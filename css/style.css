@@ -2,19 +2,19 @@
 
 /* ── VARIABLES ─────────────────────────────────────────────── */
 :root {
-    --bg:         #0f0f1a;
-    --panel:      #1a1a2e;
-    --border:     #2a2a4a;
-    --accent:     #4fc3f7;
-    --accent-dim: #1a4a6a;
-    --luck:       #ffd700;
-    --luck-dim:   #4a3a00;
-    --text:       #c8d6e5;
-    --text-dim:   #5a6a7a;
-    --green:      #00e676;
-    --red:        #ff5252;
-    --gold:       #ffd700;
-    --purple:     #ce93d8;
+    --bg:          #0f0f1a;
+    --panel:       #1a1a2e;
+    --border:      #2a2a4a;
+    --accent:      #4fc3f7;
+    --accent-dim:  #1a4a6a;
+    --luck:        #ffd700;
+    --luck-dim:    #4a3a00;
+    --text:        #c8d6e5;
+    --text-dim:    #5a6a7a;
+    --green:       #00e676;
+    --red:         #ff5252;
+    --gold:        #ffd700;
+    --purple:      #ce93d8;
 }
 
 /* ── RESET ──────────────────────────────────────────────────── */
@@ -55,8 +55,13 @@ body {
 
 @keyframes pulse {
     0%   { transform: scale(1); }
-    50%  { transform: scale(1.03); }
+    50%  { transform: scale(1.04); }
     100% { transform: scale(1); }
+}
+
+@keyframes numberRoll {
+    0%   { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes glowPulse {
@@ -83,6 +88,11 @@ body {
 @keyframes scanline {
     0%   { top: -10%; }
     100% { top: 110%; }
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
 }
 
 @keyframes rankGlow {
@@ -148,7 +158,12 @@ body {
     transition: all 0.3s ease;
 }
 
-.rank-badge.rank-s { border-color: var(--gold); color: var(--gold); animation: rankGlow 2s ease-in-out infinite; }
+.rank-badge.rank-s {
+    border-color: var(--gold);
+    color: var(--gold);
+    animation: rankGlow 2s ease-in-out infinite;
+}
+
 .rank-badge.rank-a { border-color: var(--purple); color: var(--purple); }
 .rank-badge.rank-b { border-color: #ef5350; color: #ef5350; }
 .rank-badge.rank-c { border-color: #ff9800; color: #ff9800; }
@@ -318,6 +333,7 @@ body {
     font-size: 0.9rem;
     color: var(--accent);
     text-align: right;
+    animation: numberRoll 0.3s ease;
 }
 
 /* ── LUCK ───────────────────────────────────────────────────── */
@@ -450,11 +466,11 @@ body {
 }
 
 .quest-xp-effective {
-    font-family: 'Share Tech Mono', monospace;
     font-size: 0.65rem;
     color: var(--text-dim);
     text-align: right;
     white-space: nowrap;
+    font-family: 'Share Tech Mono', monospace;
 }
 
 .complete-btn {
@@ -703,6 +719,7 @@ body {
     animation: particleBurst 1.2s ease forwards;
 }
 
+/* scanline effect on overlays */
 .overlay::after {
     content: '';
     position: absolute;
@@ -712,4 +729,38 @@ body {
     background: rgba(79, 195, 247, 0.08);
     animation: scanline 3s linear infinite;
     pointer-events: none;
+}
+
+/* ── QUEST MODEL / WHY ──────────────────────────────────────── */
+.quest-model {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+}
+
+.quest-model-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    text-transform: uppercase;
+}
+
+.quest-model-why {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    font-style: italic;
+}
+
+/* ── QUEST CARD RIGHT COLUMN ────────────────────────────────── */
+.quest-card-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    min-width: 52px;
 }
