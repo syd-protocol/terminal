@@ -1,15 +1,18 @@
-// ─── CONSTANTS ───────────────────────────────────────────────
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'levelup_player';
-const MAX_STAT = 100;
-const STAT_NAMES = ['strength', 'intelligence', 'agility', 'endurance', 'charisma'];
+const MAX_STAT    = 100;
+const STAT_NAMES  = ['strength', 'intelligence', 'agility', 'endurance', 'charisma'];
+
+// Answer index (0–3) maps to these starting point values
+const ANSWER_WEIGHTS = [10, 15, 22, 30];
 
 const TITLES = [
     { minLevel: 1, label: 'ORDINARY PERSON' },
-    { minLevel: 2, label: 'AWAKENED' },
-    { minLevel: 4, label: 'APPRENTICE' },
-    { minLevel: 6, label: 'CHALLENGER' },
-    { minLevel: 8, label: 'PROVEN' },
-    { minLevel: 9, label: 'ELITE' }
+    { minLevel: 2, label: 'AWAKENED'         },
+    { minLevel: 4, label: 'APPRENTICE'       },
+    { minLevel: 6, label: 'CHALLENGER'       },
+    { minLevel: 8, label: 'PROVEN'           },
+    { minLevel: 9, label: 'ELITE'            }
 ];
 
 const ONBOARD_QUESTIONS = [
@@ -20,18 +23,23 @@ const ONBOARD_QUESTIONS = [
     },
     {
         stat: 'intelligence',
-        text: 'How often do you deliberately learn or study something outside of work or school?',
+        text: 'How often do you deliberately learn something outside of work or school?',
         options: ['Rarely or never', 'Occasionally', 'A few times a week', 'Daily']
     },
     {
         stat: 'agility',
         text: 'When your plans change unexpectedly, how do you typically respond?',
-        options: ['It really unsettles me', 'I struggle but manage', 'I adapt fairly well', 'I adapt quickly and move on']
+        options: [
+            'It really unsettles me',
+            'I struggle but manage',
+            'I adapt fairly well',
+            'I adapt quickly and move on'
+        ]
     },
     {
         stat: 'endurance',
-        text: 'How consistently do you follow through on things even when motivation fades?',
-        options: ['I often give up', 'I finish sometimes', 'I usually push through', 'I almost always finish what I start']
+        text: 'How consistently do you follow through on things when motivation fades?',
+        options: ['I often give up', 'I finish sometimes', 'I usually push through', 'I almost always finish']
     },
     {
         stat: 'charisma',
@@ -40,17 +48,17 @@ const ONBOARD_QUESTIONS = [
     }
 ];
 
-// ─── STATE ───────────────────────────────────────────────────
-let player = null;
-let dailyQuests = [];
-let allQuests = [];
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let player         = null;
+let dailyQuests    = [];
+let allQuests      = [];
 let currentQuestion = 0;
 let questionAnswers = {};
 
-// ─── INIT ────────────────────────────────────────────────────
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
     allQuests = await loadQuests();
-    player = loadPlayer();
+    player    = loadPlayer();
 
     setupTooltips();
 
@@ -70,16 +78,16 @@ async function init() {
     }
 }
 
-// ─── TYPEWRITER ───────────────────────────────────────────────
+// ─── TYPEWRITER ───────────────────────────────────────────────────────────────
 function runTypewriter() {
     const heading = 'INITIALISING PLAYER DATA';
-    const subtext = 'Enter your name to begin your journey.';
-    const headEl = document.getElementById('onboard-heading');
-    const subEl = document.getElementById('onboard-sub');
+    const subtext = 'The system reads only what is true. Your answers shape your starting point.';
+    const headEl  = document.getElementById('onboard-heading');
+    const subEl   = document.getElementById('onboard-sub');
 
     typeText(headEl, heading, 55, () => {
         setTimeout(() => {
-            typeText(subEl, subtext, 35, () => {
+            typeText(subEl, subtext, 28, () => {
                 setTimeout(() => {
                     document.getElementById('name-section').classList.remove('hidden');
                     document.getElementById('name-input').focus();
@@ -103,7 +111,7 @@ function typeText(el, text, speed, onDone) {
     }, speed);
 }
 
-// ─── NAME SECTION ─────────────────────────────────────────────
+// ─── NAME SECTION ─────────────────────────────────────────────────────────────
 function setupNameSection() {
     const input = document.getElementById('name-input');
 
@@ -111,28 +119,27 @@ function setupNameSection() {
         if (e.key === 'Enter') proceedToQuestions();
     });
 
-    // Show a continue button after typing starts
     input.addEventListener('input', () => {
         if (input.value.trim().length > 0) {
-            showContinueBtn('CONTINUE', proceedToQuestions);
+            showActionBtn('CONTINUE', proceedToQuestions);
         } else {
-            hideContinueBtn();
+            hideActionBtn();
         }
     });
 }
 
-function showContinueBtn(label, fn) {
+function showActionBtn(label, fn) {
     const btn = document.getElementById('start-btn');
     btn.textContent = label;
     btn.classList.remove('hidden');
     btn.onclick = fn;
 }
 
-function hideContinueBtn() {
+function hideActionBtn() {
     document.getElementById('start-btn').classList.add('hidden');
 }
 
-// ─── QUESTIONS ────────────────────────────────────────────────
+// ─── QUESTIONS ────────────────────────────────────────────────────────────────
 function proceedToQuestions() {
     const name = document.getElementById('name-input').value.trim();
     if (!name) {
@@ -141,41 +148,41 @@ function proceedToQuestions() {
     }
 
     document.getElementById('name-section').classList.add('hidden');
-    hideContinueBtn();
+    hideActionBtn();
+    document.getElementById('onboard-sub').textContent =
+        'Answer honestly — the system rewards truth.';
 
-    // Update subtext
-    document.getElementById('onboard-sub').textContent = 'Answer honestly. This helps calibrate your starting profile.';
-
-    currentQuestion = 0;
-    questionAnswers = {};
+    currentQuestion  = 0;
+    questionAnswers  = {};
     document.getElementById('question-section').classList.remove('hidden');
-    showQuestion(currentQuestion);
+    showQuestion(0);
 }
 
 function showQuestion(index) {
     const q = ONBOARD_QUESTIONS[index];
-    document.getElementById('q-stat').textContent = '[ ' + q.stat.toUpperCase() + ' ASSESSMENT ]';
+
+    document.getElementById('q-stat').textContent =
+        '[ ' + q.stat.toUpperCase() + ' ASSESSMENT ]';
     document.getElementById('q-text').textContent = q.text;
     document.getElementById('q-progress').textContent =
         'QUESTION ' + (index + 1) + ' OF ' + ONBOARD_QUESTIONS.length;
 
     const optionsEl = document.getElementById('q-options');
     optionsEl.innerHTML = '';
-    hideContinueBtn();
+    hideActionBtn();
 
     q.options.forEach((opt, i) => {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.textContent = opt;
         btn.addEventListener('click', () => {
-            // Mark selected
-            optionsEl.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            optionsEl.querySelectorAll('.option-btn')
+                .forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             questionAnswers[q.stat] = i;
 
-            // Show next or awaken
             const isLast = index === ONBOARD_QUESTIONS.length - 1;
-            showContinueBtn(isLast ? 'AWAKEN' : 'NEXT', () => {
+            showActionBtn(isLast ? 'AWAKEN' : 'NEXT', () => {
                 if (isLast) {
                     createPlayer();
                 } else {
@@ -188,7 +195,7 @@ function showQuestion(index) {
     });
 }
 
-// ─── PLAYER MANAGEMENT ───────────────────────────────────────
+// ─── PLAYER MANAGEMENT ───────────────────────────────────────────────────────
 function loadPlayer() {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
@@ -201,17 +208,18 @@ function savePlayer() {
 function createPlayer() {
     const name = document.getElementById('name-input').value.trim().toUpperCase();
 
+    // Build stats from answer weights
+    const stats = {};
+    STAT_NAMES.forEach(stat => {
+        const answerIndex = questionAnswers[stat] ?? 0;
+        stats[stat] = ANSWER_WEIGHTS[answerIndex];
+    });
+
     player = {
         name,
-        stats: {
-            strength: 10,
-            intelligence: 10,
-            agility: 10,
-            endurance: 10,
-            charisma: 10
-        },
+        stats,
         completedToday: [],
-        lastQuestDate: today()
+        lastQuestDate:  today()
     };
 
     savePlayer();
@@ -220,11 +228,11 @@ function createPlayer() {
     showScreen('screen-status');
 }
 
-// ─── DAILY RESET ─────────────────────────────────────────────
+// ─── DAILY RESET ──────────────────────────────────────────────────────────────
 function checkDailyReset() {
     if (player.lastQuestDate !== today()) {
         player.completedToday = [];
-        player.lastQuestDate = today();
+        player.lastQuestDate  = today();
         savePlayer();
     }
 }
@@ -233,10 +241,10 @@ function today() {
     return new Date().toISOString().slice(0, 10);
 }
 
-// ─── LOAD QUESTS ─────────────────────────────────────────────
+// ─── LOAD QUESTS ──────────────────────────────────────────────────────────────
 async function loadQuests() {
     try {
-        const res = await fetch('/levelup/data/quests.json');
+        const res  = await fetch('/levelup/data/quests.json');
         const data = await res.json();
         return data.quests;
     } catch (e) {
@@ -245,7 +253,7 @@ async function loadQuests() {
     }
 }
 
-// ─── QUEST COMPLETION ────────────────────────────────────────
+// ─── QUEST COMPLETION ────────────────────────────────────────────────────────
 function completeQuest(id, stat, xp) {
     if (player.completedToday.includes(id)) return;
     player.stats[stat] = Math.min(player.stats[stat] + xp, MAX_STAT);
@@ -256,30 +264,29 @@ function completeQuest(id, stat, xp) {
     flashStat(stat);
 }
 
-// ─── STATUS SCREEN ───────────────────────────────────────────
+// ─── STATUS SCREEN ───────────────────────────────────────────────────────────
 function updateStatusScreen() {
-    document.getElementById('player-name').textContent = player.name;
+    document.getElementById('player-name').textContent  = player.name;
     document.getElementById('player-level').textContent = calculateLevel();
 
     const title = calculateTitle();
-    document.getElementById('player-title').innerHTML =
-        '[ ' + title + ' ] <span class="info-icon" data-tip="title">?</span>';
+    const titleEl = document.getElementById('player-title');
+    titleEl.textContent = '[ ' + title + ' ]';
 
     STAT_NAMES.forEach(stat => {
         const val = player.stats[stat];
-        document.getElementById('val-' + stat).textContent = val;
-        document.getElementById('bar-' + stat).style.width = val + '%';
+        document.getElementById('val-' + stat).textContent    = val;
+        document.getElementById('bar-' + stat).style.width    = val + '%';
     });
 
     const luck = calculateLuck();
-    document.getElementById('val-luck').textContent = luck;
-    document.getElementById('bar-luck').style.width = luck + '%';
+    document.getElementById('val-luck').textContent  = luck;
+    document.getElementById('bar-luck').style.width  = luck + '%';
 
-    // Re-attach tooltip listeners after innerHTML update
     setupTooltips();
 }
 
-// ─── CALCULATIONS ────────────────────────────────────────────
+// ─── CALCULATIONS ────────────────────────────────────────────────────────────
 function calculateLuck() {
     const total = STAT_NAMES.reduce((sum, s) => sum + player.stats[s], 0);
     return Math.floor(total / STAT_NAMES.length);
@@ -300,47 +307,41 @@ function calculateLevel() {
 
 function calculateTitle() {
     const level = calculateLevel();
-    let title = TITLES[0].label;
+    let title   = TITLES[0].label;
     for (const t of TITLES) {
         if (level >= t.minLevel) title = t.label;
     }
     return title;
 }
 
-// ─── TOOLTIPS ────────────────────────────────────────────────
+// ─── TOOLTIPS ────────────────────────────────────────────────────────────────
 function setupTooltips() {
-    document.querySelectorAll('.info-icon').forEach(icon => {
-        // Clone to remove old listeners
-        const fresh = icon.cloneNode(true);
-        icon.parentNode.replaceChild(fresh, icon);
+    document.querySelectorAll('.tappable').forEach(el => {
+        const fresh = el.cloneNode(true);
+        el.parentNode.replaceChild(fresh, el);
 
         fresh.addEventListener('click', e => {
             e.stopPropagation();
             const tip = fresh.dataset.tip;
-            const box = document.getElementById('tip-' + tip);
+            if (!tip) return;
+            const box     = document.getElementById('tip-' + tip);
             if (!box) return;
+            const isOpen  = box.classList.contains('visible');
 
-            const isOpen = box.classList.contains('visible');
+            document.querySelectorAll('.tooltip-box')
+                .forEach(b => b.classList.remove('visible'));
 
-            // Close all tooltips
-            document.querySelectorAll('.tooltip-box').forEach(b => b.classList.remove('visible'));
-            document.querySelectorAll('.info-icon').forEach(i => i.classList.remove('active'));
-
-            if (!isOpen) {
-                box.classList.add('visible');
-                fresh.classList.add('active');
-            }
+            if (!isOpen) box.classList.add('visible');
         });
     });
 
-    // Close tooltips when tapping elsewhere
     document.addEventListener('click', () => {
-        document.querySelectorAll('.tooltip-box').forEach(b => b.classList.remove('visible'));
-        document.querySelectorAll('.info-icon').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('.tooltip-box')
+            .forEach(b => b.classList.remove('visible'));
     });
 }
 
-// ─── UI HELPERS ──────────────────────────────────────────────
+// ─── UI HELPERS ──────────────────────────────────────────────────────────────
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -356,5 +357,5 @@ function flashStat(stat) {
     setTimeout(() => { row.style.background = ''; }, 600);
 }
 
-// ─── START ───────────────────────────────────────────────────
+// ─── START ───────────────────────────────────────────────────────────────────
 init();
