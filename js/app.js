@@ -7,12 +7,9 @@ const STORAGE_KEY = 'levelup_player';
 const STAT_NAMES  = ['strength', 'intelligence', 'agility', 'endurance', 'charisma'];
 const STAT_FLOOR  = 10;
 
-// Onboarding answer weights — max 23 keeps everyone in Level 1
 const ANSWER_WEIGHTS = [10, 14, 18, 23];
 
 // ─── LEVEL FORMULA ───────────────────────────────────────────
-// XP to reach Level N = 25 × (N-1)^1.9
-// Level 2 ≈ 25 XP (~2 days at full play)
 function xpForLevel(n) {
     if (n <= 1) return 0;
     return Math.floor(25 * Math.pow(n - 1, 1.9));
@@ -20,9 +17,7 @@ function xpForLevel(n) {
 
 function levelFromXP(xp) {
     let level = 1;
-    while (xp >= xpForLevel(level + 1)) {
-        level++;
-    }
+    while (xp >= xpForLevel(level + 1)) level++;
     return level;
 }
 
@@ -55,29 +50,29 @@ function rankFromLevel(level) {
 
 // ─── TITLE SYSTEM ────────────────────────────────────────────
 const TITLES = [
-    { minLevel: 1,   label: 'THE BEGINNER'      },
-    { minLevel: 6,   label: 'THE MOTIVATED'     },
-    { minLevel: 11,  label: 'THE CONSISTENT'    },
-    { minLevel: 16,  label: 'THE DEVELOPING'    },
-    { minLevel: 21,  label: 'THE EMERGING'      },
-    { minLevel: 26,  label: 'THE GROUNDED'      },
-    { minLevel: 31,  label: 'THE CAPABLE'       },
-    { minLevel: 36,  label: 'THE RELIABLE'      },
-    { minLevel: 41,  label: 'THE FOCUSED'       },
-    { minLevel: 46,  label: 'THE DISCIPLINED'   },
-    { minLevel: 51,  label: 'THE SKILLED'       },
-    { minLevel: 56,  label: 'THE ACCOMPLISHED'  },
-    { minLevel: 61,  label: 'THE EXCEPTIONAL'   },
-    { minLevel: 66,  label: 'THE RESPECTED'     },
-    { minLevel: 71,  label: 'THE INFLUENTIAL'   },
-    { minLevel: 76,  label: 'THE ELITE'         },
-    { minLevel: 81,  label: 'THE MASTERFUL'     },
-    { minLevel: 86,  label: 'THE RENOWNED'      },
-    { minLevel: 91,  label: 'THE AWAKENED'      },
-    { minLevel: 96,  label: 'THE TRANSCENDENT'  },
-    { minLevel: 101, label: 'THE LEGEND'        },
-    { minLevel: 151, label: 'THE MYTH'          },
-    { minLevel: 200, label: 'THE ETERNAL'       }
+    { minLevel: 1,   label: 'THE BEGINNER'     },
+    { minLevel: 6,   label: 'THE MOTIVATED'    },
+    { minLevel: 11,  label: 'THE CONSISTENT'   },
+    { minLevel: 16,  label: 'THE DEVELOPING'   },
+    { minLevel: 21,  label: 'THE EMERGING'     },
+    { minLevel: 26,  label: 'THE GROUNDED'     },
+    { minLevel: 31,  label: 'THE CAPABLE'      },
+    { minLevel: 36,  label: 'THE RELIABLE'     },
+    { minLevel: 41,  label: 'THE FOCUSED'      },
+    { minLevel: 46,  label: 'THE DISCIPLINED'  },
+    { minLevel: 51,  label: 'THE SKILLED'      },
+    { minLevel: 56,  label: 'THE ACCOMPLISHED' },
+    { minLevel: 61,  label: 'THE EXCEPTIONAL'  },
+    { minLevel: 66,  label: 'THE RESPECTED'    },
+    { minLevel: 71,  label: 'THE INFLUENTIAL'  },
+    { minLevel: 76,  label: 'THE ELITE'        },
+    { minLevel: 81,  label: 'THE MASTERFUL'    },
+    { minLevel: 86,  label: 'THE RENOWNED'     },
+    { minLevel: 91,  label: 'THE AWAKENED'     },
+    { minLevel: 96,  label: 'THE TRANSCENDENT' },
+    { minLevel: 101, label: 'THE LEGEND'       },
+    { minLevel: 151, label: 'THE MYTH'         },
+    { minLevel: 200, label: 'THE ETERNAL'      }
 ];
 
 function titleFromLevel(level) {
@@ -89,12 +84,6 @@ function titleFromLevel(level) {
 }
 
 // ─── MOMENTUM ────────────────────────────────────────────────
-// Research basis:
-// Ceiling 1.5x  — Milkman 2019 consistency research
-// Build curve   — Newell & Rosenbloom Power Law of Practice
-// Decay rates   — Milkman missed-day significance thresholds
-// 14-day period — Lally 2010 habit formation
-
 function buildMomentum(consecutiveDays) {
     return parseFloat((1 + 0.5 * (1 - Math.exp(-consecutiveDays / 14))).toFixed(4));
 }
@@ -106,6 +95,24 @@ function decayMomentum(current, missedDays) {
         ? Math.pow(0.65, missedDays - 2)
         : decayRates[missedDays];
     return parseFloat(Math.max(1.0, current * rate).toFixed(4));
+}
+
+// ─── SHARE TAGLINES ──────────────────────────────────────────
+const SHARE_TAGLINES = [
+    'Every day is a quest. Are you playing?',
+    'Real life has no respawn. Level up while you can.',
+    'The grind never stops — but it does compound.',
+    'F-Rank today. What about tomorrow?',
+    'Stats don\'t lie. Effort doesn\'t either.',
+    'The system is watching. Are you showing up?',
+    'Progress is invisible until suddenly it isn\'t.',
+    'Your future self is watching. Don\'t let them down.',
+    'Discipline is just delayed gratification done consistently.',
+    'One quest at a time. One level at a time.'
+];
+
+function getRandomTagline() {
+    return SHARE_TAGLINES[Math.floor(Math.random() * SHARE_TAGLINES.length)];
 }
 
 // ─── ONBOARDING QUESTIONS ────────────────────────────────────
@@ -187,6 +194,29 @@ function toggleSound() {
     localStorage.setItem('levelup_sound', soundEnabled ? '1' : '0');
 }
 
+function showSoundPrompt() {
+    const prompt = document.createElement('div');
+    prompt.style.cssText = `
+        position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+        background:#1a1a2e; border:1px solid #4fc3f7; color:#c8d6e5;
+        font-family:'Share Tech Mono',monospace; font-size:0.7rem;
+        letter-spacing:1px; padding:12px 20px; z-index:9999;
+        text-align:center; max-width:320px; width:90%;
+        animation:fadeIn 0.4s ease; line-height:1.6; pointer-events:none;
+    `;
+    prompt.innerHTML = `🔊 SOUND IS ON<br>
+        <span style="color:#5a6a7a;font-size:0.65rem;">
+            Enables immersive audio feedback.<br>
+            Toggle anytime with the icon above.
+        </span>`;
+    document.body.appendChild(prompt);
+    setTimeout(() => {
+        prompt.style.transition = 'opacity 0.5s ease';
+        prompt.style.opacity    = '0';
+        setTimeout(() => prompt.remove(), 500);
+    }, 3000);
+}
+
 // ─── STATE ───────────────────────────────────────────────────
 let player          = null;
 let dailyQuests     = [];
@@ -201,7 +231,6 @@ async function init() {
 
     const savedSound = localStorage.getItem('levelup_sound');
     if (savedSound === null) {
-        // First visit — default to on and show prompt
         soundEnabled = true;
         localStorage.setItem('levelup_sound', '1');
         showSoundPrompt();
@@ -210,6 +239,9 @@ async function init() {
     }
     document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
     document.getElementById('sound-toggle').addEventListener('click', toggleSound);
+
+    // Settings gear button
+    document.getElementById('settings-btn').addEventListener('click', openSettings);
 
     setupTooltips();
 
@@ -372,8 +404,8 @@ function runAwakenSequence() {
     const linesEl  = document.getElementById('boot-lines');
     const nameEl   = document.getElementById('boot-name');
     const statusEl = document.getElementById('boot-status');
-    linesEl.innerHTML   = '';
-    nameEl.textContent  = '';
+    linesEl.innerHTML    = '';
+    nameEl.textContent   = '';
     statusEl.textContent = '';
 
     let lineIndex = 0;
@@ -485,11 +517,9 @@ async function loadQuests() {
 function completeQuest(id, stat, baseXP) {
     if (player.completedToday.includes(id)) return;
 
-    const momentum    = player.momentum || 1.0;
-    const earnedAmt   = parseFloat((baseXP * momentum).toFixed(1));
-
-    // Record XP before adding so we can detect level up
-    const xpBefore = earnedXP(player.stats);
+    const momentum  = player.momentum || 1.0;
+    const earnedAmt = parseFloat((baseXP * momentum).toFixed(1));
+    const xpBefore  = earnedXP(player.stats);
 
     player.stats[stat] = parseFloat(
         ((player.stats[stat] || STAT_FLOOR) + earnedAmt).toFixed(1)
@@ -497,26 +527,20 @@ function completeQuest(id, stat, baseXP) {
     player.completedToday.push(id);
     savePlayer();
 
-    // Card animation
     const card = document.getElementById('quest-card-' + id);
     if (card) {
         card.classList.add('completing');
         setTimeout(() => card.classList.remove('completing'), 400);
     }
 
-    // Floating XP
     showFloatingXP(id, earnedAmt);
-
-    // Sound
     playQuestComplete();
 
-    // Check level and rank changes
     const prevLevel = levelFromXP(xpBefore);
     const newLevel  = calculateLevel();
     const prevRank  = rankFromLevel(prevLevel);
     const newRank   = rankFromLevel(newLevel);
 
-    // Re-render UI
     renderQuests(dailyQuests, player.completedToday, player.momentum);
     updateStatusScreen();
 
@@ -554,27 +578,22 @@ function updateStatusScreen(animate) {
     document.getElementById('player-level').textContent = level;
     document.getElementById('player-title').textContent = '[ ' + title + ' ]';
 
-    // Rank badge
     const rankEl = document.getElementById('rank-badge');
     rankEl.textContent = rank;
     rankEl.className   = 'rank-badge tappable ' + rankCssClass(rank);
     rankEl.dataset.tip = 'rank';
 
-    // Level progress
     document.getElementById('level-progress-bar').style.width   = pct + '%';
     document.getElementById('level-progress-label').textContent =
         xpThis + ' / ' + xpNext + ' XP  (' + pct + '%)';
 
-    // Momentum
     const mPct = Math.round(((momentum - 1.0) / 0.5) * 100);
     document.getElementById('momentum-bar').style.width   = mPct + '%';
     document.getElementById('momentum-value').textContent = momentum.toFixed(2) + 'x';
 
-    // Stats
     STAT_NAMES.forEach(stat => {
-        const val    = player.stats[stat] || STAT_FLOOR;
+        const val     = player.stats[stat] || STAT_FLOOR;
         const dispVal = Math.floor(val);
-        // Bar scales: 10 = 0%, growing logarithmically for visual feel
         const barPct  = Math.min(100, ((val - STAT_FLOOR) / 90) * 100);
 
         if (animate) {
@@ -588,7 +607,6 @@ function updateStatusScreen(animate) {
         }
     });
 
-    // Luck
     const luck    = calculateLuck();
     const luckVal = Math.floor(luck);
     const luckPct = Math.min(100, ((luck - STAT_FLOOR) / 90) * 100);
@@ -624,47 +642,9 @@ function showStatusScreenWithAnimation() {
     }, 200);
 }
 
-// ─── SOUND ─────────────────────────────────────────
-function showSoundPrompt() {
-    const prompt = document.createElement('div');
-    prompt.id = 'sound-prompt';
-    prompt.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #1a1a2e;
-        border: 1px solid #4fc3f7;
-        color: #c8d6e5;
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.7rem;
-        letter-spacing: 1px;
-        padding: 12px 20px;
-        z-index: 9999;
-        text-align: center;
-        max-width: 320px;
-        width: 90%;
-        animation: fadeIn 0.4s ease;
-        line-height: 1.6;
-    `;
-    prompt.innerHTML = `
-        🔊 SOUND IS ON<br>
-        <span style="color:#5a6a7a;font-size:0.65rem;">
-            Enables immersive audio feedback.<br>
-            Toggle anytime with the icon above.
-        </span>
-    `;
-    document.body.appendChild(prompt);
-    setTimeout(() => {
-        prompt.style.transition = 'opacity 0.5s ease';
-        prompt.style.opacity = '0';
-        setTimeout(() => prompt.remove(), 500);
-    }, 3000);
-}
-
 // ─── ANIMATE NUMBER ──────────────────────────────────────────
 function animateNumber(elId, from, to, duration) {
-    const el    = document.getElementById(elId);
+    const el = document.getElementById(elId);
     if (!el) return;
     const steps = 30;
     const step  = (to - from) / steps;
@@ -694,29 +674,195 @@ function showFloatingXP(questId, amount) {
 }
 
 // ─── LEVEL UP OVERLAY ────────────────────────────────────────
+// Overlays are now interactive — they do NOT auto-dismiss.
+// User must tap Share or Dismiss.
 function showLevelUpOverlay(level) {
     playLevelUp();
     spawnParticles('lu-particles', 20, 'var(--accent)');
+
+    const titleText = titleFromLevel(level);
+    const rankText  = rankFromLevel(level);
+    const subText   = rankText + '-RANK  ·  KEEP GOING';
+
     document.getElementById('lu-level').textContent = level;
-    document.getElementById('lu-title').textContent = titleFromLevel(level);
-    document.getElementById('lu-sub').textContent =
-        rankFromLevel(level) + '-RANK  ·  KEEP GOING';
+    document.getElementById('lu-title').textContent = titleText;
+    document.getElementById('lu-sub').textContent   = subText;
+
     const overlay = document.getElementById('overlay-levelup');
     overlay.classList.remove('hidden');
-    setTimeout(() => overlay.classList.add('hidden'), 3500);
+
+    // Share button — generates canvas card and triggers native share / download
+    document.getElementById('lu-share-btn').onclick = () => shareCard({
+        headline:    'LEVEL UP',
+        bigText:     String(level),
+        titleText,
+        subText,
+        accentColor: '#4fc3f7'
+    });
+
+    // Dismiss button
+    document.getElementById('lu-dismiss-btn').onclick = () =>
+        overlay.classList.add('hidden');
 }
 
 // ─── RANK UP OVERLAY ─────────────────────────────────────────
 function showRankUpOverlay(rank, level) {
     playRankUp();
     spawnParticles('ru-particles', 35, 'var(--gold)');
+
+    const titleText = rank + '-RANK ACHIEVED';
+    const subText   = titleFromLevel(level) + '  ·  LEVEL ' + level;
+
     document.getElementById('ru-rank').textContent  = rank;
-    document.getElementById('ru-title').textContent = rank + '-RANK ACHIEVED';
-    document.getElementById('ru-sub').textContent   =
-        titleFromLevel(level) + '  ·  LEVEL ' + level;
+    document.getElementById('ru-title').textContent = titleText;
+    document.getElementById('ru-sub').textContent   = subText;
+
     const overlay = document.getElementById('overlay-rankup');
     overlay.classList.remove('hidden');
-    setTimeout(() => overlay.classList.add('hidden'), 4500);
+
+    // Share button
+    document.getElementById('ru-share-btn').onclick = () => shareCard({
+        headline:    'RANK UP',
+        bigText:     rank,
+        titleText,
+        subText,
+        accentColor: '#ffd700'
+    });
+
+    // Dismiss button
+    document.getElementById('ru-dismiss-btn').onclick = () =>
+        overlay.classList.add('hidden');
+}
+
+// ─── SHARE CARD GENERATOR ────────────────────────────────────
+// Draws a 1080×1080 branded share image on a canvas.
+// On mobile: triggers native share sheet with the image file.
+// On desktop: downloads the image directly.
+
+function shareCard({ headline, bigText, titleText, subText, accentColor }) {
+    const W = 1080, H = 1080;
+    const canvas = document.createElement('canvas');
+    canvas.width  = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // ── Background ──────────────────────────────────
+    ctx.fillStyle = '#0f0f1a';
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle dot-grid overlay
+    ctx.fillStyle = 'rgba(42, 42, 74, 0.7)';
+    for (let x = 30; x < W; x += 60) {
+        for (let y = 30; y < H; y += 60) {
+            ctx.beginPath();
+            ctx.arc(x, y, 1, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // ── Accent border lines ──────────────────────────
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(0, 0, W, 5);       // top
+    ctx.fillRect(0, H - 5, W, 5);   // bottom
+    ctx.fillRect(0, 0, 5, H);       // left
+    ctx.fillRect(W - 5, 0, 5, H);   // right
+
+    // ── [ SYSTEM ] label ────────────────────────────
+    ctx.fillStyle   = accentColor;
+    ctx.textAlign   = 'center';
+    ctx.font        = '500 30px monospace';
+    ctx.fillText('[ SYSTEM ]', W / 2, 120);
+
+    // ── Headline ─────────────────────────────────────
+    ctx.fillStyle = 'rgba(200, 214, 229, 0.45)';
+    ctx.font      = '32px monospace';
+    ctx.fillText(headline, W / 2, 178);
+
+    // ── Big number / rank — glowing ──────────────────
+    ctx.save();
+    ctx.shadowColor = accentColor;
+    ctx.shadowBlur  = 80;
+    ctx.fillStyle   = accentColor;
+
+    // Scale font down for long rank strings like SS+, SSS
+    const bigFontSize = bigText.length > 2 ? 200 : 300;
+    ctx.font = `bold ${bigFontSize}px monospace`;
+    ctx.fillText(bigText, W / 2, 540);
+    ctx.restore();
+
+    // ── Title ────────────────────────────────────────
+    ctx.fillStyle = '#ffffff';
+    ctx.font      = 'bold 54px sans-serif';
+    ctx.fillText(titleText, W / 2, 650);
+
+    // ── Sub (rank · level) ───────────────────────────
+    ctx.fillStyle = 'rgba(200, 214, 229, 0.5)';
+    ctx.font      = '30px monospace';
+    ctx.fillText(subText, W / 2, 712);
+
+    // ── Divider line ────────────────────────────────
+    ctx.strokeStyle = 'rgba(42, 42, 74, 1)';
+    ctx.lineWidth   = 1;
+    ctx.beginPath();
+    ctx.moveTo(120, 760);
+    ctx.lineTo(W - 120, 760);
+    ctx.stroke();
+
+    // ── Player name ──────────────────────────────────
+    ctx.fillStyle = '#ffffff';
+    ctx.font      = 'bold 44px monospace';
+    ctx.fillText(player.name, W / 2, 836);
+
+    // ── Tagline ──────────────────────────────────────
+    ctx.fillStyle = 'rgba(200, 214, 229, 0.35)';
+    ctx.font      = '26px monospace';
+    canvasWrapText(ctx, getRandomTagline(), W / 2, 908, W - 160, 38);
+
+    // ── Watermark ────────────────────────────────────
+    ctx.fillStyle = accentColor;
+    ctx.font      = '22px monospace';
+    ctx.globalAlpha = 0.6;
+    ctx.fillText('LEVELUP', W / 2, 1032);
+    ctx.globalAlpha = 1;
+
+    // ── Share / download ─────────────────────────────
+    canvas.toBlob(blob => {
+        const file = new File([blob], 'levelup-moment.png', { type: 'image/png' });
+
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({
+                files: [file],
+                title: 'LevelUp — ' + headline,
+                text:  player.name + ' · ' + subText + '\n' + getRandomTagline()
+            }).catch(() => downloadCanvas(canvas));
+        } else {
+            downloadCanvas(canvas);
+        }
+    }, 'image/png');
+}
+
+function canvasWrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    const words = text.split(' ');
+    let line = '';
+    for (let n = 0; n < words.length; n++) {
+        const test    = line + words[n] + ' ';
+        const metrics = ctx.measureText(test);
+        if (metrics.width > maxWidth && n > 0) {
+            ctx.fillText(line.trim(), x, y);
+            line = words[n] + ' ';
+            y   += lineHeight;
+        } else {
+            line = test;
+        }
+    }
+    ctx.fillText(line.trim(), x, y);
+}
+
+function downloadCanvas(canvas) {
+    const a    = document.createElement('a');
+    a.download = 'levelup-moment.png';
+    a.href     = canvas.toDataURL('image/png');
+    a.click();
 }
 
 // ─── PARTICLES ───────────────────────────────────────────────
@@ -732,16 +878,69 @@ function spawnParticles(containerId, count, color) {
         const tx    = Math.cos(angle * Math.PI / 180) * dist + 'px';
         const ty    = Math.sin(angle * Math.PI / 180) * dist + 'px';
         p.style.cssText = `
-            background: ${color};
-            left: 50%;
-            top: 50%;
-            --tx: ${tx};
-            --ty: ${ty};
-            animation-delay: ${Math.random() * 0.3}s;
-            animation-duration: ${0.8 + Math.random() * 0.6}s;
+            background:${color}; left:50%; top:50%;
+            --tx:${tx}; --ty:${ty};
+            animation-delay:${Math.random() * 0.3}s;
+            animation-duration:${0.8 + Math.random() * 0.6}s;
         `;
         container.appendChild(p);
     }
+}
+
+// ─── SETTINGS ────────────────────────────────────────────────
+function openSettings() {
+    // Pre-fill current name
+    document.getElementById('settings-name-input').value = player.name;
+    // Always hide confirm box when opening
+    document.getElementById('confirm-box').classList.add('hidden');
+    // Wire buttons fresh each time (avoids duplicate listeners)
+    document.getElementById('save-name-btn').onclick = savePlayerName;
+    document.getElementById('reset-btn').onclick     = showConfirmReset;
+    document.getElementById('confirm-yes').onclick   = resetProfile;
+    document.getElementById('confirm-no').onclick    = () =>
+        document.getElementById('confirm-box').classList.add('hidden');
+
+    showScreen('screen-settings');
+}
+
+function savePlayerName() {
+    const input   = document.getElementById('settings-name-input');
+    const newName = input.value.trim().toUpperCase();
+    if (!newName) { input.focus(); return; }
+    player.name = newName;
+    savePlayer();
+    updateStatusScreen();
+    showToast('✓ NAME UPDATED');
+    // Return to status after a beat so they see the change
+    setTimeout(() => showScreen('screen-status'), 1200);
+}
+
+function showConfirmReset() {
+    document.getElementById('confirm-box').classList.remove('hidden');
+}
+
+function resetProfile() {
+    // Wipe all stored data and reload cleanly from onboarding
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('levelup_sound');
+    window.location.reload();
+}
+
+function showToast(message) {
+    const existing = document.getElementById('levelup-toast');
+    if (existing) existing.remove();
+
+    const toast     = document.createElement('div');
+    toast.id        = 'levelup-toast';
+    toast.className = 'save-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.transition = 'opacity 0.4s ease';
+        toast.style.opacity    = '0';
+        setTimeout(() => toast.remove(), 400);
+    }, 2000);
 }
 
 // ─── TOOLTIPS ────────────────────────────────────────────────

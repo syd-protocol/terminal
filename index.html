@@ -15,6 +15,10 @@
     ═══════════════════════════════════════════════ -->
     <div class="screen" id="screen-status">
 
+        <!-- Settings gear — top left -->
+        <button class="settings-btn" id="settings-btn" title="Settings">⚙</button>
+
+        <!-- Sound toggle — top right -->
         <div class="sound-toggle" id="sound-toggle" title="Toggle sound">
             <span id="sound-icon">🔇</span>
         </div>
@@ -34,7 +38,7 @@
                 <div class="level-progress-bar" id="level-progress-bar"></div>
             </div>
             <div class="level-progress-label" id="level-progress-label">0 / 25 XP</div>
-            
+
             <div class="tooltip-box" id="tip-level">
                 <strong>Your Level</strong>
                 Your level is calculated from your total earned XP — every quest you
@@ -203,6 +207,51 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════
+         SETTINGS SCREEN
+    ═══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-settings">
+
+        <div class="settings-header">
+            <h2>[ SETTINGS ]</h2>
+        </div>
+
+        <!-- Name edit -->
+        <div class="settings-section">
+            <div class="settings-section-title">PLAYER NAME</div>
+            <input
+                type="text"
+                id="settings-name-input"
+                class="settings-name-input"
+                maxlength="20"
+                placeholder="Enter new name..."
+            />
+            <button class="nav-btn" id="save-name-btn">SAVE NAME</button>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="danger-zone">
+            <div class="settings-section-title">DANGER ZONE</div>
+            <button class="danger-btn" id="reset-btn">RESET PROFILE</button>
+
+            <div class="confirm-box hidden" id="confirm-box">
+                <p>
+                    <strong>THIS CANNOT BE UNDONE.</strong><br>
+                    All your stats, XP, levels, and quest history<br>
+                    will be permanently deleted.
+                </p>
+                <div class="confirm-actions">
+                    <button class="confirm-yes" id="confirm-yes">RESET</button>
+                    <button class="confirm-no"  id="confirm-no">CANCEL</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="back-link" onclick="showScreen('screen-status')">
+            ← BACK TO STATUS
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
          ONBOARDING SCREEN
     ═══════════════════════════════════════════════ -->
     <div class="screen active" id="screen-onboarding">
@@ -234,7 +283,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════
-         LEVEL UP OVERLAY
+         LEVEL UP OVERLAY  (no auto-dismiss — user controls)
     ═══════════════════════════════════════════════ -->
     <div class="overlay hidden" id="overlay-levelup">
         <div class="overlay-content">
@@ -242,13 +291,15 @@
             <div class="overlay-headline">LEVEL UP</div>
             <div class="overlay-level" id="lu-level">2</div>
             <div class="overlay-title" id="lu-title">THE MOTIVATED</div>
-            <div class="overlay-sub" id="lu-sub"></div>
+            <div class="overlay-sub"   id="lu-sub"></div>
             <div class="overlay-particles" id="lu-particles"></div>
+            <button class="overlay-share-btn"   id="lu-share-btn">⬆ SHARE THIS MOMENT</button>
+            <button class="overlay-dismiss-btn" id="lu-dismiss-btn">DISMISS</button>
         </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════
-         RANK UP OVERLAY
+         RANK UP OVERLAY  (no auto-dismiss — user controls)
     ═══════════════════════════════════════════════ -->
     <div class="overlay hidden" id="overlay-rankup">
         <div class="overlay-content rankup-content">
@@ -256,8 +307,10 @@
             <div class="overlay-headline">RANK UP</div>
             <div class="overlay-rank-letter" id="ru-rank">E</div>
             <div class="overlay-title" id="ru-title">E-RANK ACHIEVED</div>
-            <div class="overlay-sub" id="ru-sub"></div>
+            <div class="overlay-sub"   id="ru-sub"></div>
             <div class="overlay-particles" id="ru-particles"></div>
+            <button class="overlay-share-btn"   id="ru-share-btn">⬆ SHARE THIS MOMENT</button>
+            <button class="overlay-dismiss-btn" id="ru-dismiss-btn">DISMISS</button>
         </div>
     </div>
 
@@ -266,8 +319,8 @@
     ═══════════════════════════════════════════════ -->
     <div class="overlay hidden" id="overlay-awaken">
         <div class="overlay-content awaken-content">
-            <div class="boot-lines" id="boot-lines"></div>
-            <div class="boot-name" id="boot-name"></div>
+            <div class="boot-lines"  id="boot-lines"></div>
+            <div class="boot-name"   id="boot-name"></div>
             <div class="boot-status" id="boot-status"></div>
         </div>
     </div>
