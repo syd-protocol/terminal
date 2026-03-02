@@ -312,32 +312,31 @@
 
     <!-- ═══════════════════════════════════════════════
          ONBOARDING SCREEN
+         Stage 1 will replace this stub with:
+         - Ambient drone via Web Audio API
+         - Lore lines fading in one at a time
+         - Name input revealed after lore completes
     ═══════════════════════════════════════════════ -->
     <div class="screen active" id="screen-onboarding">
         <div class="onboarding-box">
             <div class="player-title">[ SYSTEM ]</div>
-            <h2 id="onboard-heading"></h2>
-            <p id="onboard-sub"></p>
+
+            <!-- Stage 1: lore lines will be injected here dynamically -->
+            <div id="lore-lines"></div>
 
             <div id="name-section" class="hidden">
                 <input
                     type="text"
                     id="name-input"
-                    placeholder="Enter your name..."
+                    placeholder="ENTER DESIGNATION..."
                     maxlength="20"
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
                 />
             </div>
 
-            <div id="question-section" class="hidden">
-                <div class="question-box">
-                    <div class="question-stat" id="q-stat"></div>
-                    <div class="question-text" id="q-text"></div>
-                    <div class="question-options" id="q-options"></div>
-                    <div class="question-progress" id="q-progress"></div>
-                </div>
-            </div>
-
-            <button class="nav-btn hidden" id="start-btn">AWAKEN</button>
+            <button class="nav-btn hidden" id="start-btn">INITIALISE</button>
         </div>
     </div>
 

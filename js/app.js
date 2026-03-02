@@ -8,8 +8,6 @@ const GEAR_KEY    = 'levelup_gear';
 const STAT_NAMES  = ['strength', 'intelligence', 'agility', 'endurance', 'charisma'];
 const STAT_FLOOR  = 10;
 
-const ANSWER_WEIGHTS = [10, 14, 18, 23];
-
 // ─── LEVEL FORMULA ───────────────────────────────────────────
 function xpForLevel(n) {
     if (n <= 1) return 0;
@@ -116,35 +114,6 @@ function getRandomTagline() {
     return SHARE_TAGLINES[Math.floor(Math.random() * SHARE_TAGLINES.length)];
 }
 
-// ─── ONBOARDING QUESTIONS ────────────────────────────────────
-const ONBOARD_QUESTIONS = [
-    {
-        stat: 'strength',
-        text: 'Physical activity and taking care of my body is a regular part of how I live.',
-        options: ['Strongly Disagree', 'Mostly Disagree', 'Mostly Agree', 'Strongly Agree']
-    },
-    {
-        stat: 'intelligence',
-        text: 'I actively seek out new knowledge and enjoy learning outside of what I have to.',
-        options: ['Strongly Disagree', 'Mostly Disagree', 'Mostly Agree', 'Strongly Agree']
-    },
-    {
-        stat: 'agility',
-        text: "When things don't go to plan, I tend to adjust and keep moving rather than getting stuck.",
-        options: ['Strongly Disagree', 'Mostly Disagree', 'Mostly Agree', 'Strongly Agree']
-    },
-    {
-        stat: 'endurance',
-        text: 'I generally follow through on commitments even when the initial motivation has faded.',
-        options: ['Strongly Disagree', 'Mostly Disagree', 'Mostly Agree', 'Strongly Agree']
-    },
-    {
-        stat: 'charisma',
-        text: 'I find it natural to connect with people and tend to build relationships without much friction.',
-        options: ['Strongly Disagree', 'Mostly Disagree', 'Mostly Agree', 'Strongly Agree']
-    }
-];
-
 // ─── SOUND ───────────────────────────────────────────────────
 let soundEnabled = false;
 const AudioCtx   = window.AudioContext || window.webkitAudioContext;
@@ -219,12 +188,10 @@ function showSoundPrompt() {
 }
 
 // ─── STATE ───────────────────────────────────────────────────
-let player          = null;
-let dailyQuests     = [];
-let allQuests       = [];
-let currentQuestion = 0;
-let questionAnswers = {};
-let currentGear     = 1; // 1, 2, or 3 — loaded from localStorage on init
+let player      = null;
+let dailyQuests = [];
+let allQuests   = [];
+let currentGear = 1; // 1, 2, or 3 — loaded from localStorage on init
 
 // ─── INIT ─────────────────────────────────────────────────────
 async function init() {
@@ -252,7 +219,7 @@ async function init() {
 
     if (!player) {
         showScreen('screen-onboarding');
-        runTypewriter();
+        runOnboarding();
         return;
     }
 
@@ -286,26 +253,8 @@ function registerServiceWorker() {
         .catch(err => console.log('SW error:', err));
 }
 
-// ─── TYPEWRITER ───────────────────────────────────────────────
-function runTypewriter() {
-    const heading = 'INITIALISING PLAYER DATA';
-    const subtext = 'The system reads only what is true. Your answers shape your destiny.';
-    const headEl  = document.getElementById('onboard-heading');
-    const subEl   = document.getElementById('onboard-sub');
-
-    typeText(headEl, heading, 50, () => {
-        setTimeout(() => {
-            typeText(subEl, subtext, 25, () => {
-                setTimeout(() => {
-                    document.getElementById('name-section').classList.remove('hidden');
-                    document.getElementById('name-input').focus();
-                    setupNameSection();
-                }, 300);
-            });
-        }, 200);
-    });
-}
-
+// ─── TYPEWRITER UTILITY ───────────────────────────────────────
+// Used by runAwakenSequence and the Stage 1 lore sequence.
 function typeText(el, text, speed, onDone) {
     let i = 0;
     el.textContent = '';
@@ -319,82 +268,45 @@ function typeText(el, text, speed, onDone) {
     }, speed);
 }
 
-// ─── NAME SECTION ─────────────────────────────────────────────
-function setupNameSection() {
-    const input = document.getElementById('name-input');
-    input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') proceedToQuestions();
-    });
-    input.addEventListener('input', () => {
-        if (input.value.trim().length > 0) {
-            showActionBtn('CONTINUE', proceedToQuestions);
+// ─── ONBOARDING (STAGE 1 STUB) ────────────────────────────────
+// It will: play an ambient drone, display lore lines one at a time,
+// then reveal the name input with ENTER DESIGNATION placeholder.
+// For now the stub wires the name input directly to createPlayer
+// so the app remains fully functional during pre-Stage-1 development.
+
+function runOnboarding() {
+    const nameSection = document.getElementById('name-section');
+    const nameInput   = document.getElementById('name-input');
+    const startBtn    = document.getElementById('start-btn');
+
+    nameSection.classList.remove('hidden');
+    nameInput.focus();
+
+    nameInput.addEventListener('input', () => {
+        if (nameInput.value.trim().length > 0) {
+            startBtn.classList.remove('hidden');
         } else {
-            hideActionBtn();
+            startBtn.classList.add('hidden');
         }
     });
-}
 
-function showActionBtn(label, fn) {
-    const btn       = document.getElementById('start-btn');
-    btn.textContent = label;
-    btn.classList.remove('hidden');
-    btn.onclick     = fn;
-}
-
-function hideActionBtn() {
-    document.getElementById('start-btn').classList.add('hidden');
-}
-
-// ─── QUESTIONS ────────────────────────────────────────────────
-function proceedToQuestions() {
-    const name = document.getElementById('name-input').value.trim();
-    if (!name) { document.getElementById('name-input').focus(); return; }
-
-    document.getElementById('name-section').classList.add('hidden');
-    hideActionBtn();
-    document.getElementById('onboard-sub').textContent =
-        'Answer honestly — the system rewards truth.';
-
-    currentQuestion = 0;
-    questionAnswers = {};
-    document.getElementById('question-section').classList.remove('hidden');
-    showQuestion(0);
-}
-
-function showQuestion(index) {
-    const q = ONBOARD_QUESTIONS[index];
-    document.getElementById('q-stat').textContent =
-        '[ ' + q.stat.toUpperCase() + ' ASSESSMENT ]';
-    document.getElementById('q-text').textContent = q.text;
-    document.getElementById('q-progress').textContent =
-        'QUESTION ' + (index + 1) + ' OF ' + ONBOARD_QUESTIONS.length;
-
-    const optionsEl = document.getElementById('q-options');
-    optionsEl.innerHTML = '';
-    hideActionBtn();
-
-    q.options.forEach((opt, i) => {
-        const btn       = document.createElement('button');
-        btn.className   = 'option-btn';
-        btn.textContent = opt;
-        btn.addEventListener('click', () => {
-            optionsEl.querySelectorAll('.option-btn')
-                .forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            questionAnswers[q.stat] = i;
-            const isLast = index === ONBOARD_QUESTIONS.length - 1;
-            showActionBtn(isLast ? 'AWAKEN' : 'NEXT', () => {
-                if (isLast) { runAwakenSequence(); }
-                else        { showQuestion(index + 1); }
-            });
-        });
-        optionsEl.appendChild(btn);
+    nameInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && nameInput.value.trim().length > 0) {
+            submitName();
+        }
     });
+
+    startBtn.onclick = submitName;
+
+    function submitName() {
+        const name = nameInput.value.trim();
+        if (!name) { nameInput.focus(); return; }
+        runAwakenSequence(name.toUpperCase());
+    }
 }
 
 // ─── AWAKEN BOOT SEQUENCE ─────────────────────────────────────
-function runAwakenSequence() {
-    const name    = document.getElementById('name-input').value.trim().toUpperCase();
+function runAwakenSequence(name) {
     const overlay = document.getElementById('overlay-awaken');
     overlay.classList.remove('hidden');
 
@@ -458,10 +370,7 @@ function savePlayer() {
 
 function createPlayer(name) {
     const stats = {};
-    STAT_NAMES.forEach(stat => {
-        const idx   = questionAnswers[stat] ?? 0;
-        stats[stat] = ANSWER_WEIGHTS[idx];
-    });
+    STAT_NAMES.forEach(stat => { stats[stat] = STAT_FLOOR; });
 
     player = {
         name,
@@ -503,7 +412,10 @@ function checkDailyReset() {
 }
 
 function today() {
-    return new Date().toISOString().slice(0, 10);
+    const d = new Date();
+    return d.getFullYear() + '-'
+        + String(d.getMonth() + 1).padStart(2, '0') + '-'
+        + String(d.getDate()).padStart(2, '0');
 }
 
 // ─── LOAD QUESTS ─────────────────────────────────────────────
@@ -576,8 +488,6 @@ function updateStatusScreen(animate) {
     const xpNext   = xpForLevel(level + 1) - xpForLevel(level);
     const pct      = xpNext > 0 ? Math.min(100, Math.round((xpThis / xpNext) * 100)) : 100;
     const momentum = player.momentum || 1.0;
-
-    setupTooltips();
 
     document.getElementById('player-name').textContent  = player.name;
     document.getElementById('player-level').textContent = level;
@@ -1021,6 +931,9 @@ function setupTooltips() {
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+    if (id === 'screen-status') {
+        setupTooltips();
+    }
     if (id === 'screen-quests') {
         renderQuests(dailyQuests, player.completedToday, player.momentum || 1.0);
     }
