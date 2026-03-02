@@ -4,6 +4,7 @@
 
 // ─── CONSTANTS ───────────────────────────────────────────────
 const STORAGE_KEY = 'levelup_player';
+const GEAR_KEY    = 'levelup_gear';
 const STAT_NAMES  = ['strength', 'intelligence', 'agility', 'endurance', 'charisma'];
 const STAT_FLOOR  = 10;
 
@@ -223,6 +224,7 @@ let dailyQuests     = [];
 let allQuests       = [];
 let currentQuestion = 0;
 let questionAnswers = {};
+let currentGear     = 1; // 1, 2, or 3 — loaded from localStorage on init
 
 // ─── INIT ─────────────────────────────────────────────────────
 async function init() {
@@ -240,6 +242,9 @@ async function init() {
     document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
     document.getElementById('sound-toggle').addEventListener('click', toggleSound);
 
+    // Load saved gear (defaults to 1 if never set)
+    currentGear = loadGear();
+
     // Settings gear button
     document.getElementById('settings-btn').addEventListener('click', openSettings);
 
@@ -252,7 +257,7 @@ async function init() {
     }
 
     checkDailyReset();
-    dailyQuests = getDailyQuests(allQuests, calculateLevel());
+    dailyQuests = getDailyQuests(allQuests, calculateLevel(), currentGear);
     updateStatusScreen();
     showScreen('screen-status');
     registerServiceWorker();
@@ -469,7 +474,7 @@ function createPlayer(name) {
     };
 
     savePlayer();
-    dailyQuests = getDailyQuests(allQuests, calculateLevel());
+    dailyQuests = getDailyQuests(allQuests, calculateLevel(), currentGear);
     showStatusScreenWithAnimation();
 }
 
@@ -887,6 +892,26 @@ function spawnParticles(containerId, count, color) {
     }
 }
 
+// ─── GEAR ────────────────────────────────────────────────────
+// Gear is stored independently of the player object so it persists
+// across profile resets and is not affected by daily resets.
+
+function loadGear() {
+    const saved = parseInt(localStorage.getItem(GEAR_KEY), 10);
+    return (saved === 2 || saved === 3) ? saved : 1;
+}
+
+function saveGear(gear) {
+    currentGear = gear;
+    localStorage.setItem(GEAR_KEY, String(gear));
+    // Immediately regenerate today's quest list with the new gear
+    dailyQuests = getDailyQuests(allQuests, calculateLevel(), currentGear);
+    // If the quest screen is currently visible, re-render it live
+    if (document.getElementById('screen-quests').classList.contains('active')) {
+        renderQuests(dailyQuests, player.completedToday, player.momentum || 1.0);
+    }
+}
+
 // ─── SETTINGS ────────────────────────────────────────────────
 function openSettings() {
     // Pre-fill current name
@@ -900,7 +925,31 @@ function openSettings() {
     document.getElementById('confirm-no').onclick    = () =>
         document.getElementById('confirm-box').classList.add('hidden');
 
+    // Sync gear selector to current gear
+    updateGearUI(currentGear);
+
+    // Wire gear option buttons
+    document.querySelectorAll('.gear-option-btn').forEach(btn => {
+        btn.onclick = () => {
+            const gear = parseInt(btn.dataset.gear, 10);
+            saveGear(gear);
+            updateGearUI(gear);
+            showToast('✓ GEAR ' + gear + ' ACTIVATED');
+        };
+    });
+
     showScreen('screen-settings');
+}
+
+function updateGearUI(gear) {
+    document.querySelectorAll('.gear-option-btn').forEach(btn => {
+        const isActive = parseInt(btn.dataset.gear, 10) === gear;
+        btn.classList.toggle('gear-active', isActive);
+    });
+    // Show the warning for the selected gear
+    document.querySelectorAll('.gear-warning').forEach(el => el.classList.add('hidden'));
+    const activeWarning = document.getElementById('gear-warning-' + gear);
+    if (activeWarning) activeWarning.classList.remove('hidden');
 }
 
 function savePlayerName() {
@@ -923,6 +972,7 @@ function resetProfile() {
     // Wipe all stored data and reload cleanly from onboarding
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem('levelup_sound');
+    localStorage.removeItem(GEAR_KEY);
     window.location.reload();
 }
 

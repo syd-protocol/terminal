@@ -8,6 +8,7 @@
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#0f0f1a" />
 </head>
+
 <body>
 
     <!-- ═══════════════════════════════════════════════
@@ -226,6 +227,64 @@
                 placeholder="Enter new name..."
             />
             <button class="nav-btn" id="save-name-btn">SAVE NAME</button>
+        </div>
+
+        <!-- Gear system -->
+        <div class="settings-section">
+            <div class="settings-section-title">PRACTICE GEAR</div>
+            <div class="gear-desc">
+                Gear controls how many quests you are offered each day per stat.
+                More quests means more practice reps — and real-world learning
+                is the root lever. XP follows effort, not the other way around.
+            </div>
+
+            <div class="gear-options">
+
+                <button class="gear-option-btn gear-active" data-gear="1">
+                    <div class="gear-name">GEAR 1</div>
+                    <div class="gear-label">Standard</div>
+                    <div class="gear-detail">1 quest per stat · 5 daily</div>
+                </button>
+
+                <button class="gear-option-btn" data-gear="2">
+                    <div class="gear-name">GEAR 2</div>
+                    <div class="gear-label">Practice Mode</div>
+                    <div class="gear-detail">2 quests per stat · 10 daily</div>
+                </button>
+
+                <button class="gear-option-btn" data-gear="3">
+                    <div class="gear-name">GEAR 3</div>
+                    <div class="gear-label">Deep Practice</div>
+                    <div class="gear-detail">3 quests per stat · 15 daily</div>
+                </button>
+
+            </div>
+
+            <!-- Per-gear warnings — JS shows only the active one -->
+            <div class="gear-warning hidden" id="gear-warning-1">
+                One quest per stat. Consistent and sustainable.
+                This path is long — that is the point.
+            </div>
+
+            <div class="gear-warning hidden" id="gear-warning-2">
+                Two quests per stat daily. A genuine commitment.
+                Research shows doubling practice reps in focused sprints has
+                a disproportionate effect on skill acquisition. Works best
+                for a week, a month, a season — then return to Gear 1 if needed.
+            </div>
+
+            <div class="gear-warning hidden" id="gear-warning-3">
+                WARNING: Gear 3 has been known to cause unexpected competence,
+                suspicious life improvement, and in rare cases, actual results.
+                The System accepts no responsibility for side effects including
+                but not limited to: new habits, better decisions, and people
+                asking what changed about you.<br><br>
+                <em>Sincerely: fifteen quests a day is a serious daily practice.
+                Each third quest per stat includes a short reflection — writing
+                it is not optional. Genuine mastery still takes time. This gear
+                works best when every quest is real.</em>
+            </div>
+
         </div>
 
         <!-- Danger zone -->

@@ -980,3 +980,141 @@ body {
     animation: slideInUp 0.4s ease 1.4s both;
 }
 .overlay-dismiss-btn:hover { color: var(--text); }
+
+/* ══════════════════════════════════════════════════════════════
+   GEAR SYSTEM
+══════════════════════════════════════════════════════════════ */
+
+.gear-desc {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.gear-options {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.gear-option-btn {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 12px 6px;
+    cursor: pointer;
+    text-align: center;
+    font-family: 'Share Tech Mono', monospace;
+    transition: border-color 0.2s, color 0.2s;
+    line-height: 1.5;
+}
+
+.gear-option-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.gear-option-btn.gear-active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(79, 195, 247, 0.06);
+}
+
+.gear-name {
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.gear-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+.gear-detail {
+    font-size: 0.55rem;
+    color: #3a4a5a;
+    margin-top: 4px;
+}
+
+.gear-option-btn.gear-active .gear-detail {
+    color: var(--accent-dim);
+}
+
+.gear-warning {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    line-height: 1.7;
+    border-left: 2px solid var(--border);
+    padding-left: 10px;
+    margin-top: 4px;
+}
+
+.gear-warning.hidden { display: none; }
+
+/* Gear 3 warning uses a faint gold accent to signal its weight */
+#gear-warning-3 {
+    border-left-color: rgba(255, 215, 0, 0.3);
+    color: #7a7a5a;
+}
+
+#gear-warning-3 em {
+    color: var(--text-dim);
+    font-style: normal;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REFLECTION PROMPT  (Gear 3 slot 3 quests)
+══════════════════════════════════════════════════════════════ */
+
+.reflection-wrap {
+    margin: 12px 0 8px;
+    border-left: 2px solid rgba(79, 195, 247, 0.3);
+    padding-left: 12px;
+}
+
+.reflection-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+}
+
+.reflection-hint {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
+
+.reflection-input {
+    width: 100%;
+    background: #0a0a14;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    padding: 10px;
+    resize: vertical;
+    min-height: 60px;
+    box-sizing: border-box;
+    line-height: 1.6;
+    transition: border-color 0.2s;
+}
+
+.reflection-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.reflection-input::placeholder {
+    color: #3a4a5a;
+}
