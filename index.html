@@ -211,6 +211,13 @@
 
         </div>
 
+        <!-- Gold + shop access row -->
+        <div class="gold-row">
+            <span class="gold-label">◈ GOLD</span>
+            <span class="gold-value" id="gold-value">0</span>
+            <button class="shop-nav-btn" id="shop-btn">SUPPLY CACHE →</button>
+        </div>
+
         <button class="nav-btn" onclick="showScreen('screen-quests')">
             VIEW TODAY'S DIRECTIVES
         </button>
@@ -225,6 +232,36 @@
             <div class="quest-date" id="quest-date"></div>
         </div>
         <div class="quest-list" id="quest-list"></div>
+        <div class="back-link" onclick="showScreen('screen-status')">
+            ← RETURN TO STATUS
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         SHOP SCREEN
+    ═══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-shop">
+
+        <div class="shop-header">
+            <h2>[ SUPPLY CACHE ]</h2>
+            <div class="shop-gold-display">
+                <span class="shop-gold-label">◈ AVAILABLE</span>
+                <span class="shop-gold-value" id="shop-gold-value">0</span>
+            </div>
+            <div class="shop-lore">
+                The System has identified resources that accelerate field performance.
+                Each corresponds to a real-world act. The System does not monitor
+                compliance. It trusts the operator to play with integrity.
+            </div>
+        </div>
+
+        <!-- Active buffs panel — hidden when no buffs active -->
+        <div class="active-buffs" id="active-buffs"></div>
+
+        <div class="shop-list" id="shop-list">
+            <!-- Rendered by renderShop() -->
+        </div>
+
         <div class="back-link" onclick="showScreen('screen-status')">
             ← RETURN TO STATUS
         </div>
@@ -318,7 +355,7 @@
             <div class="confirm-box hidden" id="confirm-box">
                 <p>
                     <strong>THIS CANNOT BE UNDONE.</strong><br>
-                    All stats, XP, levels, and directive history<br>
+                    All stats, XP, levels, gold, and directive history<br>
                     will be permanently erased from the System.
                 </p>
                 <div class="confirm-actions">

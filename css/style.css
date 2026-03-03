@@ -1170,3 +1170,241 @@ body {
 .reflection-input::placeholder {
     color: #3a4a5a;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   GOLD + SHOP
+══════════════════════════════════════════════════════════════ */
+
+/* ── GOLD ROW (status screen) ───────────────────────────────── */
+.gold-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    margin-bottom: 8px;
+}
+
+.gold-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: var(--luck);          /* gold colour matches the luck stat */
+    white-space: nowrap;
+}
+
+.gold-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--luck);
+    font-weight: 700;
+    flex: 1;
+}
+
+.shop-nav-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    color: var(--luck);
+    background: transparent;
+    border: 1px solid var(--luck-dim);
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.shop-nav-btn:hover {
+    background: var(--luck-dim);
+    border-color: var(--luck);
+}
+
+/* ── SHOP SCREEN ─────────────────────────────────────────────── */
+.shop-header {
+    text-align: center;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    padding: 20px 20px 16px;
+    margin-bottom: 10px;
+}
+
+.shop-header h2 {
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 4px;
+    font-size: 1rem;
+    color: var(--luck);
+    margin-bottom: 10px;
+}
+
+.shop-gold-display {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 215, 0, 0.06);
+    border: 1px solid var(--luck-dim);
+    padding: 6px 16px;
+    margin-bottom: 12px;
+}
+
+.shop-gold-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    color: var(--luck);
+}
+
+.shop-gold-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--luck);
+}
+
+.shop-lore {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    line-height: 1.8;
+    letter-spacing: 0.5px;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    text-align: left;
+}
+
+/* ── ACTIVE BUFFS PANEL ──────────────────────────────────────── */
+.active-buffs {
+    border: 1px solid rgba(79, 195, 247, 0.25);
+    background: rgba(79, 195, 247, 0.04);
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    animation: fadeIn 0.3s ease;
+}
+
+.active-buffs.hidden { display: none; }
+
+.active-buffs-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 8px;
+}
+
+.active-buff-line {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text);
+    line-height: 1.9;
+    letter-spacing: 0.5px;
+}
+
+/* ── SHOP ITEM CARDS ─────────────────────────────────────────── */
+.shop-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.shop-card {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    padding: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.shop-card:hover { border-color: var(--luck-dim); }
+
+.shop-card--unaffordable { opacity: 0.45; }
+
+.shop-card-top {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: 12px;
+    align-items: start;
+    margin-bottom: 10px;
+}
+
+.shop-item-emoji {
+    font-size: 1.4rem;
+    line-height: 1;
+    padding-top: 2px;
+}
+
+.shop-item-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    color: var(--luck);
+    margin-bottom: 4px;
+}
+
+.shop-item-desc {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.55;
+    margin-bottom: 5px;
+    font-style: italic;
+}
+
+.shop-item-effect {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+    line-height: 1.5;
+}
+
+.shop-item-price {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    padding-top: 2px;
+    white-space: nowrap;
+}
+
+.shop-price-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--luck);
+    line-height: 1;
+}
+
+.shop-price-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.5rem;
+    letter-spacing: 1px;
+    color: var(--luck-dim);
+    text-transform: uppercase;
+}
+
+/* ── CONSUME BUTTON ──────────────────────────────────────────── */
+.consume-btn {
+    display: block;
+    width: 100%;
+    padding: 7px 12px;
+    background: transparent;
+    border: 1px solid var(--luck-dim);
+    color: var(--luck);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.consume-btn:hover {
+    background: var(--luck-dim);
+    border-color: var(--luck);
+}
+
+.consume-btn:disabled {
+    border-color: var(--border);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    background: transparent;
+}

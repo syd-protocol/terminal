@@ -114,6 +114,99 @@ function getRandomTagline() {
     return SHARE_TAGLINES[Math.floor(Math.random() * SHARE_TAGLINES.length)];
 }
 
+// ─── SHOP ITEMS ──────────────────────────────────────────────
+// Each item has:
+//   id         — unique key, also used as player.buffs key where applicable
+//   emoji      — single emoji, the real-world object without naming it explicitly
+//   name       — what the System calls it
+//   desc       — Bridge principle: third-person description of what it IS
+//   effect     — what the System registers when consumed
+//   consumeMsg — shown in toast after consumption, present tense, indirect prompt
+//   price      — gold cost
+//   buffKey    — player.buffs property this affects (null for instant items)
+
+const SHOP_ITEMS = [
+    {
+        id:         'focusDraught',
+        emoji:      '☕',
+        name:       'FOCUS DRAUGHT',
+        desc:       'The warm drink that sharpens the mind before deep work. Field operatives in every timeline have used a version of this.',
+        effect:     'INT + END directives yield double XP for the rest of the day.',
+        consumeMsg: '[ FOCUS DRAUGHT ACTIVE ] — The System has registered the intake.',
+        price:      18,
+        buffKey:    'focusDraught'
+    },
+    {
+        id:         'vitalityTonic',
+        emoji:      '💧',
+        name:       'VITALITY TONIC',
+        desc:       'Something that restores the body. Water. A meal. Anything nourishing.',
+        effect:     'Restores 20 HP immediately.',
+        consumeMsg: '[ +20 HP ] — Something has been restored. The System registers the change.',
+        price:      15,
+        buffKey:    null
+    },
+    {
+        id:         'sprintScroll',
+        emoji:      '⚡',
+        name:       'SPRINT SCROLL',
+        desc:       'A focused burst. Twenty-five minutes. Nothing else.',
+        effect:     'Gear increases by one step for the rest of the day.',
+        consumeMsg: '[ GEAR ELEVATED ] — A focused session has begun. The System is watching.',
+        price:      35,
+        buffKey:    'sprintScroll'
+    },
+    {
+        id:         'restSigil',
+        emoji:      '🌑',
+        name:       'REST SIGIL',
+        desc:       'Ten minutes away from all screens. The System will wait.',
+        effect:     'Momentum decay is blocked for 24 hours. Missing a day will not reduce momentum while the Sigil is active.',
+        consumeMsg: '[ REST SIGIL ACTIVE ] — Absence registered. Momentum protected for 24h.',
+        price:      30,
+        buffKey:    'restSigil'
+    },
+    {
+        id:         'clarityShards',
+        emoji:      '📝',
+        name:       'CLARITY SHARDS',
+        desc:       'Three things. What you are grateful for, or what you intend. Written.',
+        effect:     '+5 XP bonus applied to the next three directives completed.',
+        consumeMsg: '[ CLARITY SHARDS ACTIVE ] — Three things have been committed to. The System notes the clarity.',
+        price:      18,
+        buffKey:    'clarityShards'
+    }
+];
+
+// ─── BUFF HELPERS ────────────────────────────────────────────
+// Returns a default buffs object for new / migrated players.
+function defaultBuffs() {
+    return {
+        focusDraught:  null,   // ISO expiry string or null
+        sprintScroll:  null,   // ISO expiry string or null
+        restSigil:     null,   // ISO expiry string or null (24h from consume)
+        clarityShards: 0       // count of remaining bonus directives
+    };
+}
+
+// Returns true if a timestamped buff is currently active.
+function buffActive(expiryISO) {
+    if (!expiryISO) return false;
+    return new Date() < new Date(expiryISO);
+}
+
+// End-of-day ISO — midnight tonight in local time.
+function endOfDayISO() {
+    const d = new Date();
+    d.setHours(23, 59, 59, 999);
+    return d.toISOString();
+}
+
+// 24 hours from now as ISO string.
+function in24hISO() {
+    return new Date(Date.now() + 86400000).toISOString();
+}
+
 // ─── SOUND ───────────────────────────────────────────────────
 let soundEnabled = false;
 const AudioCtx   = window.AudioContext || window.webkitAudioContext;
@@ -142,8 +235,6 @@ function playTone(frequency, duration, type = 'sine', volume = 0.15) {
 }
 
 // ─── UI CLICK ────────────────────────────────────────────────
-// Short square-wave tick on any button/tap interaction.
-// Gives the System a sense of being alive and responsive.
 function playUIClick() {
     playTone(880, 0.04, 'square', 0.08);
 }
@@ -225,6 +316,32 @@ function playCriticalHit() {
     } catch (e) { /* silent fail */ }
 }
 
+// ─── CONSUME SOUND ───────────────────────────────────────────
+// Rising three-tone sequence — distinct from the two-note quest chime.
+// Suggests a buff being applied: low → mid → high, sine wave, smooth fade.
+function playConsume() {
+    if (!soundEnabled) return;
+    try {
+        const ctx  = getAudioCtx();
+        const now  = ctx.currentTime;
+        const seq  = [330, 495, 660];
+        seq.forEach((freq, i) => {
+            const osc  = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type            = 'sine';
+            osc.frequency.value = freq;
+            const t = now + i * 0.12;
+            gain.gain.setValueAtTime(0.0, t);
+            gain.gain.linearRampToValueAtTime(0.14, t + 0.04);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+            osc.start(t);
+            osc.stop(t + 0.28);
+        });
+    } catch (e) { /* silent fail */ }
+}
+
 // ─── AMBIENT DRONE ───────────────────────────────────────────
 let droneOsc  = null;
 let droneGain = null;
@@ -291,6 +408,11 @@ async function init() {
         openSettings();
     });
 
+    document.getElementById('shop-btn').addEventListener('click', () => {
+        playUIClick();
+        openShop();
+    });
+
     setupTooltips();
 
     if (!player) {
@@ -300,7 +422,7 @@ async function init() {
     }
 
     checkDailyReset();
-    dailyQuests = getDailyQuests(allQuests, calculateLevel(), currentGear);
+    dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear());
     updateStatusScreen();
     showScreen('screen-status');
     registerServiceWorker();
@@ -345,21 +467,6 @@ function typeText(el, text, speed, onDone) {
 }
 
 // ─── ONBOARDING ──────────────────────────────────────────────
-// Three distinct phases. Each clears before the next begins.
-//
-//   Phase 1 — SIGNAL
-//   Three > lines type out one by one. After the last, a flash-clear
-//   simulates the terminal refreshing to a connected state.
-//
-//   Phase 2 — LORE
-//   Each sentence types out with a blinking cursor. Lines stack.
-//   After the last line a pause, then another flash-clear.
-//
-//   Phase 3 — NAME
-//   Two short prompt lines type out, then the input and button appear.
-//
-// The ambient drone runs throughout all phases.
-
 function runOnboarding() {
     startAmbientDrone();
 
@@ -368,7 +475,6 @@ function runOnboarding() {
     const nameInput   = document.getElementById('name-input');
     const startBtn    = document.getElementById('start-btn');
 
-    // ── PHASE 1: SIGNAL ──────────────────────────────────────
     function runSignalPhase() {
         loreEl.innerHTML = '';
         nameSection.classList.add('hidden');
@@ -403,8 +509,6 @@ function runOnboarding() {
         typeNextSignalLine();
     }
 
-    // ── FLASH CLEAR ──────────────────────────────────────────
-    // Brief white flash then content wipes — terminal screen refresh.
     function flashClear(onDone) {
         loreEl.classList.add('terminal-flash');
         setTimeout(() => {
@@ -414,7 +518,6 @@ function runOnboarding() {
         }, 220);
     }
 
-    // ── PHASE 2: LORE ────────────────────────────────────────
     function runLorePhase() {
         const loreLines = [
             'The economy broke first.',
@@ -457,7 +560,6 @@ function runOnboarding() {
         typeNextLoreLine();
     }
 
-    // ── PHASE 3: NAME ────────────────────────────────────────
     function runNamePhase() {
         const promptLines = [
             'Identify yourself.',
@@ -491,7 +593,6 @@ function runOnboarding() {
         typeNextPromptLine();
     }
 
-    // ── NAME INPUT WIRING ────────────────────────────────────
     nameInput.addEventListener('input', () => {
         startBtn.classList.toggle('hidden', nameInput.value.trim().length === 0);
     });
@@ -576,7 +677,12 @@ function calcMaxHp(level) {
 // ─── PLAYER MANAGEMENT ───────────────────────────────────────
 function loadPlayer() {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    // Migration: add gold and buffs to existing saves that predate Stage 2
+    if (typeof p.gold !== 'number') p.gold = 0;
+    if (!p.buffs) p.buffs = defaultBuffs();
+    return p;
 }
 
 function savePlayer() {
@@ -599,12 +705,25 @@ function createPlayer(name) {
         lastActiveDate:  today(),
         hp:              maxHp,
         maxHp,
-        corrupted:       false
+        corrupted:       false,
+        gold:            0,
+        buffs:           defaultBuffs()
     };
 
     savePlayer();
-    dailyQuests = getDailyQuests(allQuests, calculateLevel(), currentGear);
+    dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear());
     showStatusScreenWithAnimation();
+}
+
+// ─── EFFECTIVE GEAR ──────────────────────────────────────────
+// Sprint Scroll raises gear by 1 for the rest of the day.
+// This is the single source of truth used everywhere gear is needed.
+function effectiveGear() {
+    const base = currentGear;
+    if (player && player.buffs && buffActive(player.buffs.sprintScroll)) {
+        return Math.min(3, base + 1);
+    }
+    return base;
 }
 
 // ─── DAILY RESET ──────────────────────────────────────────────
@@ -622,7 +741,12 @@ function checkDailyReset() {
         player.momentum        = buildMomentum(player.consecutiveDays);
     } else {
         player.consecutiveDays = 1;
-        player.momentum        = decayMomentum(player.momentum || 1.0, diffDays - 1);
+
+        // Rest Sigil blocks momentum decay for 24h from consumption.
+        // If the sigil is still active, skip the decay entirely.
+        if (!buffActive(player.buffs && player.buffs.restSigil)) {
+            player.momentum = decayMomentum(player.momentum || 1.0, diffDays - 1);
+        }
     }
 
     const level  = levelFromXP(Math.max(0, earnedXP(player.stats)));
@@ -655,6 +779,13 @@ function checkDailyReset() {
         player.corrupted = false;
     }
 
+    // Clear day-scoped buffs that expired at midnight.
+    // focusDraught and sprintScroll are end-of-day buffs — clear them.
+    // restSigil is timestamp-based (24h) — left to buffActive() to evaluate.
+    // clarityShards are count-based — persist until used up.
+    if (!buffActive(player.buffs.focusDraught))  player.buffs.focusDraught = null;
+    if (!buffActive(player.buffs.sprintScroll))   player.buffs.sprintScroll  = null;
+
     player.completedToday = [];
     player.lastQuestDate  = todayStr;
     player.lastActiveDate = todayStr;
@@ -680,6 +811,158 @@ async function loadQuests() {
     }
 }
 
+// ─── SHOP ────────────────────────────────────────────────────
+function openShop() {
+    renderShop();
+    showScreen('screen-shop');
+}
+
+function renderShop() {
+    const list      = document.getElementById('shop-list');
+    const goldEl    = document.getElementById('shop-gold-value');
+    const buffsEl   = document.getElementById('active-buffs');
+    const gold      = player.gold || 0;
+    const buffs     = player.buffs || defaultBuffs();
+
+    goldEl.textContent = gold;
+    list.innerHTML     = '';
+
+    // ── Active buffs panel ───────────────────────────────────
+    const activeLines = [];
+
+    if (buffActive(buffs.focusDraught)) {
+        activeLines.push('☕ FOCUS DRAUGHT — INT + END ×2 active until midnight');
+    }
+    if (buffActive(buffs.sprintScroll)) {
+        activeLines.push('⚡ SPRINT SCROLL — Gear ' + effectiveGear() + ' active until midnight');
+    }
+    if (buffActive(buffs.restSigil)) {
+        const exp = new Date(buffs.restSigil);
+        const hh  = exp.getHours().toString().padStart(2, '0');
+        const mm  = exp.getMinutes().toString().padStart(2, '0');
+        activeLines.push('🌑 REST SIGIL — Momentum protected until ' + hh + ':' + mm);
+    }
+    if (buffs.clarityShards > 0) {
+        activeLines.push('📝 CLARITY SHARDS — +5 XP on next ' + buffs.clarityShards + ' directive(s)');
+    }
+
+    if (activeLines.length > 0) {
+        buffsEl.innerHTML =
+            '<div class="active-buffs-title">[ ACTIVE EFFECTS ]</div>' +
+            activeLines.map(l => '<div class="active-buff-line">' + l + '</div>').join('');
+        buffsEl.classList.remove('hidden');
+    } else {
+        buffsEl.innerHTML = '';
+        buffsEl.classList.add('hidden');
+    }
+
+    // ── Item cards ───────────────────────────────────────────
+    SHOP_ITEMS.forEach(item => {
+        const canAfford = gold >= item.price;
+
+        // Determine if this item is already active (for timestamped buffs)
+        let alreadyActive = false;
+        if (item.buffKey && item.buffKey !== 'clarityShards') {
+            alreadyActive = buffActive(buffs[item.buffKey]);
+        }
+
+        const card     = document.createElement('div');
+        card.className = 'shop-card' + (!canAfford ? ' shop-card--unaffordable' : '');
+
+        card.innerHTML = `
+            <div class="shop-card-top">
+                <span class="shop-item-emoji">${item.emoji}</span>
+                <div class="shop-item-info">
+                    <div class="shop-item-name">${item.name}</div>
+                    <div class="shop-item-desc">${item.desc}</div>
+                    <div class="shop-item-effect">${item.effect}</div>
+                </div>
+                <div class="shop-item-price">
+                    <span class="shop-price-value">${item.price}</span>
+                    <span class="shop-price-label">GOLD</span>
+                </div>
+            </div>
+            <button
+                class="consume-btn"
+                data-item-id="${item.id}"
+                ${!canAfford || alreadyActive ? 'disabled' : ''}
+            >${alreadyActive ? '[ ACTIVE ]' : canAfford ? 'CONSUME' : 'INSUFFICIENT GOLD'}</button>
+        `;
+
+        list.appendChild(card);
+    });
+
+    // Wire consume buttons
+    document.querySelectorAll('.consume-btn:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', () => {
+            playUIClick();
+            consumeItem(btn.dataset.itemId);
+        });
+    });
+}
+
+// ─── CONSUME ITEM ────────────────────────────────────────────
+function consumeItem(itemId) {
+    const item = SHOP_ITEMS.find(i => i.id === itemId);
+    if (!item) return;
+
+    const gold = player.gold || 0;
+    if (gold < item.price) return;
+
+    // Guard: Sprint Scroll at Gear 3 — already at max
+    if (itemId === 'sprintScroll' && effectiveGear() >= 3) {
+        showToast('GEAR CEILING REACHED — SPRINT SCROLL HAS NO EFFECT HERE');
+        return;
+    }
+
+    player.gold = gold - item.price;
+
+    switch (itemId) {
+
+        case 'focusDraught':
+            player.buffs.focusDraught = endOfDayISO();
+            break;
+
+        case 'vitalityTonic': {
+            const maxHp = player.maxHp || calcMaxHp(calculateLevel());
+            player.hp   = Math.min(maxHp, (player.hp || maxHp) + 20);
+            // Update HP display on status screen immediately
+            const hpPct = Math.round((player.hp / maxHp) * 100);
+            const hpEl  = document.getElementById('hp-bar');
+            const hpVal = document.getElementById('hp-value');
+            if (hpEl)  hpEl.style.width      = hpPct + '%';
+            if (hpVal) hpVal.textContent      = player.hp + ' / ' + maxHp;
+            break;
+        }
+
+        case 'sprintScroll':
+            player.buffs.sprintScroll = endOfDayISO();
+            // Refresh daily quests immediately to reflect elevated gear
+            dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear());
+            break;
+
+        case 'restSigil':
+            player.buffs.restSigil = in24hISO();
+            break;
+
+        case 'clarityShards':
+            // Stack on top of any remaining shards
+            player.buffs.clarityShards = (player.buffs.clarityShards || 0) + 3;
+            break;
+    }
+
+    savePlayer();
+    playConsume();
+    showToast(item.consumeMsg, 'accent');
+
+    // Re-render shop to update gold, active buffs, and button states
+    renderShop();
+
+    // Update gold display on status screen
+    const goldEl = document.getElementById('gold-value');
+    if (goldEl) goldEl.textContent = player.gold;
+}
+
 // ─── QUEST COMPLETION ────────────────────────────────────────
 function completeQuest(id, stat, baseXP) {
     if (player.completedToday.includes(id)) return;
@@ -690,6 +973,18 @@ function completeQuest(id, stat, baseXP) {
     // Corrupted debuff: XP halved while HP is at 0
     const wasCorrupted = player.corrupted;
     if (wasCorrupted) earnedAmt = parseFloat((earnedAmt / 2).toFixed(1));
+
+    // Focus Draught: double XP for INT and END directives
+    if (buffActive(player.buffs.focusDraught) &&
+        (stat === 'intelligence' || stat === 'endurance')) {
+        earnedAmt = parseFloat((earnedAmt * 2).toFixed(1));
+    }
+
+    // Clarity Shards: flat +5 XP on next 3 directives
+    if (player.buffs.clarityShards > 0) {
+        earnedAmt = parseFloat((earnedAmt + 5).toFixed(1));
+        player.buffs.clarityShards -= 1;
+    }
 
     // Critical hit: 1-in-8 chance of a ×1.5 bonus strike
     const isCritical = Math.random() < 0.125;
@@ -704,6 +999,10 @@ function completeQuest(id, stat, baseXP) {
         ((player.stats[stat] || STAT_FLOOR) + earnedAmt).toFixed(1)
     );
     player.completedToday.push(id);
+
+    // Gold earned equals the base XP value of the quest (before multipliers)
+    player.gold = (player.gold || 0) + baseXP;
+
     savePlayer();
 
     const card = document.getElementById('quest-card-' + id);
@@ -783,6 +1082,10 @@ function updateStatusScreen(animate) {
     const hpPct = Math.round((hp / maxHp) * 100);
     document.getElementById('hp-bar').style.width   = hpPct + '%';
     document.getElementById('hp-value').textContent = hp + ' / ' + maxHp;
+
+    // Gold
+    const goldEl = document.getElementById('gold-value');
+    if (goldEl) goldEl.textContent = player.gold || 0;
 
     STAT_NAMES.forEach(stat => {
         const val     = player.stats[stat] || STAT_FLOOR;
@@ -1072,7 +1375,7 @@ function loadGear() {
 function saveGear(gear) {
     currentGear = gear;
     localStorage.setItem(GEAR_KEY, String(gear));
-    dailyQuests = getDailyQuests(allQuests, calculateLevel(), currentGear);
+    dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear());
     if (document.getElementById('screen-quests').classList.contains('active')) {
         renderQuests(dailyQuests, player.completedToday, player.momentum || 1.0);
     }
