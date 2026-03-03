@@ -19,7 +19,7 @@
         <!-- Settings gear — top left -->
         <button class="settings-btn" id="settings-btn" title="System Settings">⚙</button>
 
-        <!-- Sound toggle — top right -->
+        <!-- Sound cycle toggle — top right -->
         <div class="sound-toggle" id="sound-toggle" title="Toggle sound">
             <span id="sound-icon">🔇</span>
         </div>
@@ -218,7 +218,6 @@
             <button class="shop-nav-btn" id="shop-btn">SUPPLY CACHE →</button>
         </div>
 
-        <!-- No inline onclick — wired in init() -->
         <button class="nav-btn" id="view-directives-btn">
             VIEW TODAY'S DIRECTIVES
         </button>
@@ -228,13 +227,12 @@
          QUESTS SCREEN
     ═══════════════════════════════════════════════ -->
     <div class="screen" id="screen-quests">
-        <!-- Top header — tappable to go back (no inline onclick) -->
+        <!-- Tapping the header navigates back — same as before -->
         <div class="quest-header" id="quest-header-back">
             <h2>TODAY'S DIRECTIVES</h2>
             <div class="quest-date" id="quest-date"></div>
         </div>
         <div class="quest-list" id="quest-list"></div>
-        <!-- Bottom back link — no inline onclick -->
         <div class="back-link" id="quests-back-link">← RETURN TO STATUS</div>
     </div>
 
@@ -243,7 +241,7 @@
     ═══════════════════════════════════════════════ -->
     <div class="screen" id="screen-shop">
 
-        <!-- Top header — tappable to go back -->
+        <!-- Header is the tap-back target — no back text inside it -->
         <div class="shop-header" id="shop-header-back">
             <h2>[ SUPPLY CACHE ]</h2>
             <div class="shop-gold-display">
@@ -255,16 +253,10 @@
                 Each corresponds to a real-world act. The System does not monitor
                 compliance. It trusts the operator to play with integrity.
             </div>
-            <!-- Top back link inside header block -->
-            <div class="back-link back-link--top" id="shop-back-link-top">← RETURN TO STATUS</div>
         </div>
 
-        <!-- Active buffs panel — hidden when no buffs active -->
         <div class="active-buffs" id="active-buffs"></div>
-
         <div class="shop-list" id="shop-list"></div>
-
-        <!-- Bottom back link -->
         <div class="back-link" id="shop-back-link-bottom">← RETURN TO STATUS</div>
     </div>
 
@@ -273,14 +265,11 @@
     ═══════════════════════════════════════════════ -->
     <div class="screen" id="screen-settings">
 
-        <!-- Top header — tappable to go back -->
+        <!-- Header is the tap-back target — no back text inside it -->
         <div class="settings-header" id="settings-header-back">
             <h2>[ SYSTEM SETTINGS ]</h2>
-            <!-- Top back link inside header block -->
-            <div class="back-link back-link--top" id="settings-back-link-top">← RETURN TO STATUS</div>
         </div>
 
-        <!-- Name edit -->
         <div class="settings-section">
             <div class="settings-section-title">DESIGNATION</div>
             <input
@@ -293,7 +282,6 @@
             <button class="nav-btn" id="save-name-btn">CONFIRM DESIGNATION</button>
         </div>
 
-        <!-- Gear system -->
         <div class="settings-section">
             <div class="settings-section-title">OPERATIONAL GEAR</div>
             <div class="gear-desc">
@@ -303,39 +291,33 @@
             </div>
 
             <div class="gear-options">
-
                 <button class="gear-option-btn gear-active" data-gear="1">
                     <div class="gear-name">GEAR 1</div>
                     <div class="gear-label">Standard</div>
                     <div class="gear-detail">1 directive per stat · 5 daily</div>
                 </button>
-
                 <button class="gear-option-btn" data-gear="2">
                     <div class="gear-name">GEAR 2</div>
                     <div class="gear-label">Practice Mode</div>
                     <div class="gear-detail">2 directives per stat · 10 daily</div>
                 </button>
-
                 <button class="gear-option-btn" data-gear="3">
                     <div class="gear-name">GEAR 3</div>
                     <div class="gear-label">Deep Practice</div>
                     <div class="gear-detail">3 directives per stat · 15 daily</div>
                 </button>
-
             </div>
 
             <div class="gear-warning hidden" id="gear-warning-1">
                 One directive per stat. Consistent and sustainable.
                 This path is long — that is the point.
             </div>
-
             <div class="gear-warning hidden" id="gear-warning-2">
                 Two directives per stat, every day. A genuine commitment.
                 Doubling practice reps in focused sprints has a disproportionate
                 effect on skill acquisition. Run it for a week, a month, a season —
                 then return to Gear 1 if needed. The System will be here.
             </div>
-
             <div class="gear-warning hidden" id="gear-warning-3">
                 WARNING: Gear 3 has been linked to unexpected competence,
                 suspicious life improvement, and in rare timelines, actual results.
@@ -347,14 +329,11 @@
                 it is not optional. Genuine mastery still takes time. This gear
                 only works if every directive is real.</em>
             </div>
-
         </div>
 
-        <!-- Danger zone -->
         <div class="danger-zone">
             <div class="settings-section-title">DANGER ZONE</div>
             <button class="danger-btn" id="reset-btn">WIPE PROFILE</button>
-
             <div class="confirm-box hidden" id="confirm-box">
                 <p>
                     <strong>THIS CANNOT BE UNDONE.</strong><br>
@@ -368,7 +347,6 @@
             </div>
         </div>
 
-        <!-- Bottom back link -->
         <div class="back-link" id="settings-back-link-bottom">← RETURN TO STATUS</div>
     </div>
 
@@ -438,7 +416,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════
-         RELAUNCH BOOT OVERLAY (every subsequent open)
+         RELAUNCH BOOT OVERLAY
     ═══════════════════════════════════════════════ -->
     <div class="relaunch-boot hidden" id="relaunch-boot">
         <div class="relaunch-boot-inner">

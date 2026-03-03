@@ -193,16 +193,74 @@ function in24hISO() {
     return new Date(Date.now() + 86400000).toISOString();
 }
 
-// ─── SOUND ───────────────────────────────────────────────────
-let soundEnabled = false;
-const AudioCtx   = window.AudioContext || window.webkitAudioContext;
-let audioCtx     = null;
+// ─── SOUND STATE ─────────────────────────────────────────────
+// Three-state cycle: 'all' → 'ui' → 'off'
+//   'all'  🔊  — UI sounds + ambient drone both active
+//   'ui'   🎵  — UI sounds only, drone silenced
+//   'off'  🔇  — all sound off
+//
+// soundEnabled  — controls clicks, quest complete, level up, etc.
+// droneEnabled  — controls ambient drone independently
+//
+// Both are derived from soundState; never set directly elsewhere.
+
+const SOUND_KEY = 'levelup_sound_state';
+
+let soundState   = 'all';   // 'all' | 'ui' | 'off'
+let soundEnabled = true;    // UI sounds
+let droneEnabled = true;    // ambient drone
+
+const SOUND_ICONS = { all: '🔊', ui: '🎵', off: '🔇' };
+
+function applySoundState(state) {
+    soundState   = state;
+    soundEnabled = (state === 'all' || state === 'ui');
+    droneEnabled = (state === 'all');
+    localStorage.setItem(SOUND_KEY, state);
+
+    const iconEl = document.getElementById('sound-icon');
+    if (iconEl) iconEl.textContent = SOUND_ICONS[state];
+
+    // React to drone flag immediately on current screen
+    const activeScreen = document.querySelector('.screen.active');
+    const onDroneScreen = activeScreen &&
+        (activeScreen.id === 'screen-status' || activeScreen.id === 'screen-quests');
+
+    if (onDroneScreen) {
+        if (droneEnabled) startAmbientDrone();
+        else stopAmbientDrone();
+    }
+}
+
+function loadSoundState() {
+    const saved = localStorage.getItem(SOUND_KEY);
+    // Migration: old boolean key 'levelup_sound' → new three-state key
+    if (!saved) {
+        const legacy = localStorage.getItem('levelup_sound');
+        return (legacy === '0') ? 'off' : 'all';
+    }
+    return (saved === 'all' || saved === 'ui' || saved === 'off') ? saved : 'all';
+}
+
+function cycleSoundState() {
+    const next = soundState === 'all' ? 'ui'
+               : soundState === 'ui'  ? 'off'
+               : 'all';
+    applySoundState(next);
+    // Click sound plays only if UI sounds are still on after the cycle
+    if (soundEnabled) playUIClick();
+}
+
+// ─── AUDIO CONTEXT ───────────────────────────────────────────
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx   = null;
 
 function getAudioCtx() {
     if (!audioCtx) audioCtx = new AudioCtx();
     return audioCtx;
 }
 
+// ─── TONE UTILITY ────────────────────────────────────────────
 function playTone(frequency, duration, type = 'sine', volume = 0.15) {
     if (!soundEnabled) return;
     try {
@@ -220,6 +278,7 @@ function playTone(frequency, duration, type = 'sine', volume = 0.15) {
     } catch (e) { /* silent fail */ }
 }
 
+// ─── UI SOUNDS ───────────────────────────────────────────────
 function playUIClick() {
     playTone(880, 0.04, 'square', 0.08);
 }
@@ -303,9 +362,9 @@ function playCriticalHit() {
 function playConsume() {
     if (!soundEnabled) return;
     try {
-        const ctx  = getAudioCtx();
-        const now  = ctx.currentTime;
-        const seq  = [330, 495, 660];
+        const ctx = getAudioCtx();
+        const now = ctx.currentTime;
+        const seq = [330, 495, 660];
         seq.forEach((freq, i) => {
             const osc  = ctx.createOscillator();
             const gain = ctx.createGain();
@@ -324,44 +383,74 @@ function playConsume() {
 }
 
 // ─── AMBIENT DRONE ───────────────────────────────────────────
-let droneOsc      = null;
-let droneGain     = null;
+// Two layered sine oscillators:
+//   Primary:   90Hz at gain 0.13
+//   Detuned:   91.5Hz at gain 0.10
+//
+// The 1.5Hz frequency difference creates a natural interference
+// pattern — the two waves reinforce and cancel each other 1.5
+// times per second, producing a slow organic pulse without any
+// additional code. This is audible on laptop speakers at 0.13.
+//
+// Corrupted LFO: both oscillators' pitch shifts ±4Hz at 0.3Hz,
+// simulating transmission instability when HP = 0.
+
+let droneOscA     = null;   // 90Hz primary
+let droneOscB     = null;   // 91.5Hz detuned
+let droneGainA    = null;
+let droneGainB    = null;
 let droneLfoTimer = null;
 let droneLfoPhase = 0;
 
-const DRONE_BASE_FREQ = 90;
+const DRONE_FREQ_A    = 90;
+const DRONE_FREQ_B    = 91.5;
+const DRONE_GAIN_A    = 0.13;
+const DRONE_GAIN_B    = 0.10;
 const DRONE_LFO_DEPTH = 4;
 const DRONE_LFO_RATE  = 0.3;
 const DRONE_LFO_TICK  = 50;
 
 function startAmbientDrone() {
-    if (!soundEnabled) return;
-    if (droneOsc) return;
+    if (!droneEnabled) return;
+    if (droneOscA) return;   // already running
     try {
         const ctx = getAudioCtx();
-        droneOsc  = ctx.createOscillator();
-        droneGain = ctx.createGain();
-        droneOsc.connect(droneGain);
-        droneGain.connect(ctx.destination);
-        droneOsc.type            = 'sine';
-        droneOsc.frequency.value = DRONE_BASE_FREQ;
-        droneGain.gain.setValueAtTime(0.0, ctx.currentTime);
-        droneGain.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 2.0);
-        droneOsc.start(ctx.currentTime);
+        const now = ctx.currentTime;
 
+        // Primary oscillator — 90Hz
+        droneOscA  = ctx.createOscillator();
+        droneGainA = ctx.createGain();
+        droneOscA.connect(droneGainA);
+        droneGainA.connect(ctx.destination);
+        droneOscA.type            = 'sine';
+        droneOscA.frequency.value = DRONE_FREQ_A;
+        droneGainA.gain.setValueAtTime(0.0, now);
+        droneGainA.gain.linearRampToValueAtTime(DRONE_GAIN_A, now + 2.0);
+        droneOscA.start(now);
+
+        // Detuned oscillator — 91.5Hz
+        droneOscB  = ctx.createOscillator();
+        droneGainB = ctx.createGain();
+        droneOscB.connect(droneGainB);
+        droneGainB.connect(ctx.destination);
+        droneOscB.type            = 'sine';
+        droneOscB.frequency.value = DRONE_FREQ_B;
+        droneGainB.gain.setValueAtTime(0.0, now);
+        droneGainB.gain.linearRampToValueAtTime(DRONE_GAIN_B, now + 2.0);
+        droneOscB.start(now);
+
+        // LFO tick — modulates both oscillators when corrupted
         droneLfoPhase = 0;
         droneLfoTimer = setInterval(() => {
-            if (!droneOsc) return;
+            if (!droneOscA) return;
             droneLfoPhase += (2 * Math.PI * DRONE_LFO_RATE * DRONE_LFO_TICK) / 1000;
             const corrupted = player && player.corrupted;
             const deviation = corrupted
                 ? DRONE_LFO_DEPTH * Math.sin(droneLfoPhase)
                 : 0;
-            droneOsc.frequency.setTargetAtTime(
-                DRONE_BASE_FREQ + deviation,
-                getAudioCtx().currentTime,
-                0.05
-            );
+            const t = getAudioCtx().currentTime;
+            droneOscA.frequency.setTargetAtTime(DRONE_FREQ_A + deviation, t, 0.05);
+            droneOscB.frequency.setTargetAtTime(DRONE_FREQ_B + deviation, t, 0.05);
         }, DRONE_LFO_TICK);
 
     } catch (e) { /* silent fail */ }
@@ -373,31 +462,26 @@ function stopAmbientDrone() {
         droneLfoTimer = null;
         droneLfoPhase = 0;
     }
-    if (!droneOsc || !droneGain) return;
+    if (!droneOscA) return;
     try {
         const ctx = getAudioCtx();
-        droneGain.gain.setValueAtTime(droneGain.gain.value, ctx.currentTime);
-        droneGain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 1.0);
-        const osc = droneOsc;
-        droneOsc  = null;
-        droneGain = null;
-        setTimeout(() => { try { osc.stop(); } catch (e) {} }, 1100);
-    } catch (e) { /* silent fail */ }
-}
+        const now = ctx.currentTime;
 
-function toggleSound() {
-    soundEnabled = !soundEnabled;
-    document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
-    localStorage.setItem('levelup_sound', soundEnabled ? '1' : '0');
-    const activeScreen = document.querySelector('.screen.active');
-    if (activeScreen) {
-        const id = activeScreen.id;
-        if (id === 'screen-status' || id === 'screen-quests') {
-            if (soundEnabled) startAmbientDrone();
-            else stopAmbientDrone();
-        }
-    }
-    playUIClick();
+        // Fade both oscillators out together
+        [droneGainA, droneGainB].forEach(g => {
+            if (!g) return;
+            g.gain.setValueAtTime(g.gain.value, now);
+            g.gain.linearRampToValueAtTime(0.0, now + 1.0);
+        });
+
+        const oscA = droneOscA;
+        const oscB = droneOscB;
+        droneOscA = droneOscB = droneGainA = droneGainB = null;
+        setTimeout(() => {
+            try { oscA.stop(); } catch (e) {}
+            try { oscB.stop(); } catch (e) {}
+        }, 1100);
+    } catch (e) { /* silent fail */ }
 }
 
 // ─── STATE ───────────────────────────────────────────────────
@@ -407,8 +491,6 @@ let allQuests   = [];
 let currentGear = 1;
 
 // ─── NAV HELPER ──────────────────────────────────────────────
-// Single function used by every navigation listener.
-// Plays the UI click then transitions screens.
 function navTo(screenId) {
     playUIClick();
     showScreen(screenId);
@@ -420,17 +502,15 @@ async function init() {
 
     player = loadPlayer();
 
-    const savedSound = localStorage.getItem('levelup_sound');
-    soundEnabled = savedSound === null ? true : savedSound === '1';
-    if (savedSound === null) localStorage.setItem('levelup_sound', '1');
+    // Load and apply sound state (handles migration from old boolean key)
+    const savedState = loadSoundState();
+    applySoundState(savedState);
 
-    document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
-    document.getElementById('sound-toggle').addEventListener('click', toggleSound);
+    document.getElementById('sound-toggle').addEventListener('click', cycleSoundState);
 
     currentGear = loadGear();
 
-    // ── All navigation listeners — wired once, always include playUIClick ──
-
+    // ── Navigation listeners ──────────────────────────────────
     document.getElementById('settings-btn').addEventListener('click', () => {
         playUIClick();
         openSettings();
@@ -445,7 +525,6 @@ async function init() {
         navTo('screen-quests');
     });
 
-    // Quests screen — top header and bottom back link
     document.getElementById('quest-header-back').addEventListener('click', () => {
         navTo('screen-status');
     });
@@ -453,18 +532,14 @@ async function init() {
         navTo('screen-status');
     });
 
-    // Shop screen — top back link and bottom back link
-    document.getElementById('shop-back-link-top').addEventListener('click', (e) => {
-        e.stopPropagation();   // prevent shop header's own click bubbling
+    document.getElementById('shop-header-back').addEventListener('click', () => {
         navTo('screen-status');
     });
     document.getElementById('shop-back-link-bottom').addEventListener('click', () => {
         navTo('screen-status');
     });
 
-    // Settings screen — top back link and bottom back link
-    document.getElementById('settings-back-link-top').addEventListener('click', (e) => {
-        e.stopPropagation();
+    document.getElementById('settings-header-back').addEventListener('click', () => {
         navTo('screen-status');
     });
     document.getElementById('settings-back-link-bottom').addEventListener('click', () => {
@@ -490,14 +565,14 @@ async function init() {
     dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear());
     updateStatusScreen();
 
-    await runRelaunchBoot(questsPromise);
+    await runRelaunchBoot();
 
     showScreen('screen-status');
     registerServiceWorker();
 }
 
 // ─── RELAUNCH BOOT ───────────────────────────────────────────
-function runRelaunchBoot(dataPromise) {
+function runRelaunchBoot() {
     return new Promise(resolve => {
         const overlay = document.getElementById('relaunch-boot');
         const linesEl = document.getElementById('relaunch-lines');
@@ -539,16 +614,14 @@ function runRelaunchBoot(dataPromise) {
 
         overlay.addEventListener('click', dismiss, { once: true });
 
-        const LINE_DELAY = 160;
-
         function showNextLine() {
             if (dismissed) return;
             if (lineIndex >= bootLines.length) {
                 lineTimer = setTimeout(dismiss, 400);
                 return;
             }
-            const line       = document.createElement('div');
-            line.className   = 'relaunch-line';
+            const line     = document.createElement('div');
+            line.className = 'relaunch-line';
             line.textContent = bootLines[lineIndex];
             linesEl.appendChild(line);
 
@@ -564,7 +637,7 @@ function runRelaunchBoot(dataPromise) {
             });
 
             lineIndex++;
-            lineTimer = setTimeout(showNextLine, LINE_DELAY);
+            lineTimer = setTimeout(showNextLine, 160);
         }
 
         showNextLine();
@@ -1010,8 +1083,8 @@ function renderShop() {
     }
 
     SHOP_ITEMS.forEach(item => {
-        const canAfford = gold >= item.price;
-        let alreadyActive = false;
+        const canAfford     = gold >= item.price;
+        let   alreadyActive = false;
         if (item.buffKey && item.buffKey !== 'clarityShards') {
             alreadyActive = buffActive(buffs[item.buffKey]);
         }
@@ -1579,7 +1652,8 @@ function showConfirmReset() {
 
 function resetProfile() {
     localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem('levelup_sound');
+    localStorage.removeItem(SOUND_KEY);
+    localStorage.removeItem('levelup_sound');   // remove legacy key too
     localStorage.removeItem(GEAR_KEY);
     window.location.reload();
 }
@@ -1621,8 +1695,8 @@ function showScreen(id) {
     const wasDrone     = prevId && droneScreens.includes(prevId);
     const isDrone      = droneScreens.includes(id);
 
-    if (isDrone  && !droneOsc) startAmbientDrone();
-    if (!isDrone && wasDrone)  stopAmbientDrone();
+    if (isDrone  && !droneOscA) startAmbientDrone();
+    if (!isDrone && wasDrone)   stopAmbientDrone();
 
     if (id === 'screen-status') setupTooltips();
     if (id === 'screen-quests') {
