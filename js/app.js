@@ -324,24 +324,19 @@ function playConsume() {
 }
 
 // ─── AMBIENT DRONE ───────────────────────────────────────────
-// Runs on both Status and Quest screens.
-// In Corrupted state an LFO modulates the drone pitch ±4Hz at 0.3Hz
-// to signal structural instability — slow enough to feel, not fast enough
-// to irritate.
-
 let droneOsc      = null;
 let droneGain     = null;
-let droneLfoTimer = null;   // setInterval id for the LFO tick
-let droneLfoPhase = 0;      // current phase in radians, advances each tick
+let droneLfoTimer = null;
+let droneLfoPhase = 0;
 
-const DRONE_BASE_FREQ = 90;   // Hz — base pitch
-const DRONE_LFO_DEPTH = 4;    // Hz — ±4Hz deviation in Corrupted state
-const DRONE_LFO_RATE  = 0.3;  // Hz — full cycle speed
-const DRONE_LFO_TICK  = 50;   // ms — how often we update the pitch (20 ticks/s)
+const DRONE_BASE_FREQ = 90;
+const DRONE_LFO_DEPTH = 4;
+const DRONE_LFO_RATE  = 0.3;
+const DRONE_LFO_TICK  = 50;
 
 function startAmbientDrone() {
     if (!soundEnabled) return;
-    if (droneOsc) return;   // already running
+    if (droneOsc) return;
     try {
         const ctx = getAudioCtx();
         droneOsc  = ctx.createOscillator();
@@ -354,8 +349,6 @@ function startAmbientDrone() {
         droneGain.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 2.0);
         droneOsc.start(ctx.currentTime);
 
-        // Start LFO tick — runs whether corrupted or not,
-        // but only modulates pitch when player.corrupted is true.
         droneLfoPhase = 0;
         droneLfoTimer = setInterval(() => {
             if (!droneOsc) return;
@@ -367,7 +360,7 @@ function startAmbientDrone() {
             droneOsc.frequency.setTargetAtTime(
                 DRONE_BASE_FREQ + deviation,
                 getAudioCtx().currentTime,
-                0.05   // short time constant — responds in ~50ms
+                0.05
             );
         }, DRONE_LFO_TICK);
 
@@ -375,7 +368,6 @@ function startAmbientDrone() {
 }
 
 function stopAmbientDrone() {
-    // Stop LFO tick first
     if (droneLfoTimer !== null) {
         clearInterval(droneLfoTimer);
         droneLfoTimer = null;
@@ -397,8 +389,6 @@ function toggleSound() {
     soundEnabled = !soundEnabled;
     document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
     localStorage.setItem('levelup_sound', soundEnabled ? '1' : '0');
-
-    // Re-evaluate drone for current screen
     const activeScreen = document.querySelector('.screen.active');
     if (activeScreen) {
         const id = activeScreen.id;
@@ -416,9 +406,16 @@ let dailyQuests = [];
 let allQuests   = [];
 let currentGear = 1;
 
+// ─── NAV HELPER ──────────────────────────────────────────────
+// Single function used by every navigation listener.
+// Plays the UI click then transitions screens.
+function navTo(screenId) {
+    playUIClick();
+    showScreen(screenId);
+}
+
 // ─── INIT ─────────────────────────────────────────────────────
 async function init() {
-    // Kick off quest fetch immediately — runs in parallel with boot sequence
     const questsPromise = loadQuests();
 
     player = loadPlayer();
@@ -432,6 +429,8 @@ async function init() {
 
     currentGear = loadGear();
 
+    // ── All navigation listeners — wired once, always include playUIClick ──
+
     document.getElementById('settings-btn').addEventListener('click', () => {
         playUIClick();
         openSettings();
@@ -442,30 +441,55 @@ async function init() {
         openShop();
     });
 
+    document.getElementById('view-directives-btn').addEventListener('click', () => {
+        navTo('screen-quests');
+    });
+
+    // Quests screen — top header and bottom back link
+    document.getElementById('quest-header-back').addEventListener('click', () => {
+        navTo('screen-status');
+    });
+    document.getElementById('quests-back-link').addEventListener('click', () => {
+        navTo('screen-status');
+    });
+
+    // Shop screen — top back link and bottom back link
+    document.getElementById('shop-back-link-top').addEventListener('click', (e) => {
+        e.stopPropagation();   // prevent shop header's own click bubbling
+        navTo('screen-status');
+    });
+    document.getElementById('shop-back-link-bottom').addEventListener('click', () => {
+        navTo('screen-status');
+    });
+
+    // Settings screen — top back link and bottom back link
+    document.getElementById('settings-back-link-top').addEventListener('click', (e) => {
+        e.stopPropagation();
+        navTo('screen-status');
+    });
+    document.getElementById('settings-back-link-bottom').addEventListener('click', () => {
+        navTo('screen-status');
+    });
+
     setupTooltips();
 
     if (!player) {
-        // First-time player — go straight to onboarding, no relaunch boot
         allQuests = await questsPromise;
         showScreen('screen-onboarding');
         runOnboarding();
         return;
     }
 
-    // Returning player — run relaunch boot in parallel with data load.
-    // The boot accepts a promise; when it resolves it transitions to status.
     allQuests = await Promise.race([
         questsPromise,
-        new Promise(resolve => setTimeout(() => resolve([]), 4000)) // 4s timeout fallback
+        new Promise(resolve => setTimeout(() => resolve([]), 4000))
     ]);
-    // Ensure we have the real quests even if race returned early
     if (!allQuests.length) allQuests = await questsPromise;
 
     checkDailyReset();
     dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear());
     updateStatusScreen();
 
-    // Run relaunch boot over the already-prepared status screen
     await runRelaunchBoot(questsPromise);
 
     showScreen('screen-status');
@@ -473,30 +497,18 @@ async function init() {
 }
 
 // ─── RELAUNCH BOOT ───────────────────────────────────────────
-// Overlays the app with a rapid diagnostic scroll.
-// Resolves when the animation finishes OR the player taps.
-// dataPromise is passed so a tap can check if data is ready.
-//
-// Momentum delta: compares current momentum against the value it
-// would have been before today's reset — gives the player real
-// feedback in the boot sequence.
-
 function runRelaunchBoot(dataPromise) {
     return new Promise(resolve => {
-        const overlay   = document.getElementById('relaunch-boot');
-        const linesEl   = document.getElementById('relaunch-lines');
-        const skipEl    = document.getElementById('relaunch-skip');
+        const overlay = document.getElementById('relaunch-boot');
+        const linesEl = document.getElementById('relaunch-lines');
 
         overlay.classList.remove('hidden');
         linesEl.innerHTML = '';
 
-        // Calculate real momentum delta for display
         const currentMomentum = player.momentum || 1.0;
         const prevMomentum    = player._prevMomentum || currentMomentum;
         const delta           = parseFloat((currentMomentum - prevMomentum).toFixed(4));
-        const deltaStr        = delta >= 0
-            ? '+' + delta.toFixed(4)
-            : delta.toFixed(4);
+        const deltaStr        = delta >= 0 ? '+' + delta.toFixed(4) : delta.toFixed(4);
 
         const bootLines = [
             '> RECONNECTING TO FIELD OPERATOR...',
@@ -509,9 +521,9 @@ function runRelaunchBoot(dataPromise) {
             '> STANDING BY.'
         ];
 
-        let dismissed  = false;
-        let lineIndex  = 0;
-        let lineTimer  = null;
+        let dismissed = false;
+        let lineIndex = 0;
+        let lineTimer = null;
 
         function dismiss() {
             if (dismissed) return;
@@ -525,16 +537,13 @@ function runRelaunchBoot(dataPromise) {
             }, 350);
         }
 
-        // Tap anywhere to skip
         overlay.addEventListener('click', dismiss, { once: true });
 
-        // Rapid line reveal — each line appears after a short delay
-        const LINE_DELAY = 160; // ms between lines — 6 lines ≈ 960ms total
+        const LINE_DELAY = 160;
 
         function showNextLine() {
             if (dismissed) return;
             if (lineIndex >= bootLines.length) {
-                // All lines shown — brief pause then auto-dismiss
                 lineTimer = setTimeout(dismiss, 400);
                 return;
             }
@@ -543,14 +552,16 @@ function runRelaunchBoot(dataPromise) {
             line.textContent = bootLines[lineIndex];
             linesEl.appendChild(line);
 
-            // Highlight the momentum delta line
             if (bootLines[lineIndex].includes('MOMENTUM_DELTA')) {
                 line.classList.add('relaunch-line--highlight');
             }
-            // Warning line gets a warning colour
             if (bootLines[lineIndex].includes('WARNING')) {
                 line.classList.add('relaunch-line--warning');
             }
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => line.classList.add('relaunch-line--visible'));
+            });
 
             lineIndex++;
             lineTimer = setTimeout(showNextLine, LINE_DELAY);
@@ -630,7 +641,6 @@ function runOnboarding() {
             cursor.className = 'terminal-cursor';
             loreEl.appendChild(lineEl);
             lineEl.appendChild(cursor);
-
             typeText(lineEl, signalLines[idx], 55, () => {
                 cursor.remove();
                 idx++;
@@ -667,20 +677,17 @@ function runOnboarding() {
                 setTimeout(() => flashClear(runNamePhase), 1400);
                 return;
             }
-
             if (idx === 4) {
                 const gap        = document.createElement('div');
                 gap.style.height = '0.8em';
                 loreEl.appendChild(gap);
             }
-
             const lineEl     = document.createElement('div');
             lineEl.className = 'lore-line';
             const cursor     = document.createElement('span');
             cursor.className = 'terminal-cursor';
             loreEl.appendChild(lineEl);
             lineEl.appendChild(cursor);
-
             typeText(lineEl, loreLines[idx], 38, () => {
                 cursor.remove();
                 idx++;
@@ -707,14 +714,12 @@ function runOnboarding() {
                 }, 500);
                 return;
             }
-
             const lineEl     = document.createElement('div');
             lineEl.className = 'lore-line lore-prompt';
             const cursor     = document.createElement('span');
             cursor.className = 'terminal-cursor';
             loreEl.appendChild(lineEl);
             lineEl.appendChild(cursor);
-
             typeText(lineEl, promptLines[idx], 55, () => {
                 cursor.remove();
                 idx++;
@@ -823,9 +828,7 @@ function savePlayer() {
 function createPlayer(name) {
     const stats = {};
     STAT_NAMES.forEach(stat => { stats[stat] = STAT_FLOOR; });
-
     const maxHp = calcMaxHp(1);
-
     player = {
         name,
         stats,
@@ -840,7 +843,6 @@ function createPlayer(name) {
         gold:            0,
         buffs:           defaultBuffs()
     };
-
     savePlayer();
     dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear());
     showStatusScreenWithAnimation();
@@ -865,7 +867,6 @@ function checkDailyReset() {
         (new Date(todayStr) - new Date(lastDate)) / 86400000
     );
 
-    // Store previous momentum before mutation — used by relaunch boot delta display
     player._prevMomentum = player.momentum || 1.0;
 
     if (diffDays === 1) {
@@ -937,46 +938,28 @@ async function loadQuests() {
 }
 
 // ─── SYSTEM LOG ──────────────────────────────────────────────
-// Replaces the toast system entirely.
-//
-// Entries stack upward from the bottom-left. Each fades after 3s.
-// A maximum of 4 entries are visible at once; the oldest is removed
-// when a 5th fires. All previous showToast() calls are replaced with
-// showLog() throughout.
-//
-// Variant 'warn' renders in the warning colour (corrupted red).
-// Default renders in var(--accent).
-
-const LOG_MAX     = 4;
-const LOG_LINGER  = 3000; // ms before fade starts
-const LOG_FADE    = 500;  // ms fade duration
+const LOG_MAX    = 4;
+const LOG_LINGER = 3000;
+const LOG_FADE   = 500;
 
 function showLog(message, variant) {
     const container = document.getElementById('system-log');
     if (!container) return;
 
-    // Enforce max entries — remove oldest if at cap
     const existing = container.querySelectorAll('.log-entry');
-    if (existing.length >= LOG_MAX) {
-        existing[0].remove();
-    }
+    if (existing.length >= LOG_MAX) existing[0].remove();
 
-    const entry       = document.createElement('div');
-    entry.className   = 'log-entry'
+    const entry     = document.createElement('div');
+    entry.className = 'log-entry'
         + (variant === 'warn'   ? ' log-entry--warn'   : '')
         + (variant === 'accent' ? ' log-entry--accent'  : '');
     entry.textContent = message;
-
-    // Entries are appended — CSS flex-direction:column-reverse
-    // makes the newest appear at the bottom and pushes older ones up.
     container.appendChild(entry);
 
-    // Trigger slide-in on next frame
     requestAnimationFrame(() => {
         requestAnimationFrame(() => entry.classList.add('log-entry--visible'));
     });
 
-    // Schedule fade and removal
     setTimeout(() => {
         entry.classList.add('log-entry--fading');
         setTimeout(() => entry.remove(), LOG_FADE);
@@ -990,11 +973,11 @@ function openShop() {
 }
 
 function renderShop() {
-    const list      = document.getElementById('shop-list');
-    const goldEl    = document.getElementById('shop-gold-value');
-    const buffsEl   = document.getElementById('active-buffs');
-    const gold      = player.gold || 0;
-    const buffs     = player.buffs || defaultBuffs();
+    const list    = document.getElementById('shop-list');
+    const goldEl  = document.getElementById('shop-gold-value');
+    const buffsEl = document.getElementById('active-buffs');
+    const gold    = player.gold || 0;
+    const buffs   = player.buffs || defaultBuffs();
 
     goldEl.textContent = gold;
     list.innerHTML     = '';
@@ -1035,7 +1018,6 @@ function renderShop() {
 
         const card     = document.createElement('div');
         card.className = 'shop-card' + (!canAfford ? ' shop-card--unaffordable' : '');
-
         card.innerHTML = `
             <div class="shop-card-top">
                 <span class="shop-item-emoji">${item.emoji}</span>
@@ -1092,8 +1074,8 @@ function consumeItem(itemId) {
             const hpPct = Math.round((player.hp / maxHp) * 100);
             const hpEl  = document.getElementById('hp-bar');
             const hpVal = document.getElementById('hp-value');
-            if (hpEl)  hpEl.style.width      = hpPct + '%';
-            if (hpVal) hpVal.textContent      = player.hp + ' / ' + maxHp;
+            if (hpEl)  hpEl.style.width    = hpPct + '%';
+            if (hpVal) hpVal.textContent   = player.hp + ' / ' + maxHp;
             showLog('[VITALITY_TONIC: +20 HP]');
             break;
         }
@@ -1116,10 +1098,7 @@ function consumeItem(itemId) {
 
     savePlayer();
     playConsume();
-
-    // Main consume log entry (from SHOP_ITEMS definition)
     showLog(item.consumeMsg, 'accent');
-
     renderShop();
 
     const goldEl = document.getElementById('gold-value');
@@ -1130,8 +1109,8 @@ function consumeItem(itemId) {
 function completeQuest(id, stat, baseXP) {
     if (player.completedToday.includes(id)) return;
 
-    const momentum     = player.momentum || 1.0;
-    let   earnedAmt    = parseFloat((baseXP * momentum).toFixed(1));
+    const momentum  = player.momentum || 1.0;
+    let   earnedAmt = parseFloat((baseXP * momentum).toFixed(1));
 
     const wasCorrupted = player.corrupted;
     if (wasCorrupted) earnedAmt = parseFloat((earnedAmt / 2).toFixed(1));
@@ -1172,7 +1151,6 @@ function completeQuest(id, stat, baseXP) {
     showFloatingXP(id, earnedAmt, isCritical);
     if (!isCritical) playQuestComplete();
 
-    // Log the stat gain
     showLog('[LOG: ' + stat.toUpperCase() + ' +' + earnedAmt + ' XP]');
 
     const prevLevel = levelFromXP(xpBefore);
@@ -1257,7 +1235,6 @@ function updateStatusScreen(animate) {
         const val     = player.stats[stat] || STAT_FLOOR;
         const dispVal = Math.floor(val);
         const barPct  = Math.min(100, ((val - STAT_FLOOR) / 90) * 100);
-
         if (animate) {
             animateNumber('val-' + stat, 0, dispVal, 600);
             setTimeout(() => {
@@ -1633,12 +1610,9 @@ function setupTooltips() {
 }
 
 // ─── UI HELPERS ──────────────────────────────────────────────
-// Drone runs on Status and Quest screens.
-// Stops on Settings and Shop screens.
-
 function showScreen(id) {
-    const prev      = document.querySelector('.screen.active');
-    const prevId    = prev ? prev.id : null;
+    const prev   = document.querySelector('.screen.active');
+    const prevId = prev ? prev.id : null;
 
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');

@@ -1173,6 +1173,7 @@ body {
 
 /* ══════════════════════════════════════════════════════════════
    STAGE 2 — GOLD + SHOP
+   Append these rules to the bottom of css/style.css
 ══════════════════════════════════════════════════════════════ */
 
 /* ── GOLD ROW (status screen) ───────────────────────────────── */
@@ -1227,6 +1228,7 @@ body {
     background: var(--panel);
     padding: 20px 20px 16px;
     margin-bottom: 10px;
+    cursor: pointer;
 }
 
 .shop-header h2 {
@@ -1413,10 +1415,25 @@ body {
    STAGE 3 — RELAUNCH BOOT + SYSTEM LOG
 ══════════════════════════════════════════════════════════════ */
 
-/* ── RELAUNCH BOOT OVERLAY ───────────────────────────────────── */
-/* Sits above all screens. Full-screen dark cover with rapid     */
-/* diagnostic lines. Fades out on dismiss.                       */
+/* ── BACK LINK TOP VARIANT ───────────────────────────────────── */
+/* Sits inside the screen header block at the top of shop and    */
+/* settings screens. Mirrors the bottom back-link style but with */
+/* a top border instead of bottom, and reduced top margin.       */
+.back-link--top {
+    margin-top: 12px;
+    margin-bottom: 0;
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    padding-top: 10px;
+    padding-bottom: 0;
+}
 
+/* Settings header — make it tappable-feeling */
+.settings-header {
+    cursor: pointer;
+}
+
+/* ── RELAUNCH BOOT OVERLAY ───────────────────────────────────── */
 .relaunch-boot {
     position: fixed;
     inset: 0;
@@ -1463,20 +1480,15 @@ body {
     line-height: 1.6;
 }
 
-/* Lines become visible when JS adds them — the transition above   */
-/* provides the subtle slide-in. We use a class rather than        */
-/* inline style so the transition fires correctly on next frame.   */
 .relaunch-line.relaunch-line--visible {
     opacity: 1;
     transform: translateY(0);
 }
 
-/* Momentum delta line — accent colour to draw the eye */
 .relaunch-line.relaunch-line--highlight {
     color: var(--accent, #4fc3f7);
 }
 
-/* Warning line — corrupted state colour */
 .relaunch-line.relaunch-line--warning {
     color: #ff4444;
 }
@@ -1496,10 +1508,6 @@ body {
 }
 
 /* ── SYSTEM LOG STRIP ────────────────────────────────────────── */
-/* Fixed bottom-left. Entries stack upward (newest at bottom).   */
-/* Max 4 entries visible. Each fades after 3 seconds.            */
-/* Pointer-events none so the log never blocks taps on the app.  */
-
 .system-log {
     position: fixed;
     bottom: 16px;
@@ -1521,8 +1529,6 @@ body {
     border-left: 2px solid var(--accent, #4fc3f7);
     padding: 5px 10px;
     line-height: 1.4;
-
-    /* Start invisible and slightly low — slide up into view */
     opacity: 0;
     transform: translateY(6px);
     transition: opacity 0.2s ease, transform 0.2s ease;
@@ -1533,21 +1539,16 @@ body {
     transform: translateY(0);
 }
 
-/* Fade out — applied by JS before removal */
 .log-entry.log-entry--fading {
     opacity: 0;
     transition: opacity 0.5s ease;
 }
 
-/* Warning variant — corrupted / error states */
 .log-entry.log-entry--warn {
     color: #ff4444;
     border-left-color: #ff4444;
 }
 
-/* Accent variant — positive events (level up, rank up, restore) */
-/* Default is already accent; this class is a no-op visually     */
-/* but kept for semantic clarity in JS calls.                     */
 .log-entry.log-entry--accent {
     color: var(--accent, #4fc3f7);
     border-left-color: var(--accent, #4fc3f7);

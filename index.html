@@ -218,7 +218,8 @@
             <button class="shop-nav-btn" id="shop-btn">SUPPLY CACHE →</button>
         </div>
 
-        <button class="nav-btn" onclick="showScreen('screen-quests')">
+        <!-- No inline onclick — wired in init() -->
+        <button class="nav-btn" id="view-directives-btn">
             VIEW TODAY'S DIRECTIVES
         </button>
     </div>
@@ -227,14 +228,14 @@
          QUESTS SCREEN
     ═══════════════════════════════════════════════ -->
     <div class="screen" id="screen-quests">
-        <div class="quest-header tappable" onclick="showScreen('screen-status')">
+        <!-- Top header — tappable to go back (no inline onclick) -->
+        <div class="quest-header" id="quest-header-back">
             <h2>TODAY'S DIRECTIVES</h2>
             <div class="quest-date" id="quest-date"></div>
         </div>
         <div class="quest-list" id="quest-list"></div>
-        <div class="back-link" onclick="showScreen('screen-status')">
-            ← RETURN TO STATUS
-        </div>
+        <!-- Bottom back link — no inline onclick -->
+        <div class="back-link" id="quests-back-link">← RETURN TO STATUS</div>
     </div>
 
     <!-- ═══════════════════════════════════════════════
@@ -242,7 +243,8 @@
     ═══════════════════════════════════════════════ -->
     <div class="screen" id="screen-shop">
 
-        <div class="shop-header">
+        <!-- Top header — tappable to go back -->
+        <div class="shop-header" id="shop-header-back">
             <h2>[ SUPPLY CACHE ]</h2>
             <div class="shop-gold-display">
                 <span class="shop-gold-label">◈ AVAILABLE</span>
@@ -253,18 +255,17 @@
                 Each corresponds to a real-world act. The System does not monitor
                 compliance. It trusts the operator to play with integrity.
             </div>
+            <!-- Top back link inside header block -->
+            <div class="back-link back-link--top" id="shop-back-link-top">← RETURN TO STATUS</div>
         </div>
 
         <!-- Active buffs panel — hidden when no buffs active -->
         <div class="active-buffs" id="active-buffs"></div>
 
-        <div class="shop-list" id="shop-list">
-            <!-- Rendered by renderShop() -->
-        </div>
+        <div class="shop-list" id="shop-list"></div>
 
-        <div class="back-link" onclick="showScreen('screen-status')">
-            ← RETURN TO STATUS
-        </div>
+        <!-- Bottom back link -->
+        <div class="back-link" id="shop-back-link-bottom">← RETURN TO STATUS</div>
     </div>
 
     <!-- ═══════════════════════════════════════════════
@@ -272,8 +273,11 @@
     ═══════════════════════════════════════════════ -->
     <div class="screen" id="screen-settings">
 
-        <div class="settings-header">
+        <!-- Top header — tappable to go back -->
+        <div class="settings-header" id="settings-header-back">
             <h2>[ SYSTEM SETTINGS ]</h2>
+            <!-- Top back link inside header block -->
+            <div class="back-link back-link--top" id="settings-back-link-top">← RETURN TO STATUS</div>
         </div>
 
         <!-- Name edit -->
@@ -320,7 +324,6 @@
 
             </div>
 
-            <!-- Per-gear warnings — JS shows only the active one -->
             <div class="gear-warning hidden" id="gear-warning-1">
                 One directive per stat. Consistent and sustainable.
                 This path is long — that is the point.
@@ -365,9 +368,8 @@
             </div>
         </div>
 
-        <div class="back-link" onclick="showScreen('screen-status')">
-            ← RETURN TO STATUS
-        </div>
+        <!-- Bottom back link -->
+        <div class="back-link" id="settings-back-link-bottom">← RETURN TO STATUS</div>
     </div>
 
     <!-- ═══════════════════════════════════════════════
@@ -376,10 +378,7 @@
     <div class="screen active" id="screen-onboarding">
         <div class="onboarding-box" id="onboarding-box">
             <div class="player-title">[ SYSTEM ]</div>
-
-            <!-- Lore lines are injected dynamically -->
             <div id="lore-lines"></div>
-
             <div id="name-section" class="hidden">
                 <input
                     type="text"
@@ -391,13 +390,12 @@
                     spellcheck="false"
                 />
             </div>
-
             <button class="nav-btn hidden" id="start-btn">INITIALISE</button>
         </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════
-         LEVEL UP OVERLAY  (no auto-dismiss — user controls)
+         LEVEL UP OVERLAY
     ═══════════════════════════════════════════════ -->
     <div class="overlay hidden" id="overlay-levelup">
         <div class="overlay-content">
@@ -413,7 +411,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════
-         RANK UP OVERLAY  (no auto-dismiss — user controls)
+         RANK UP OVERLAY
     ═══════════════════════════════════════════════ -->
     <div class="overlay hidden" id="overlay-rankup">
         <div class="overlay-content rankup-content">
@@ -429,7 +427,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════
-         AWAKEN BOOT OVERLAY  (first-time onboarding only)
+         AWAKEN BOOT OVERLAY (first-time only)
     ═══════════════════════════════════════════════ -->
     <div class="overlay hidden" id="overlay-awaken">
         <div class="overlay-content awaken-content">
@@ -440,8 +438,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════
-         RELAUNCH BOOT OVERLAY  (every subsequent open)
-         Skippable on tap. Sits above all screens.
+         RELAUNCH BOOT OVERLAY (every subsequent open)
     ═══════════════════════════════════════════════ -->
     <div class="relaunch-boot hidden" id="relaunch-boot">
         <div class="relaunch-boot-inner">
@@ -452,8 +449,6 @@
 
     <!-- ═══════════════════════════════════════════════
          SYSTEM LOG STRIP
-         Fixed bottom-left. Entries stack upward, fade after 3s.
-         Rendered entirely by showLog() — no static HTML needed.
     ═══════════════════════════════════════════════ -->
     <div class="system-log" id="system-log"></div>
 
