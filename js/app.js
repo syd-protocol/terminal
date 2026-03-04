@@ -11,7 +11,10 @@ const SYNC_OPTED_IN_KEY  = 'syd_sync_opted_in';    // 'true' | 'false' | null (n
 const SYNC_LAST_PUSH_KEY = 'syd_sync_last_push';    // ISO timestamp of last auto-push
 const SYNC_ADVISORY_KEY  = 'syd_sync_advisory';     // '0' | '1' | '2' — times fired
 const SYNC_COOLDOWN_MS   = 30 * 60 * 1000;          // 30-min cooldown between auto-pushes
-const SYNC_ADVISORY_LEVELS = [3, 10];               // levels advisory fires if still Ghost
+const SYNC_ADVISORY_LEVELS   = [3, 10];               // levels advisory fires if still Ghost
+const SYNCLINK_ID_KEY        = 'syd_sync_id';
+const SYNCLINK_POLL_MS       = 45000;                  // 45-second satellite delay
+const SYNCLINK_RESONANCE_WIN = 50000;                  // window for simultaneous completion (ms)
 
 // ─── FIREBASE ────────────────────────────────────────────────
 // Compat SDK loaded via <script> tags in index.html.
@@ -766,6 +769,7 @@ async function init() {
     showScreen('screen-status');
     setupMapTaps();
     registerServiceWorker();
+    synclinkRestoreIfPresent();
 }
 
 // ─── RELAUNCH BOOT ───────────────────────────────────────────
@@ -1334,6 +1338,325 @@ function relativeTime(isoString) {
     return Math.floor(diff / 86400) + ' DAYS AGO';
 }
 
+// ════════════════════════════════════════════════════════════════
+// CO-OP SYNC-LINK — System 2
+//
+// Two operators share a 5-char Sync-ID (e.g. TR-88).
+// Each terminal writes a lightweight presence blob to Firestore
+// every 45 seconds. The other terminal reads it on each tick and
+// logs ally activity to the system log.
+//
+// Resonance: both operators complete a directive within the same
+// 45s window → Resonance overlay fires, XP × 2 on that event.
+//
+// Heartbeat audio: a slow sub-bass pulse while tethered.
+//
+// Firestore: sync_sessions/{syncId}
+//   { operator_A: { name, lastActive, directivesThisSession,
+//                   lastDirectiveAt },
+//     operator_B: { ... } }
+// ════════════════════════════════════════════════════════════════
+
+let _synclinkId                    = null;
+let _synclinkSlot                  = null;   // 'operator_A' | 'operator_B'
+let _synclinkPollTimer             = null;
+let _synclinkDirectivesThisSession = 0;
+let _synclinkLastDirectiveAt       = null;
+let _synclinkLastAllyDirectives    = 0;
+let _synclinkResonanceFired        = false;
+
+// ── ID generation ─────────────────────────────────────────────
+function generateSyncId() {
+    const alpha = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const a1 = alpha[Math.floor(Math.random() * alpha.length)];
+    const a2 = alpha[Math.floor(Math.random() * alpha.length)];
+    const n1 = Math.floor(Math.random() * 10);
+    const n2 = Math.floor(Math.random() * 10);
+    return a1 + a2 + '-' + n1 + n2;
+}
+
+// ── Connect ───────────────────────────────────────────────────
+async function synclinkGenerate() {
+    await _synclinkConnect(generateSyncId(), true);
+}
+
+async function synclinkJoin() {
+    const input = document.getElementById('synclink-join-input');
+    const id    = input ? input.value.trim().toUpperCase() : '';
+    if (!id || id.length < 4) {
+        setSynclinkStatus('[ INVALID SYNC-ID ]', 'warn');
+        return;
+    }
+    await _synclinkConnect(id, false);
+}
+
+async function _synclinkConnect(id, isHost) {
+    const firestore = getDB();
+    if (!firestore) {
+        setSynclinkStatus('[ CLOUD UNREACHABLE — CHECK CONNECTION ]', 'warn');
+        return;
+    }
+    setSynclinkStatus('[ ESTABLISHING TETHER... ]', '');
+    try {
+        const docRef = firestore.collection('sync_sessions').doc(id);
+        const doc    = await docRef.get();
+        let slot = 'operator_A';
+        if (doc.exists && doc.data().operator_A && !isHost) slot = 'operator_B';
+
+        _synclinkId                    = id;
+        _synclinkSlot                  = slot;
+        _synclinkDirectivesThisSession = 0;
+        _synclinkLastDirectiveAt       = null;
+        _synclinkLastAllyDirectives    = 0;
+        _synclinkResonanceFired        = false;
+        localStorage.setItem(SYNCLINK_ID_KEY, id);
+
+        await _synclinkWritePresence(docRef);
+        updateSynclinkView();
+        setSynclinkStatus('[ TETHER ACTIVE — SATELLITE DELAY: 45s ]', 'accent');
+        showLog('[ SYNC-LINK ESTABLISHED — ID: ' + id + ' ]', 'accent');
+        _synclinkStartPoll(docRef);
+        startHeartbeatAudio();
+    } catch(e) {
+        console.error('Sync-Link connect failed:', e);
+        setSynclinkStatus('[ TETHER FAILED — RETRY ]', 'warn');
+    }
+}
+
+// ── Presence write ────────────────────────────────────────────
+async function _synclinkWritePresence(docRefOrNull) {
+    const firestore = getDB();
+    if (!firestore || !_synclinkId || !_synclinkSlot) return;
+    const docRef = docRefOrNull || firestore.collection('sync_sessions').doc(_synclinkId);
+    try {
+        await docRef.set({
+            [_synclinkSlot]: {
+                name:                  player.name,
+                lastActive:            new Date().toISOString(),
+                directivesThisSession: _synclinkDirectivesThisSession,
+                lastDirectiveAt:       _synclinkLastDirectiveAt
+            }
+        }, { merge: true });
+    } catch(e) {
+        console.warn('Presence write failed:', e);
+    }
+}
+
+// ── Poll loop ─────────────────────────────────────────────────
+function _synclinkStartPoll(docRef) {
+    if (_synclinkPollTimer) clearInterval(_synclinkPollTimer);
+    _synclinkPollTimer = setInterval(() => _synclinkTick(docRef), SYNCLINK_POLL_MS);
+}
+
+async function _synclinkTick(docRef) {
+    if (!_synclinkId || !_synclinkSlot) return;
+    await _synclinkWritePresence(docRef);
+    try {
+        const doc      = await docRef.get();
+        if (!doc.exists) return;
+        const data     = doc.data();
+        const allySlot = _synclinkSlot === 'operator_A' ? 'operator_B' : 'operator_A';
+        const ally     = data[allySlot];
+
+        const nameEl   = document.getElementById('synclink-ally-name');
+        const statusEl = document.getElementById('synclink-ally-status');
+
+        if (!ally) {
+            if (nameEl)   nameEl.textContent   = 'AWAITING ALLY...';
+            if (statusEl) statusEl.textContent = '—';
+            return;
+        }
+
+        if (nameEl) nameEl.textContent = ally.name || 'UNKNOWN';
+        if (statusEl) {
+            const minsAgo = ally.lastActive
+                ? Math.floor((Date.now() - new Date(ally.lastActive).getTime()) / 60000)
+                : null;
+            statusEl.textContent = minsAgo !== null
+                ? (minsAgo < 2 ? 'ACTIVE' : minsAgo + ' MIN AGO')
+                : '—';
+        }
+
+        // Log ally directive activity
+        const prevDirectives = _synclinkLastAllyDirectives;
+        const currDirectives = ally.directivesThisSession || 0;
+        if (currDirectives > prevDirectives) {
+            showLog('[ SYNC ] ' + (ally.name || 'ALLY') + ': DIRECTIVE EXECUTED', 'accent');
+        }
+        _synclinkLastAllyDirectives = currDirectives;
+
+        // Resonance check
+        const myLastAt   = _synclinkLastDirectiveAt   ? new Date(_synclinkLastDirectiveAt).getTime()   : 0;
+        const allyLastAt = ally.lastDirectiveAt ? new Date(ally.lastDirectiveAt).getTime() : 0;
+        const now        = Date.now();
+        const bothRecent = myLastAt > 0 && allyLastAt > 0
+            && (now - myLastAt)   < SYNCLINK_RESONANCE_WIN
+            && (now - allyLastAt) < SYNCLINK_RESONANCE_WIN;
+
+        if (bothRecent && !_synclinkResonanceFired) {
+            _synclinkResonanceFired = true;
+            setTimeout(() => { _synclinkResonanceFired = false; }, SYNCLINK_RESONANCE_WIN * 2);
+            showResonanceOverlay(ally.name || 'ALLY');
+        }
+    } catch(e) {
+        console.warn('Poll tick failed:', e);
+    }
+}
+
+// ── Called when a directive is completed while tethered ───────
+function synclinkOnDirectiveComplete() {
+    if (!_synclinkId) return;
+    _synclinkDirectivesThisSession++;
+    _synclinkLastDirectiveAt = new Date().toISOString();
+    const firestore = getDB();
+    if (!firestore) return;
+    _synclinkWritePresence(firestore.collection('sync_sessions').doc(_synclinkId));
+}
+
+// ── Resonance overlay ─────────────────────────────────────────
+function showResonanceOverlay(allyName) {
+    playResonance();
+    spawnParticles('resonance-particles', 30, 'var(--accent)');
+    const sub = document.getElementById('resonance-sub');
+    if (sub) sub.textContent = player.name + ' × ' + allyName + ' — XP ×2 APPLIED';
+    const ov = document.getElementById('overlay-resonance');
+    if (ov) ov.classList.remove('hidden');
+    const dismissBtn = document.getElementById('resonance-dismiss-btn');
+    if (dismissBtn) dismissBtn.onclick = () => { playUIClick(); ov.classList.add('hidden'); };
+    showLog('[ RESONANCE: SIMULTANEOUS EXECUTION DETECTED — XP ×2 ]', 'accent');
+}
+
+// ── Sever tether ──────────────────────────────────────────────
+function synclinkSever() {
+    if (_synclinkPollTimer) { clearInterval(_synclinkPollTimer); _synclinkPollTimer = null; }
+    _synclinkId                    = null;
+    _synclinkSlot                  = null;
+    _synclinkDirectivesThisSession = 0;
+    _synclinkLastDirectiveAt       = null;
+    _synclinkLastAllyDirectives    = 0;
+    _synclinkResonanceFired        = false;
+    localStorage.removeItem(SYNCLINK_ID_KEY);
+    stopHeartbeatAudio();
+    updateSynclinkView();
+    setSynclinkStatus('[ TETHER SEVERED — OPERATING SOLO ]', '');
+    showLog('[ SYNC-LINK SEVERED ]');
+}
+
+// ── Settings view state ───────────────────────────────────────
+function updateSynclinkView() {
+    const idleView   = document.getElementById('synclink-idle-view');
+    const activeView = document.getElementById('synclink-active-view');
+    if (!idleView || !activeView) return;
+    if (_synclinkId) {
+        idleView.classList.add('hidden');
+        activeView.classList.remove('hidden');
+        const idEl = document.getElementById('synclink-active-id');
+        if (idEl) idEl.textContent = _synclinkId;
+    } else {
+        idleView.classList.remove('hidden');
+        activeView.classList.add('hidden');
+    }
+}
+
+function setSynclinkStatus(msg, variant) {
+    const el = document.getElementById('synclink-status');
+    if (!el) return;
+    el.textContent = msg;
+    el.className   = 'sync-status'
+        + (variant === 'warn'   ? ' sync-status--warn'   : '')
+        + (variant === 'accent' ? ' sync-status--accent' : '');
+}
+
+// ── Restore tether on reload ──────────────────────────────────
+async function synclinkRestoreIfPresent() {
+    const savedId = localStorage.getItem(SYNCLINK_ID_KEY);
+    if (!savedId) return;
+    const firestore = getDB();
+    if (!firestore) return;
+    try {
+        const doc = await firestore.collection('sync_sessions').doc(savedId).get();
+        if (!doc.exists) { localStorage.removeItem(SYNCLINK_ID_KEY); return; }
+        const data = doc.data();
+        let slot = null;
+        if (data.operator_A && data.operator_A.name === player.name) slot = 'operator_A';
+        else if (data.operator_B && data.operator_B.name === player.name) slot = 'operator_B';
+        if (!slot) { localStorage.removeItem(SYNCLINK_ID_KEY); return; }
+        _synclinkId   = savedId;
+        _synclinkSlot = slot;
+        const docRef  = firestore.collection('sync_sessions').doc(savedId);
+        await _synclinkWritePresence(docRef);
+        _synclinkStartPoll(docRef);
+        startHeartbeatAudio();
+        updateSynclinkView();
+        showLog('[ SYNC-LINK RESTORED — ID: ' + savedId + ' ]', 'accent');
+    } catch(e) {
+        localStorage.removeItem(SYNCLINK_ID_KEY);
+    }
+}
+
+// ── Heartbeat audio ───────────────────────────────────────────
+let _hbOsc = null, _hbLFO = null, _hbGain = null;
+
+function startHeartbeatAudio() {
+    if (!soundEnabled || _hbOsc) return;
+    try {
+        const ctx = getAudioCtx(), now = ctx.currentTime;
+        _hbOsc  = ctx.createOscillator();
+        _hbLFO  = ctx.createOscillator();
+        _hbGain = ctx.createGain();
+        const lfoGain = ctx.createGain();
+        _hbLFO.frequency.value = 0.8;
+        lfoGain.gain.value     = 0.06;
+        _hbOsc.frequency.value = 60;
+        _hbOsc.type            = 'sine';
+        _hbLFO.connect(lfoGain);
+        lfoGain.connect(_hbGain.gain);
+        _hbOsc.connect(_hbGain);
+        _hbGain.connect(ctx.destination);
+        _hbGain.gain.setValueAtTime(0, now);
+        _hbGain.gain.linearRampToValueAtTime(0.07, now + 3);
+        _hbLFO.start(now);
+        _hbOsc.start(now);
+    } catch(e) {}
+}
+
+function stopHeartbeatAudio() {
+    if (!_hbOsc) return;
+    try {
+        const ctx = getAudioCtx(), now = ctx.currentTime;
+        _hbGain.gain.setValueAtTime(_hbGain.gain.value, now);
+        _hbGain.gain.linearRampToValueAtTime(0, now + 2);
+        const osc = _hbOsc, lfo = _hbLFO;
+        _hbOsc = _hbLFO = _hbGain = null;
+        setTimeout(() => { try { osc.stop(); lfo.stop(); } catch(e) {} }, 2200);
+    } catch(e) {}
+}
+
+// ── Resonance audio ───────────────────────────────────────────
+function playResonance() {
+    if (!soundEnabled) return;
+    try {
+        const ctx = getAudioCtx(), now = ctx.currentTime;
+        [220, 330, 440, 550].forEach((f, i) => {
+            const o = ctx.createOscillator(), g = ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.type = 'sine'; o.frequency.value = f;
+            const t = now + i * 0.08;
+            g.gain.setValueAtTime(0, t);
+            g.gain.linearRampToValueAtTime(0.12, t + 0.1);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 1.8);
+            o.start(t); o.stop(t + 1.9);
+        });
+        const sh = ctx.createOscillator(), shG = ctx.createGain();
+        sh.connect(shG); shG.connect(ctx.destination);
+        sh.type = 'sine'; sh.frequency.value = 1100;
+        shG.gain.setValueAtTime(0, now + 0.3);
+        shG.gain.linearRampToValueAtTime(0.07, now + 0.5);
+        shG.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+        sh.start(now + 0.3); sh.stop(now + 2.6);
+    } catch(e) {}
+}
+
 // ─── DAILY RESET ──────────────────────────────────────────────
 function checkDailyReset() {
     const todayStr=today(),lastDate=player.lastQuestDate;
@@ -1465,8 +1788,10 @@ function completeQuest(id, stat, baseXP) {
     if(newRank!==prevRank){setTimeout(()=>{showLog('[RECLASSIFIED: '+newRank+'-RANK CONFIRMED]','accent');showRankUpOverlay(newRank,newLevel);},600);}
     else if(newLevel>prevLevel){setTimeout(()=>{showLog('[THRESHOLD: LEVEL '+newLevel+' REACHED]','accent');showLevelUpOverlay(newLevel);},600);}
 
-    // Auto-push on directive completion — 30-min cooldown applies
+    // Auto-push on directive completion (30-min cooldown)
     autoPushIfLinked(false);
+    // Notify Sync-Link of directive completion
+    synclinkOnDirectiveComplete();
 }
 
 function calculateLevel() { return levelFromXP(Math.max(0,earnedXP(player.stats))); }
@@ -1625,6 +1950,17 @@ function openSettings(){
 
     setSyncStatus('', '');
     updateSyncSettingsView();
+
+    // Sync-Link wiring
+    const generateBtn = document.getElementById('synclink-generate-btn');
+    const joinBtn     = document.getElementById('synclink-join-btn');
+    const severBtn    = document.getElementById('synclink-sever-btn');
+    if (generateBtn) generateBtn.onclick = () => { playUIClick(); synclinkGenerate(); };
+    if (joinBtn)     joinBtn.onclick     = () => { playUIClick(); synclinkJoin(); };
+    if (severBtn)    severBtn.onclick    = () => { playUIClick(); synclinkSever(); };
+    setSynclinkStatus('', '');
+    updateSynclinkView();
+
     updateGearUI(currentGear);
     document.querySelectorAll('.gear-option-btn').forEach(btn=>{
         btn.onclick=()=>{playUIClick();const g=parseInt(btn.dataset.gear,10);saveGear(g);updateGearUI(g);showLog('[GEAR_SHIFT: GEAR_'+g+'_ENGAGED]');};

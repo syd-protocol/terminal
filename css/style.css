@@ -2205,3 +2205,93 @@ body {
 }
 .sync-status--warn   { color: var(--warn, #ff6b6b); }
 .sync-status--accent { color: var(--accent); }
+
+/* ════════════════════════════════════════════════════════════
+   SYNC-LINK — Co-op Tether (Stage 5b System 2)
+   ════════════════════════════════════════════════════════════ */
+
+.synclink-resonance-label {
+    color: var(--accent);
+    font-weight: 700;
+}
+.synclink-divider {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    letter-spacing: 0.1em;
+    margin: 1rem 0 0.65rem;
+    opacity: 0.5;
+}
+.synclink-generate-btn,
+.synclink-join-btn,
+.synclink-sever-btn { width: 100%; }
+.synclink-join-btn  { margin-top: 0.5rem; }
+.synclink-join-input { text-transform: uppercase; letter-spacing: 0.12em; }
+
+.synclink-sever-btn {
+    border-color: var(--warn, #ff6b6b) !important;
+    color: var(--warn, #ff6b6b) !important;
+    margin-top: 0.5rem;
+}
+.synclink-sever-btn:hover,
+.synclink-sever-btn:active {
+    background: var(--warn, #ff6b6b) !important;
+    color: var(--bg) !important;
+}
+
+.synclink-diagnostics {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+}
+.synclink-active-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.9rem;
+    font-family: var(--font-mono);
+}
+.synclink-active-tag {
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+}
+.synclink-active-id {
+    font-size: 1.2rem;
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.2em;
+}
+
+/* ── Resonance overlay ────────────────────────────────────── */
+.resonance-content {
+    text-align: center;
+    padding: 2.5rem 1.6rem 2rem;
+    max-width: 320px;
+}
+.resonance-tag {
+    font-size: 0.72rem;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    letter-spacing: 0.14em;
+    margin-bottom: 0.5rem;
+}
+.resonance-headline {
+    font-size: 2.4rem;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.18em;
+    text-shadow: 0 0 40px rgba(79, 195, 247, 0.5);
+    margin-bottom: 0.6rem;
+}
+.resonance-sub {
+    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    margin-bottom: 1.2rem;
+    line-height: 1.5;
+}
