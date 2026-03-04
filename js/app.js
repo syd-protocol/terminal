@@ -1464,6 +1464,9 @@ function completeQuest(id, stat, baseXP) {
     updateStatusScreen();
     if(newRank!==prevRank){setTimeout(()=>{showLog('[RECLASSIFIED: '+newRank+'-RANK CONFIRMED]','accent');showRankUpOverlay(newRank,newLevel);},600);}
     else if(newLevel>prevLevel){setTimeout(()=>{showLog('[THRESHOLD: LEVEL '+newLevel+' REACHED]','accent');showLevelUpOverlay(newLevel);},600);}
+
+    // Auto-push on directive completion — 30-min cooldown applies
+    autoPushIfLinked(false);
 }
 
 function calculateLevel() { return levelFromXP(Math.max(0,earnedXP(player.stats))); }
@@ -1530,8 +1533,16 @@ function showLevelUpOverlay(level) {
     document.getElementById('lu-sub').textContent=sub;
     const ov=document.getElementById('overlay-levelup'); ov.classList.remove('hidden');
     document.getElementById('lu-share-btn').onclick=()=>{playUIClick();shareCard({headline:'THRESHOLD REACHED',bigText:String(level),titleText:tt,subText:sub,accentColor:'#4fc3f7'});};
-    document.getElementById('lu-dismiss-btn').onclick=()=>{playUIClick();ov.classList.add('hidden');};
+    document.getElementById('lu-dismiss-btn').onclick=()=>{
+        playUIClick();
+        ov.classList.add('hidden');
+        // Advisory fires after the celebration clears — never during
+        checkSyncAdvisory(level);
+    };
+    // Immediate push on level-up — bypass cooldown
+    autoPushIfLinked(true);
 }
+
 function showRankUpOverlay(rank,level) {
     playRankUp(); spawnParticles('ru-particles',35,'var(--gold)');
     const tt=rank+'-RANK CONFIRMED',sub=titleFromLevel(level)+'  ·  LEVEL '+level;
@@ -1541,6 +1552,8 @@ function showRankUpOverlay(rank,level) {
     const ov=document.getElementById('overlay-rankup'); ov.classList.remove('hidden');
     document.getElementById('ru-share-btn').onclick=()=>{playUIClick();shareCard({headline:'RANK RECLASSIFIED',bigText:rank,titleText:tt,subText:sub,accentColor:'#ffd700'});};
     document.getElementById('ru-dismiss-btn').onclick=()=>{playUIClick();ov.classList.add('hidden');};
+    // Immediate push on rank-up — bypass cooldown
+    autoPushIfLinked(true);
 }
 
 // ─── SHARE CARD ──────────────────────────────────────────────
@@ -1605,22 +1618,13 @@ function openSettings(){
     document.getElementById('confirm-no').onclick=()=>{playUIClick();document.getElementById('confirm-box').classList.add('hidden');};
 
     // Sync Terminal wiring
-    const pushBtn    = document.getElementById('sync-push-btn');
-    const recoverBtn = document.getElementById('sync-recover-btn');
-    if (pushBtn)    pushBtn.onclick    = () => { playUIClick(); pushSaveState(); };
-    if (recoverBtn) recoverBtn.onclick = () => { playUIClick(); reconstituteSaveState(); };
+    const establishBtn = document.getElementById('sync-establish-btn');
+    const recoverBtn   = document.getElementById('sync-recover-btn');
+    if (establishBtn) establishBtn.onclick = () => { playUIClick(); establishFrequency(); };
+    if (recoverBtn)   recoverBtn.onclick   = () => { playUIClick(); reconstituteSaveState(); };
 
-    // Show existing frequency code if the player has already pushed
-    const existingFreq = player.saveFrequency || localStorage.getItem(SAVE_FREQ_KEY);
-    if (existingFreq) {
-        const display = document.getElementById('sync-freq-display');
-        const codeEl  = document.getElementById('sync-freq-code');
-        if (display) display.classList.remove('hidden');
-        if (codeEl)  codeEl.textContent = existingFreq;
-    }
-
-    // Clear any previous status message when reopening settings
     setSyncStatus('', '');
+    updateSyncSettingsView();
     updateGearUI(currentGear);
     document.querySelectorAll('.gear-option-btn').forEach(btn=>{
         btn.onclick=()=>{playUIClick();const g=parseInt(btn.dataset.gear,10);saveGear(g);updateGearUI(g);showLog('[GEAR_SHIFT: GEAR_'+g+'_ENGAGED]');};
