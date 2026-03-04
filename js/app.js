@@ -1156,7 +1156,9 @@ async function checkReferralPayouts() {
 // Share referral link — uses Web Share API if available, clipboard fallback
 function shareReferralLink() {
     const link = getReferralLink();
-    const text = 'The System found me. It will find you too. Join the resistance: ' + link;
+    // text must NOT include the link — Web Share API appends url separately,
+    // so including it in both text and url causes it to appear twice.
+    const text = 'The System found me. It will find you too. Join the resistance.';
     if (navigator.share) {
         navigator.share({ title: 'SYD — Join the Resistance', text, url: link })
             .catch(() => copyReferralToClipboard(link));
@@ -1172,6 +1174,135 @@ function copyReferralToClipboard(link) {
             .catch(() => showLog('[ COPY FAILED — SHARE MANUALLY ]', 'warn'));
     } else {
         showLog('[ FREQUENCY: ' + link + ' ]', 'accent');
+    }
+}
+
+// ════════════════════════════════════════════════════════════════
+// TELEGRAM COMMS — System 4
+//
+// Zero-budget approach: no bot, no Cloud Functions.
+// One hardcoded Resistance Hub invite link stored as a constant.
+// To update the link: change TELEGRAM_INVITE_LINK below and redeploy.
+//
+// The [ ESTABLISH COMMS ] button appears in two places:
+//   1. Settings → RESISTANCE COMMS section (always accessible)
+//   2. Sync-Link active view (contextual — jump into channel with your ally)
+//
+// On mobile: tg:// deep-link opens Telegram app directly.
+// Fallback:  https://t.me/ link works in any browser.
+// ════════════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════════════
+// TELEGRAM COMMS — System 4
+//
+// Per-session encrypted channel. No hardcoded global link.
+//
+// Flow:
+//   1. Host generates a Sync-ID → comms prompt fires (optional)
+//   2. Host pastes their Telegram group invite link (or skips)
+//   3. Link is saved to sync_sessions/{syncId}.commsLink in Firestore
+//   4. Allies polling the session receive the link automatically
+//   5. [ ESTABLISH COMMS ] appears only if commsLink exists on the doc
+//   6. Button fires tg:// deep-link with https://t.me/ fallback
+//
+// The comms prompt fires from _synclinkConnect() when isHost === true.
+// Allies receive the link on their first poll tick via _synclinkTick().
+// ════════════════════════════════════════════════════════════════
+
+let _synclinkCommsLink = null;   // active session's Telegram invite link
+
+// Called when a host generates a Sync-ID — shows the comms prompt overlay
+function showCommsPrompt(docRef) {
+    const overlay = document.getElementById('overlay-comms-prompt');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+
+    const input     = document.getElementById('comms-prompt-input');
+    const confirmBtn = document.getElementById('comms-prompt-confirm');
+    const skipBtn    = document.getElementById('comms-prompt-skip');
+
+    function close(link) {
+        overlay.classList.add('hidden');
+        if (input) input.value = '';
+        if (link) _saveCommsLink(docRef, link);
+    }
+
+    // Tapping outside = skip
+    overlay.addEventListener('click', () => close(null), { once: true });
+    document.getElementById('comms-prompt-inner')
+        .addEventListener('click', e => e.stopPropagation());
+
+    if (confirmBtn) confirmBtn.onclick = e => {
+        e.stopPropagation();
+        playUIClick();
+        const raw  = input ? input.value.trim() : '';
+        const link = _parseTelegramLink(raw);
+        if (!link) {
+            document.getElementById('comms-prompt-status').textContent =
+                '[ INVALID LINK — MUST BE A t.me INVITE URL ]';
+            return;
+        }
+        close(link);
+        showLog('[ TACTICAL COMMS CHANNEL ESTABLISHED ]', 'accent');
+    };
+
+    if (skipBtn) skipBtn.onclick = e => {
+        e.stopPropagation();
+        playUIClick();
+        close(null);
+        showLog('[ PROCEEDING WITHOUT COMMS — CHANNEL UNENCRYPTED ]');
+    };
+}
+
+// Parse and normalise a Telegram invite link
+// Accepts: https://t.me/+HASH, https://t.me/joinchat/HASH, tg://join?invite=HASH
+function _parseTelegramLink(raw) {
+    if (!raw) return null;
+    // Already a full https link
+    if (raw.startsWith('https://t.me/')) return raw;
+    // tg:// scheme — convert to https
+    const inviteMatch = raw.match(/tg:\/\/join\?invite=(.+)/);
+    if (inviteMatch) return 'https://t.me/+' + inviteMatch[1];
+    return null;
+}
+
+// Save comms link to the Firestore session document
+async function _saveCommsLink(docRef, link) {
+    _synclinkCommsLink = link;
+    try {
+        await docRef.set({ commsLink: link }, { merge: true });
+    } catch(e) {
+        console.warn('Comms link save failed:', e);
+    }
+    _refreshCommsButton();
+}
+
+// Open the Telegram channel — tg:// deep-link with https fallback
+function openTelegramComms() {
+    const link = _synclinkCommsLink;
+    if (!link) return;
+
+    // Extract the invite hash to build the tg:// deep-link
+    // https://t.me/+HASH → tg://join?invite=HASH
+    const hash     = link.replace('https://t.me/+', '').replace('https://t.me/joinchat/', '');
+    const appLink  = 'tg://join?invite=' + hash;
+
+    // Fire the app deep-link; fall back to web if Telegram isn't installed
+    const fallback = setTimeout(() => window.open(link, '_blank'), 1200);
+    window.location.href = appLink;
+    window.addEventListener('blur', () => clearTimeout(fallback), { once: true });
+
+    showLog('[ RESISTANCE COMMS: ENCRYPTED CHANNEL OPEN ]', 'accent');
+}
+
+// Show or hide the comms button based on whether a link exists
+function _refreshCommsButton() {
+    const btn = document.getElementById('synclink-comms-btn');
+    if (!btn) return;
+    if (_synclinkCommsLink) {
+        btn.classList.remove('hidden');
+    } else {
+        btn.classList.add('hidden');
     }
 }
 
@@ -1490,6 +1621,8 @@ async function _synclinkConnect(id, isHost) {
         showLog('[ SYNC-LINK ESTABLISHED — ID: ' + id + ' ]', 'accent');
         _synclinkStartPoll(docRef);
         startHeartbeatAudio();
+        // Host gets the comms prompt; allies receive the link via polling
+        if (isHost) setTimeout(() => showCommsPrompt(docRef), 800);
     } catch(e) {
         console.error('Sync-Link connect failed:', e);
         setSynclinkStatus('[ TETHER FAILED — RETRY ]', 'warn');
@@ -1550,6 +1683,13 @@ async function _synclinkTick(docRef) {
                 : '—';
         }
 
+        // Receive comms link if host has set one and we don't have it yet
+        if (data.commsLink && !_synclinkCommsLink) {
+            _synclinkCommsLink = data.commsLink;
+            _refreshCommsButton();
+            showLog('[ TACTICAL COMMS CHANNEL AVAILABLE — TAP ESTABLISH COMMS ]', 'accent');
+        }
+
         // Log ally directive activity
         const prevDirectives = _synclinkLastAllyDirectives;
         const currDirectives = ally.directivesThisSession || 0;
@@ -1608,8 +1748,10 @@ function synclinkSever() {
     _synclinkLastDirectiveAt       = null;
     _synclinkLastAllyDirectives    = 0;
     _synclinkResonanceFired        = false;
+    _synclinkCommsLink             = null;
     localStorage.removeItem(SYNCLINK_ID_KEY);
     stopHeartbeatAudio();
+    _refreshCommsButton();
     updateSynclinkView();
     setSynclinkStatus('[ TETHER SEVERED — OPERATING SOLO ]', '');
     showLog('[ SYNC-LINK SEVERED ]');
@@ -2033,6 +2175,11 @@ function openSettings(){
     if (severBtn)    severBtn.onclick    = () => { playUIClick(); synclinkSever(); };
     setSynclinkStatus('', '');
     updateSynclinkView();
+
+    // Resistance Comms wiring — button only visible when a session comms link exists
+    const synclinkComms = document.getElementById('synclink-comms-btn');
+    if (synclinkComms) synclinkComms.onclick = () => { playUIClick(); openTelegramComms(); };
+    _refreshCommsButton();
 
     updateGearUI(currentGear);
     document.querySelectorAll('.gear-option-btn').forEach(btn=>{

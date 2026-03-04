@@ -477,6 +477,9 @@
                         <span class="sync-diag-value">45s</span>
                     </div>
                 </div>
+                <button class="nav-btn synclink-comms-btn hidden" id="synclink-comms-btn">
+                    [ OPEN RESISTANCE CHANNEL ]
+                </button>
                 <button class="nav-btn synclink-sever-btn" id="synclink-sever-btn">
                     SEVER TETHER
                 </button>
@@ -638,6 +641,42 @@
                 </button>
                 <button class="sync-advisory-dismiss-btn" id="sync-advisory-dismiss-btn">
                     REMAIN UNLINKED
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         COMMS PROMPT OVERLAY
+         Fires for the host after generating a Sync-ID.
+         Optional — skippable by tapping outside or SKIP.
+    ═══════════════════════════════════════════════ -->
+    <div class="overlay hidden" id="overlay-comms-prompt">
+        <div class="overlay-content comms-prompt-content" id="comms-prompt-inner">
+            <div class="comms-prompt-tag">[ TACTICAL COMMS ]</div>
+            <div class="comms-prompt-headline">ENCRYPT THIS CHANNEL</div>
+            <div class="comms-prompt-body">
+                Create a Telegram group for this encounter and paste
+                the invite link below. Allies will receive it automatically
+                when they join the Sync-ID.<br><br>
+                This step is optional. The System does not require it.
+            </div>
+            <input
+                type="url"
+                id="comms-prompt-input"
+                class="settings-name-input comms-prompt-input"
+                placeholder="https://t.me/+..."
+                autocomplete="off"
+                autocorrect="off"
+                spellcheck="false"
+            />
+            <div class="comms-prompt-status" id="comms-prompt-status"></div>
+            <div class="comms-prompt-actions">
+                <button class="comms-prompt-confirm-btn" id="comms-prompt-confirm">
+                    [ ESTABLISH ENCRYPTED CHANNEL ]
+                </button>
+                <button class="comms-prompt-skip-btn" id="comms-prompt-skip">
+                    SKIP — PROCEED WITHOUT COMMS
                 </button>
             </div>
         </div>

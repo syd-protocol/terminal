@@ -2295,3 +2295,92 @@ body {
     margin-bottom: 1.2rem;
     line-height: 1.5;
 }
+
+/* ════════════════════════════════════════════════════════════
+   TELEGRAM COMMS — Per-Session Encrypted Channel (System 4)
+   ════════════════════════════════════════════════════════════ */
+
+.synclink-comms-btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    border-color: rgba(79, 195, 247, 0.5);
+}
+
+/* ── Comms prompt overlay ─────────────────────────────────── */
+.comms-prompt-content {
+    max-width: 340px;
+    text-align: center;
+    padding: 2rem 1.6rem;
+}
+.comms-prompt-tag {
+    font-size: 0.72rem;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    letter-spacing: 0.12em;
+    margin-bottom: 0.6rem;
+}
+.comms-prompt-headline {
+    font-size: 1.2rem;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+}
+.comms-prompt-body {
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    color: var(--text-dim);
+    line-height: 1.7;
+    margin-bottom: 1rem;
+}
+.comms-prompt-input {
+    width: 100%;
+    text-align: left;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.5rem;
+}
+.comms-prompt-status {
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+    color: var(--warn, #ff6b6b);
+    min-height: 1rem;
+    margin-bottom: 0.6rem;
+    letter-spacing: 0.06em;
+}
+.comms-prompt-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+.comms-prompt-confirm-btn {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.comms-prompt-confirm-btn:hover,
+.comms-prompt-confirm-btn:active {
+    background: var(--accent);
+    color: var(--bg);
+}
+.comms-prompt-skip-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    padding: 0.4rem;
+    cursor: pointer;
+    opacity: 0.65;
+    transition: opacity 0.15s ease;
+}
+.comms-prompt-skip-btn:hover { opacity: 1; }
