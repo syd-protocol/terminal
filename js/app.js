@@ -4,8 +4,33 @@
 // ═══════════════════════════════════════════════════════════════
 
 // ─── CONSTANTS ───────────────────────────────────────────────
-const STORAGE_KEY = 'syd_player';
-const GEAR_KEY    = 'syd_gear';
+const STORAGE_KEY     = 'syd_player';
+const GEAR_KEY        = 'syd_gear';
+const SAVE_FREQ_KEY   = 'syd_save_frequency';
+
+// ─── FIREBASE ────────────────────────────────────────────────
+// Compat SDK loaded via <script> tags in index.html.
+// db is initialised once here and used by all sync functions.
+const FIREBASE_CONFIG = {
+    apiKey:            'AIzaSyAkuEPtCAc5YWRgb08zClJwnr9IXlrN5nE',
+    authDomain:        'syd-protocol.firebaseapp.com',
+    projectId:         'syd-protocol',
+    storageBucket:     'syd-protocol.firebasestorage.app',
+    messagingSenderId: '6170479356',
+    appId:             '1:6170479356:web:1f1127ba7c77f87a2ce579'
+};
+
+let db = null;
+function getDB() {
+    if (db) return db;
+    try {
+        if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+        db = firebase.firestore();
+    } catch(e) {
+        console.warn('Firebase unavailable:', e);
+    }
+    return db;
+}
 const STAT_NAMES  = ['strength', 'intelligence', 'agility', 'endurance', 'charisma'];
 const STAT_FLOOR  = 10;
 
@@ -891,6 +916,8 @@ function loadPlayer() {
     if(!p.mapMilestones) p.mapMilestones={};
     // Existing players who predate the briefing — mark as seen so it never fires
     if(typeof p.hasSeenBriefing === 'undefined') p.hasSeenBriefing=true;
+    // Save frequency — generated on first push, not on creation
+    if(!p.saveFrequency) p.saveFrequency = null;
     return p;
 }
 function savePlayer() { localStorage.setItem(STORAGE_KEY,JSON.stringify(player)); }
@@ -1064,6 +1091,130 @@ function copyReferralToClipboard(link) {
     } else {
         showLog('[ FREQUENCY: ' + link + ' ]', 'accent');
     }
+}
+
+// ════════════════════════════════════════════════════════════════
+// SAVE-STATE TRANSMISSIONS — cloud persistence via Firestore
+//
+// Save Frequency: an 8-character operator code (e.g. S-992-X1).
+// Generated once on first push, stored in both player object
+// and localStorage under syd_save_frequency.
+//
+// Push: serialises full player blob to Firestore doc at save_states/{code}
+// Reconstitute: reads the doc, overwrites localStorage, reloads the page.
+//
+// The System never pushes automatically. Syncing is a deliberate choice.
+// ════════════════════════════════════════════════════════════════
+
+function generateSaveFrequency(name, seed) {
+    // Format: S-NNN-XX  (S prefix, 3 digits, 2 alphanum chars)
+    let hash = 0;
+    const str = 'SAVE' + name + String(seed);
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+    }
+    const n = Math.abs(hash);
+    const digits = String(n % 1000).padStart(3, '0');
+    const chars  = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const c1     = chars[(n >> 4)  % chars.length];
+    const c2     = chars[(n >> 8)  % chars.length];
+    return 'S-' + digits + '-' + c1 + c2;
+}
+
+function getOrCreateSaveFrequency() {
+    // Return existing code if already generated
+    if (player.saveFrequency) return player.saveFrequency;
+    const freq = generateSaveFrequency(player.name, player.lastQuestDate || Date.now());
+    player.saveFrequency = freq;
+    savePlayer();
+    localStorage.setItem(SAVE_FREQ_KEY, freq);
+    return freq;
+}
+
+async function pushSaveState() {
+    const firestore = getDB();
+    if (!firestore) {
+        setSyncStatus('[ ERROR: CLOUD UNREACHABLE — CHECK CONNECTION ]', 'warn');
+        return;
+    }
+    const btn = document.getElementById('sync-push-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'TRANSMITTING...'; }
+
+    try {
+        const freq    = getOrCreateSaveFrequency();
+        const payload = {
+            playerBlob:  JSON.stringify(player),
+            pushedAt:    new Date().toISOString(),
+            appVersion:  'syd-v2'
+        };
+        await firestore.collection('save_states').doc(freq).set(payload);
+
+        // Show the frequency code in the UI
+        const display = document.getElementById('sync-freq-display');
+        const codeEl  = document.getElementById('sync-freq-code');
+        if (display) display.classList.remove('hidden');
+        if (codeEl)  codeEl.textContent = freq;
+
+        setSyncStatus('[ STATE TRANSMITTED — FREQUENCY: ' + freq + ' ]', 'accent');
+        showLog('[ SAVE-STATE TRANSMITTED — ' + freq + ' ]', 'accent');
+    } catch(e) {
+        console.error('Push failed:', e);
+        setSyncStatus('[ TRANSMISSION FAILED — RETRY OR CHECK CONNECTION ]', 'warn');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'PUSH STATE TO CLOUD'; }
+    }
+}
+
+async function reconstituteSaveState() {
+    const input   = document.getElementById('sync-recover-input');
+    const code    = input ? input.value.trim().toUpperCase() : '';
+
+    if (!code || code.length < 4) {
+        setSyncStatus('[ INVALID FREQUENCY — ENTER FULL CODE ]', 'warn');
+        return;
+    }
+
+    const firestore = getDB();
+    if (!firestore) {
+        setSyncStatus('[ ERROR: CLOUD UNREACHABLE — CHECK CONNECTION ]', 'warn');
+        return;
+    }
+
+    const btn = document.getElementById('sync-recover-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'SCANNING...'; }
+    setSyncStatus('[ SCANNING CLOUD FOR FREQUENCY: ' + code + ' ]', '');
+
+    try {
+        const doc = await firestore.collection('save_states').doc(code).get();
+        if (!doc.exists) {
+            setSyncStatus('[ NO SIGNAL FOUND AT FREQUENCY: ' + code + ' ]', 'warn');
+            if (btn) { btn.disabled = false; btn.textContent = 'RECONSTITUTE'; }
+            return;
+        }
+        const data       = doc.data();
+        const blobString = data.playerBlob;
+        if (!blobString) throw new Error('Empty blob');
+
+        // Overwrite localStorage and reload — cleanest reconstitution
+        localStorage.setItem(STORAGE_KEY, blobString);
+        localStorage.setItem(SAVE_FREQ_KEY, code);
+        setSyncStatus('[ FREQUENCY LOCKED — RECONSTITUTING TERMINAL... ]', 'accent');
+        setTimeout(() => window.location.reload(), 1200);
+    } catch(e) {
+        console.error('Reconstitute failed:', e);
+        setSyncStatus('[ RECONSTITUTION FAILED — CHECK CODE AND RETRY ]', 'warn');
+        if (btn) { btn.disabled = false; btn.textContent = 'RECONSTITUTE'; }
+    }
+}
+
+function setSyncStatus(msg, variant) {
+    const el = document.getElementById('sync-status');
+    if (!el) return;
+    el.textContent = msg;
+    el.className   = 'sync-status'
+        + (variant === 'warn'   ? ' sync-status--warn'   : '')
+        + (variant === 'accent' ? ' sync-status--accent' : '');
 }
 
 // ─── DAILY RESET ──────────────────────────────────────────────
@@ -1335,6 +1486,24 @@ function openSettings(){
     document.getElementById('reset-btn').onclick=()=>{playUIClick();showConfirmReset();};
     document.getElementById('confirm-yes').onclick=()=>{playUIClick();resetProfile();};
     document.getElementById('confirm-no').onclick=()=>{playUIClick();document.getElementById('confirm-box').classList.add('hidden');};
+
+    // Sync Terminal wiring
+    const pushBtn    = document.getElementById('sync-push-btn');
+    const recoverBtn = document.getElementById('sync-recover-btn');
+    if (pushBtn)    pushBtn.onclick    = () => { playUIClick(); pushSaveState(); };
+    if (recoverBtn) recoverBtn.onclick = () => { playUIClick(); reconstituteSaveState(); };
+
+    // Show existing frequency code if the player has already pushed
+    const existingFreq = player.saveFrequency || localStorage.getItem(SAVE_FREQ_KEY);
+    if (existingFreq) {
+        const display = document.getElementById('sync-freq-display');
+        const codeEl  = document.getElementById('sync-freq-code');
+        if (display) display.classList.remove('hidden');
+        if (codeEl)  codeEl.textContent = existingFreq;
+    }
+
+    // Clear any previous status message when reopening settings
+    setSyncStatus('', '');
     updateGearUI(currentGear);
     document.querySelectorAll('.gear-option-btn').forEach(btn=>{
         btn.onclick=()=>{playUIClick();const g=parseInt(btn.dataset.gear,10);saveGear(g);updateGearUI(g);showLog('[GEAR_SHIFT: GEAR_'+g+'_ENGAGED]');};

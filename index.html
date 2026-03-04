@@ -368,6 +368,46 @@
             </div>
         </div>
 
+        <!-- ── SYNC TERMINAL ───────────────────────────── -->
+        <div class="settings-section" id="sync-section">
+            <div class="settings-section-title">SYNC TERMINAL</div>
+            <div class="sync-lore">
+                Serialise your terminal state to the cloud. Enter your Save Frequency
+                on any device to reconstitute your progress. Local by default —
+                syncing is a deliberate operator choice.
+            </div>
+
+            <div class="sync-freq-display hidden" id="sync-freq-display">
+                <div class="sync-freq-label">[ SAVE FREQUENCY ]</div>
+                <div class="sync-freq-code"  id="sync-freq-code">—</div>
+            </div>
+
+            <button class="nav-btn sync-push-btn" id="sync-push-btn">
+                PUSH STATE TO CLOUD
+            </button>
+
+            <div class="sync-divider">— OR —</div>
+
+            <div class="sync-recover-wrap">
+                <div class="sync-recover-label">RECONSTITUTE TERMINAL</div>
+                <input
+                    type="text"
+                    id="sync-recover-input"
+                    class="settings-name-input sync-recover-input"
+                    maxlength="9"
+                    placeholder="ENTER FREQUENCY CODE..."
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                />
+                <button class="nav-btn sync-recover-btn" id="sync-recover-btn">
+                    RECONSTITUTE
+                </button>
+            </div>
+
+            <div class="sync-status" id="sync-status"></div>
+        </div>
+
         <div class="danger-zone">
             <div class="settings-section-title">DANGER ZONE</div>
             <button class="danger-btn" id="reset-btn">WIPE PROFILE</button>
@@ -501,6 +541,10 @@
          SYSTEM LOG STRIP
     ═══════════════════════════════════════════════ -->
     <div class="system-log" id="system-log"></div>
+
+    <!-- Firebase SDK (compat build — no bundler required) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
     <script src="js/quests.js"></script>
     <script src="js/app.js"></script>

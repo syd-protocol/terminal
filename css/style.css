@@ -2049,3 +2049,91 @@ body {
 .briefing-directives-btn.hidden {
     display: none;
 }
+
+/* ════════════════════════════════════════════════════════════
+   SYNC TERMINAL — Settings section (System 1: Save-State)
+   ════════════════════════════════════════════════════════════ */
+
+.sync-lore {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 1.2rem;
+    font-family: var(--font-mono);
+}
+
+.sync-freq-display {
+    background: rgba(79, 195, 247, 0.06);
+    border: 1px solid rgba(79, 195, 247, 0.25);
+    border-radius: 4px;
+    padding: 0.8rem 1rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.sync-freq-label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.35rem;
+}
+
+.sync-freq-code {
+    font-size: 1.5rem;
+    font-family: var(--font-mono);
+    color: var(--accent);
+    letter-spacing: 0.18em;
+    font-weight: 700;
+}
+
+.sync-push-btn {
+    width: 100%;
+    margin-bottom: 0.8rem;
+}
+
+.sync-divider {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    margin: 0.6rem 0;
+    letter-spacing: 0.1em;
+    opacity: 0.6;
+}
+
+.sync-recover-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.sync-recover-label {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+}
+
+.sync-recover-input {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+.sync-recover-btn {
+    width: 100%;
+}
+
+.sync-status {
+    margin-top: 0.9rem;
+    font-size: 0.74rem;
+    font-family: var(--font-mono);
+    color: var(--text-dim);
+    min-height: 1.2rem;
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+    transition: color 0.2s ease;
+}
+
+.sync-status--warn   { color: var(--warn, #ff6b6b); }
+.sync-status--accent { color: var(--accent); }
