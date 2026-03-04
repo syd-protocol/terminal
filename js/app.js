@@ -1631,18 +1631,22 @@ function openSettings(){
     });
     showScreen('screen-settings');
 }
+
 function updateGearUI(gear){
     document.querySelectorAll('.gear-option-btn').forEach(b=>b.classList.toggle('gear-active',parseInt(b.dataset.gear,10)===gear));
     document.querySelectorAll('.gear-warning').forEach(e=>e.classList.add('hidden'));
     const w=document.getElementById('gear-warning-'+gear);if(w)w.classList.remove('hidden');
 }
+
 function savePlayerName(){
     const i=document.getElementById('settings-name-input'),n=i.value.trim().toUpperCase();
     if(!n){i.focus();return;}
     player.name=n;savePlayer();updateStatusScreen();showLog('[DESIGNATION_UPDATED]');
     setTimeout(()=>showScreen('screen-status'),1200);
 }
+
 function showConfirmReset(){document.getElementById('confirm-box').classList.remove('hidden');}
+
 function resetProfile(){
     localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(SOUND_KEY);
     localStorage.removeItem('syd_sound');localStorage.removeItem(GEAR_KEY);

@@ -371,31 +371,49 @@
         <!-- ── SYNC TERMINAL ───────────────────────────── -->
         <div class="settings-section" id="sync-section">
             <div class="settings-section-title">SYNC TERMINAL</div>
-            <div class="sync-lore">
-                Serialise your terminal state to the cloud. Enter your Save Frequency
-                on any device to reconstitute your progress. Local by default —
-                syncing is a deliberate operator choice.
+
+            <!-- Ghost / Unlinked state -->
+            <div id="sync-ghost-view">
+                <div class="sync-lore">
+                    Terminal operating unlinked. Progress is stored locally only.
+                    Establish a Save Frequency to enable automated cloud protection.
+                    The System will handle broadcasts silently once the channel is open.
+                </div>
+                <button class="nav-btn sync-establish-btn" id="sync-establish-btn">
+                    [ ESTABLISH FREQUENCY ]
+                </button>
             </div>
 
-            <div class="sync-freq-display hidden" id="sync-freq-display">
-                <div class="sync-freq-label">[ SAVE FREQUENCY ]</div>
-                <div class="sync-freq-code"  id="sync-freq-code">—</div>
+            <!-- Linked / Active state -->
+            <div id="sync-linked-view" class="hidden">
+                <div class="sync-freq-display">
+                    <div class="sync-freq-label">[ SAVE FREQUENCY ]</div>
+                    <div class="sync-freq-code" id="sync-freq-code">—</div>
+                </div>
+                <div class="sync-diagnostics">
+                    <div class="sync-diag-row">
+                        <span class="sync-diag-label">UPLINK STATUS</span>
+                        <span class="sync-diag-value sync-diag-active" id="sync-uplink-status">ACTIVE</span>
+                    </div>
+                    <div class="sync-diag-row">
+                        <span class="sync-diag-label">LAST BROADCAST</span>
+                        <span class="sync-diag-value" id="sync-last-broadcast">—</span>
+                    </div>
+                </div>
             </div>
 
-            <button class="nav-btn sync-push-btn" id="sync-push-btn">
-                PUSH STATE TO CLOUD
-            </button>
-
-            <div class="sync-divider">— OR —</div>
-
+            <!-- Reconstitute — always visible -->
             <div class="sync-recover-wrap">
-                <div class="sync-recover-label">RECONSTITUTE TERMINAL</div>
+                <div class="sync-divider">— RECONSTITUTE TERMINAL —</div>
+                <div class="sync-recover-lore">
+                    Restore your progress from the cloud on this device.
+                </div>
                 <input
                     type="text"
                     id="sync-recover-input"
                     class="settings-name-input sync-recover-input"
                     maxlength="9"
-                    placeholder="ENTER FREQUENCY CODE..."
+                    placeholder="FREQUENCY CODE..."
                     autocomplete="off"
                     autocorrect="off"
                     spellcheck="false"
@@ -532,6 +550,35 @@
                 </button>
                 <button class="install-dismiss-btn" id="install-dismiss-btn">
                     LATER
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         SYNC ADVISORY OVERLAY
+         Fires once at Level 3, once more at Level 10
+         if operator is still unlinked. Dismissible by
+         tapping outside — never blocks the operator.
+    ═══════════════════════════════════════════════ -->
+    <div class="overlay hidden" id="overlay-sync-advisory">
+        <div class="overlay-content sync-advisory-content" id="sync-advisory-inner">
+            <div class="sync-advisory-tag">[ SYSTEM ADVISORY ]</div>
+            <div class="sync-advisory-headline">TERMINAL UNANCHORED</div>
+            <div class="sync-advisory-body">
+                Your progress exists on this device only.<br><br>
+                Establishing a Save Frequency opens an encrypted uplink.
+                Once linked, the System protects your timeline automatically.
+                No further action required from the operator.<br><br>
+                Remaining unlinked is an accepted operational risk.
+                The System does not judge the choice. It records the outcome.
+            </div>
+            <div class="sync-advisory-actions">
+                <button class="sync-advisory-confirm-btn" id="sync-advisory-confirm-btn">
+                    [ ESTABLISH FREQUENCY ]
+                </button>
+                <button class="sync-advisory-dismiss-btn" id="sync-advisory-dismiss-btn">
+                    REMAIN UNLINKED
                 </button>
             </div>
         </div>
