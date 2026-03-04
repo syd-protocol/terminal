@@ -1173,392 +1173,8 @@ body {
 
 /* ══════════════════════════════════════════════════════════════
    STAGE 2 — GOLD + SHOP
-   Append these rules to the bottom of css/style.css
 ══════════════════════════════════════════════════════════════ */
 
-/* ── GOLD ROW (status screen) ───────────────────────────────── */
-.gold-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    padding: 10px 14px;
-    margin-bottom: 8px;
-}
-
-.gold-label {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 2px;
-    color: var(--luck);
-    white-space: nowrap;
-}
-
-.gold-value {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.9rem;
-    color: var(--luck);
-    font-weight: 700;
-    flex: 1;
-}
-
-.shop-nav-btn {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 2px;
-    color: var(--luck);
-    background: transparent;
-    border: 1px solid var(--luck-dim);
-    padding: 5px 10px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-
-.shop-nav-btn:hover {
-    background: var(--luck-dim);
-    border-color: var(--luck);
-}
-
-/* ── SHOP SCREEN ─────────────────────────────────────────────── */
-.shop-header {
-    text-align: center;
-    border: 1px solid var(--border);
-    background: var(--panel);
-    padding: 20px 20px 16px;
-    margin-bottom: 10px;
-    cursor: pointer;
-}
-
-.shop-header h2 {
-    font-family: 'Share Tech Mono', monospace;
-    letter-spacing: 4px;
-    font-size: 1rem;
-    color: var(--luck);
-    margin-bottom: 10px;
-}
-
-.shop-gold-display {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(255, 215, 0, 0.06);
-    border: 1px solid var(--luck-dim);
-    padding: 6px 16px;
-    margin-bottom: 12px;
-}
-
-.shop-gold-label {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 2px;
-    color: var(--luck);
-}
-
-.shop-gold-value {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--luck);
-}
-
-.shop-lore {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.62rem;
-    color: var(--text-dim);
-    line-height: 1.8;
-    letter-spacing: 0.5px;
-    border-top: 1px solid var(--border);
-    padding-top: 10px;
-    text-align: left;
-}
-
-/* ── ACTIVE BUFFS PANEL ──────────────────────────────────────── */
-.active-buffs {
-    border: 1px solid rgba(79, 195, 247, 0.25);
-    background: rgba(79, 195, 247, 0.04);
-    padding: 12px 14px;
-    margin-bottom: 10px;
-    animation: fadeIn 0.3s ease;
-}
-
-.active-buffs.hidden { display: none; }
-
-.active-buffs-title {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.58rem;
-    letter-spacing: 2px;
-    color: var(--accent);
-    margin-bottom: 8px;
-}
-
-.active-buff-line {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--text);
-    line-height: 1.9;
-    letter-spacing: 0.5px;
-}
-
-/* ── SHOP ITEM CARDS ─────────────────────────────────────────── */
-.shop-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 12px;
-}
-
-.shop-card {
-    border: 1px solid var(--border);
-    background: var(--panel);
-    padding: 14px;
-    transition: border-color 0.2s ease;
-}
-
-.shop-card:hover { border-color: var(--luck-dim); }
-
-.shop-card--unaffordable { opacity: 0.45; }
-
-.shop-card-top {
-    display: grid;
-    grid-template-columns: 36px 1fr auto;
-    gap: 12px;
-    align-items: start;
-    margin-bottom: 10px;
-}
-
-.shop-item-emoji {
-    font-size: 1.4rem;
-    line-height: 1;
-    padding-top: 2px;
-}
-
-.shop-item-name {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.72rem;
-    letter-spacing: 2px;
-    color: var(--luck);
-    margin-bottom: 4px;
-}
-
-.shop-item-desc {
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    line-height: 1.55;
-    margin-bottom: 5px;
-    font-style: italic;
-}
-
-.shop-item-effect {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.6rem;
-    color: var(--accent);
-    letter-spacing: 0.5px;
-    line-height: 1.5;
-}
-
-.shop-item-price {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-    padding-top: 2px;
-    white-space: nowrap;
-}
-
-.shop-price-value {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--luck);
-    line-height: 1;
-}
-
-.shop-price-label {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.5rem;
-    letter-spacing: 1px;
-    color: var(--luck-dim);
-    text-transform: uppercase;
-}
-
-/* ── CONSUME BUTTON ──────────────────────────────────────────── */
-.consume-btn {
-    display: block;
-    width: 100%;
-    padding: 7px 12px;
-    background: transparent;
-    border: 1px solid var(--luck-dim);
-    color: var(--luck);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 2px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-}
-
-.consume-btn:hover {
-    background: var(--luck-dim);
-    border-color: var(--luck);
-}
-
-.consume-btn:disabled {
-    border-color: var(--border);
-    color: var(--text-dim);
-    cursor: not-allowed;
-    background: transparent;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   STAGE 3 — RELAUNCH BOOT + SYSTEM LOG
-══════════════════════════════════════════════════════════════ */
-
-/* ── BACK LINK TOP VARIANT ───────────────────────────────────── */
-/* Sits inside the screen header block at the top of shop and    */
-/* settings screens. Mirrors the bottom back-link style but with */
-/* a top border instead of bottom, and reduced top margin.       */
-.back-link--top {
-    margin-top: 12px;
-    margin-bottom: 0;
-    border-top: 1px solid var(--border);
-    border-bottom: none;
-    padding-top: 10px;
-    padding-bottom: 0;
-}
-
-/* Settings header — make it tappable-feeling */
-.settings-header {
-    cursor: pointer;
-}
-
-/* ── RELAUNCH BOOT OVERLAY ───────────────────────────────────── */
-.relaunch-boot {
-    position: fixed;
-    inset: 0;
-    background: var(--bg, #0f0f1a);
-    z-index: 9000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    opacity: 1;
-    transition: opacity 0.35s ease;
-}
-
-.relaunch-boot.hidden {
-    display: none;
-}
-
-.relaunch-boot.relaunch-fade-out {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.relaunch-boot-inner {
-    width: min(420px, 90vw);
-    padding: 24px;
-}
-
-.relaunch-lines {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 28px;
-    min-height: 120px;
-}
-
-.relaunch-line {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.72rem;
-    letter-spacing: 1.5px;
-    color: var(--text-dim, rgba(200, 214, 229, 0.5));
-    opacity: 0;
-    transform: translateY(4px);
-    transition: opacity 0.15s ease, transform 0.15s ease;
-    line-height: 1.6;
-}
-
-.relaunch-line.relaunch-line--visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.relaunch-line.relaunch-line--highlight {
-    color: var(--accent, #4fc3f7);
-}
-
-.relaunch-line.relaunch-line--warning {
-    color: #ff4444;
-}
-
-.relaunch-skip {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.55rem;
-    letter-spacing: 2px;
-    color: var(--text-dim, rgba(200, 214, 229, 0.3));
-    text-align: right;
-    animation: relaunch-blink 1.2s ease-in-out infinite;
-}
-
-@keyframes relaunch-blink {
-    0%, 100% { opacity: 0.3; }
-    50%       { opacity: 0.8; }
-}
-
-/* ── SYSTEM LOG STRIP ────────────────────────────────────────── */
-.system-log {
-    position: fixed;
-    bottom: 16px;
-    left: 12px;
-    z-index: 8000;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    pointer-events: none;
-    max-width: min(360px, calc(100vw - 24px));
-}
-
-.log-entry {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.62rem;
-    letter-spacing: 1px;
-    color: var(--accent, #4fc3f7);
-    background: rgba(15, 15, 26, 0.88);
-    border-left: 2px solid var(--accent, #4fc3f7);
-    padding: 5px 10px;
-    line-height: 1.4;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.log-entry.log-entry--visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.log-entry.log-entry--fading {
-    opacity: 0;
-    transition: opacity 0.5s ease;
-}
-
-.log-entry.log-entry--warn {
-    color: #ff4444;
-    border-left-color: #ff4444;
-}
-
-.log-entry.log-entry--accent {
-    color: var(--accent, #4fc3f7);
-    border-left-color: var(--accent, #4fc3f7);
-}
-
-/* ══════════════════════════════════════════════════════════════
-   STAGE 2 — GOLD + SHOP
-══════════════════════════════════════════════════════════════ */
-
-/* ── GOLD ROW ────────────────────────────────────────────────── */
 .gold-row {
     display: flex;
     align-items: center;
@@ -1599,25 +1215,11 @@ body {
     white-space: nowrap;
 }
 
-.map-nav-btn {
-    color: var(--accent);
-    border-color: rgba(79, 195, 247, 0.3);
-}
-.map-nav-btn:hover {
-    background: rgba(79, 195, 247, 0.08);
-    border-color: var(--accent);
-}
+.map-nav-btn  { color: var(--accent); border-color: rgba(79,195,247,0.3); }
+.map-nav-btn:hover { background: rgba(79,195,247,0.08); border-color: var(--accent); }
+.shop-nav-btn { color: var(--luck); border-color: var(--luck-dim); }
+.shop-nav-btn:hover { background: var(--luck-dim); border-color: var(--luck); }
 
-.shop-nav-btn {
-    color: var(--luck);
-    border-color: var(--luck-dim);
-}
-.shop-nav-btn:hover {
-    background: var(--luck-dim);
-    border-color: var(--luck);
-}
-
-/* ── SHOP SCREEN ─────────────────────────────────────────────── */
 .shop-header {
     text-align: center;
     border: 1px solid var(--border);
@@ -1639,7 +1241,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    background: rgba(255, 215, 0, 0.06);
+    background: rgba(255,215,0,0.06);
     border: 1px solid var(--luck-dim);
     padding: 6px 16px;
     margin-bottom: 12px;
@@ -1670,15 +1272,13 @@ body {
     text-align: left;
 }
 
-/* ── ACTIVE BUFFS PANEL ──────────────────────────────────────── */
 .active-buffs {
-    border: 1px solid rgba(79, 195, 247, 0.25);
-    background: rgba(79, 195, 247, 0.04);
+    border: 1px solid rgba(79,195,247,0.25);
+    background: rgba(79,195,247,0.04);
     padding: 12px 14px;
     margin-bottom: 10px;
     animation: fadeIn 0.3s ease;
 }
-
 .active-buffs.hidden { display: none; }
 
 .active-buffs-title {
@@ -1697,7 +1297,6 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* ── SHOP ITEM CARDS ─────────────────────────────────────────── */
 .shop-list {
     display: flex;
     flex-direction: column;
@@ -1711,7 +1310,6 @@ body {
     padding: 14px;
     transition: border-color 0.2s ease;
 }
-
 .shop-card:hover { border-color: var(--luck-dim); }
 .shop-card--unaffordable { opacity: 0.45; }
 
@@ -1723,11 +1321,7 @@ body {
     margin-bottom: 10px;
 }
 
-.shop-item-emoji {
-    font-size: 1.4rem;
-    line-height: 1;
-    padding-top: 2px;
-}
+.shop-item-emoji { font-size: 1.4rem; line-height: 1; padding-top: 2px; }
 
 .shop-item-name {
     font-family: 'Share Tech Mono', monospace;
@@ -1792,12 +1386,7 @@ body {
     transition: all 0.2s ease;
     text-align: center;
 }
-
-.consume-btn:hover {
-    background: var(--luck-dim);
-    border-color: var(--luck);
-}
-
+.consume-btn:hover { background: var(--luck-dim); border-color: var(--luck); }
 .consume-btn:disabled {
     border-color: var(--border);
     color: var(--text-dim);
@@ -1810,115 +1399,74 @@ body {
 ══════════════════════════════════════════════════════════════ */
 
 .relaunch-boot {
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background: var(--bg, #0f0f1a);
     z-index: 9000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    opacity: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 1;
     transition: opacity 0.35s ease;
 }
-
 .relaunch-boot.hidden { display: none; }
+.relaunch-boot.relaunch-fade-out { opacity: 0; pointer-events: none; }
 
-.relaunch-boot.relaunch-fade-out {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.relaunch-boot-inner {
-    width: min(420px, 90vw);
-    padding: 24px;
-}
+.relaunch-boot-inner { width: min(420px, 90vw); padding: 24px; }
 
 .relaunch-lines {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 28px;
-    min-height: 120px;
+    display: flex; flex-direction: column; gap: 6px;
+    margin-bottom: 28px; min-height: 120px;
 }
 
 .relaunch-line {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.72rem;
-    letter-spacing: 1.5px;
-    color: var(--text-dim, rgba(200, 214, 229, 0.5));
-    opacity: 0;
-    transform: translateY(4px);
+    font-size: 0.72rem; letter-spacing: 1.5px;
+    color: var(--text-dim, rgba(200,214,229,0.5));
+    opacity: 0; transform: translateY(4px);
     transition: opacity 0.15s ease, transform 0.15s ease;
     line-height: 1.6;
 }
-
-.relaunch-line.relaunch-line--visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
+.relaunch-line.relaunch-line--visible { opacity: 1; transform: translateY(0); }
 .relaunch-line.relaunch-line--highlight { color: var(--accent, #4fc3f7); }
 .relaunch-line.relaunch-line--warning   { color: #ff4444; }
 
 .relaunch-skip {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.55rem;
-    letter-spacing: 2px;
-    color: var(--text-dim, rgba(200, 214, 229, 0.3));
+    font-size: 0.55rem; letter-spacing: 2px;
+    color: var(--text-dim, rgba(200,214,229,0.3));
     text-align: right;
     animation: relaunch-blink 1.2s ease-in-out infinite;
 }
-
-@keyframes relaunch-blink {
-    0%, 100% { opacity: 0.3; }
-    50%       { opacity: 0.8; }
-}
+@keyframes relaunch-blink { 0%,100%{opacity:0.3} 50%{opacity:0.8} }
 
 .system-log {
-    position: fixed;
-    bottom: 16px;
-    left: 12px;
+    position: fixed; bottom: 16px; left: 12px;
     z-index: 8000;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    display: flex; flex-direction: column; gap: 4px;
     pointer-events: none;
     max-width: min(360px, calc(100vw - 24px));
 }
 
 .log-entry {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.62rem;
-    letter-spacing: 1px;
+    font-size: 0.62rem; letter-spacing: 1px;
     color: var(--accent, #4fc3f7);
-    background: rgba(15, 15, 26, 0.88);
+    background: rgba(15,15,26,0.88);
     border-left: 2px solid var(--accent, #4fc3f7);
-    padding: 5px 10px;
-    line-height: 1.4;
-    opacity: 0;
-    transform: translateY(6px);
+    padding: 5px 10px; line-height: 1.4;
+    opacity: 0; transform: translateY(6px);
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
+.log-entry.log-entry--visible  { opacity: 1; transform: translateY(0); }
+.log-entry.log-entry--fading   { opacity: 0; transition: opacity 0.5s ease; }
+.log-entry.log-entry--warn     { color: #ff4444; border-left-color: #ff4444; }
+.log-entry.log-entry--accent   { color: var(--accent,#4fc3f7); border-left-color: var(--accent,#4fc3f7); }
 
-.log-entry.log-entry--visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.log-entry.log-entry--fading {
-    opacity: 0;
-    transition: opacity 0.5s ease;
-}
-
-.log-entry.log-entry--warn {
-    color: #ff4444;
-    border-left-color: #ff4444;
-}
-
-.log-entry.log-entry--accent {
-    color: var(--accent, #4fc3f7);
-    border-left-color: var(--accent, #4fc3f7);
+/* Transmission log — special one-time milestone entries */
+/* Wider, longer linger, gold left border */
+.log-entry.log-entry--transmission {
+    color: var(--luck, #ffd700);
+    border-left-color: var(--luck, #ffd700);
+    border-left-width: 3px;
+    font-size: 0.65rem;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1926,8 +1474,6 @@ body {
 ══════════════════════════════════════════════════════════════ */
 
 /* ── MAP HEADER ──────────────────────────────────────────────── */
-/* Matches the pattern of quest-header: tappable, navigates back */
-
 .map-header {
     text-align: center;
     border: 1px solid var(--border);
@@ -1937,32 +1483,24 @@ body {
     cursor: pointer;
     transition: border-color 0.2s ease;
 }
-
 .map-header:hover { border-color: var(--accent); }
 
 .map-header h2 {
     font-family: 'Share Tech Mono', monospace;
-    letter-spacing: 4px;
-    font-size: 0.95rem;
-    color: var(--accent);
-    margin-bottom: 4px;
+    letter-spacing: 4px; font-size: 0.95rem;
+    color: var(--accent); margin-bottom: 4px;
 }
 
 .map-header-sub {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.58rem;
-    letter-spacing: 2px;
+    font-size: 0.58rem; letter-spacing: 2px;
     color: var(--text-dim);
 }
 
 /* ── MAP VIEWPORT ────────────────────────────────────────────── */
-/* Contains both the radar sweep overlay and the zone grid.      */
-/* position: relative so the sweep overlay can sit on top.       */
-
 .map-viewport {
     position: relative;
     width: 100%;
-    /* Maintain square aspect ratio for the map */
     aspect-ratio: 1 / 1;
     max-width: 480px;
     margin: 0 auto 10px;
@@ -1972,337 +1510,364 @@ body {
 }
 
 /* ── RADAR SWEEP ─────────────────────────────────────────────── */
-/* A conic-gradient pseudo-element that rotates continuously.    */
-/* Two layers: bright leading edge + fainter trailing glow.      */
-/* pointer-events: none so it never intercepts taps.             */
-
+/*
+ * FIX: The sweep div is scaled to 160% so the gradient line
+ * always extends past all four edges of the viewport regardless
+ * of rotation angle. Negative margin pulls it back to centre.
+ * overflow:hidden on .map-viewport clips the excess cleanly.
+ */
 .map-radar-sweep {
     position: absolute;
-    inset: 0;
-    border-radius: 0;
+    /* Oversized: 160% × 160%, centred via negative offset */
+    width: 160%;
+    height: 160%;
+    top: -30%;
+    left: -30%;
     pointer-events: none;
     z-index: 10;
-    /* The sweep is a conic gradient rotating around the centre. */
-    /* The accent colour fades to transparent over ~40°.          */
     background: conic-gradient(
         from 0deg at 50% 50%,
         transparent 0deg,
         transparent 300deg,
-        rgba(79, 195, 247, 0.03) 320deg,
-        rgba(79, 195, 247, 0.12) 345deg,
-        rgba(79, 195, 247, 0.22) 358deg,
-        rgba(79, 195, 247, 0.06) 360deg
+        rgba(79,195,247,0.03) 320deg,
+        rgba(79,195,247,0.12) 345deg,
+        rgba(79,195,247,0.22) 358deg,
+        rgba(79,195,247,0.06) 360deg
     );
     animation: radar-rotate 8s linear infinite;
     mix-blend-mode: screen;
+    /* The conic gradient is centred on the element itself,
+       which is centred on the viewport — so rotation origin
+       stays at the viewport centre. */
+    transform-origin: 50% 50%;
 }
 
-/* Corrupted map — red sweep, faster, jittery */
 .map-viewport.map--corrupted .map-radar-sweep {
     background: conic-gradient(
         from 0deg at 50% 50%,
         transparent 0deg,
         transparent 300deg,
-        rgba(255, 68, 68, 0.03) 320deg,
-        rgba(255, 68, 68, 0.14) 345deg,
-        rgba(255, 68, 68, 0.28) 358deg,
-        rgba(255, 68, 68, 0.08) 360deg
+        rgba(255,68,68,0.03) 320deg,
+        rgba(255,68,68,0.14) 345deg,
+        rgba(255,68,68,0.28) 358deg,
+        rgba(255,68,68,0.08) 360deg
     );
     animation: radar-rotate 4s linear infinite, radar-jitter 0.3s ease-in-out infinite;
 }
 
-@keyframes radar-rotate {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-}
-
+@keyframes radar-rotate { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 @keyframes radar-jitter {
-    0%, 100% { opacity: 1; }
-    48%       { opacity: 0.85; }
-    50%       { opacity: 0.6; transform: rotate(var(--rot, 0deg)) translateX(1px); }
-    52%       { opacity: 0.85; }
+    0%,100%{opacity:1}
+    48%{opacity:0.85}
+    50%{opacity:0.6; transform:rotate(var(--rot,0deg)) translateX(1px)}
+    52%{opacity:0.85}
 }
 
 /* ── MAP GRID ────────────────────────────────────────────────── */
-/* 3×3 grid. Corner cells (.map-void) are empty dark space.      */
-/* The 5 zone tiles + 1 hub tile fill the cross pattern.         */
-
 .map-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    width: 100%;
-    height: 100%;
-    gap: 2px;
-    padding: 2px;
+    grid-template-columns: repeat(3,1fr);
+    grid-template-rows: repeat(3,1fr);
+    width: 100%; height: 100%;
+    gap: 2px; padding: 2px;
     box-sizing: border-box;
 }
 
 .map-void {
     background: #04040a;
-    /* Corner grid lines — faint dot to suggest infinite space */
     background-image: radial-gradient(circle, rgba(79,195,247,0.06) 1px, transparent 1px);
     background-size: 12px 12px;
 }
 
 /* ── ZONE TILES ──────────────────────────────────────────────── */
-/* Each tile is position:relative to stack fog + terrain + text. */
-
 .map-zone {
-    position: relative;
-    overflow: hidden;
-    border: 1px solid rgba(79, 195, 247, 0.12);
+    position: relative; overflow: hidden;
+    border: 1px solid rgba(79,195,247,0.12);
     background: #0a0a18;
     transition: border-color 0.4s ease;
+    cursor: pointer;
 }
-
-.map-zone:hover { border-color: rgba(79, 195, 247, 0.3); }
-
-/* Hub tile has a slightly brighter base */
-.map-zone--hub {
-    border-color: rgba(79, 195, 247, 0.25);
-    background: #0d0d20;
-}
+.map-zone:hover          { border-color: rgba(79,195,247,0.35); }
+.map-zone--hub           { border-color: rgba(79,195,247,0.25); background: #0d0d20; }
+.map-zone.zone--selected { border-color: var(--accent) !important; box-shadow: inset 0 0 12px rgba(79,195,247,0.08); }
 
 /* ── TERRAIN LAYER ───────────────────────────────────────────── */
-/* Sits behind content. ASCII characters create texture.         */
-/* Each zone gets its own character via data attributes.         */
-
 .zone-terrain {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.55rem;
-    line-height: 1.4;
-    letter-spacing: 1px;
-    word-break: break-all;
-    overflow: hidden;
-    padding: 3px;
+    font-size: 0.55rem; line-height: 1.4;
+    letter-spacing: 1px; word-break: break-all;
+    overflow: hidden; padding: 3px;
     pointer-events: none;
-    /* Terrain is very dim by default — the fog controls visibility */
-    opacity: 0.18;
-    color: var(--accent);
+    opacity: 0.18; color: var(--accent);
     transition: opacity 0.8s ease;
 }
+.map-zone.tier-0 .zone-terrain { opacity: 0.0; }
+.map-zone.tier-1 .zone-terrain { opacity: 0.10; }
+.map-zone.tier-2 .zone-terrain { opacity: 0.22; }
+.map-zone.tier-3 .zone-terrain { opacity: 0.38; }
 
-/* Tier visibility — JS adds these classes to .map-zone */
-.map-zone.tier-0 .zone-terrain  { opacity: 0.0;  }
-.map-zone.tier-1 .zone-terrain  { opacity: 0.10; }
-.map-zone.tier-2 .zone-terrain  { opacity: 0.22; }
-.map-zone.tier-3 .zone-terrain  { opacity: 0.38; }
-
-/* ── FOG OF WAR OVERLAY ──────────────────────────────────────── */
-/* Sits above terrain but below content text.                    */
-/* Tier classes control opacity — JS applies them to .map-zone.  */
-
+/* ── FOG OF WAR ──────────────────────────────────────────────── */
 .zone-fog {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     pointer-events: none;
     transition: opacity 0.8s ease;
     z-index: 2;
-    /* Static noise: dense dot pattern simulating an unscanned surface */
-    background-image:
-        radial-gradient(circle, rgba(8,8,16,0.0) 1px, rgba(8,8,16,0.85) 1px);
+    background-image: radial-gradient(circle, rgba(8,8,16,0.0) 1px, rgba(8,8,16,0.85) 1px);
     background-size: 3px 3px;
 }
-
-/* Tier 0 — completely obscured */
 .map-zone.tier-0 .zone-fog { opacity: 1.0; }
-
-/* Tier 1 — heavy fog, just the outline visible */
 .map-zone.tier-1 .zone-fog { opacity: 0.78; }
-
-/* Tier 2 — partial reveal, interior still patchy */
 .map-zone.tier-2 .zone-fog { opacity: 0.45; }
-
-/* Tier 3 — clear, only a faint atmospheric haze */
 .map-zone.tier-3 .zone-fog { opacity: 0.10; }
-
-/* Hub fog — cleared when player has ≥3 zones at tier 1+ */
-.map-zone--hub.hub-locked .zone-fog   { opacity: 0.85; }
-.map-zone--hub.hub-unlocked .zone-fog { opacity: 0.0;  }
+.map-zone--hub.hub-locked   .zone-fog { opacity: 0.85; }
+.map-zone--hub.hub-unlocked .zone-fog { opacity: 0.0; }
 
 /* ── ZONE CONTENT TEXT ───────────────────────────────────────── */
-/* Sits above both terrain and fog layers.                       */
-
 .zone-content {
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 4px;
-    text-align: center;
-    gap: 2px;
+    position: absolute; inset: 0; z-index: 3;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 6px 4px; text-align: center; gap: 2px;
 }
 
 .zone-name {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.52rem;
-    letter-spacing: 1.5px;
-    color: var(--accent);
-    line-height: 1.3;
-    text-shadow: 0 0 8px rgba(79, 195, 247, 0.6);
+    font-size: 0.52rem; letter-spacing: 1.5px;
+    color: var(--accent); line-height: 1.3;
+    text-shadow: 0 0 8px rgba(79,195,247,0.6);
     transition: opacity 0.4s ease;
 }
 
 .zone-stat-name {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.42rem;
-    letter-spacing: 1px;
-    color: var(--text-dim);
-    opacity: 0.7;
+    font-size: 0.42rem; letter-spacing: 1px;
+    color: var(--text-dim); opacity: 0.7;
 }
 
 .zone-value {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--accent);
-    margin-top: 2px;
-    text-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
+    font-size: 0.72rem; font-weight: 700;
+    color: var(--accent); margin-top: 2px;
+    text-shadow: 0 0 10px rgba(79,195,247,0.5);
     transition: color 0.4s ease;
 }
-
-/* Zone value colour scales with tier */
-.map-zone.tier-0 .zone-value { color: rgba(79, 195, 247, 0.2); }
-.map-zone.tier-1 .zone-value { color: rgba(79, 195, 247, 0.5); }
-.map-zone.tier-2 .zone-value { color: rgba(79, 195, 247, 0.8); }
+.map-zone.tier-0 .zone-value { color: rgba(79,195,247,0.2); }
+.map-zone.tier-1 .zone-value { color: rgba(79,195,247,0.5); }
+.map-zone.tier-2 .zone-value { color: rgba(79,195,247,0.8); }
 .map-zone.tier-3 .zone-value { color: #4fc3f7; }
 
 .zone-tier {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.4rem;
-    letter-spacing: 1px;
-    color: var(--text-dim);
-    opacity: 0.55;
-    margin-top: 1px;
+    font-size: 0.4rem; letter-spacing: 1px;
+    color: var(--text-dim); opacity: 0.55; margin-top: 1px;
 }
-
-/* Tier 0 zones — name is barely readable through the fog */
-.map-zone.tier-0 .zone-name     { opacity: 0.3; }
-.map-zone.tier-0 .zone-stat-name { opacity: 0.2; }
+.map-zone.tier-0 .zone-name      { opacity: 0.3; }
+.map-zone.tier-0 .zone-stat-name  { opacity: 0.2; }
 
 /* ── HUB CONTENT ─────────────────────────────────────────────── */
-
-.zone-content--hub {
-    gap: 3px;
-}
+.zone-content--hub { gap: 3px; }
 
 .hub-pin {
-    font-size: 1.4rem;
-    color: var(--accent);
-    text-shadow: 0 0 16px rgba(79, 195, 247, 0.9), 0 0 32px rgba(79, 195, 247, 0.4);
+    font-size: 1.4rem; color: var(--accent);
+    text-shadow: 0 0 16px rgba(79,195,247,0.9), 0 0 32px rgba(79,195,247,0.4);
     animation: hub-pulse 2.4s ease-in-out infinite;
     line-height: 1;
 }
-
 @keyframes hub-pulse {
-    0%, 100% { transform: scale(1.0);   opacity: 1.0; }
-    50%       { transform: scale(1.12); opacity: 0.7; }
+    0%,100%{transform:scale(1.0); opacity:1.0}
+    50%    {transform:scale(1.12); opacity:0.7}
 }
 
 .hub-label {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.4rem;
-    letter-spacing: 1.5px;
-    color: var(--text-dim);
-    opacity: 0.6;
+    font-size: 0.4rem; letter-spacing: 1.5px;
+    color: var(--text-dim); opacity: 0.6;
 }
-
 .hub-name {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.52rem;
-    letter-spacing: 1px;
-    color: var(--accent);
-    font-weight: 700;
+    font-size: 0.52rem; letter-spacing: 1px;
+    color: var(--accent); font-weight: 700;
 }
-
 .hub-rank {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.42rem;
-    letter-spacing: 1px;
-    color: var(--text-dim);
-    opacity: 0.7;
+    font-size: 0.42rem; letter-spacing: 1px;
+    color: var(--text-dim); opacity: 0.7;
 }
 
 /* ── MAP STATUS BAR ──────────────────────────────────────────── */
-
 .map-status-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: flex; align-items: center; gap: 10px;
     padding: 7px 14px;
     border: 1px solid var(--border);
     background: var(--panel);
     margin-bottom: 10px;
-    max-width: 480px;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 480px; margin-left: auto; margin-right: auto;
 }
-
 .map-status-label {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.55rem;
-    letter-spacing: 2px;
+    font-size: 0.55rem; letter-spacing: 2px; color: var(--text-dim);
+}
+.map-status-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 1.5px; color: var(--accent);
+    animation: status-blink 2s ease-in-out infinite;
+}
+@keyframes status-blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ── ZONE LORE PANEL ─────────────────────────────────────────── */
+/*
+ * Slides up from below the map viewport when a zone is tapped.
+ * Contains: zone designation, lore text, and (if tier 1+)
+ * a VIEW ZONE DIRECTIVES button.
+ */
+.map-lore-panel {
+    max-width: 480px;
+    margin: 0 auto 10px;
+    border: 1px solid var(--accent);
+    background: rgba(10,10,24,0.96);
+    overflow: hidden;
+    /* Collapsed by default */
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.35s ease, opacity 0.25s ease;
+}
+.map-lore-panel.lore-panel--open {
+    max-height: 320px;
+    opacity: 1;
+}
+
+.lore-panel-inner {
+    padding: 14px 16px 12px;
+    display: flex; flex-direction: column; gap: 8px;
+}
+
+.lore-panel-zone-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.5rem; letter-spacing: 2.5px;
+    color: var(--text-dim); opacity: 0.6;
+}
+
+.lore-panel-zone-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem; letter-spacing: 2px;
+    color: var(--accent);
+    text-shadow: 0 0 10px rgba(79,195,247,0.4);
+}
+
+.lore-panel-stat {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.52rem; letter-spacing: 1.5px;
+    color: var(--text-dim); opacity: 0.6;
+    margin-top: -4px;
+}
+
+.lore-panel-divider {
+    border: none;
+    border-top: 1px solid rgba(79,195,247,0.15);
+    margin: 0;
+}
+
+.lore-panel-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.64rem; line-height: 1.75;
+    letter-spacing: 0.4px;
     color: var(--text-dim);
 }
 
-.map-status-value {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 1.5px;
-    color: var(--accent);
-    animation: status-blink 2s ease-in-out infinite;
+/* Hub lore panel — slightly different accent for the centre */
+.lore-panel--hub .lore-panel-zone-name { color: var(--accent); }
+.lore-panel--hub                        { border-color: rgba(79,195,247,0.5); }
+
+/* Uncharted panel — dimmer, warning feel */
+.lore-panel--uncharted .lore-panel-text { opacity: 0.55; font-style: italic; }
+.lore-panel--uncharted                  { border-color: rgba(79,195,247,0.25); }
+
+.lore-panel-actions {
+    display: flex; flex-direction: column; gap: 6px;
+    margin-top: 2px;
 }
 
-@keyframes status-blink {
-    0%, 100% { opacity: 1.0; }
-    50%       { opacity: 0.4; }
+.lore-panel-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 2px;
+    background: transparent;
+    border: 1px solid rgba(79,195,247,0.35);
+    color: var(--accent);
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
 }
+.lore-panel-btn:hover {
+    background: rgba(79,195,247,0.08);
+    border-color: var(--accent);
+}
+
+/* ── QUEST FILTER INDICATOR ──────────────────────────────────── */
+/*
+ * Shown at the top of screen-quests when arriving from the map
+ * with a zone filter active. Displays the zone name + a clear button.
+ */
+.quest-filter-bar {
+    display: flex; align-items: center; gap: 10px;
+    border: 1px solid rgba(79,195,247,0.3);
+    background: rgba(79,195,247,0.05);
+    padding: 8px 14px;
+    margin-bottom: 8px;
+}
+.quest-filter-bar.hidden { display: none; }
+
+.quest-filter-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.55rem; letter-spacing: 1.5px;
+    color: var(--text-dim); flex-shrink: 0;
+}
+.quest-filter-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 1.5px;
+    color: var(--accent); flex: 1;
+}
+.quest-filter-clear {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.55rem; letter-spacing: 1.5px;
+    color: var(--text-dim);
+    background: transparent; border: none;
+    cursor: pointer; padding: 2px 4px;
+    transition: color 0.15s ease;
+    flex-shrink: 0;
+}
+.quest-filter-clear:hover { color: var(--accent); }
 
 /* ── CORRUPTED MAP STATE ─────────────────────────────────────── */
-/* Applied to .map-viewport when player.corrupted is true.       */
-
 .map-viewport.map--corrupted .map-grid {
     animation: map-corrupt-flicker 4s ease-in-out infinite;
 }
-
 @keyframes map-corrupt-flicker {
-    0%, 100% { filter: none; opacity: 1; }
-    92%       { filter: none; opacity: 1; }
-    93%       { filter: saturate(0) brightness(0.6); opacity: 0.7; }
-    94%       { filter: none; opacity: 1; }
-    97%       { filter: saturate(0) brightness(0.5); opacity: 0.6; }
-    98%       { filter: none; opacity: 1; }
+    0%,100%{filter:none;opacity:1}
+    92%    {filter:none;opacity:1}
+    93%    {filter:saturate(0) brightness(0.6);opacity:0.7}
+    94%    {filter:none;opacity:1}
+    97%    {filter:saturate(0) brightness(0.5);opacity:0.6}
+    98%    {filter:none;opacity:1}
 }
 
-/* ── SCAN LINE EFFECT ────────────────────────────────────────── */
-/* Subtle horizontal scan lines across the whole map viewport.   */
-/* A pure CSS pattern — no JS, no images.                        */
-
+/* ── SCAN LINES ──────────────────────────────────────────────── */
 .map-viewport::after {
     content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 20;
+    position: absolute; inset: 0;
+    pointer-events: none; z-index: 20;
     background: repeating-linear-gradient(
         to bottom,
-        transparent 0px,
-        transparent 3px,
-        rgba(0, 0, 0, 0.08) 3px,
-        rgba(0, 0, 0, 0.08) 4px
+        transparent 0px, transparent 3px,
+        rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px
     );
 }
 
-/* ── RESPONSIVE — tighten text on very small screens ─────────── */
+/* ── RESPONSIVE ──────────────────────────────────────────────── */
 @media (max-width: 360px) {
     .zone-name      { font-size: 0.44rem; }
     .zone-stat-name { font-size: 0.36rem; }
     .zone-value     { font-size: 0.62rem; }
-    .hub-pin        { font-size: 1.1rem; }
+    .hub-pin        { font-size: 1.1rem;  }
 }

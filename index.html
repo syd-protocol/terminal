@@ -8,7 +8,6 @@
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#0f0f1a" />
 </head>
-
 <body>
 
     <!-- ═══════════════════════════════════════════════
@@ -17,22 +16,17 @@
     <div class="screen" id="screen-status">
 
         <button class="settings-btn" id="settings-btn" title="System Settings">⚙</button>
-
         <div class="sound-toggle" id="sound-toggle" title="Toggle sound">
             <span id="sound-icon">🔇</span>
         </div>
 
         <div class="status-header" id="status-header">
-            <div class="player-title tappable" id="player-title" data-tip="title">
-                [ THE BEGINNER ]
-            </div>
+            <div class="player-title tappable" id="player-title" data-tip="title">[ THE BEGINNER ]</div>
             <div class="rank-badge tappable rank-f" id="rank-badge" data-tip="rank">F</div>
             <h1 class="player-name" id="player-name">PLAYER</h1>
-
             <div class="player-level tappable" id="player-level-row" data-tip="level">
                 LEVEL <span id="player-level">1</span>
             </div>
-
             <div class="level-progress-wrap">
                 <div class="level-progress-bar" id="level-progress-bar"></div>
             </div>
@@ -40,150 +34,92 @@
 
             <div class="tooltip-box" id="tip-level">
                 <strong>Level</strong>
-                Derived from total earned XP. Every completed directive adds to it
-                permanently — no quest undoes what you have already built. Early levels
-                arrive quickly. Later levels require months of sustained effort. The
-                progress bar shows exactly where you stand. The System has seen every
-                timeline. Those who reach Level 100 all had one thing in common: they
-                kept showing up.
+                Derived from total earned XP. Every completed directive adds to it permanently — no quest undoes what you have already built. Early levels arrive quickly. Later levels require months of sustained effort. The progress bar shows exactly where you stand. The System has seen every timeline. Those who reach Level 100 all had one thing in common: they kept showing up.
             </div>
 
             <div class="momentum-row tappable" id="momentum-row" data-tip="momentum">
                 <span class="momentum-label">MOMENTUM</span>
-                <div class="momentum-bar-wrap">
-                    <div class="momentum-bar" id="momentum-bar"></div>
-                </div>
+                <div class="momentum-bar-wrap"><div class="momentum-bar" id="momentum-bar"></div></div>
                 <span class="momentum-value" id="momentum-value">1.00x</span>
             </div>
 
             <div class="hp-row tappable" id="hp-row" data-tip="hp">
                 <span class="hp-label">HP</span>
-                <div class="hp-bar-wrap">
-                    <div class="hp-bar" id="hp-bar"></div>
-                </div>
+                <div class="hp-bar-wrap"><div class="hp-bar" id="hp-bar"></div></div>
                 <span class="hp-value" id="hp-value">105 / 105</span>
             </div>
 
             <div class="tooltip-box" id="tip-hp">
                 <strong>System HP</strong>
-                Cover all five stats in a single day and the System recovers 20 HP.
-                Miss a day and it takes damage — 10 for one missed day, 20 for two,
-                35 for three or more. At zero, the System enters a Corrupted state:
-                XP gain is halved until HP climbs above 25. Max HP scales with level.
-                The stronger you become, the more punishment the System can absorb
-                before it breaks.
+                Cover all five stats in a single day and the System recovers 20 HP. Miss a day and it takes damage — 10 for one missed day, 20 for two, 35 for three or more. At zero, the System enters a Corrupted state: XP gain is halved until HP climbs above 25. Max HP scales with level.
             </div>
-
             <div class="tooltip-box" id="tip-title">
                 <strong>Designation</strong>
-                The System assigns titles based on observable attribute levels. Everyone
-                starts as The Beginner — not as an insult, but as an accurate reading.
-                As your attributes compound through completed directives, the designation
-                updates to reflect who you are becoming. The System does not give titles
-                away. You earn each one.
+                The System assigns titles based on observable attribute levels. Everyone starts as The Beginner — not as an insult, but as an accurate reading. As your attributes compound through completed directives, the designation updates to reflect who you are becoming.
             </div>
             <div class="tooltip-box" id="tip-rank">
                 <strong>Rank</strong>
-                F → E → D → C → B → A → S, then S+, SS, SS+, SSS beyond Level 100.
-                Rank is determined by level. F-Rank covers Levels 1 to 15. Each
-                threshold represents a genuine, measurable shift in who you are —
-                not a badge, a consequence. Almost no one reaches S-Rank. The System
-                has observed the ones who do. They were not exceptional at the start.
-                They were consistent.
+                F → E → D → C → B → A → S, then S+, SS, SS+, SSS beyond Level 100. Rank is determined by level. F-Rank covers Levels 1 to 15. Each threshold represents a genuine, measurable shift in who you are — not a badge, a consequence.
             </div>
             <div class="tooltip-box" id="tip-momentum">
                 <strong>Momentum</strong>
-                Consecutive effort compounds. The System has observed this in every
-                timeline. Fourteen days of daily execution brings the multiplier to
-                its maximum — 1.5× XP per directive. Miss a day occasionally and it
-                barely registers. Fall away for longer and the multiplier returns to
-                baseline, ready to be rebuilt. Your XP is always yours. Momentum only
-                governs how fast you earn more.
+                Consecutive effort compounds. Fourteen days of daily execution brings the multiplier to its maximum — 1.5× XP per directive. Miss a day occasionally and it barely registers. Fall away for longer and the multiplier returns to baseline, ready to be rebuilt.
             </div>
         </div>
 
         <div class="stat-block">
-
             <div class="stat-row tappable" data-stat="strength" data-tip="strength">
                 <span class="stat-label">STRENGTH</span>
-                <div class="stat-bar-wrap">
-                    <div class="stat-bar" id="bar-strength"></div>
-                </div>
+                <div class="stat-bar-wrap"><div class="stat-bar" id="bar-strength"></div></div>
                 <span class="stat-value" id="val-strength">10</span>
             </div>
             <div class="tooltip-box" id="tip-strength">
                 <strong>Strength</strong>
-                Physical output — energy, fitness, the ability to exert yourself when
-                it matters. 10 is where survivors start. The question is what you do
-                next. Every Strength directive completed adds to this permanently.
-                There is no ceiling because physical potential has no ceiling.
+                Physical output — energy, fitness, the ability to exert yourself when it matters. 10 is where survivors start.
                 <em class="tip-flavour">"Still working out where the gym is."</em>
             </div>
 
             <div class="stat-row tappable" data-stat="intelligence" data-tip="intelligence">
                 <span class="stat-label">INTELLIGENCE</span>
-                <div class="stat-bar-wrap">
-                    <div class="stat-bar" id="bar-intelligence"></div>
-                </div>
+                <div class="stat-bar-wrap"><div class="stat-bar" id="bar-intelligence"></div></div>
                 <span class="stat-value" id="val-intelligence">10</span>
             </div>
             <div class="tooltip-box" id="tip-intelligence">
                 <strong>Intelligence</strong>
-                Capacity to learn, reason, and decide well under pressure. 10 means
-                a functional mind with room to grow. Every Intelligence directive
-                adds to this permanently — there is no upper limit because learning
-                never stops. This is not an IQ score. It measures deliberate
-                intellectual effort compounded over time.
+                Capacity to learn, reason, and decide well under pressure.
                 <em class="tip-flavour">"Knows things. Working on knowing more things."</em>
             </div>
 
             <div class="stat-row tappable" data-stat="agility" data-tip="agility">
                 <span class="stat-label">AGILITY</span>
-                <div class="stat-bar-wrap">
-                    <div class="stat-bar" id="bar-agility"></div>
-                </div>
+                <div class="stat-bar-wrap"><div class="stat-bar" id="bar-agility"></div></div>
                 <span class="stat-value" id="val-agility">10</span>
             </div>
             <div class="tooltip-box" id="tip-agility">
                 <strong>Agility</strong>
-                Adaptability under disruption. 10 means you can function when
-                circumstances shift. A higher score means you find opportunity in
-                chaos rather than being paralysed by it. Agility directives train
-                deliberate pattern-breaking and response over reaction.
+                Adaptability under disruption. A higher score means you find opportunity in chaos rather than being paralysed by it.
                 <em class="tip-flavour">"Flexible. Mostly in schedule. Working on the rest."</em>
             </div>
 
             <div class="stat-row tappable" data-stat="endurance" data-tip="endurance">
                 <span class="stat-label">ENDURANCE</span>
-                <div class="stat-bar-wrap">
-                    <div class="stat-bar" id="bar-endurance"></div>
-                </div>
+                <div class="stat-bar-wrap"><div class="stat-bar" id="bar-endurance"></div></div>
                 <span class="stat-value" id="val-endurance">10</span>
             </div>
             <div class="tooltip-box" id="tip-endurance">
                 <strong>Endurance</strong>
-                Sustained effort over time — physical, mental, emotional. 10 means
-                you can get through a day. Higher means you persist through difficulty
-                without burning out. Sleep, consistency, and finishing what you start
-                are the foundations. The System has never seen anyone reach high
-                Endurance without earning it slowly.
+                Sustained effort over time. The System has never seen anyone reach high Endurance without earning it slowly.
                 <em class="tip-flavour">"Finishes most things. The rest are in progress."</em>
             </div>
 
             <div class="stat-row tappable" data-stat="charisma" data-tip="charisma">
                 <span class="stat-label">CHARISMA</span>
-                <div class="stat-bar-wrap">
-                    <div class="stat-bar" id="bar-charisma"></div>
-                </div>
+                <div class="stat-bar-wrap"><div class="stat-bar" id="bar-charisma"></div></div>
                 <span class="stat-value" id="val-charisma">10</span>
             </div>
             <div class="tooltip-box" id="tip-charisma">
                 <strong>Charisma</strong>
-                Social presence — how you connect, influence, and build trust.
-                10 means you are capable of genuine human connection. Higher means
-                people seek you out, remember you, and want to work beside you.
-                The System has observed that in every timeline, the people who
-                compound the fastest are never alone.
+                Social presence — how you connect, influence, and build trust. The people who compound the fastest are never alone.
                 <em class="tip-flavour">"Likeable. People remember their name most of the time."</em>
             </div>
 
@@ -191,25 +127,16 @@
 
             <div class="stat-row luck-row tappable" data-stat="luck" data-tip="luck">
                 <span class="stat-label">LUCK</span>
-                <div class="stat-bar-wrap">
-                    <div class="stat-bar luck-bar" id="bar-luck"></div>
-                </div>
+                <div class="stat-bar-wrap"><div class="stat-bar luck-bar" id="bar-luck"></div></div>
                 <span class="stat-value" id="val-luck">10</span>
             </div>
             <div class="tooltip-box" id="tip-luck">
                 <strong>Luck</strong>
-                Cannot be raised directly. It is the average of all other attributes.
-                This is intentional. What people experience as luck is preparation,
-                awareness, resilience, and strong relationships compounded over time.
-                Build the core attributes and luck rises with them. A high Luck score
-                means you have become the kind of person the world calls fortunate —
-                because you built them into being.
+                Cannot be raised directly. It is the average of all other attributes. Build the core attributes and luck rises with them.
                 <em class="tip-flavour">"Lucky? Debatable. Getting luckier? Absolutely."</em>
             </div>
-
         </div>
 
-        <!-- Gold + shop + map row -->
         <div class="gold-row">
             <span class="gold-label">◈ GOLD</span>
             <span class="gold-value" id="gold-value">0</span>
@@ -217,9 +144,7 @@
             <button class="shop-nav-btn" id="shop-btn">SUPPLY CACHE →</button>
         </div>
 
-        <button class="nav-btn" id="view-directives-btn">
-            VIEW TODAY'S DIRECTIVES
-        </button>
+        <button class="nav-btn" id="view-directives-btn">VIEW TODAY'S DIRECTIVES</button>
     </div>
 
     <!-- ═══════════════════════════════════════════════
@@ -230,6 +155,14 @@
             <h2>TODAY'S DIRECTIVES</h2>
             <div class="quest-date" id="quest-date"></div>
         </div>
+
+        <!-- Quest filter bar — shown when arriving from the map with a zone filter -->
+        <div class="quest-filter-bar hidden" id="quest-filter-bar">
+            <span class="quest-filter-label">FILTERING:</span>
+            <span class="quest-filter-value" id="quest-filter-value"></span>
+            <button class="quest-filter-clear" id="quest-filter-clear">[ CLEAR ]</button>
+        </div>
+
         <div class="quest-list" id="quest-list"></div>
         <div class="back-link" id="quests-back-link">← RETURN TO STATUS</div>
     </div>
@@ -239,21 +172,15 @@
     ═══════════════════════════════════════════════ -->
     <div class="screen" id="screen-map">
 
-        <!-- Tappable header — back to status -->
         <div class="map-header" id="map-header-back">
             <h2>[ WORLD MAP ]</h2>
             <div class="map-header-sub" id="map-coords"></div>
         </div>
 
-        <!-- The radar sweep and zone grid live here -->
         <div class="map-viewport" id="map-viewport">
-
-            <!-- Radar sweep overlay — pure CSS animation -->
             <div class="map-radar-sweep" id="map-radar-sweep"></div>
 
-            <!-- 3×3 CSS grid. Corners are void cells. -->
             <div class="map-grid" id="map-grid">
-
                 <!-- Row 1 -->
                 <div class="map-void"></div>
                 <div class="map-zone" id="zone-intelligence" data-zone="intelligence">
@@ -263,7 +190,7 @@
                         <div class="zone-name">SIGNAL GRID</div>
                         <div class="zone-stat-name">INTELLIGENCE</div>
                         <div class="zone-value" id="zval-intelligence">—</div>
-                        <div class="zone-tier" id="ztier-intelligence"></div>
+                        <div class="zone-tier"  id="ztier-intelligence"></div>
                     </div>
                 </div>
                 <div class="map-void"></div>
@@ -276,18 +203,17 @@
                         <div class="zone-name">THE IRON PEAKS</div>
                         <div class="zone-stat-name">STRENGTH</div>
                         <div class="zone-value" id="zval-strength">—</div>
-                        <div class="zone-tier" id="ztier-strength"></div>
+                        <div class="zone-tier"  id="ztier-strength"></div>
                     </div>
                 </div>
 
-                <!-- Centre hub -->
                 <div class="map-zone map-zone--hub" id="zone-hub">
                     <div class="zone-fog" id="fog-hub"></div>
                     <div class="zone-content zone-content--hub">
-                        <div class="hub-pin" id="hub-pin">◈</div>
+                        <div class="hub-pin"  id="hub-pin">◈</div>
                         <div class="hub-label">THE CONVERGENCE</div>
-                        <div class="hub-name" id="hub-player-name"></div>
-                        <div class="hub-rank" id="hub-rank"></div>
+                        <div class="hub-name"  id="hub-player-name"></div>
+                        <div class="hub-rank"  id="hub-rank"></div>
                     </div>
                 </div>
 
@@ -298,20 +224,20 @@
                         <div class="zone-name">SOCIAL FOREST</div>
                         <div class="zone-stat-name">CHARISMA</div>
                         <div class="zone-value" id="zval-charisma">—</div>
-                        <div class="zone-tier" id="ztier-charisma"></div>
+                        <div class="zone-tier"  id="ztier-charisma"></div>
                     </div>
                 </div>
 
                 <!-- Row 3 -->
                 <div class="map-void"></div>
-                <div class="map-zone map-zone--bottom-left" id="zone-endurance" data-zone="endurance">
+                <div class="map-zone" id="zone-endurance" data-zone="endurance">
                     <div class="zone-fog" id="fog-endurance"></div>
                     <div class="zone-terrain" id="terrain-endurance"></div>
                     <div class="zone-content">
                         <div class="zone-name">THE DEAD SEA</div>
                         <div class="zone-stat-name">ENDURANCE</div>
                         <div class="zone-value" id="zval-endurance">—</div>
-                        <div class="zone-tier" id="ztier-endurance"></div>
+                        <div class="zone-tier"  id="ztier-endurance"></div>
                     </div>
                 </div>
                 <div class="map-zone" id="zone-agility" data-zone="agility">
@@ -321,17 +247,26 @@
                         <div class="zone-name">ASHFIELD</div>
                         <div class="zone-stat-name">AGILITY</div>
                         <div class="zone-value" id="zval-agility">—</div>
-                        <div class="zone-tier" id="ztier-agility"></div>
+                        <div class="zone-tier"  id="ztier-agility"></div>
                     </div>
                 </div>
-
             </div>
             <!-- end map-grid -->
-
         </div>
         <!-- end map-viewport -->
 
-        <!-- Scan status bar below map -->
+        <!-- Zone lore panel — slides open when a zone is tapped -->
+        <div class="map-lore-panel" id="map-lore-panel">
+            <div class="lore-panel-inner">
+                <div class="lore-panel-zone-tag"  id="lore-zone-tag"></div>
+                <div class="lore-panel-zone-name" id="lore-zone-name"></div>
+                <div class="lore-panel-stat"       id="lore-zone-stat"></div>
+                <hr class="lore-panel-divider" />
+                <div class="lore-panel-text"       id="lore-zone-text"></div>
+                <div class="lore-panel-actions"    id="lore-zone-actions"></div>
+            </div>
+        </div>
+
         <div class="map-status-bar">
             <span class="map-status-label">SCAN STATUS</span>
             <span class="map-status-value" id="map-scan-status">ACTIVE</span>
@@ -344,7 +279,6 @@
          SHOP SCREEN
     ═══════════════════════════════════════════════ -->
     <div class="screen" id="screen-shop">
-
         <div class="shop-header" id="shop-header-back">
             <h2>[ SUPPLY CACHE ]</h2>
             <div class="shop-gold-display">
@@ -353,34 +287,27 @@
             </div>
             <div class="shop-lore">
                 The System has identified resources that accelerate field performance.
-                Each corresponds to a real-world act. The System does not monitor
-                compliance. It trusts the operator to play with integrity.
+                Each corresponds to a real-world act. The System does not monitor compliance.
+                It trusts the operator to play with integrity.
             </div>
         </div>
-
         <div class="active-buffs" id="active-buffs"></div>
-        <div class="shop-list" id="shop-list"></div>
-        <div class="back-link" id="shop-back-link-bottom">← RETURN TO STATUS</div>
+        <div class="shop-list"    id="shop-list"></div>
+        <div class="back-link"    id="shop-back-link-bottom">← RETURN TO STATUS</div>
     </div>
 
     <!-- ═══════════════════════════════════════════════
          SETTINGS SCREEN
     ═══════════════════════════════════════════════ -->
     <div class="screen" id="screen-settings">
-
         <div class="settings-header" id="settings-header-back">
             <h2>[ SYSTEM SETTINGS ]</h2>
         </div>
 
         <div class="settings-section">
             <div class="settings-section-title">DESIGNATION</div>
-            <input
-                type="text"
-                id="settings-name-input"
-                class="settings-name-input"
-                maxlength="20"
-                placeholder="ENTER NEW DESIGNATION..."
-            />
+            <input type="text" id="settings-name-input" class="settings-name-input"
+                   maxlength="20" placeholder="ENTER NEW DESIGNATION..." />
             <button class="nav-btn" id="save-name-btn">CONFIRM DESIGNATION</button>
         </div>
 
@@ -391,7 +318,6 @@
                 More directives means more practice reps — and real-world execution
                 is the root lever. XP follows effort, not the other way around.
             </div>
-
             <div class="gear-options">
                 <button class="gear-option-btn gear-active" data-gear="1">
                     <div class="gear-name">GEAR 1</div>
@@ -409,27 +335,16 @@
                     <div class="gear-detail">3 directives per stat · 15 daily</div>
                 </button>
             </div>
-
             <div class="gear-warning hidden" id="gear-warning-1">
-                One directive per stat. Consistent and sustainable.
-                This path is long — that is the point.
+                One directive per stat. Consistent and sustainable. This path is long — that is the point.
             </div>
             <div class="gear-warning hidden" id="gear-warning-2">
                 Two directives per stat, every day. A genuine commitment.
-                Doubling practice reps in focused sprints has a disproportionate
-                effect on skill acquisition. Run it for a week, a month, a season —
-                then return to Gear 1 if needed. The System will be here.
             </div>
             <div class="gear-warning hidden" id="gear-warning-3">
-                WARNING: Gear 3 has been linked to unexpected competence,
-                suspicious life improvement, and in rare timelines, actual results.
-                The System accepts no responsibility for side effects including
-                but not limited to: new habits, better decisions, and people
-                asking what changed about you.<br><br>
-                <em>Fifteen directives daily is a serious operational load.
-                Each third directive per stat includes a short reflection — writing
-                it is not optional. Genuine mastery still takes time. This gear
-                only works if every directive is real.</em>
+                WARNING: Gear 3 has been linked to unexpected competence, suspicious life improvement,
+                and in rare timelines, actual results.<br><br>
+                <em>Fifteen directives daily is a serious operational load.</em>
             </div>
         </div>
 
@@ -437,11 +352,9 @@
             <div class="settings-section-title">DANGER ZONE</div>
             <button class="danger-btn" id="reset-btn">WIPE PROFILE</button>
             <div class="confirm-box hidden" id="confirm-box">
-                <p>
-                    <strong>THIS CANNOT BE UNDONE.</strong><br>
-                    All stats, XP, levels, gold, and directive history<br>
-                    will be permanently erased from the System.
-                </p>
+                <p><strong>THIS CANNOT BE UNDONE.</strong><br>
+                All stats, XP, levels, gold, and directive history<br>
+                will be permanently erased from the System.</p>
                 <div class="confirm-actions">
                     <button class="confirm-yes" id="confirm-yes">CONFIRM WIPE</button>
                     <button class="confirm-no"  id="confirm-no">ABORT</button>
@@ -453,22 +366,15 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════
-        ONBOARDING SCREEN
+         ONBOARDING SCREEN
     ═══════════════════════════════════════════════ -->
     <div class="screen active" id="screen-onboarding">
         <div class="onboarding-box" id="onboarding-box">
             <div class="player-title">[ SYSTEM ]</div>
             <div id="lore-lines"></div>
             <div id="name-section" class="hidden">
-                <input
-                    type="text"
-                    id="name-input"
-                    placeholder="ENTER DESIGNATION..."
-                    maxlength="20"
-                    autocomplete="off"
-                    autocorrect="off"
-                    spellcheck="false"
-                />
+                <input type="text" id="name-input" placeholder="ENTER DESIGNATION..."
+                       maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false" />
             </div>
             <button class="nav-btn hidden" id="start-btn">INITIALISE</button>
         </div>
@@ -481,9 +387,9 @@
         <div class="overlay-content">
             <div class="overlay-system">[ SYSTEM ]</div>
             <div class="overlay-headline">THRESHOLD REACHED</div>
-            <div class="overlay-level" id="lu-level">2</div>
-            <div class="overlay-title" id="lu-title">THE MOTIVATED</div>
-            <div class="overlay-sub"   id="lu-sub"></div>
+            <div class="overlay-level"    id="lu-level">2</div>
+            <div class="overlay-title"    id="lu-title">THE MOTIVATED</div>
+            <div class="overlay-sub"      id="lu-sub"></div>
             <div class="overlay-particles" id="lu-particles"></div>
             <button class="overlay-share-btn"   id="lu-share-btn">⬆ BROADCAST THIS</button>
             <button class="overlay-dismiss-btn" id="lu-dismiss-btn">ACKNOWLEDGED</button>
@@ -498,16 +404,16 @@
             <div class="overlay-system">[ SYSTEM ]</div>
             <div class="overlay-headline">RANK RECLASSIFIED</div>
             <div class="overlay-rank-letter" id="ru-rank">E</div>
-            <div class="overlay-title" id="ru-title">E-RANK CONFIRMED</div>
-            <div class="overlay-sub"   id="ru-sub"></div>
-            <div class="overlay-particles" id="ru-particles"></div>
+            <div class="overlay-title"       id="ru-title">E-RANK CONFIRMED</div>
+            <div class="overlay-sub"         id="ru-sub"></div>
+            <div class="overlay-particles"   id="ru-particles"></div>
             <button class="overlay-share-btn"   id="ru-share-btn">⬆ BROADCAST THIS</button>
             <button class="overlay-dismiss-btn" id="ru-dismiss-btn">ACKNOWLEDGED</button>
         </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════
-         AWAKEN BOOT OVERLAY (first-time only)
+         AWAKEN BOOT OVERLAY
     ═══════════════════════════════════════════════ -->
     <div class="overlay hidden" id="overlay-awaken">
         <div class="overlay-content awaken-content">
