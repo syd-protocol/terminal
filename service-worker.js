@@ -1,16 +1,16 @@
-const CACHE_NAME = 'levelup-v18';
+const CACHE_NAME = 'syd-v1';
 
 // These are the app shell files we want to pre-cache during install.
 // On every new deploy, bump CACHE_NAME so the install event fires again,
 // the old cache is deleted, and fresh files are fetched immediately.
 const PRECACHE_ASSETS = [
-    '/levelup/',
-    '/levelup/index.html',
-    '/levelup/css/style.css',
-    '/levelup/js/app.js',
-    '/levelup/js/quests.js',
-    '/levelup/data/quests.json',
-    '/levelup/manifest.json'
+    '/terminal/',
+    '/terminal/index.html',
+    '/terminal/css/style.css',
+    '/terminal/js/app.js',
+    '/terminal/js/quests.js',
+    '/terminal/data/quests.json',
+    '/terminal/manifest.json'
 ];
 
 // ─── INSTALL ──────────────────────────────────────────────────
@@ -110,18 +110,18 @@ self.addEventListener('message', e => {
     );
 
     if (diffDays >= 3) {
-        self.registration.showNotification('LevelUp', {
-            body:     `${playerName || 'Hunter'}, your momentum is fading. Return and keep levelling up.`,
-            icon:     '/levelup/icons/icon-192.png',
-            tag:      'levelup-reminder',
+        self.registration.showNotification('SYD', {
+            body:     `${playerName || 'Operator'}, your momentum is decaying. The System is standing by.`,
+            icon:     '/terminal/icons/icon-192.png',
+            tag:      'syd-reminder',
             renotify: false,
-            data:     { url: '/levelup/' }
+            data:     { url: '/terminal/' }
         });
     }
 });
 
 // ─── NOTIFICATION CLICK ──────────────────────────────────────
-// When the user taps the notification, focus an existing LevelUp tab
+// When the user taps the notification, focus an existing SYD tab
 // or open a new one if none is available.
 self.addEventListener('notificationclick', e => {
     e.notification.close();
@@ -129,11 +129,11 @@ self.addEventListener('notificationclick', e => {
         clients.matchAll({ type: 'window', includeUncontrolled: true })
             .then(clientList => {
                 for (const client of clientList) {
-                    if (client.url.includes('/levelup/') && 'focus' in client) {
+                    if (client.url.includes('/terminal/') && 'focus' in client) {
                         return client.focus();
                     }
                 }
-                if (clients.openWindow) return clients.openWindow('/levelup/');
+                if (clients.openWindow) return clients.openWindow('/terminal/');
             })
     );
 });

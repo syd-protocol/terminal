@@ -1,10 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// LEVELUP — app.js
+// SYD — Synchronized Yield Directive
+// app.js
 // ═══════════════════════════════════════════════════════════════
 
 // ─── CONSTANTS ───────────────────────────────────────────────
-const STORAGE_KEY = 'levelup_player';
-const GEAR_KEY    = 'levelup_gear';
+const STORAGE_KEY = 'syd_player';
+const GEAR_KEY    = 'syd_gear';
 const STAT_NAMES  = ['strength', 'intelligence', 'agility', 'endurance', 'charisma'];
 const STAT_FLOOR  = 10;
 
@@ -118,7 +119,7 @@ function endOfDayISO() { const d=new Date(); d.setHours(23,59,59,999); return d.
 function in24hISO()    { return new Date(Date.now()+86400000).toISOString(); }
 
 // ─── SOUND STATE ─────────────────────────────────────────────
-const SOUND_KEY   = 'levelup_sound_state';
+const SOUND_KEY   = 'syd_sound_state';
 let soundState    = 'all';
 let soundEnabled  = true;
 let droneEnabled  = true;
@@ -141,7 +142,7 @@ function applySoundState(state) {
 
 function loadSoundState() {
     const saved = localStorage.getItem(SOUND_KEY);
-    if (!saved) { const leg = localStorage.getItem('levelup_sound'); return leg==='0'?'off':'all'; }
+    if (!saved) { const leg = localStorage.getItem('syd_sound'); return leg==='0'?'off':'all'; }
     return ['all','ui','off'].includes(saved) ? saved : 'all';
 }
 
@@ -747,8 +748,9 @@ function runRelaunchBoot() {
         const delta=parseFloat((cur-prev).toFixed(4));
         const dStr=delta>=0?'+'+delta.toFixed(4):delta.toFixed(4);
         const lines=[
+            '> SYD_OS [Version 1.0.0] — SYNCHRONIZED YIELD DIRECTIVE',
+            '> STATUS: CONNECTED TO RESISTANCE_HUB',
             '> RECONNECTING TO FIELD OPERATOR...',
-            '> CHECKING TEMPORAL BUFFER... [OK]',
             '> STAT INTEGRITY: VERIFIED',
             '> MOMENTUM_DELTA: '+dStr,
             player.corrupted?'> WARNING: SYSTEM INTEGRITY COMPROMISED':'> SYSTEM INTEGRITY: NOMINAL',
@@ -767,6 +769,7 @@ function runRelaunchBoot() {
             if (idx>=lines.length) { timer=setTimeout(dismiss,400); return; }
             const el=document.createElement('div'); el.className='relaunch-line'; el.textContent=lines[idx];
             linesEl.appendChild(el);
+            if (lines[idx].includes('SYD_OS'))         el.classList.add('relaunch-line--highlight');
             if (lines[idx].includes('MOMENTUM_DELTA')) el.classList.add('relaunch-line--highlight');
             if (lines[idx].includes('WARNING'))        el.classList.add('relaunch-line--warning');
             requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('relaunch-line--visible')));
@@ -779,7 +782,7 @@ function runRelaunchBoot() {
 // ─── SERVICE WORKER ──────────────────────────────────────────
 function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('/levelup/service-worker.js')
+    navigator.serviceWorker.register('/terminal/service-worker.js')
         .then(reg=>{
             if (!('Notification' in window)) return;
             if (Notification.permission==='default') setTimeout(()=>Notification.requestPermission(),3000);
@@ -1012,7 +1015,7 @@ function getOrCreateRefId() {
 }
 
 function getReferralLink() {
-    const base = window.location.origin + '/levelup/';
+    const base = window.location.origin + '/terminal/';
     return base + '?ref=' + getOrCreateRefId();
 }
 
@@ -1023,13 +1026,13 @@ function checkIncomingReferral() {
     if (!ref) return;
     // Store the referrer ID locally — Stage 5 backend will resolve the reward
     // when both sides sync. For now we record it so it survives until then.
-    localStorage.setItem('levelup_pending_ref', ref.toUpperCase());
+    localStorage.setItem('syd_pending_ref', ref.toUpperCase());
 }
 
 // Called after createPlayer — marks that this install was referred
 // Stage 5 will pick this up and send gold to the referrer via the bulletin board
 function recordReferralIfPresent() {
-    const pendingRef = localStorage.getItem('levelup_pending_ref');
+    const pendingRef = localStorage.getItem('syd_pending_ref');
     if (!pendingRef) return;
     if (!player.referredBy) {
         player.referredBy = pendingRef;
@@ -1038,7 +1041,7 @@ function recordReferralIfPresent() {
         // to sync_instances table. For now just log.
         showLog('[ RECRUIT SIGNAL ACKNOWLEDGED — REFERRER WILL BE NOTIFIED ]', 'accent');
     }
-    localStorage.removeItem('levelup_pending_ref');
+    localStorage.removeItem('syd_pending_ref');
 }
 
 // Share referral link — uses Web Share API if available, clipboard fallback
@@ -1046,7 +1049,7 @@ function shareReferralLink() {
     const link = getReferralLink();
     const text = 'The System found me. It will find you too. Join the resistance: ' + link;
     if (navigator.share) {
-        navigator.share({ title: 'LevelUp — Join the Resistance', text, url: link })
+        navigator.share({ title: 'SYD — Join the Resistance', text, url: link })
             .catch(() => copyReferralToClipboard(link));
     } else {
         copyReferralToClipboard(link);
@@ -1099,7 +1102,7 @@ function today() {
 
 // ─── LOAD QUESTS ─────────────────────────────────────────────
 async function loadQuests() {
-    try { const res=await fetch('/levelup/data/quests.json'); const data=await res.json(); return data.quests; }
+    try { const res=await fetch('/terminal/data/quests.json'); const data=await res.json(); return data.quests; }
     catch(e) { console.error('Could not load quests:',e); return []; }
 }
 
@@ -1289,11 +1292,11 @@ function shareCard({headline,bigText,titleText,subText,accentColor}) {
     ctx.strokeStyle='rgba(42,42,74,1)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(120,760);ctx.lineTo(W-120,760);ctx.stroke();
     ctx.fillStyle='#ffffff';ctx.font='bold 44px monospace';ctx.fillText(player.name,W/2,836);
     ctx.fillStyle='rgba(200,214,229,0.35)';ctx.font='26px monospace';canvasWrapText(ctx,getRandomTagline(),W/2,908,W-160,38);
-    ctx.fillStyle=accentColor;ctx.font='22px monospace';ctx.globalAlpha=0.6;ctx.fillText('LEVELUP',W/2,1032);ctx.globalAlpha=1;
+    ctx.fillStyle=accentColor;ctx.font='22px monospace';ctx.globalAlpha=0.6;ctx.fillText('SYD — SYNCHRONIZED YIELD DIRECTIVE',W/2,1032);ctx.globalAlpha=1;
     canvas.toBlob(blob=>{
-        const file=new File([blob],'levelup-moment.png',{type:'image/png'});
+        const file=new File([blob],'syd-moment.png',{type:'image/png'});
         if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-            navigator.share({files:[file],title:'LevelUp — '+headline,text:player.name+' · '+subText+'\n'+getRandomTagline()}).catch(()=>downloadCanvas(canvas));
+            navigator.share({files:[file],title:'SYD — '+headline,text:player.name+' · '+subText+'\n'+getRandomTagline()}).catch(()=>downloadCanvas(canvas));
         }else downloadCanvas(canvas);
     },'image/png');
 }
@@ -1302,7 +1305,7 @@ function canvasWrapText(ctx,text,x,y,maxWidth,lh){
     for(let n=0;n<words.length;n++){const test=line+words[n]+' ';if(ctx.measureText(test).width>maxWidth&&n>0){ctx.fillText(line.trim(),x,y);line=words[n]+' ';y+=lh;}else line=test;}
     ctx.fillText(line.trim(),x,y);
 }
-function downloadCanvas(canvas){const a=document.createElement('a');a.download='levelup-moment.png';a.href=canvas.toDataURL('image/png');a.click();}
+function downloadCanvas(canvas){const a=document.createElement('a');a.download='syd-moment.png';a.href=canvas.toDataURL('image/png');a.click();}
 
 // ─── PARTICLES ───────────────────────────────────────────────
 function spawnParticles(cId,count,color){
@@ -1352,7 +1355,7 @@ function savePlayerName(){
 function showConfirmReset(){document.getElementById('confirm-box').classList.remove('hidden');}
 function resetProfile(){
     localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(SOUND_KEY);
-    localStorage.removeItem('levelup_sound');localStorage.removeItem(GEAR_KEY);
+    localStorage.removeItem('syd_sound');localStorage.removeItem(GEAR_KEY);
     window.location.reload();
 }
 
@@ -1456,7 +1459,7 @@ document.addEventListener('visibilitychange', () => {
 // stored in localStorage so it never re-appears after a decision.
 // ════════════════════════════════════════════════════════════════
 let deferredInstallPrompt = null;
-const INSTALL_DISMISSED_KEY = 'levelup_install_dismissed';
+const INSTALL_DISMISSED_KEY = 'syd_install_dismissed';
 
 window.addEventListener('beforeinstallprompt', e => {
     e.preventDefault();   // stop the browser's own dialog
