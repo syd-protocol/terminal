@@ -6,7 +6,12 @@
 // ─── CONSTANTS ───────────────────────────────────────────────
 const STORAGE_KEY     = 'syd_player';
 const GEAR_KEY        = 'syd_gear';
-const SAVE_FREQ_KEY   = 'syd_save_frequency';
+const SAVE_FREQ_KEY      = 'syd_save_frequency';
+const SYNC_OPTED_IN_KEY  = 'syd_sync_opted_in';    // 'true' | 'false' | null (never asked)
+const SYNC_LAST_PUSH_KEY = 'syd_sync_last_push';    // ISO timestamp of last auto-push
+const SYNC_ADVISORY_KEY  = 'syd_sync_advisory';     // '0' | '1' | '2' — times fired
+const SYNC_COOLDOWN_MS   = 30 * 60 * 1000;          // 30-min cooldown between auto-pushes
+const SYNC_ADVISORY_LEVELS = [3, 10];               // levels advisory fires if still Ghost
 
 // ─── FIREBASE ────────────────────────────────────────────────
 // Compat SDK loaded via <script> tags in index.html.
@@ -1132,38 +1137,69 @@ function getOrCreateSaveFrequency() {
     return freq;
 }
 
-async function pushSaveState() {
+// ════════════════════════════════════════════════════════════════
+// SAVE-STATE TRANSMISSIONS — Advanced Uplink
+//
+// Ghost mode  — SYNC_OPTED_IN_KEY is null or 'false'. No cloud writes.
+// Linked mode — SYNC_OPTED_IN_KEY is 'true'. System auto-pushes silently.
+//
+// Auto-push fires when:
+//   • Operator is linked
+//   • Something meaningful changed (directive / level / rank / gold)
+//   • 30 minutes have passed since last push (cooldown bypassed on level/rank)
+//
+// Advisory fires at Level 3 (first time) and Level 10 (if still Ghost).
+// After Level 10 the System never raises it again. Silent witness only.
+// ════════════════════════════════════════════════════════════════
+
+function isSyncLinked() {
+    return localStorage.getItem(SYNC_OPTED_IN_KEY) === 'true';
+}
+
+// ── Core cloud write ─────────────────────────────────────────
+async function pushToCloud() {
     const firestore = getDB();
-    if (!firestore) {
-        setSyncStatus('[ ERROR: CLOUD UNREACHABLE — CHECK CONNECTION ]', 'warn');
-        return;
-    }
-    const btn = document.getElementById('sync-push-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'TRANSMITTING...'; }
-
+    if (!firestore) return;
+    const freq = getOrCreateSaveFrequency();
+    const now  = new Date().toISOString();
     try {
-        const freq    = getOrCreateSaveFrequency();
-        const payload = {
-            playerBlob:  JSON.stringify(player),
-            pushedAt:    new Date().toISOString(),
-            appVersion:  'syd-v2'
-        };
-        await firestore.collection('save_states').doc(freq).set(payload);
-
-        // Show the frequency code in the UI
-        const display = document.getElementById('sync-freq-display');
-        const codeEl  = document.getElementById('sync-freq-code');
-        if (display) display.classList.remove('hidden');
-        if (codeEl)  codeEl.textContent = freq;
-
-        setSyncStatus('[ STATE TRANSMITTED — FREQUENCY: ' + freq + ' ]', 'accent');
-        showLog('[ SAVE-STATE TRANSMITTED — ' + freq + ' ]', 'accent');
+        await firestore.collection('save_states').doc(freq).set({
+            playerBlob: JSON.stringify(player),
+            pushedAt:   now,
+            appVersion: 'syd-v2'
+        });
+        localStorage.setItem(SYNC_LAST_PUSH_KEY, now);
+        refreshSyncDiagnostics();
     } catch(e) {
-        console.error('Push failed:', e);
-        setSyncStatus('[ TRANSMISSION FAILED — RETRY OR CHECK CONNECTION ]', 'warn');
-    } finally {
-        if (btn) { btn.disabled = false; btn.textContent = 'PUSH STATE TO CLOUD'; }
+        console.warn('Auto-push failed silently:', e);
     }
+}
+
+// ── Auto-push gate ───────────────────────────────────────────
+// immediate = true  → bypass cooldown (level-up, rank-up)
+// immediate = false → enforce 30-min cooldown (directive, gold)
+function autoPushIfLinked(immediate) {
+    if (!isSyncLinked()) return;
+    if (!immediate) {
+        const last = localStorage.getItem(SYNC_LAST_PUSH_KEY);
+        if (last && (Date.now() - new Date(last).getTime()) < SYNC_COOLDOWN_MS) return;
+    }
+    pushToCloud();
+}
+
+// ── Opt-in: establish frequency ──────────────────────────────
+async function establishFrequency() {
+    localStorage.setItem(SYNC_OPTED_IN_KEY, 'true');
+    await pushToCloud();
+    updateSyncSettingsView();
+    showLog('[ UPLINK ESTABLISHED — FREQUENCY: ' + getOrCreateSaveFrequency() + ' ]', 'accent');
+}
+
+// ── Opt-out: remain unlinked ─────────────────────────────────
+function remainUnlinked() {
+    localStorage.setItem(SYNC_OPTED_IN_KEY, 'false');
+    updateSyncSettingsView();
+    showLog('[ TERMINAL OPERATING UNLINKED — STATE LOCAL ONLY ]');
 }
 
 async function reconstituteSaveState() {
@@ -1215,6 +1251,87 @@ function setSyncStatus(msg, variant) {
     el.className   = 'sync-status'
         + (variant === 'warn'   ? ' sync-status--warn'   : '')
         + (variant === 'accent' ? ' sync-status--accent' : '');
+}
+
+// ── Advisory overlay ─────────────────────────────────────────
+// Fires after Level 3 level-up is dismissed (first time).
+// Fires again after Level 10 if operator is still unlinked.
+// Tapping outside = choosing Remain Unlinked. Never blocks.
+function checkSyncAdvisory(level) {
+    if (isSyncLinked()) return;
+    const fired = parseInt(localStorage.getItem(SYNC_ADVISORY_KEY) || '0', 10);
+    if (fired >= 2) return;
+    const targetLevel = SYNC_ADVISORY_LEVELS[fired];
+    if (level !== targetLevel) return;
+    setTimeout(showSyncAdvisory, 600);
+}
+
+function showSyncAdvisory() {
+    const overlay = document.getElementById('overlay-sync-advisory');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+
+    const fired = parseInt(localStorage.getItem(SYNC_ADVISORY_KEY) || '0', 10);
+    localStorage.setItem(SYNC_ADVISORY_KEY, String(fired + 1));
+
+    const inner      = document.getElementById('sync-advisory-inner');
+    const confirmBtn = document.getElementById('sync-advisory-confirm-btn');
+    const dismissBtn = document.getElementById('sync-advisory-dismiss-btn');
+
+    function close(opted) {
+        overlay.classList.add('hidden');
+        if (opted) establishFrequency();
+        else       remainUnlinked();
+    }
+
+    // Inner card absorbs taps — only the backdrop dismisses
+    const stopProp = e => e.stopPropagation();
+    if (inner) inner.addEventListener('click', stopProp);
+
+    // Backdrop tap = Remain Unlinked
+    overlay.addEventListener('click', () => {
+        if (inner) inner.removeEventListener('click', stopProp);
+        close(false);
+    }, { once: true });
+
+    if (confirmBtn) confirmBtn.onclick = e => { e.stopPropagation(); playUIClick(); close(true); };
+    if (dismissBtn) dismissBtn.onclick = e => { e.stopPropagation(); playUIClick(); close(false); };
+}
+
+// ── Settings UI — two states ─────────────────────────────────
+function updateSyncSettingsView() {
+    const ghostView  = document.getElementById('sync-ghost-view');
+    const linkedView = document.getElementById('sync-linked-view');
+    if (!ghostView || !linkedView) return;
+    if (isSyncLinked()) {
+        ghostView.classList.add('hidden');
+        linkedView.classList.remove('hidden');
+        const codeEl = document.getElementById('sync-freq-code');
+        if (codeEl) codeEl.textContent = getOrCreateSaveFrequency();
+        refreshSyncDiagnostics();
+    } else {
+        ghostView.classList.remove('hidden');
+        linkedView.classList.add('hidden');
+    }
+}
+
+function refreshSyncDiagnostics() {
+    const statusEl    = document.getElementById('sync-uplink-status');
+    const broadcastEl = document.getElementById('sync-last-broadcast');
+    if (!statusEl || !broadcastEl) return;
+    const linked = isSyncLinked();
+    statusEl.textContent = linked ? 'ACTIVE' : 'UNLINKED';
+    statusEl.className   = 'sync-diag-value ' + (linked ? 'sync-diag-active' : 'sync-diag-offgrid');
+    const last = localStorage.getItem(SYNC_LAST_PUSH_KEY);
+    broadcastEl.textContent = last ? relativeTime(last) : '—';
+}
+
+function relativeTime(isoString) {
+    const diff = Math.floor((Date.now() - new Date(isoString).getTime()) / 1000);
+    if (diff < 60)    return 'JUST NOW';
+    if (diff < 3600)  return Math.floor(diff / 60) + ' MINUTES AGO';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' HOURS AGO';
+    return Math.floor(diff / 86400) + ' DAYS AGO';
 }
 
 // ─── DAILY RESET ──────────────────────────────────────────────
