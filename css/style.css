@@ -2051,17 +2051,84 @@ body {
 }
 
 /* ════════════════════════════════════════════════════════════
-   SYNC TERMINAL — Settings section (System 1: Save-State)
+   SYNC TERMINAL — Advanced Uplink (Stage 5b System 1)
    ════════════════════════════════════════════════════════════ */
 
+/* ── Advisory overlay ─────────────────────────────────────── */
+.sync-advisory-content {
+    max-width: 340px;
+    text-align: center;
+    padding: 2rem 1.6rem;
+}
+.sync-advisory-tag {
+    font-size: 0.72rem;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    letter-spacing: 0.12em;
+    margin-bottom: 0.6rem;
+}
+.sync-advisory-headline {
+    font-size: 1.3rem;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.1em;
+    margin-bottom: 1.1rem;
+}
+.sync-advisory-body {
+    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    color: var(--text-dim);
+    line-height: 1.75;
+    margin-bottom: 1.6rem;
+}
+.sync-advisory-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+.sync-advisory-confirm-btn {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.sync-advisory-confirm-btn:hover,
+.sync-advisory-confirm-btn:active {
+    background: var(--accent);
+    color: var(--bg);
+}
+.sync-advisory-dismiss-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    padding: 0.4rem;
+    cursor: pointer;
+    opacity: 0.65;
+    transition: opacity 0.15s ease;
+}
+.sync-advisory-dismiss-btn:hover { opacity: 1; }
+
+/* ── Settings: Ghost view ─────────────────────────────────── */
 .sync-lore {
     font-size: 0.78rem;
     color: var(--text-dim);
-    line-height: 1.6;
-    margin-bottom: 1.2rem;
+    line-height: 1.65;
+    margin-bottom: 1.1rem;
     font-family: var(--font-mono);
 }
+.sync-establish-btn { width: 100%; }
 
+/* ── Settings: Linked view ────────────────────────────────── */
 .sync-freq-display {
     background: rgba(79, 195, 247, 0.06);
     border: 1px solid rgba(79, 195, 247, 0.25);
@@ -2070,7 +2137,6 @@ body {
     margin-bottom: 1rem;
     text-align: center;
 }
-
 .sync-freq-label {
     font-size: 0.7rem;
     color: var(--text-dim);
@@ -2078,7 +2144,6 @@ body {
     letter-spacing: 0.08em;
     margin-bottom: 0.35rem;
 }
-
 .sync-freq-code {
     font-size: 1.5rem;
     font-family: var(--font-mono);
@@ -2086,44 +2151,48 @@ body {
     letter-spacing: 0.18em;
     font-weight: 700;
 }
-
-.sync-push-btn {
-    width: 100%;
-    margin-bottom: 0.8rem;
-}
-
-.sync-divider {
-    text-align: center;
-    font-size: 0.72rem;
-    color: var(--text-dim);
-    font-family: var(--font-mono);
-    margin: 0.6rem 0;
-    letter-spacing: 0.1em;
-    opacity: 0.6;
-}
-
-.sync-recover-wrap {
+.sync-diagnostics {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
 }
+.sync-diag-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    padding: 0.28rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.sync-diag-label   { color: var(--text-dim); letter-spacing: 0.06em; }
+.sync-diag-value   { color: var(--text); letter-spacing: 0.08em; }
+.sync-diag-active  { color: var(--accent); }
+.sync-diag-offgrid { color: var(--text-dim); opacity: 0.55; }
 
-.sync-recover-label {
-    font-size: 0.72rem;
+/* ── Reconstitute section ─────────────────────────────────── */
+.sync-divider {
+    text-align: center;
+    font-size: 0.7rem;
     color: var(--text-dim);
     font-family: var(--font-mono);
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
+    margin: 1rem 0 0.65rem;
+    opacity: 0.5;
 }
-
-.sync-recover-input {
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
+.sync-recover-lore {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    line-height: 1.5;
+    margin-bottom: 0.65rem;
 }
+.sync-recover-wrap  { display: flex; flex-direction: column; gap: 0.5rem; }
+.sync-recover-input { text-transform: uppercase; letter-spacing: 0.12em; }
+.sync-recover-btn   { width: 100%; }
 
-.sync-recover-btn {
-    width: 100%;
-}
-
+/* ── Status line ──────────────────────────────────────────── */
 .sync-status {
     margin-top: 0.9rem;
     font-size: 0.74rem;
@@ -2134,6 +2203,5 @@ body {
     letter-spacing: 0.04em;
     transition: color 0.2s ease;
 }
-
 .sync-status--warn   { color: var(--warn, #ff6b6b); }
 .sync-status--accent { color: var(--accent); }
