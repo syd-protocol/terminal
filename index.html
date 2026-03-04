@@ -426,6 +426,65 @@
             <div class="sync-status" id="sync-status"></div>
         </div>
 
+        <!-- ── SYNC-LINK ───────────────────────────────── -->
+        <div class="settings-section" id="synclink-section">
+            <div class="settings-section-title">SYNC-LINK</div>
+
+            <!-- Untethered state -->
+            <div id="synclink-idle-view">
+                <div class="sync-lore">
+                    Tether your terminal to an ally. Share a Sync-ID and
+                    complete directives together. Simultaneous execution
+                    triggers <span class="synclink-resonance-label">[ RESONANCE ]</span>
+                    — doubling XP for that event.
+                </div>
+                <button class="nav-btn synclink-generate-btn" id="synclink-generate-btn">
+                    GENERATE SYNC-ID
+                </button>
+                <div class="synclink-divider">— OR ENTER AN ALLY'S ID —</div>
+                <input
+                    type="text"
+                    id="synclink-join-input"
+                    class="settings-name-input synclink-join-input"
+                    maxlength="5"
+                    placeholder="SYNC-ID..."
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                />
+                <button class="nav-btn synclink-join-btn" id="synclink-join-btn">
+                    ESTABLISH TETHER
+                </button>
+            </div>
+
+            <!-- Tethered state -->
+            <div id="synclink-active-view" class="hidden">
+                <div class="synclink-active-header">
+                    <span class="synclink-active-tag">[ TETHERED ]</span>
+                    <span class="synclink-active-id" id="synclink-active-id">—</span>
+                </div>
+                <div class="synclink-diagnostics">
+                    <div class="sync-diag-row">
+                        <span class="sync-diag-label">ALLY</span>
+                        <span class="sync-diag-value" id="synclink-ally-name">SCANNING...</span>
+                    </div>
+                    <div class="sync-diag-row">
+                        <span class="sync-diag-label">ALLY STATUS</span>
+                        <span class="sync-diag-value" id="synclink-ally-status">—</span>
+                    </div>
+                    <div class="sync-diag-row">
+                        <span class="sync-diag-label">SATELLITE DELAY</span>
+                        <span class="sync-diag-value">45s</span>
+                    </div>
+                </div>
+                <button class="nav-btn synclink-sever-btn" id="synclink-sever-btn">
+                    SEVER TETHER
+                </button>
+            </div>
+
+            <div class="sync-status" id="synclink-status"></div>
+        </div>
+
         <div class="danger-zone">
             <div class="settings-section-title">DANGER ZONE</div>
             <button class="danger-btn" id="reset-btn">WIPE PROFILE</button>
@@ -581,6 +640,21 @@
                     REMAIN UNLINKED
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         RESONANCE OVERLAY
+         Fires when both tethered operators complete a
+         directive in the same 45s polling window.
+    ═══════════════════════════════════════════════ -->
+    <div class="overlay hidden" id="overlay-resonance">
+        <div class="overlay-content resonance-content">
+            <div class="resonance-tag">[ SYNC-LINK ]</div>
+            <div class="resonance-headline">RESONANCE</div>
+            <div class="resonance-sub" id="resonance-sub"></div>
+            <div class="overlay-particles" id="resonance-particles"></div>
+            <button class="overlay-dismiss-btn" id="resonance-dismiss-btn">ACKNOWLEDGED</button>
         </div>
     </div>
 
