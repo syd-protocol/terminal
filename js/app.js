@@ -770,6 +770,7 @@ async function init() {
     setupMapTaps();
     registerServiceWorker();
     synclinkRestoreIfPresent();
+    checkReferralPayouts();
 }
 
 // ─── RELAUNCH BOOT ───────────────────────────────────────────
@@ -817,14 +818,23 @@ function runRelaunchBoot() {
 function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
     navigator.serviceWorker.register('/terminal/service-worker.js')
-        .then(reg=>{
+        .then(reg => {
             if (!('Notification' in window)) return;
-            if (Notification.permission==='default') setTimeout(()=>Notification.requestPermission(),3000);
-            if (Notification.permission==='granted'&&player) {
-                const sw=reg.active||reg.waiting||reg.installing;
-                if (sw) sw.postMessage({type:'CHECK_NOTIFICATION',lastActiveDate:player.lastActiveDate||player.lastQuestDate,playerName:player.name});
+            if (Notification.permission === 'default') setTimeout(() => Notification.requestPermission(), 3000);
+            if (Notification.permission === 'granted' && player) {
+                const sw = reg.active || reg.waiting || reg.installing;
+                if (sw) sw.postMessage({ type: 'CHECK_NOTIFICATION', lastActiveDate: player.lastActiveDate || player.lastQuestDate, playerName: player.name });
             }
-        }).catch(e=>console.log('SW error:',e));
+        }).catch(e => console.log('SW error:', e));
+
+    // Listen for SW_UPDATED — posted by the service worker after activation.
+    // Reloads the page so open PWA instances always run fresh code after a deploy.
+    navigator.serviceWorker.addEventListener('message', e => {
+        if (e.data && e.data.type === 'SW_UPDATED') {
+            showLog('[ SYSTEM UPDATE DETECTED — RELOADING TERMINAL... ]', 'accent');
+            setTimeout(() => window.location.reload(), 1500);
+        }
+    });
 }
 
 // ─── TYPEWRITER ───────────────────────────────────────────────
@@ -1065,19 +1075,82 @@ function checkIncomingReferral() {
     localStorage.setItem('syd_pending_ref', ref.toUpperCase());
 }
 
-// Called after createPlayer — marks that this install was referred
-// Stage 5 will pick this up and send gold to the referrer via the bulletin board
-function recordReferralIfPresent() {
+// ════════════════════════════════════════════════════════════════
+// REFERRAL GOLD PAYOUT — System 3
+//
+// Flow:
+//   1. Operator A shares their referral link (?ref=REFID)
+//   2. Recruit opens link, completes onboarding → recordReferralIfPresent()
+//      writes a handshake doc to referral_handshakes/{recruitRefId}:
+//        { referrerRef, recruitName, recruitedAt, paid: false }
+//   3. On every app load, checkReferralPayouts() scans for unpaid
+//      handshakes where referrerRef === player.refId
+//   4. For each unpaid doc: award REFERRAL_GOLD, mark paid: true, log it
+// ════════════════════════════════════════════════════════════════
+
+async function recordReferralIfPresent() {
     const pendingRef = localStorage.getItem('syd_pending_ref');
     if (!pendingRef) return;
-    if (!player.referredBy) {
-        player.referredBy = pendingRef;
-        savePlayer();
-        // Stage 5: POST { recruit_ref: player.refId, referrer_ref: pendingRef }
-        // to sync_instances table. For now just log.
+    if (player.referredBy) {
+        localStorage.removeItem('syd_pending_ref');
+        return;
+    }
+    player.referredBy = pendingRef;
+    savePlayer();
+    localStorage.removeItem('syd_pending_ref');
+
+    const firestore = getDB();
+    if (!firestore) {
+        showLog('[ RECRUIT SIGNAL ACKNOWLEDGED — REFERRER WILL BE NOTIFIED ]', 'accent');
+        return;
+    }
+    try {
+        const recruitRef = getOrCreateRefId();
+        await firestore.collection('referral_handshakes').doc(recruitRef).set({
+            referrerRef:  pendingRef,
+            recruitName:  player.name,
+            recruitedAt:  new Date().toISOString(),
+            paid:         false
+        });
+        showLog('[ RECRUIT SIGNAL TRANSMITTED — REFERRER WILL RECEIVE THEIR REWARD ]', 'accent');
+    } catch(e) {
+        console.warn('Referral handshake write failed:', e);
         showLog('[ RECRUIT SIGNAL ACKNOWLEDGED — REFERRER WILL BE NOTIFIED ]', 'accent');
     }
-    localStorage.removeItem('syd_pending_ref');
+}
+
+async function checkReferralPayouts() {
+    if (!player) return;
+    const firestore = getDB();
+    if (!firestore) return;
+    const myRef = getOrCreateRefId();
+    try {
+        const snapshot = await firestore
+            .collection('referral_handshakes')
+            .where('referrerRef', '==', myRef)
+            .where('paid', '==', false)
+            .get();
+        if (snapshot.empty) return;
+
+        let totalGold = 0;
+        const batch   = firestore.batch();
+        snapshot.forEach(doc => {
+            totalGold += REFERRAL_GOLD;
+            batch.update(doc.ref, { paid: true, paidAt: new Date().toISOString() });
+        });
+        await batch.commit();
+
+        player.gold = (player.gold || 0) + totalGold;
+        savePlayer();
+        const goldEl = document.getElementById('gold-value');
+        if (goldEl) goldEl.textContent = player.gold;
+
+        const count  = snapshot.size;
+        const plural = count > 1 ? count + ' RECRUITS' : '1 RECRUIT';
+        showLog('[ REFERRAL PAYOUT: ' + plural + ' AWAKENED — ◈ ' + totalGold + ' GOLD RECEIVED ]', 'accent');
+    } catch(e) {
+        console.warn('Referral payout check failed:', e);
+    }
 }
 
 // Share referral link — uses Web Share API if available, clipboard fallback

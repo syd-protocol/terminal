@@ -1,4 +1,4 @@
-const CACHE_NAME = 'syd-v4';
+const CACHE_NAME = 'syd-v5';
 
 // These are the app shell files we want to pre-cache during install.
 // On every new deploy, bump CACHE_NAME so the install event fires again,
@@ -38,6 +38,15 @@ self.addEventListener('activate', e => {
                 )
             )
             .then(() => self.clients.claim())
+            .then(() => {
+                // Notify all open clients that new code is available.
+                // app.js listens for SW_UPDATED and reloads the page so
+                // operators never run stale JS after a deploy.
+                return self.clients.matchAll({ type: 'window' })
+                    .then(clients => {
+                        clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
+                    });
+            })
     );
 });
 
