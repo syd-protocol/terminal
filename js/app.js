@@ -195,20 +195,15 @@ function in24hISO() {
 
 // ─── SOUND STATE ─────────────────────────────────────────────
 // Three-state cycle: 'all' → 'ui' → 'off'
-//   'all'  🔊  — UI sounds + ambient drone both active
-//   'ui'   🎵  — UI sounds only, drone silenced
-//   'off'  🔇  — all sound off
-//
-// soundEnabled  — controls clicks, quest complete, level up, etc.
-// droneEnabled  — controls ambient drone independently
-//
-// Both are derived from soundState; never set directly elsewhere.
+//   'all'  🔊  UI sounds + ambient drone
+//   'ui'   🎵  UI sounds only, drone silenced
+//   'off'  🔇  all sound off
 
-const SOUND_KEY = 'levelup_sound_state';
+const SOUND_KEY  = 'levelup_sound_state';
 
-let soundState   = 'all';   // 'all' | 'ui' | 'off'
-let soundEnabled = true;    // UI sounds
-let droneEnabled = true;    // ambient drone
+let soundState   = 'all';
+let soundEnabled = true;
+let droneEnabled = true;
 
 const SOUND_ICONS = { all: '🔊', ui: '🎵', off: '🔇' };
 
@@ -221,8 +216,7 @@ function applySoundState(state) {
     const iconEl = document.getElementById('sound-icon');
     if (iconEl) iconEl.textContent = SOUND_ICONS[state];
 
-    // React to drone flag immediately on current screen
-    const activeScreen = document.querySelector('.screen.active');
+    const activeScreen  = document.querySelector('.screen.active');
     const onDroneScreen = activeScreen &&
         (activeScreen.id === 'screen-status' || activeScreen.id === 'screen-quests');
 
@@ -234,7 +228,6 @@ function applySoundState(state) {
 
 function loadSoundState() {
     const saved = localStorage.getItem(SOUND_KEY);
-    // Migration: old boolean key 'levelup_sound' → new three-state key
     if (!saved) {
         const legacy = localStorage.getItem('levelup_sound');
         return (legacy === '0') ? 'off' : 'all';
@@ -247,7 +240,6 @@ function cycleSoundState() {
                : soundState === 'ui'  ? 'off'
                : 'all';
     applySoundState(next);
-    // Click sound plays only if UI sounds are still on after the cycle
     if (soundEnabled) playUIClick();
 }
 
@@ -383,33 +375,102 @@ function playConsume() {
 }
 
 // ─── AMBIENT DRONE ───────────────────────────────────────────
-// Two layered sine oscillators:
-//   Primary:   90Hz at gain 0.13
-//   Detuned:   91.5Hz at gain 0.10
 //
-// The 1.5Hz frequency difference creates a natural interference
-// pattern — the two waves reinforce and cancel each other 1.5
-// times per second, producing a slow organic pulse without any
-// additional code. This is audible on laptop speakers at 0.13.
+// Four-layer sound design:
 //
-// Corrupted LFO: both oscillators' pitch shifts ±4Hz at 0.3Hz,
-// simulating transmission instability when HP = 0.
+//   Layer 1 — Primary tone (90Hz sine)
+//     The foundational low hum. Gain 0.13, breathes via LFO.
+//
+//   Layer 2 — Detuned tone (91.5Hz sine)
+//     1.5Hz separation from primary creates natural interference
+//     beating — the two waves reinforce/cancel 1.5× per second.
+//     Gain 0.10, also breathes.
+//
+//   Layer 3 — Filtered noise floor
+//     White noise through a bandpass filter (centre 900Hz, Q 1.8).
+//     Cuts harsh highs and rumbling lows, leaving mid-range hiss.
+//     Gain 0.015 — barely perceptible individually but adds texture
+//     that makes the whole feel like a real transmission rather
+//     than a synthesised tone. Constant, no modulation.
+//
+//   Layer 4 — Intermittent crackle (set DRONE_CRACKLE = false to disable)
+//     A brief filtered noise burst at random intervals (12–22s).
+//     Duration 60–110ms. Gain 0.035. Same bandpass as layer 3 but
+//     slightly wider. Simulates satellite signal artefacts.
+//     Scheduled recursively so it never feels rhythmic.
+//
+//   Breathing
+//     A slow LFO at 0.06Hz (one cycle ~17s) modulates the gain of
+//     layers 1 and 2 between DRONE_BREATH_MIN and DRONE_BREATH_MAX.
+//     The detuned layer breathes slightly out of phase (+π/4) so
+//     the two tones don't perfectly sync — more organic.
+//
+//   Corrupted LFO
+//     When player.corrupted is true, a second LFO at 0.3Hz shifts
+//     both tone oscillators' pitch ±4Hz. The noise layers are
+//     unaffected — corruption is a pitch instability, not a
+//     signal-quality problem.
 
-let droneOscA     = null;   // 90Hz primary
-let droneOscB     = null;   // 91.5Hz detuned
-let droneGainA    = null;
-let droneGainB    = null;
-let droneLfoTimer = null;
-let droneLfoPhase = 0;
+const DRONE_CRACKLE    = true;   // set false to disable crackle globally
 
-const DRONE_FREQ_A    = 90;
-const DRONE_FREQ_B    = 91.5;
-const DRONE_GAIN_A    = 0.13;
-const DRONE_GAIN_B    = 0.10;
-const DRONE_LFO_DEPTH = 4;
-const DRONE_LFO_RATE  = 0.3;
-const DRONE_LFO_TICK  = 50;
+const DRONE_FREQ_A     = 90;
+const DRONE_FREQ_B     = 91.5;
+const DRONE_GAIN_A     = 0.13;
+const DRONE_GAIN_B     = 0.10;
 
+const DRONE_BREATH_RATE = 0.06;   // Hz — one breath every ~17s
+const DRONE_BREATH_MIN  = 0.07;   // gain floor during exhale
+const DRONE_BREATH_MAX  = 0.17;   // gain ceiling during inhale
+const DRONE_BREATH_TICK = 80;     // ms between breath updates
+
+const DRONE_NOISE_GAIN    = 0.015;
+const DRONE_NOISE_FREQ    = 900;
+const DRONE_NOISE_Q       = 1.8;
+
+const DRONE_CRACKLE_GAIN  = 0.035;
+const DRONE_CRACKLE_MIN   = 12000;  // ms minimum gap between crackles
+const DRONE_CRACKLE_MAX   = 22000;  // ms maximum gap
+
+const DRONE_LFO_DEPTH  = 4;
+const DRONE_LFO_RATE   = 0.3;
+const DRONE_LFO_TICK   = 50;
+
+// Running drone nodes
+let droneOscA       = null;
+let droneGainA      = null;
+let droneOscB       = null;
+let droneGainB      = null;
+let droneNoiseNode  = null;
+let droneNoiseGain  = null;
+
+// Timers
+let droneBreathTimer  = null;
+let droneLfoTimer     = null;
+let droneCrackleTimer = null;
+
+// Phase accumulators
+let droneBreathPhase = 0;
+let droneLfoPhase    = 0;
+
+// ── Noise buffer (generated once, looped) ────────────────────
+// White noise is two seconds of random floats. Looping it avoids
+// repeated allocation and sounds identical to infinite noise.
+let _noiseBuffer = null;
+
+function getNoiseBuffer() {
+    if (_noiseBuffer) return _noiseBuffer;
+    const ctx        = getAudioCtx();
+    const sampleRate = ctx.sampleRate;
+    const length     = sampleRate * 2;   // 2 seconds
+    _noiseBuffer     = ctx.createBuffer(1, length, sampleRate);
+    const data       = _noiseBuffer.getChannelData(0);
+    for (let i = 0; i < length; i++) {
+        data[i] = Math.random() * 2 - 1;
+    }
+    return _noiseBuffer;
+}
+
+// ── Start ─────────────────────────────────────────────────────
 function startAmbientDrone() {
     if (!droneEnabled) return;
     if (droneOscA) return;   // already running
@@ -417,7 +478,7 @@ function startAmbientDrone() {
         const ctx = getAudioCtx();
         const now = ctx.currentTime;
 
-        // Primary oscillator — 90Hz
+        // Layer 1 — primary tone
         droneOscA  = ctx.createOscillator();
         droneGainA = ctx.createGain();
         droneOscA.connect(droneGainA);
@@ -425,10 +486,10 @@ function startAmbientDrone() {
         droneOscA.type            = 'sine';
         droneOscA.frequency.value = DRONE_FREQ_A;
         droneGainA.gain.setValueAtTime(0.0, now);
-        droneGainA.gain.linearRampToValueAtTime(DRONE_GAIN_A, now + 2.0);
+        droneGainA.gain.linearRampToValueAtTime(DRONE_GAIN_A, now + 3.0);
         droneOscA.start(now);
 
-        // Detuned oscillator — 91.5Hz
+        // Layer 2 — detuned tone
         droneOscB  = ctx.createOscillator();
         droneGainB = ctx.createGain();
         droneOscB.connect(droneGainB);
@@ -436,51 +497,141 @@ function startAmbientDrone() {
         droneOscB.type            = 'sine';
         droneOscB.frequency.value = DRONE_FREQ_B;
         droneGainB.gain.setValueAtTime(0.0, now);
-        droneGainB.gain.linearRampToValueAtTime(DRONE_GAIN_B, now + 2.0);
+        droneGainB.gain.linearRampToValueAtTime(DRONE_GAIN_B, now + 3.0);
         droneOscB.start(now);
 
-        // LFO tick — modulates both oscillators when corrupted
+        // Layer 3 — filtered noise floor
+        droneNoiseNode = ctx.createBufferSource();
+        droneNoiseGain = ctx.createGain();
+        const noiseFilter    = ctx.createBiquadFilter();
+        noiseFilter.type     = 'bandpass';
+        noiseFilter.frequency.value = DRONE_NOISE_FREQ;
+        noiseFilter.Q.value  = DRONE_NOISE_Q;
+        droneNoiseNode.buffer = getNoiseBuffer();
+        droneNoiseNode.loop   = true;
+        droneNoiseNode.connect(noiseFilter);
+        noiseFilter.connect(droneNoiseGain);
+        droneNoiseGain.connect(ctx.destination);
+        droneNoiseGain.gain.setValueAtTime(0.0, now);
+        droneNoiseGain.gain.linearRampToValueAtTime(DRONE_NOISE_GAIN, now + 4.0);
+        droneNoiseNode.start(now);
+
+        // Breathing LFO — modulates gains of layers 1 and 2
+        // Layer B starts at π/4 offset so the two tones breathe
+        // slightly out of phase with each other.
+        droneBreathPhase = 0;
+        droneBreathTimer = setInterval(() => {
+            if (!droneGainA || !droneGainB) return;
+            droneBreathPhase += (2 * Math.PI * DRONE_BREATH_RATE * DRONE_BREATH_TICK) / 1000;
+
+            const mid   = (DRONE_BREATH_MAX + DRONE_BREATH_MIN) / 2;
+            const amp   = (DRONE_BREATH_MAX - DRONE_BREATH_MIN) / 2;
+            const gainA = mid + amp * Math.sin(droneBreathPhase);
+            const gainB = (mid + amp * Math.sin(droneBreathPhase + Math.PI / 4))
+                          * (DRONE_GAIN_B / DRONE_GAIN_A);  // scale B relative to A
+
+            const t = getAudioCtx().currentTime;
+            droneGainA.gain.setTargetAtTime(gainA, t, 0.3);
+            droneGainB.gain.setTargetAtTime(gainB, t, 0.3);
+        }, DRONE_BREATH_TICK);
+
+        // Pitch LFO — corrupted state only
         droneLfoPhase = 0;
         droneLfoTimer = setInterval(() => {
             if (!droneOscA) return;
             droneLfoPhase += (2 * Math.PI * DRONE_LFO_RATE * DRONE_LFO_TICK) / 1000;
             const corrupted = player && player.corrupted;
-            const deviation = corrupted
-                ? DRONE_LFO_DEPTH * Math.sin(droneLfoPhase)
-                : 0;
+            const deviation = corrupted ? DRONE_LFO_DEPTH * Math.sin(droneLfoPhase) : 0;
             const t = getAudioCtx().currentTime;
             droneOscA.frequency.setTargetAtTime(DRONE_FREQ_A + deviation, t, 0.05);
             droneOscB.frequency.setTargetAtTime(DRONE_FREQ_B + deviation, t, 0.05);
         }, DRONE_LFO_TICK);
 
+        // Layer 4 — intermittent crackle
+        if (DRONE_CRACKLE) scheduleCrackle();
+
     } catch (e) { /* silent fail */ }
 }
 
+// ── Crackle scheduler ─────────────────────────────────────────
+// Fires a brief filtered noise burst then reschedules itself with
+// a fresh random delay. Stopped by clearing droneCrackleTimer.
+function scheduleCrackle() {
+    const delay = DRONE_CRACKLE_MIN
+        + Math.random() * (DRONE_CRACKLE_MAX - DRONE_CRACKLE_MIN);
+
+    droneCrackleTimer = setTimeout(() => {
+        if (!droneEnabled || !droneOscA) return;   // drone stopped while waiting
+        fireCrackle();
+        scheduleCrackle();   // reschedule immediately after firing
+    }, delay);
+}
+
+function fireCrackle() {
+    try {
+        const ctx      = getAudioCtx();
+        const now      = ctx.currentTime;
+        const duration = 0.06 + Math.random() * 0.05;   // 60–110ms
+
+        const noise  = ctx.createBufferSource();
+        const filter = ctx.createBiquadFilter();
+        const gain   = ctx.createGain();
+
+        noise.buffer = getNoiseBuffer();
+        noise.loop   = true;
+
+        filter.type            = 'bandpass';
+        filter.frequency.value = 700 + Math.random() * 600;  // 700–1300Hz
+        filter.Q.value         = 1.2;
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        // Sharp attack, immediate decay — a genuine artefact shape
+        gain.gain.setValueAtTime(0.0, now);
+        gain.gain.linearRampToValueAtTime(DRONE_CRACKLE_GAIN, now + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+        noise.start(now);
+        noise.stop(now + duration + 0.01);
+    } catch (e) { /* silent fail */ }
+}
+
+// ── Stop ──────────────────────────────────────────────────────
 function stopAmbientDrone() {
-    if (droneLfoTimer !== null) {
-        clearInterval(droneLfoTimer);
-        droneLfoTimer = null;
-        droneLfoPhase = 0;
-    }
+    // Clear all timers first
+    if (droneBreathTimer !== null) { clearInterval(droneBreathTimer); droneBreathTimer = null; }
+    if (droneLfoTimer    !== null) { clearInterval(droneLfoTimer);    droneLfoTimer    = null; }
+    if (droneCrackleTimer !== null) { clearTimeout(droneCrackleTimer); droneCrackleTimer = null; }
+
+    droneBreathPhase = 0;
+    droneLfoPhase    = 0;
+
     if (!droneOscA) return;
     try {
         const ctx = getAudioCtx();
         const now = ctx.currentTime;
 
-        // Fade both oscillators out together
-        [droneGainA, droneGainB].forEach(g => {
+        // Fade all gain nodes together over 1.5s
+        [droneGainA, droneGainB, droneNoiseGain].forEach(g => {
             if (!g) return;
             g.gain.setValueAtTime(g.gain.value, now);
-            g.gain.linearRampToValueAtTime(0.0, now + 1.0);
+            g.gain.linearRampToValueAtTime(0.0, now + 1.5);
         });
 
-        const oscA = droneOscA;
-        const oscB = droneOscB;
-        droneOscA = droneOscB = droneGainA = droneGainB = null;
+        // Capture refs then null them so new calls to startAmbientDrone
+        // don't see stale nodes while the fade is still running
+        const oscA  = droneOscA;
+        const oscB  = droneOscB;
+        const noise = droneNoiseNode;
+        droneOscA = droneOscB = droneGainA = droneGainB = droneNoiseNode = droneNoiseGain = null;
+
         setTimeout(() => {
-            try { oscA.stop(); } catch (e) {}
-            try { oscB.stop(); } catch (e) {}
-        }, 1100);
+            try { oscA.stop();  } catch (e) {}
+            try { oscB.stop();  } catch (e) {}
+            try { noise.stop(); } catch (e) {}
+        }, 1600);
     } catch (e) { /* silent fail */ }
 }
 
@@ -502,7 +653,6 @@ async function init() {
 
     player = loadPlayer();
 
-    // Load and apply sound state (handles migration from old boolean key)
     const savedState = loadSoundState();
     applySoundState(savedState);
 
@@ -515,30 +665,25 @@ async function init() {
         playUIClick();
         openSettings();
     });
-
     document.getElementById('shop-btn').addEventListener('click', () => {
         playUIClick();
         openShop();
     });
-
     document.getElementById('view-directives-btn').addEventListener('click', () => {
         navTo('screen-quests');
     });
-
     document.getElementById('quest-header-back').addEventListener('click', () => {
         navTo('screen-status');
     });
     document.getElementById('quests-back-link').addEventListener('click', () => {
         navTo('screen-status');
     });
-
     document.getElementById('shop-header-back').addEventListener('click', () => {
         navTo('screen-status');
     });
     document.getElementById('shop-back-link-bottom').addEventListener('click', () => {
         navTo('screen-status');
     });
-
     document.getElementById('settings-header-back').addEventListener('click', () => {
         navTo('screen-status');
     });
@@ -620,8 +765,8 @@ function runRelaunchBoot() {
                 lineTimer = setTimeout(dismiss, 400);
                 return;
             }
-            const line     = document.createElement('div');
-            line.className = 'relaunch-line';
+            const line       = document.createElement('div');
+            line.className   = 'relaunch-line';
             line.textContent = bootLines[lineIndex];
             linesEl.appendChild(line);
 
@@ -806,11 +951,9 @@ function runOnboarding() {
     nameInput.addEventListener('input', () => {
         startBtn.classList.toggle('hidden', nameInput.value.trim().length === 0);
     });
-
     nameInput.addEventListener('keydown', e => {
         if (e.key === 'Enter' && nameInput.value.trim().length > 0) submitName();
     });
-
     startBtn.addEventListener('click', () => {
         playUIClick();
         submitName();
@@ -982,8 +1125,8 @@ function checkDailyReset() {
         player.corrupted = false;
     }
 
-    if (!buffActive(player.buffs.focusDraught))  player.buffs.focusDraught = null;
-    if (!buffActive(player.buffs.sprintScroll))   player.buffs.sprintScroll  = null;
+    if (!buffActive(player.buffs.focusDraught)) player.buffs.focusDraught = null;
+    if (!buffActive(player.buffs.sprintScroll)) player.buffs.sprintScroll  = null;
 
     player.completedToday = [];
     player.lastQuestDate  = todayStr;
@@ -1653,7 +1796,7 @@ function showConfirmReset() {
 function resetProfile() {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(SOUND_KEY);
-    localStorage.removeItem('levelup_sound');   // remove legacy key too
+    localStorage.removeItem('levelup_sound');
     localStorage.removeItem(GEAR_KEY);
     window.location.reload();
 }
