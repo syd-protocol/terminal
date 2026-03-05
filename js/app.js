@@ -2616,7 +2616,7 @@ ${schemaHint}`;
     let raw = '';
 
     if (provider === 'gemini') {
-        const url  = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+        const url  = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`;
         const body = {
             system_instruction: { parts: [{ text: SYD_SYSTEM_PROMPT }] },
             contents: [{ parts: [{ text: userMsg }] }]
@@ -2844,6 +2844,63 @@ function updateNeuralBadge() {
     } else {
         badge.classList.add('hidden');
         btn.classList.remove('nav-btn--neural-active');
+    }
+}
+
+async function testNeuralKey() {
+    const keyInput = document.getElementById('neural-key-input');
+    const provSel  = document.getElementById('neural-provider-select');
+    const statusEl = document.getElementById('neural-processor-status');
+    const testBtn  = document.getElementById('neural-test-btn');
+    if (!keyInput || !statusEl) return;
+
+    const k = keyInput.value.trim() || getNeuralKey();
+    const p = provSel ? provSel.value : getNeuralProvider();
+    if (!k) { statusEl.textContent = '[ ERROR: PASTE A KEY FIRST ]'; statusEl.className = 'neural-status neural-status--offline'; return; }
+
+    testBtn.disabled    = true;
+    statusEl.textContent = '[ TESTING CONNECTION... ]';
+    statusEl.className   = 'neural-status';
+
+    try {
+        const pingMsg = 'Reply with exactly: {"ok":true}';
+        let ok = false;
+
+        if (p === 'gemini') {
+            const url  = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${k}`;
+            const res  = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ contents:[{ parts:[{ text: pingMsg }] }] }) });
+            ok = res.ok;
+            if (!ok) {
+                const err = await res.json().catch(()=>({}));
+                if (res.status === 429) throw new Error('_429');
+                if (res.status === 401 || res.status === 403) throw new Error('_401');
+                throw new Error('_' + res.status);
+            }
+        } else if (p === 'openai') {
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+k},
+                body: JSON.stringify({ model:'gpt-4o-mini', messages:[{role:'user',content:pingMsg}], max_tokens:10 }) });
+            ok = res.ok;
+            if (!ok) throw new Error('_' + res.status);
+        } else if (p === 'anthropic') {
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+                method:'POST', headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01'},
+                body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:10, messages:[{role:'user',content:pingMsg}] }) });
+            ok = res.ok;
+            if (!ok) throw new Error('_' + res.status);
+        }
+
+        statusEl.innerHTML  = `[ ✓ CONNECTION CONFIRMED — ${p.toUpperCase()} KEY ACCEPTED ]`;
+        statusEl.className  = 'neural-status neural-status--online';
+    } catch(e) {
+        const msg = e.message || '';
+        if      (msg.includes('_429'))                    statusEl.textContent = '[ RATE LIMITED — KEY IS VALID BUT QUOTA EXCEEDED ]';
+        else if (msg.includes('_401')||msg.includes('_403')) statusEl.textContent = '[ KEY REJECTED — CHECK THE KEY AND PROVIDER ]';
+        else                                               statusEl.textContent = '[ CONNECTION FAILED — CHECK NETWORK OR KEY ]';
+        statusEl.className = 'neural-status neural-status--offline';
+    } finally {
+        testBtn.disabled = false;
     }
 }
 

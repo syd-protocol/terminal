@@ -548,6 +548,7 @@
                     <button class="neural-save-btn" onclick="saveNeuralKey()">[ INSTALL PROCESSOR ]</button>
                     <button class="neural-remove-btn" onclick="removeNeuralKey()">[ REMOVE ]</button>
                 </div>
+                <button class="neural-test-btn" id="neural-test-btn" onclick="testNeuralKey()">[ TEST CONNECTION ]</button>
             </div>
 
             <div class="neural-generate-row">
@@ -780,8 +781,7 @@
          NEURAL LINK SCREEN
     ═══════════════════════════════════════════════ -->
     <div class="screen" id="screen-neural">
-        <div class="neural-screen-header">
-            <button class="back-link" id="neural-header-back">← BACK</button>
+        <div class="neural-header" id="neural-header-back">
             <h2>NEURAL LINK</h2>
         </div>
 
@@ -816,9 +816,7 @@
             <div id="ns-boss-list" class="ns-entity-list"></div>
         </div>
 
-        <div class="back-link-bottom">
-            <button class="back-link" id="neural-back-link">← BACK TO STATUS</button>
-        </div>
+        <div class="back-link" id="neural-back-link">← RETURN TO STATUS</div>
     </div>
 
     <!-- ═══════════════════════════════════════════════

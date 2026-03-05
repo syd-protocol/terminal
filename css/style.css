@@ -3098,23 +3098,6 @@ body {
     margin-bottom: 0.2rem;
 }
 
-/* ── Neural Link screen layout ── */
-.neural-screen-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 1rem;
-}
-.neural-screen-header h2 {
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.15em;
-    color: var(--accent);
-    flex: 1;
-}
-
 /* ── Tabs ── */
 .neural-screen-tabs {
     display: flex;
@@ -3324,3 +3307,38 @@ body {
     cursor: default;
     opacity: 0.7;
 }
+
+/* ── Neural Link screen header (matches other screen headers) ── */
+.neural-header {
+    text-align: center;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+.neural-header:hover { border-color: var(--accent); }
+.neural-header h2 {
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 4px;
+    font-size: 1rem;
+    color: var(--accent);
+}
+
+/* ── Test connection button ── */
+.neural-test-btn {
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.09em;
+    background: transparent;
+    border: 1px solid rgba(120, 200, 255, 0.2);
+    color: var(--text-dim);
+    padding: 0.38rem;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    margin-top: 0.4rem;
+}
+.neural-test-btn:hover { color: var(--accent); border-color: rgba(120,200,255,0.4); }
+.neural-test-btn[disabled] { opacity: 0.4; cursor: default; }
