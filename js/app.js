@@ -752,6 +752,8 @@ async function init() {
     document.getElementById('shop-back-link-bottom').addEventListener('click',()=>navTo('screen-status'));
     document.getElementById('settings-header-back').addEventListener('click',()=>navTo('screen-status'));
     document.getElementById('settings-back-link-bottom').addEventListener('click',()=>navTo('screen-status'));
+    document.getElementById('neural-header-back').addEventListener('click',       ()=>navTo('screen-status'));
+    document.getElementById('neural-back-link').addEventListener('click',         ()=>navTo('screen-status'));
 
     setupTooltips();
 
@@ -2269,8 +2271,9 @@ function showScreen(id) {
     }
 
     // ── Per-screen setup ─────────────────────────────────────
-    if (id === 'screen-status')   { setupTooltips(); renderElasticUI(); }
+    if (id === 'screen-status')   { setupTooltips(); renderElasticUI(); updateNeuralBadge(); }
     if (id === 'screen-settings')   renderNeuralSettings();
+    if (id === 'screen-neural')     renderNeuralScreen();
     if (id === 'screen-quests') {
         // Apply filter if coming from the map
         const quests = activeQuestFilter
@@ -2687,10 +2690,14 @@ async function submitNeuralGeneration() {
         entity = await callNeuralAPI(planText, type);
     } catch (e) {
         const msg = e.message || '';
-        if      (msg === 'NO_KEY')                                           statusEl.textContent = '[ ERROR: NO NEURAL KEY INSTALLED ]';
-        else if (msg.includes('_401') || msg.includes('_403'))               statusEl.textContent = '[ ERROR: KEY REJECTED — VERIFY PROCESSOR ]';
-        else if (msg.includes('SyntaxError') || msg.includes('JSON'))        statusEl.textContent = '[ ERROR: TRANSLATION CORRUPTED — RETRY ]';
-        else                                                                  statusEl.textContent = '[ NEURAL LINK UNSTABLE — TRANSLATION FAILED ]';
+        let errText;
+        if      (msg === 'NO_KEY')                                        errText = '[ ERROR: NO NEURAL KEY INSTALLED ]';
+        else if (msg.includes('_401') || msg.includes('_403'))            errText = '[ ERROR: KEY REJECTED — CHECK YOUR PROVIDER KEY ]';
+        else if (msg.includes('_429'))                                    errText = '[ RATE LIMIT HIT — WAIT 60 SECONDS AND RETRY ]';
+        else if (msg.includes('SyntaxError') || msg.includes('JSON'))    errText = '[ TRANSLATION CORRUPTED — RETRY ]';
+        else                                                              errText = '[ NEURAL LINK UNSTABLE — RETRY ]';
+        statusEl.textContent  = errText;
+        statusEl.className    = 'ng-status ng-status--error';
         console.error('Neural API error:', e);
         submitBtn.disabled = false;
         return;
@@ -2714,9 +2721,137 @@ async function submitNeuralGeneration() {
 
     closeNeuralGenerator();
     renderElasticUI();
+    updateNeuralBadge();
+    // If the neural screen is open, refresh it
+    if (document.getElementById('screen-neural') && document.getElementById('screen-neural').classList.contains('active')) {
+        renderNeuralScreen();
+    }
 }
 
 // ─── NEURAL PROCESSOR SETTINGS ────────────────────────────────
+
+// ─── NEURAL LINK SCREEN ───────────────────────────────────────
+function renderNeuralScreen() {
+    switchNeuralTab(document.getElementById('ns-tab-incursions').classList.contains('ns-tab--active') ? 'incursions' : 'bosses');
+}
+
+function switchNeuralTab(tab) {
+    const incPanel = document.getElementById('ns-panel-incursions');
+    const bossPanel= document.getElementById('ns-panel-bosses');
+    const incTab   = document.getElementById('ns-tab-incursions');
+    const bossTab  = document.getElementById('ns-tab-bosses');
+    if (!incPanel) return;
+
+    if (tab === 'incursions') {
+        incPanel.classList.remove('hidden');
+        bossPanel.classList.add('hidden');
+        incTab.classList.add('ns-tab--active');
+        bossTab.classList.remove('ns-tab--active');
+        renderNeuralIncursionList();
+    } else {
+        bossPanel.classList.remove('hidden');
+        incPanel.classList.add('hidden');
+        bossTab.classList.add('ns-tab--active');
+        incTab.classList.remove('ns-tab--active');
+        renderNeuralBossList();
+    }
+}
+
+function renderNeuralIncursionList() {
+    const container = document.getElementById('ns-incursion-list');
+    if (!container) return;
+    const incursions = pruneExpiredIncursions();
+
+    if (!incursions.length) {
+        container.innerHTML = '<div class="ns-empty">[ NO ACTIVE INCURSIONS — GENERATE ONE FROM A REAL-WORLD CHALLENGE ]</div>';
+        return;
+    }
+    container.innerHTML = '';
+    incursions.forEach(inc => {
+        const isComplete = (player.completedToday || []).includes(inc.id);
+        const remaining  = inc.expiresAt ? timeRemaining(inc.expiresAt) : null;
+        const el = document.createElement('div');
+        el.className = 'ns-entity-card ns-entity-card--incursion' + (isComplete ? ' ns-entity-card--done' : '');
+        el.innerHTML = `
+            <div class="ns-entity-header">
+                <span class="ns-entity-label">${inc.label || '[ INCURSION ]'}</span>
+                ${remaining ? `<span class="ns-entity-timer${remaining === 'EXPIRED' ? ' ns-entity-timer--expired' : ''}">${remaining}</span>` : ''}
+            </div>
+            <div class="ns-entity-meta">[ ${(inc.stat||'???').toUpperCase()} ] · +${inc.baseXP} XP · 1.5× BOSS DAMAGE</div>
+            ${inc.enemy  ? `<div class="ns-entity-enemy">ENEMY: ${inc.enemy}</div>` : ''}
+            ${inc.weapon ? `<div class="ns-entity-weapon">WEAPON: ${inc.weapon}</div>` : ''}
+            ${inc.tacticalGuide ? `<div class="ns-entity-guide">${inc.tacticalGuide}</div>` : ''}
+            <div class="ns-entity-actions">
+                <button class="ns-complete-btn" ${isComplete ? 'disabled' : ''}>
+                    ${isComplete ? '[ ✓ EXECUTED ]' : '[ MARK EXECUTED ]'}
+                </button>
+            </div>
+        `;
+        container.appendChild(el);
+        if (!isComplete) {
+            el.querySelector('.ns-complete-btn').addEventListener('click', () => {
+                completeIncursion(inc);
+                renderNeuralIncursionList();
+                updateNeuralBadge();
+            });
+        }
+    });
+}
+
+function renderNeuralBossList() {
+    const container = document.getElementById('ns-boss-list');
+    if (!container) return;
+    const bosses = loadWorldBosses();
+
+    if (!bosses.length) {
+        container.innerHTML = '<div class="ns-empty">[ NO ACTIVE WORLD BOSSES — GENERATE ONE FROM A LONG-TERM GOAL ]</div>';
+        return;
+    }
+    container.innerHTML = '';
+    bosses.forEach(boss => {
+        const pct = Math.max(0, Math.round((boss.currentHp / boss.maxHp) * 100));
+        const el  = document.createElement('div');
+        el.className = 'ns-entity-card ns-entity-card--boss';
+        el.innerHTML = `
+            <div class="ns-entity-header">
+                <span class="ns-entity-label ns-entity-label--boss">${boss.label || '[ WORLD BOSS ]'}</span>
+            </div>
+            <div class="ns-boss-hp-wrap">
+                <div class="ns-boss-hp-bar${pct > 50 ? '' : pct > 25 ? ' ns-boss-hp-bar--amber' : ' ns-boss-hp-bar--critical'}" style="width:${pct}%"></div>
+            </div>
+            <div class="ns-entity-meta">${boss.currentHp} / ${boss.maxHp} HP · ${pct}% remaining</div>
+            ${boss.enemy  ? `<div class="ns-entity-enemy">ENEMY: ${boss.enemy}</div>` : ''}
+            ${boss.weapon ? `<div class="ns-entity-weapon">WEAPON: ${boss.weapon}</div>` : ''}
+            ${boss.tacticalGuide ? `<div class="ns-entity-guide">${boss.tacticalGuide}</div>` : ''}
+        `;
+        container.appendChild(el);
+    });
+}
+
+function updateNeuralBadge() {
+    const badge       = document.getElementById('neural-link-badge');
+    const btn         = document.getElementById('neural-link-btn');
+    if (!badge) return;
+    const incursions  = pruneExpiredIncursions();
+    const bosses      = loadWorldBosses();
+    const active      = incursions.filter(i => !(player.completedToday || []).includes(i.id)).length + bosses.length;
+    if (active > 0) {
+        badge.textContent = active;
+        badge.classList.remove('hidden');
+        btn.classList.add('nav-btn--neural-active');
+    } else {
+        badge.classList.add('hidden');
+        btn.classList.remove('nav-btn--neural-active');
+    }
+}
+
+function onProviderChange() {
+    const provSel = document.getElementById('neural-provider-select');
+    const hint    = document.getElementById('neural-key-hint');
+    if (!provSel || !hint) return;
+    hint.style.display = provSel.value === 'gemini' ? '' : 'none';
+}
+
 function renderNeuralSettings() {
     const key      = getNeuralKey();
     const provider = getNeuralProvider();

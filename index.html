@@ -185,6 +185,10 @@
         </div>
 
         <button class="nav-btn" id="view-directives-btn">VIEW TODAY'S DIRECTIVES</button>
+        <button class="nav-btn nav-btn--neural" id="neural-link-btn" onclick="navTo('screen-neural')">
+            ⬡ NEURAL LINK
+            <span class="neural-link-badge hidden" id="neural-link-badge">0</span>
+        </button>
     </div>
 
     <!-- ═══════════════════════════════════════════════
@@ -521,10 +525,10 @@
 
             <div class="neural-key-section">
                 <div class="neural-field-label">PROVIDER</div>
-                <select class="neural-provider-select" id="neural-provider-select">
-                    <option value="gemini">GEMINI — Google AI Studio (free tier, no billing card)</option>
-                    <option value="openai">OPENAI — GPT-4o-mini</option>
-                    <option value="anthropic">ANTHROPIC — Claude Haiku</option>
+                <select class="neural-provider-select" id="neural-provider-select" onchange="onProviderChange()">
+                    <option value="gemini"    style="background:#1a1a2e;color:#c8d6e5;">GEMINI — Google AI Studio (free tier)</option>
+                    <option value="openai"    style="background:#1a1a2e;color:#c8d6e5;">OPENAI — GPT-4o-mini</option>
+                    <option value="anthropic" style="background:#1a1a2e;color:#c8d6e5;">ANTHROPIC — Claude Haiku</option>
                 </select>
 
                 <div class="neural-field-label">API KEY</div>
@@ -537,8 +541,8 @@
                     autocorrect="off"
                     spellcheck="false"
                 />
-                <div class="neural-key-hint">
-                    Gemini keys are free at <strong>aistudio.google.com/app/apikey</strong> — no billing card required.
+                <div class="neural-key-hint" id="neural-key-hint">
+                    Gemini keys are free at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="neural-key-link">aistudio.google.com/app/apikey</a> — no billing card required.
                 </div>
                 <div class="neural-btn-row">
                     <button class="neural-save-btn" onclick="saveNeuralKey()">[ INSTALL PROCESSOR ]</button>
@@ -547,11 +551,8 @@
             </div>
 
             <div class="neural-generate-row">
-                <div class="neural-gen-label">GENERATE FROM REAL-WORLD INPUT</div>
-                <div class="neural-gen-btn-row">
-                    <button class="neural-gen-btn" onclick="openNeuralGenerator('incursion')">+ INCURSION</button>
-                    <button class="neural-gen-btn neural-gen-btn--boss" onclick="openNeuralGenerator('worldboss')">+ WORLD BOSS</button>
-                </div>
+                <div class="neural-gen-label">GENERATE MISSIONS FROM REAL-WORLD INPUT</div>
+                <button class="neural-settings-link-btn" onclick="navTo('screen-neural')">OPEN NEURAL LINK SCREEN ›</button>
             </div>
         </div>
 
@@ -776,9 +777,54 @@
     <script src="js/quests.js"></script>
     <script src="js/app.js"></script>
 <!-- ═══════════════════════════════════════════════
+         NEURAL LINK SCREEN
+    ═══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-neural">
+        <div class="neural-screen-header">
+            <button class="back-link" id="neural-header-back">← BACK</button>
+            <h2>NEURAL LINK</h2>
+        </div>
+
+        <div class="neural-screen-tabs">
+            <button class="ns-tab ns-tab--active" id="ns-tab-incursions" onclick="switchNeuralTab('incursions')">INCURSIONS</button>
+            <button class="ns-tab" id="ns-tab-bosses" onclick="switchNeuralTab('bosses')">WORLD BOSSES</button>
+        </div>
+
+        <!-- Incursions panel -->
+        <div class="ns-panel" id="ns-panel-incursions">
+            <div class="ns-explainer">
+                <div class="ns-explainer-title">[ WHAT IS AN INCURSION? ]</div>
+                <div class="ns-explainer-body">A time-sensitive mission generated from a real-world challenge you're facing today. The System identifies the hidden enemy, selects a tactical weapon, and issues a mission brief. Incursions expire in 6 hours. Execute them to earn bonus XP and deal damage to active World Bosses.</div>
+            </div>
+            <div class="ns-generate-btn-wrap">
+                <button class="ns-generate-btn" onclick="openNeuralGenerator('incursion')">+ GENERATE INCURSION</button>
+            </div>
+            <div class="ns-list-label">ACTIVE INCURSIONS</div>
+            <div id="ns-incursion-list" class="ns-entity-list"></div>
+        </div>
+
+        <!-- World Bosses panel -->
+        <div class="ns-panel hidden" id="ns-panel-bosses">
+            <div class="ns-explainer">
+                <div class="ns-explainer-title">[ WHAT IS A WORLD BOSS? ]</div>
+                <div class="ns-explainer-body">A persistent enemy entity generated from a long-term goal or recurring obstacle. It has an HP bar that is reduced every time you complete related directives or incursions. Defeat it by executing consistently. World Bosses do not expire — they endure until you destroy them.</div>
+            </div>
+            <div class="ns-generate-btn-wrap">
+                <button class="ns-generate-btn ns-generate-btn--boss" onclick="openNeuralGenerator('worldboss')">+ GENERATE WORLD BOSS</button>
+            </div>
+            <div class="ns-list-label">ACTIVE WORLD BOSSES</div>
+            <div id="ns-boss-list" class="ns-entity-list"></div>
+        </div>
+
+        <div class="back-link-bottom">
+            <button class="back-link" id="neural-back-link">← BACK TO STATUS</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
          NEURAL GENERATOR OVERLAY
     ═══════════════════════════════════════════════ -->
-    <div class="overlay hidden" id="overlay-neural-gen">
+    <div class="overlay hidden" id="overlay-neural-gen" onclick="if(event.target===this)closeNeuralGenerator()">
         <div class="overlay-content neural-gen-overlay">
             <div class="overlay-system">[ NEURAL LINK ]</div>
             <div class="ng-title" id="ng-title">[ GENERATE INCURSION ]</div>
@@ -794,7 +840,7 @@
             <div class="ng-status" id="ng-status"></div>
             <div class="ng-btn-row">
                 <button class="overlay-dismiss-btn" onclick="closeNeuralGenerator()">ABORT</button>
-                <button class="ng-submit-btn" id="ng-submit-btn" onclick="submitNeuralGeneration()">TRANSLATE →</button>
+                <button class="ng-submit-btn" id="ng-submit-btn" onclick="submitNeuralGeneration()">PROCESS ›</button>
             </div>
             <div class="ng-ephemeral">[ EPHEMERAL PROTOCOL ACTIVE — INPUT IS NOT STORED ]</div>
         </div>
@@ -803,7 +849,7 @@
     <!-- ═══════════════════════════════════════════════
          TACTICAL GUIDE OVERLAY
     ═══════════════════════════════════════════════ -->
-    <div class="overlay hidden" id="overlay-tactical">
+    <div class="overlay hidden" id="overlay-tactical" onclick="if(event.target===this)closeTacticalGuide()">
         <div class="overlay-content tactical-overlay">
             <div class="overlay-system">[ TACTICAL INTEL ]</div>
             <div class="tg-label"  id="tg-label"></div>

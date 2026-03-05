@@ -3007,3 +3007,320 @@ body {
 }
 
 .neural-gen-btn--boss:hover { background: rgba(255, 80, 80, 0.11); }
+
+/* ════════════════════════════════════════════════════════════════
+   NEURAL LINK SCREEN + UI FIXES
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Provider select — force dark background on options ── */
+.neural-provider-select option {
+    background: #1a1a2e;
+    color: var(--text);
+}
+
+/* ── Gemini key link ── */
+.neural-key-link {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(79, 195, 247, 0.3);
+    transition: border-color 0.2s;
+}
+.neural-key-link:hover { border-bottom-color: var(--accent); }
+
+/* ── Settings link button to Neural screen ── */
+.neural-settings-link-btn {
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    background: transparent;
+    border: 1px solid rgba(120, 200, 255, 0.25);
+    color: rgba(120, 200, 255, 0.7);
+    padding: 0.45rem;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.2s, color 0.2s;
+    margin-top: 0.35rem;
+}
+.neural-settings-link-btn:hover {
+    background: rgba(120, 200, 255, 0.08);
+    color: var(--accent);
+}
+
+/* ── Status screen Neural Link button ── */
+.nav-btn--neural {
+    position: relative;
+    border-color: rgba(120, 200, 255, 0.3);
+    color: rgba(120, 200, 255, 0.8);
+    margin-top: 0.5rem;
+}
+.nav-btn--neural:hover {
+    background: rgba(120, 200, 255, 0.08);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.nav-btn--neural-active {
+    border-color: rgba(255, 200, 60, 0.6) !important;
+    color: rgba(255, 200, 60, 0.9) !important;
+    animation: neural-pulse 2s ease-in-out infinite;
+}
+@keyframes neural-pulse {
+    0%, 100% { box-shadow: none; }
+    50%       { box-shadow: 0 0 12px rgba(255, 200, 60, 0.2); }
+}
+
+.neural-link-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: rgba(255, 200, 60, 0.9);
+    color: var(--bg);
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    font-weight: 700;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.neural-link-badge.hidden { display: none; }
+
+/* ── Error status styling ── */
+.ng-status--error {
+    color: var(--red) !important;
+    font-size: 0.66rem !important;
+    letter-spacing: 0.06em;
+    padding: 0.3rem 0.4rem;
+    border: 1px solid rgba(255, 82, 82, 0.3);
+    background: rgba(255, 82, 82, 0.05);
+    margin-bottom: 0.2rem;
+}
+
+/* ── Neural Link screen layout ── */
+.neural-screen-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem;
+}
+.neural-screen-header h2 {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    flex: 1;
+}
+
+/* ── Tabs ── */
+.neural-screen-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1.2rem;
+    border-bottom: 1px solid var(--border);
+}
+.ns-tab {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-dim);
+    padding: 0.5rem 1.2rem;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    margin-bottom: -1px;
+}
+.ns-tab--active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+.ns-tab:hover:not(.ns-tab--active) { color: var(--text); }
+
+/* ── Panel ── */
+
+/* ── Explainer box ── */
+.ns-explainer {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-left: 3px solid rgba(120, 200, 255, 0.4);
+    background: rgba(120, 200, 255, 0.03);
+    margin-bottom: 1rem;
+}
+.ns-explainer-title {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    color: rgba(120, 200, 255, 0.8);
+    margin-bottom: 0.4rem;
+}
+.ns-explainer-body {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+}
+
+/* ── Generate button ── */
+.ns-generate-btn-wrap { margin-bottom: 1.2rem; }
+.ns-generate-btn {
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    background: rgba(255, 200, 60, 0.06);
+    border: 1px solid rgba(255, 200, 60, 0.4);
+    color: rgba(255, 200, 60, 0.9);
+    padding: 0.65rem;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+.ns-generate-btn:hover {
+    background: rgba(255, 200, 60, 0.12);
+    box-shadow: 0 0 10px rgba(255, 200, 60, 0.1);
+}
+.ns-generate-btn--boss {
+    background: rgba(255, 80, 80, 0.05);
+    border-color: rgba(255, 80, 80, 0.4);
+    color: rgba(255, 110, 110, 0.9);
+}
+.ns-generate-btn--boss:hover {
+    background: rgba(255, 80, 80, 0.1);
+    box-shadow: 0 0 10px rgba(255, 80, 80, 0.1);
+}
+
+/* ── Section label ── */
+.ns-list-label {
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin-bottom: 0.6rem;
+}
+
+/* ── Empty state ── */
+.ns-empty {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    padding: 1rem 0;
+    text-align: center;
+    opacity: 0.6;
+}
+
+/* ── Entity cards ── */
+.ns-entity-card {
+    border: 1px solid var(--border);
+    border-left: 3px solid rgba(255, 200, 60, 0.5);
+    background: var(--panel);
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.ns-entity-card--boss {
+    border-left-color: rgba(255, 80, 80, 0.6);
+}
+.ns-entity-card--done {
+    opacity: 0.45;
+    border-left-color: var(--green);
+}
+
+.ns-entity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.ns-entity-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: rgba(255, 200, 60, 0.95);
+    flex: 1;
+    line-height: 1.3;
+}
+.ns-entity-label--boss { color: rgba(255, 100, 100, 0.95); }
+
+.ns-entity-timer {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    color: rgba(255, 200, 60, 0.7);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.ns-entity-timer--expired { color: var(--red); }
+
+.ns-entity-meta {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+}
+
+.ns-entity-enemy {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: rgba(255, 110, 110, 0.85);
+    letter-spacing: 0.05em;
+}
+.ns-entity-weapon {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: rgba(120, 200, 255, 0.85);
+    letter-spacing: 0.05em;
+}
+.ns-entity-guide {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    font-style: italic;
+    padding-top: 0.2rem;
+    border-top: 1px solid var(--border);
+    margin-top: 0.2rem;
+}
+
+/* ── Boss HP bar ── */
+.ns-boss-hp-wrap {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.ns-boss-hp-bar {
+    height: 100%;
+    background: #4caf80;
+    border-radius: 2px;
+    transition: width 0.8s ease, background 0.4s;
+}
+.ns-boss-hp-bar--amber    { background: #e8a040; }
+.ns-boss-hp-bar--critical { background: #ff5252; }
+
+/* ── Complete button on entity card ── */
+.ns-complete-btn {
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    background: transparent;
+    border: 1px solid rgba(255, 200, 60, 0.4);
+    color: rgba(255, 200, 60, 0.9);
+    padding: 0.45rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 0.2rem;
+}
+.ns-complete-btn:hover:not([disabled]) { background: rgba(255, 200, 60, 0.1); }
+.ns-complete-btn[disabled] {
+    border-color: var(--green);
+    color: var(--green);
+    cursor: default;
+    opacity: 0.7;
+}
