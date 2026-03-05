@@ -39,6 +39,9 @@ There is no cheat code. There is no catch-up mechanic. The only way to progress 
 - **Gold** — Earned per directive. Spent in the Supply Cache on performance buffs.
 - **World Map** — A radar-scan satellite map of five territory zones. Each zone unlocks as the corresponding stat grows. Fog of War clears with effort.
 - **Supply Cache** — Five purchasable buffs: Focus Draught, Vitality Tonic, Sprint Scroll, Rest Sigil, Clarity Shards.
+- **Save-State Transmissions** — Cloud persistence via an 8-character Save Frequency code. Ghost by default; syncing is a deliberate operator choice.
+- **Sync-Link** — Co-op tether. Two operators share a Sync-ID. Complete directives simultaneously and trigger Resonance — XP doubled for that event.
+- **Referral Network** — Share a referral link. When your recruit awakens, 50 Gold arrives automatically at next login.
 
 ---
 
@@ -47,14 +50,14 @@ There is no cheat code. There is no catch-up mechanic. The only way to progress 
 | Layer | Implementation |
 |---|---|
 | Framework | None — vanilla JS, HTML, CSS |
-| Storage | `localStorage` — local by default |
-| Audio | Web Audio API — four-layer ambient system |
-| Offline | Service Worker with cache-first strategy |
+| Storage | `localStorage` (local) + Firebase Firestore (cloud, opt-in) |
+| Audio | Web Audio API — four-layer ambient system + co-op heartbeat layer |
+| Offline | Service Worker with network-first strategy for app shell |
 | Install | PWA — installable on iOS, Android, desktop |
 | Notifications | Push via Service Worker |
 | Build tools | None |
 
-No dependencies. No bundler. No accounts required. The terminal runs anywhere a browser runs.
+No bundler. No accounts required. The terminal runs anywhere a browser runs.
 
 ---
 
@@ -62,16 +65,16 @@ No dependencies. No bundler. No accounts required. The terminal runs anywhere a 
 
 ```
 terminal/
-├── index.html              # Single-page shell, all screens
+├── index.html              # Single-page shell, all screens and overlays
 ├── manifest.json           # PWA manifest
-├── service-worker.js       # Cache + notification worker
+├── service-worker.js       # Cache + notification + update broadcast worker
 ├── css/
-│   └── style.css           # Base design system + Stage additions
+│   └── style.css           # Full design system — all stage additions appended
 ├── js/
 │   ├── app.js              # All game logic
 │   └── quests.js           # Quest pool rendering and selection
 ├── data/
-│   └── quests.json         # Directive pool (categorised by stat)
+│   └── quests.json         # Daily directive pool (categorised by stat)
 └── icons/
     ├── icon-192.png
     └── icon-512.png
@@ -81,8 +84,6 @@ terminal/
 
 ## Development status
 
-SYD is in active development. No production users. Breaking changes ship without migration paths until Stage 5 (cloud persistence) is complete.
-
 | Stage | Status | Description |
 |---|---|---|
 | Pre-1 | ✅ Complete | Bug fixes, tooltip refactor, service worker baseline |
@@ -90,34 +91,42 @@ SYD is in active development. No production users. Breaking changes ship without
 | 2 | ✅ Complete | Gold economy, Supply Cache, active buffs |
 | 3 | ✅ Complete | Atmospheric audio, relaunch boot, system log strip |
 | 4 | ✅ Complete | World Map — fog of war, zone lore, directive filter, territory transmissions |
-| 5a | 🔲 Planned | Neural Link — AI processor, System Incursions, World Boss HP bars |
-| 5b | 🔲 Planned | Sync-Link — Supabase persistence, co-op raids, referral rewards, Telegram comms |
+| 4.5 | ✅ Complete | First Transmission, PWA install prompt, referral stub, SYD rebrand |
+| 5b | ✅ Complete | Sync-Link — cloud persistence, co-op tether, referral payout, Telegram comms |
+| 5a | 🔲 In progress | Neural Link — AI processor, System Incursions, World Boss HP bars |
 
 ---
 
-## Roadmap (Stage 5 and beyond)
+## Roadmap
 
-**Stage 5a — The Neural Link Expansion**
+### Stage 5a — The Neural Link Expansion *(next)*
 
-A BYO-Key AI layer that translates the player's real-world plans into game entities. Input: *"Big presentation at 2pm."* Output: `[BOSS ENCOUNTER: THE ARBITER]`. The UI becomes elastic — Solo mode, Combat mode (Incursions active), and War Room mode (World Boss HP bar looming). Player supplies their own API key. Stored locally. Purged after translation.
+A BYO-Key AI layer that translates the operator's real-world plans into structured game entities using the **SYD-Prompt architecture** — a four-step transformation chain that surfaces the underlying friction of any task, gamifies it into a named enemy entity, selects a tactical mental model as the counter-weapon, and produces a dense Tactical Guide the operator can read before executing.
 
-**Stage 5b — The Sync-Link Protocol**
+Input: *"Big presentation at 2pm."*
+Output: `[INCURSION: THE ARBITER — INTELLIGENCE — 45 XP — EXPIRES 14:00]` with a full Tactical Guide on tap.
 
-Co-op without accounts. Two players share a 5-character Sync-ID and synchronise progress against shared encounters. Supabase handles the "Session Blob" — a JSON snapshot polled every 30–60 seconds. If both players complete tasks in the same window, `[RESONANCE]` fires: XP and Luck doubled for the session. Save-state transmissions let players back up and restore progress via an 8-character Save Frequency code.
+The operator supplies their own API key (Gemini by default — free tier, no billing card). Stored locally only, never persisted, purged immediately after each translation (Ephemeral Protocol). The UI is elastic — Solo mode for daily directives, Combat mode when Incursions are active, War Room mode when a World Boss HP bar is in play.
+
+### Beyond Stage 5
+
+- World Boss Raids and Temporal Rifts (co-op encounters mapped to real-world events)
+- Public bulletin board for shared Raids visible on the World Map
+- Tightened Firestore security rules once an operator identity model is defined
 
 ---
 
 ## Running locally
 
-SYD has no build step and no dependencies. Open the project in VS Code and use the **Live Server** extension (right-click `index.html` → *Open with Live Server*). This serves the files over `http://localhost` which is all the browser needs to register the Service Worker and test PWA features.
+SYD has no build step and no dependencies. Open the project in VS Code and use the **Live Server** extension (right-click `index.html` → *Open with Live Server*). This serves the files over `http://localhost`, which is all the browser needs to register the Service Worker and test PWA features.
 
-Do not open `index.html` directly as a file (`file:///...`). Service Workers refuse to register outside of a server context, so the app will load but audio, offline mode, and the install prompt will not work.
+Do not open `index.html` directly as a `file:///` path. Service Workers refuse to register outside a server context — audio, offline mode, and the install prompt will not work.
 
 ---
 
 ## Contributing
 
-SYD is a solo dev project in active development. It is not currently open for external contributions. Watch the repo for Stage 5 updates.
+SYD is a solo dev project in active development. Not currently open for external contributions.
 
 ---
 
