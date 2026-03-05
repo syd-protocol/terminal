@@ -2709,7 +2709,7 @@ async function submitNeuralGeneration() {
     }
 
     if (type === 'incursion') {
-        if (!entity.expiresAt) entity.expiresAt = new Date(Date.now() + 6 * 3600000).toISOString();
+        entity.expiresAt = new Date(Date.now() + 6 * 3600000).toISOString();
         const active = loadIncursions();
         active.push(entity);
         saveIncursions(active);
