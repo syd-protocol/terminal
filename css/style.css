@@ -3301,6 +3301,12 @@ body {
     margin-top: 0.2rem;
 }
 .ns-complete-btn:hover:not([disabled]) { background: rgba(255, 200, 60, 0.1); }
+.ns-entity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
 .ns-complete-btn[disabled] {
     border-color: var(--green);
     color: var(--green);
