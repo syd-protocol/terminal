@@ -3416,3 +3416,49 @@ body {
     color: var(--text);
     line-height: 1.4;
 }
+
+/* ── Boss defeated overlay ── */
+.boss-defeated-overlay {
+    text-align: center;
+}
+.bd-label {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    color: var(--green);
+    margin: 1rem 0 0.5rem;
+    line-height: 1.4;
+}
+.bd-enemy {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: rgba(255, 100, 100, 0.7);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.3rem;
+}
+.bd-weapon {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: rgba(120, 200, 255, 0.7);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.8rem;
+}
+.bd-body {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    font-style: italic;
+    margin-bottom: 1.2rem;
+}
+
+/* ── Defeated boss entry in history list ── */
+.ns-entity-card--defeated {
+    border-left-color: rgba(0, 230, 118, 0.4);
+    opacity: 0.6;
+}
+.ns-entity-label--defeated {
+    color: rgba(0, 230, 118, 0.8);
+}
+.ns-list-label--defeated {
+    margin-top: 1.2rem;
+}

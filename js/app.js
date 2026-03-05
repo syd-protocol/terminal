@@ -1413,9 +1413,19 @@ async function pushToCloud() {
     if (!firestore) return;
     const freq = getOrCreateSaveFrequency();
     const now  = new Date().toISOString();
+    // Sidecar: non-player state that should sync across devices.
+    // Neural API key is deliberately excluded — never store keys in the cloud.
+    const sidecar = {
+        incursions:      localStorage.getItem(INCURSIONS_KEY)      || '[]',
+        worldBosses:     localStorage.getItem(WORLDBOSSES_KEY)     || '[]',
+        trace:           localStorage.getItem(TRACE_KEY)           || '[]',
+        defeatedBosses:  localStorage.getItem('syd_defeated_bosses') || '[]',
+        audioMinutes:    localStorage.getItem(AUDIO_MINUTES_KEY)   || '0',
+    };
     try {
         await firestore.collection('save_states').doc(freq).set({
             playerBlob: JSON.stringify(player),
+            sidecar:    JSON.stringify(sidecar),
             pushedAt:   now,
             appVersion: 'syd-v2'
         });
@@ -1486,8 +1496,25 @@ async function reconstituteSaveState() {
         // Overwrite localStorage and reload — cleanest reconstitution
         localStorage.setItem(STORAGE_KEY, blobString);
         localStorage.setItem(SAVE_FREQ_KEY, code);
+
+        // Restore sidecar if present
+        if (data.sidecar) {
+            try {
+                const sc = JSON.parse(data.sidecar);
+                if (sc.incursions)     localStorage.setItem(INCURSIONS_KEY,           sc.incursions);
+                if (sc.worldBosses)    localStorage.setItem(WORLDBOSSES_KEY,          sc.worldBosses);
+                if (sc.trace)          localStorage.setItem(TRACE_KEY,                sc.trace);
+                if (sc.defeatedBosses) localStorage.setItem('syd_defeated_bosses',    sc.defeatedBosses);
+                if (sc.audioMinutes)   localStorage.setItem(AUDIO_MINUTES_KEY,        sc.audioMinutes);
+            } catch(e) { console.warn('Sidecar restore failed:', e); }
+        }
+
         setSyncStatus('[ FREQUENCY LOCKED — RECONSTITUTING TERMINAL... ]', 'accent');
-        setTimeout(() => window.location.reload(), 1200);
+        // Show key advisory before reload
+        setTimeout(() => {
+            setSyncStatus('[ NOTE: NEURAL PROCESSOR KEY NOT SYNCED — RE-ENTER IN SETTINGS ]', 'warn');
+        }, 400);
+        setTimeout(() => window.location.reload(), 2400);
     } catch(e) {
         console.error('Reconstitute failed:', e);
         setSyncStatus('[ RECONSTITUTION FAILED — CHECK CODE AND RETRY ]', 'warn');
