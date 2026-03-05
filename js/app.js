@@ -2724,24 +2724,24 @@ async function submitNeuralGeneration() {
     closeNeuralGenerator();
     renderElasticUI();
     updateNeuralBadge();
-    // If the neural screen is open, refresh it
-    if (document.getElementById('screen-neural') && document.getElementById('screen-neural').classList.contains('active')) {
-        renderNeuralScreen();
-    }
+    const neuralScreen = document.getElementById('screen-neural');
+    if (neuralScreen && neuralScreen.classList.contains('active')) renderNeuralScreen();
 }
 
 // ─── NEURAL PROCESSOR SETTINGS ────────────────────────────────
 
 // ─── NEURAL LINK SCREEN ───────────────────────────────────────
 function renderNeuralScreen() {
-    switchNeuralTab(document.getElementById('ns-tab-incursions').classList.contains('ns-tab--active') ? 'incursions' : 'bosses');
+    const incTab = document.getElementById('ns-tab-incursions');
+    const activeTab = incTab && incTab.classList.contains('ns-tab--active') ? 'incursions' : 'bosses';
+    switchNeuralTab(activeTab);
 }
 
 function switchNeuralTab(tab) {
-    const incPanel = document.getElementById('ns-panel-incursions');
-    const bossPanel= document.getElementById('ns-panel-bosses');
-    const incTab   = document.getElementById('ns-tab-incursions');
-    const bossTab  = document.getElementById('ns-tab-bosses');
+    const incPanel  = document.getElementById('ns-panel-incursions');
+    const bossPanel = document.getElementById('ns-panel-bosses');
+    const incTab    = document.getElementById('ns-tab-incursions');
+    const bossTab   = document.getElementById('ns-tab-bosses');
     if (!incPanel) return;
 
     if (tab === 'incursions') {
@@ -2780,8 +2780,8 @@ function renderNeuralIncursionList() {
                 ${remaining ? `<span class="ns-entity-timer${remaining === 'EXPIRED' ? ' ns-entity-timer--expired' : ''}">${remaining}</span>` : ''}
             </div>
             <div class="ns-entity-meta">[ ${(inc.stat||'???').toUpperCase()} ] · +${inc.baseXP} XP · 1.5× BOSS DAMAGE</div>
-            ${inc.enemy  ? `<div class="ns-entity-enemy">ENEMY: ${inc.enemy}</div>` : ''}
-            ${inc.weapon ? `<div class="ns-entity-weapon">WEAPON: ${inc.weapon}</div>` : ''}
+            ${inc.enemy       ? `<div class="ns-entity-enemy">ENEMY: ${inc.enemy}</div>` : ''}
+            ${inc.weapon      ? `<div class="ns-entity-weapon">WEAPON: ${inc.weapon}</div>` : ''}
             ${inc.tacticalGuide ? `<div class="ns-entity-guide">${inc.tacticalGuide}</div>` : ''}
             <div class="ns-entity-actions">
                 <button class="ns-complete-btn" ${isComplete ? 'disabled' : ''}>
@@ -2822,8 +2822,8 @@ function renderNeuralBossList() {
                 <div class="ns-boss-hp-bar${pct > 50 ? '' : pct > 25 ? ' ns-boss-hp-bar--amber' : ' ns-boss-hp-bar--critical'}" style="width:${pct}%"></div>
             </div>
             <div class="ns-entity-meta">${boss.currentHp} / ${boss.maxHp} HP · ${pct}% remaining</div>
-            ${boss.enemy  ? `<div class="ns-entity-enemy">ENEMY: ${boss.enemy}</div>` : ''}
-            ${boss.weapon ? `<div class="ns-entity-weapon">WEAPON: ${boss.weapon}</div>` : ''}
+            ${boss.enemy       ? `<div class="ns-entity-enemy">ENEMY: ${boss.enemy}</div>` : ''}
+            ${boss.weapon      ? `<div class="ns-entity-weapon">WEAPON: ${boss.weapon}</div>` : ''}
             ${boss.tacticalGuide ? `<div class="ns-entity-guide">${boss.tacticalGuide}</div>` : ''}
         `;
         container.appendChild(el);
@@ -2831,12 +2831,12 @@ function renderNeuralBossList() {
 }
 
 function updateNeuralBadge() {
-    const badge       = document.getElementById('neural-link-badge');
-    const btn         = document.getElementById('neural-link-btn');
-    if (!badge) return;
-    const incursions  = pruneExpiredIncursions();
-    const bosses      = loadWorldBosses();
-    const active      = incursions.filter(i => !(player.completedToday || []).includes(i.id)).length + bosses.length;
+    const badge = document.getElementById('neural-link-badge');
+    const btn   = document.getElementById('neural-link-btn');
+    if (!badge || !btn) return;
+    const incursions = pruneExpiredIncursions();
+    const bosses     = loadWorldBosses();
+    const active     = incursions.filter(i => !(player.completedToday || []).includes(i.id)).length + bosses.length;
     if (active > 0) {
         badge.textContent = active;
         badge.classList.remove('hidden');
@@ -2845,6 +2845,13 @@ function updateNeuralBadge() {
         badge.classList.add('hidden');
         btn.classList.remove('nav-btn--neural-active');
     }
+}
+
+function onProviderChange() {
+    const provSel = document.getElementById('neural-provider-select');
+    const hint    = document.getElementById('neural-key-hint');
+    if (!provSel || !hint) return;
+    hint.style.display = provSel.value === 'gemini' ? '' : 'none';
 }
 
 async function testNeuralKey() {
@@ -2856,59 +2863,46 @@ async function testNeuralKey() {
 
     const k = keyInput.value.trim() || getNeuralKey();
     const p = provSel ? provSel.value : getNeuralProvider();
-    if (!k) { statusEl.textContent = '[ ERROR: PASTE A KEY FIRST ]'; statusEl.className = 'neural-status neural-status--offline'; return; }
+    if (!k) {
+        statusEl.textContent = '[ ERROR: PASTE A KEY FIRST ]';
+        statusEl.className   = 'neural-status neural-status--offline';
+        return;
+    }
 
-    testBtn.disabled    = true;
+    testBtn.disabled     = true;
     statusEl.textContent = '[ TESTING CONNECTION... ]';
     statusEl.className   = 'neural-status';
 
     try {
-        const pingMsg = 'Reply with exactly: {"ok":true}';
-        let ok = false;
-
         if (p === 'gemini') {
-            const url  = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${k}`;
-            const res  = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ contents:[{ parts:[{ text: pingMsg }] }] }) });
-            ok = res.ok;
-            if (!ok) {
-                const err = await res.json().catch(()=>({}));
-                if (res.status === 429) throw new Error('_429');
-                if (res.status === 401 || res.status === 403) throw new Error('_401');
-                throw new Error('_' + res.status);
-            }
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${k}`;
+            const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ contents:[{ parts:[{ text:'Reply with: {"ok":true}' }] }] }) });
+            if (!res.ok) throw new Error('_' + res.status);
         } else if (p === 'openai') {
             const res = await fetch('https://api.openai.com/v1/chat/completions', {
                 method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+k},
-                body: JSON.stringify({ model:'gpt-4o-mini', messages:[{role:'user',content:pingMsg}], max_tokens:10 }) });
-            ok = res.ok;
-            if (!ok) throw new Error('_' + res.status);
+                body: JSON.stringify({ model:'gpt-4o-mini', messages:[{role:'user',content:'hi'}], max_tokens:5 }) });
+            if (!res.ok) throw new Error('_' + res.status);
         } else if (p === 'anthropic') {
             const res = await fetch('https://api.anthropic.com/v1/messages', {
                 method:'POST', headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01'},
-                body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:10, messages:[{role:'user',content:pingMsg}] }) });
-            ok = res.ok;
-            if (!ok) throw new Error('_' + res.status);
+                body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:5, messages:[{role:'user',content:'hi'}] }) });
+            if (!res.ok) throw new Error('_' + res.status);
         }
-
+        // Success — show confirmation then restore the masked key display after 3 seconds
         statusEl.innerHTML  = `[ ✓ CONNECTION CONFIRMED — ${p.toUpperCase()} KEY ACCEPTED ]`;
         statusEl.className  = 'neural-status neural-status--online';
+        setTimeout(() => renderNeuralSettings(), 3000);
     } catch(e) {
         const msg = e.message || '';
-        if      (msg.includes('_429'))                    statusEl.textContent = '[ RATE LIMITED — KEY IS VALID BUT QUOTA EXCEEDED ]';
-        else if (msg.includes('_401')||msg.includes('_403')) statusEl.textContent = '[ KEY REJECTED — CHECK THE KEY AND PROVIDER ]';
-        else                                               statusEl.textContent = '[ CONNECTION FAILED — CHECK NETWORK OR KEY ]';
+        if      (msg.includes('_429'))                         statusEl.textContent = '[ RATE LIMITED — KEY VALID BUT QUOTA EXCEEDED ]';
+        else if (msg.includes('_401')||msg.includes('_403'))   statusEl.textContent = '[ KEY REJECTED — CHECK THE KEY AND PROVIDER ]';
+        else                                                   statusEl.textContent = '[ CONNECTION FAILED — CHECK NETWORK OR KEY ]';
         statusEl.className = 'neural-status neural-status--offline';
     } finally {
         testBtn.disabled = false;
     }
-}
-
-function onProviderChange() {
-    const provSel = document.getElementById('neural-provider-select');
-    const hint    = document.getElementById('neural-key-hint');
-    if (!provSel || !hint) return;
-    hint.style.display = provSel.value === 'gemini' ? '' : 'none';
 }
 
 function renderNeuralSettings() {
