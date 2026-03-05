@@ -195,6 +195,7 @@
             ⬡ NEURAL LINK
             <span class="neural-link-badge hidden" id="neural-link-badge">0</span>
         </button>
+        <button class="nav-btn nav-btn--terminal-floor" id="terminal-floor-btn">[ TERMINAL FLOOR ]</button>
     </div>
 
     <!-- ═══════════════════════════════════════════════
@@ -652,6 +653,107 @@
                 <button class="nav-btn hidden" id="sigil-confirm-btn">[ CONFIRM SIGIL ]</button>
             </div>
         </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         TERMINAL FLOOR SCREEN (Stage 6c)
+         A spatial 1D scene — the operator's field position.
+         On first visit (post archetype): arrival cinematic.
+         On return visits: live world, avatar at COMMAND POST.
+    ═══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-terminal">
+
+        <!-- Layer 1: perspective grid background (CSS animation only) -->
+        <div class="tf-bg-grid" id="tf-bg-grid" aria-hidden="true">
+            <div class="tf-grid-lines"></div>
+        </div>
+
+        <!-- Arrival sequence text (typewriter lines, hidden after first visit) -->
+        <div class="tf-arrival-overlay hidden" id="tf-arrival-overlay">
+            <div class="tf-arrival-lines" id="tf-arrival-lines"></div>
+            <div class="tf-arrival-tap" id="tf-arrival-tap">[ TAP ANYWHERE TO PROCEED ]</div>
+        </div>
+
+        <!-- Layer 2: structures mid-ground -->
+        <div class="tf-stage" id="tf-stage">
+
+            <!-- Structure 1: FIELD ARCHIVE — Map (comms tower / antenna array) -->
+            <div class="tf-structure tf-structure--archive" id="tf-struct-map" data-screen="screen-map" title="FIELD ARCHIVE">
+                <div class="tf-struct-inner">
+                    <div class="tf-antenna-mast"></div>
+                    <div class="tf-antenna-arms">
+                        <div class="tf-antenna-arm tf-antenna-arm--l"></div>
+                        <div class="tf-antenna-arm tf-antenna-arm--r"></div>
+                    </div>
+                    <div class="tf-antenna-base"></div>
+                    <div class="tf-struct-blink" id="tf-blink-map"></div>
+                </div>
+                <div class="tf-struct-label">FIELD ARCHIVE</div>
+            </div>
+
+            <!-- Structure 2: SUPPLY CACHE — Shop (reinforced container stack) -->
+            <div class="tf-structure tf-structure--cache" id="tf-struct-shop" data-screen="screen-shop" title="SUPPLY CACHE">
+                <div class="tf-struct-inner">
+                    <div class="tf-container tf-container--top"></div>
+                    <div class="tf-container tf-container--mid"></div>
+                    <div class="tf-container tf-container--bot"></div>
+                </div>
+                <div class="tf-struct-label">SUPPLY CACHE</div>
+            </div>
+
+            <!-- Structure 3: COMMAND POST — Status (terminal desk + screen glow) -->
+            <div class="tf-structure tf-structure--command" id="tf-struct-status" data-screen="screen-status" title="COMMAND POST">
+                <div class="tf-struct-inner">
+                    <div class="tf-monitor">
+                        <div class="tf-monitor-screen"></div>
+                    </div>
+                    <div class="tf-desk"></div>
+                </div>
+                <div class="tf-struct-label">COMMAND POST</div>
+            </div>
+
+            <!-- Structure 4: OPERATIONS — Directives (mission board / briefing wall) -->
+            <div class="tf-structure tf-structure--ops" id="tf-struct-quests" data-screen="screen-quests" title="OPERATIONS">
+                <div class="tf-struct-inner">
+                    <div class="tf-board">
+                        <div class="tf-board-grid">
+                            <div></div><div></div><div></div>
+                            <div></div><div></div><div></div>
+                            <div></div><div></div><div></div>
+                        </div>
+                    </div>
+                    <div class="tf-struct-blink" id="tf-blink-quests"></div>
+                </div>
+                <div class="tf-struct-label">OPERATIONS</div>
+            </div>
+
+            <!-- Structure 5: NEURAL LINK — Neural screen (server rack) -->
+            <div class="tf-structure tf-structure--neural" id="tf-struct-neural" data-screen="screen-neural" title="NEURAL LINK">
+                <div class="tf-struct-inner">
+                    <div class="tf-rack">
+                        <div class="tf-rack-unit"></div>
+                        <div class="tf-rack-unit"></div>
+                        <div class="tf-rack-unit"></div>
+                        <div class="tf-rack-unit tf-rack-unit--active"></div>
+                    </div>
+                    <div class="tf-struct-blink tf-struct-blink--neural" id="tf-blink-neural"></div>
+                </div>
+                <div class="tf-struct-label">NEURAL LINK</div>
+            </div>
+
+        </div>
+        <!-- end tf-stage -->
+
+        <!-- Layer 3: ground plane + avatar -->
+        <div class="tf-ground-wrap">
+            <div class="tf-ground-line"></div>
+            <!-- Avatar — clip-path silhouette applied by JS from player sigil -->
+            <div class="tf-avatar" id="tf-avatar">
+                <div class="tf-avatar-shape" id="tf-avatar-shape"></div>
+            </div>
+        </div>
+
+        <div class="back-link tf-back-link" id="tf-back-link">← RETURN TO STATUS</div>
     </div>
 
     <!-- ═══════════════════════════════════════════════

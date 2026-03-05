@@ -815,6 +815,7 @@ async function init() {
     document.getElementById('view-directives-btn').addEventListener('click', ()=>navTo('screen-quests'));
     document.getElementById('install-confirm-btn').addEventListener('click', ()=>{ playUIClick(); acceptInstall(); });
     document.getElementById('install-dismiss-btn').addEventListener('click', ()=>{ playUIClick(); dismissInstall(); });
+    document.getElementById('terminal-floor-btn').addEventListener('click',  ()=>{ playUIClick(); showTerminalFloor(); });
     document.getElementById('quest-header-back').addEventListener('click',   ()=>navTo('screen-status'));
     document.getElementById('quests-back-link').addEventListener('click',    ()=>navTo('screen-status'));
     document.getElementById('map-header-back').addEventListener('click',     ()=>navTo('screen-status'));
@@ -1166,7 +1167,8 @@ function runArchetypeScan() {
         });
     }
 
-    // Confirm sigil — save both fields to player, proceed to status screen
+    // Confirm sigil — save both fields to player, then route to Terminal Floor arrival.
+    // The arrival cinematic fires because hasSeenTerminalFloor is false for new players.
     sigilConfBtn.addEventListener('click', () => {
         if (!chosenArchetype || !chosenSigil) return;
         player.archetype = chosenArchetype;
@@ -1174,9 +1176,287 @@ function runArchetypeScan() {
         savePlayer();
         playUIClick();
         updateStatusScreen();
-        showScreen('screen-status');
-        runFirstTransmission();
+        showTerminalFloor();
     });
+}
+
+// ════════════════════════════════════════════════════════════════
+// STAGE 6C — TERMINAL FLOOR
+// ════════════════════════════════════════════════════════════════
+
+// Zone-to-structure mapping — matches HTML data-screen attributes.
+// Order matches the visual left-to-right layout.
+const TF_STRUCTURES = [
+    { id: 'tf-struct-map',    screen: 'screen-map',    label: 'FIELD ARCHIVE'  },
+    { id: 'tf-struct-shop',   screen: 'screen-shop',   label: 'SUPPLY CACHE'   },
+    { id: 'tf-struct-status', screen: 'screen-status', label: 'COMMAND POST'   },
+    { id: 'tf-struct-quests', screen: 'screen-quests', label: 'OPERATIONS'     },
+    { id: 'tf-struct-neural', screen: 'screen-neural', label: 'NEURAL LINK'    }
+];
+
+// Avatar X positions (as percentage of container width) for each structure.
+// Indices match TF_STRUCTURES order (0=archive, 1=cache, 2=command, 3=ops, 4=neural).
+// These are set by JS after the stage is rendered so they align with actual positions.
+const TF_AVATAR_X_OFFSETS = [10, 28, 50, 70, 88]; // % of container width
+
+// Current avatar target index (default: COMMAND POST = index 2)
+let tfAvatarIndex = 2;
+
+// ── showTerminalFloor ─────────────────────────────────────────
+// Called from the Terminal Floor button on status screen and from
+// the sigil confirm in Stage 6a. Handles both arrival (first time)
+// and return visits.
+function showTerminalFloor() {
+    showScreen('screen-terminal');
+    renderTerminalAvatar();
+    updateTerminalActiveStates();
+    wireTfStructures();
+    wireTfBackLink();
+
+    if (!player.hasSeenTerminalFloor) {
+        // First visit — run arrival cinematic then show the world
+        runTerminalArrival();
+    } else {
+        // Return visit — illuminate everything immediately, avatar at COMMAND POST
+        illuminateAllStructures(false);
+        positionAvatar(2, false); // COMMAND POST, no slide animation
+    }
+}
+
+// ── renderTerminalAvatar ──────────────────────────────────────
+// Applies the operator's sigil clip-path and archetype colour to the avatar shape.
+function renderTerminalAvatar() {
+    const shapeEl = document.getElementById('tf-avatar-shape');
+    if (!shapeEl || !player) return;
+
+    const archetype = player.archetype || 'ghost';
+    const sigilKey  = player.sigil     || (archetype + '_A');
+    const variant   = sigilKey.split('_')[1] || 'A';
+    const colour    = ARCHETYPE_COLOURS[archetype] || 'var(--accent)';
+    const clip      = (SIGIL_CLIPS[archetype] && SIGIL_CLIPS[archetype][variant])
+                        || SIGIL_CLIPS.ghost.A;
+
+    shapeEl.style.clipPath  = clip;
+    shapeEl.style.background = colour;
+    shapeEl.style.boxShadow  = '0 0 8px ' + colour + '99';
+}
+
+// ── updateTerminalActiveStates ────────────────────────────────
+// Reads current game state and activates/deactivates blink indicators:
+//   - OPERATIONS blinks if today's directives are not all complete
+//   - NEURAL LINK blinks if active incursions or world bosses exist
+function updateTerminalActiveStates() {
+    // OPERATIONS
+    const questsEl  = document.getElementById('tf-struct-quests');
+    const blinkQ    = document.getElementById('tf-blink-quests');
+    const allDone   = player && dailyQuests.length > 0 &&
+                      dailyQuests.every(q => (player.completedToday || []).includes(q.id));
+    if (questsEl && blinkQ) {
+        questsEl.classList.toggle('tf-structure--active', !allDone);
+        blinkQ.classList.toggle('tf-struct-blink--active', !allDone);
+    }
+
+    // NEURAL LINK
+    const neuralEl  = document.getElementById('tf-struct-neural');
+    const blinkN    = document.getElementById('tf-blink-neural');
+    const incursions = pruneExpiredIncursions();
+    const bosses     = loadWorldBosses();
+    const neuralActive = incursions.filter(i => !(player.completedToday||[]).includes(i.id)).length + bosses.length > 0;
+    if (neuralEl && blinkN) {
+        blinkN.classList.toggle('tf-struct-blink--active', neuralActive);
+    }
+}
+
+// ── wireTfStructures ──────────────────────────────────────────
+// Wires tap handlers on every structure. Tap → avatar slides to
+// that structure → navTo that screen (except COMMAND POST which
+// is already the status screen — stay, no nav).
+function wireTfStructures() {
+    TF_STRUCTURES.forEach((cfg, idx) => {
+        const el = document.getElementById(cfg.id);
+        if (!el) return;
+        // Remove any previous listener by cloning
+        const fresh = el.cloneNode(true);
+        el.parentNode.replaceChild(fresh, el);
+        fresh.addEventListener('click', () => {
+            playUIClick();
+            positionAvatar(idx, true);
+            // Delay nav slightly so the slide is visible
+            setTimeout(() => {
+                if (cfg.screen === 'screen-status') {
+                    // COMMAND POST — return to status without re-running showTerminalFloor
+                    showScreen('screen-status');
+                } else {
+                    navTo(cfg.screen);
+                }
+            }, 420);
+        });
+    });
+}
+
+// ── wireTfBackLink ────────────────────────────────────────────
+function wireTfBackLink() {
+    const link = document.getElementById('tf-back-link');
+    if (!link) return;
+    const fresh = link.cloneNode(true);
+    link.parentNode.replaceChild(fresh, link);
+    fresh.addEventListener('click', () => { playUIClick(); navTo('screen-status'); });
+}
+
+// ── positionAvatar ────────────────────────────────────────────
+// Moves the avatar to the structure at `index`.
+// If animate is false, the transition is suppressed (instant reposition).
+function positionAvatar(index, animate) {
+    tfAvatarIndex = index;
+    const avatarEl  = document.getElementById('tf-avatar');
+    const stageEl   = document.getElementById('tf-stage');
+    if (!avatarEl || !stageEl) return;
+
+    // Find the actual rendered x-centre of the target structure
+    const structs = stageEl.querySelectorAll('.tf-structure');
+    const target  = structs[index];
+    if (!target) return;
+
+    const stageRect  = stageEl.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const centreX    = (targetRect.left + targetRect.width / 2) - stageRect.left;
+
+    if (!animate) {
+        avatarEl.style.transition = 'none';
+        avatarEl.style.left = (centreX - 10) + 'px'; // -10 = half avatar width
+        // Re-enable transition on next frame
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            avatarEl.style.transition = '';
+        }));
+    } else {
+        avatarEl.style.left = (centreX - 10) + 'px';
+    }
+}
+
+// ── illuminateAllStructures ───────────────────────────────────
+// Makes all structures visible. On arrival, staggered with CSS animation.
+// On return visits, instant (no stagger).
+function illuminateAllStructures(stagger) {
+    const structs = document.querySelectorAll('.tf-structure');
+    structs.forEach((el, i) => {
+        if (stagger) {
+            el.style.animationDelay  = (i * 0.22) + 's';
+            el.style.animationName   = 'tf-illuminate';
+            el.style.animationDuration = '0.5s';
+            el.style.animationFillMode = 'both';
+            setTimeout(() => el.classList.add('tf-structure--lit'), i * 220);
+        } else {
+            el.classList.add('tf-structure--lit');
+        }
+    });
+}
+
+// ── runTerminalArrival ────────────────────────────────────────
+// One-time cinematic. Fires only when hasSeenTerminalFloor === false.
+// Sequence:
+//   1. Overlay covers the stage — typewriter lines appear
+//   2. Structures illuminate left to right (stagger)
+//   3. Avatar materialises at COMMAND POST (index 2) with drop animation
+//   4. Final System line appears
+//   5. "TAP ANYWHERE TO PROCEED" — tap dismisses to status screen
+function runTerminalArrival() {
+    const overlay  = document.getElementById('tf-arrival-overlay');
+    const linesEl  = document.getElementById('tf-arrival-lines');
+    const tapEl    = document.getElementById('tf-arrival-tap');
+    if (!overlay || !linesEl) return;
+
+    overlay.classList.remove('hidden');
+    linesEl.innerHTML = '';
+    tapEl.classList.add('hidden');
+
+    const name      = player ? player.name     : 'OPERATOR';
+    const archetype = player ? (ARCHETYPE_NAMES[player.archetype] || 'UNKNOWN') : 'UNKNOWN';
+
+    const lines = [
+        { text: '[ COORDINATE LOCK ESTABLISHED ]',               dim: false },
+        { text: '[ OPERATOR: ' + name + ' DETECTED ]',           dim: false },
+        { text: '[ ARCHETYPE: ' + archetype + ' — CONFIRMED ]',  dim: false },
+        { text: '[ ASSIGNING FIELD POSITION... ]',                dim: false }
+    ];
+
+    let idx = 0;
+    function nextLine() {
+        if (idx >= lines.length) {
+            // All scan lines done — illuminate structures, then materialise avatar
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                illuminateAllStructures(true);
+
+                // Avatar materialises at COMMAND POST after structures light up
+                const totalIllumTime = TF_STRUCTURES.length * 220 + 100;
+                setTimeout(() => {
+                    positionAvatar(2, false);
+                    const avatarEl    = document.getElementById('tf-avatar');
+                    const avatarShape = document.getElementById('tf-avatar-shape');
+                    if (avatarEl) {
+                        avatarEl.style.opacity = '0';
+                        // Small delay so position is set before we fade in
+                        setTimeout(() => {
+                            avatarEl.style.opacity = '1';
+                            if (avatarShape) {
+                                avatarShape.classList.remove('tf-avatar--materialise');
+                                void avatarShape.offsetWidth; // force reflow
+                                avatarShape.classList.add('tf-avatar--materialise');
+                            }
+                        }, 80);
+                    }
+
+                    // Final System line — appears below the structures
+                    setTimeout(() => {
+                        // Re-show overlay briefly for final line, then tap-to-proceed
+                        overlay.classList.remove('hidden');
+                        linesEl.innerHTML = '';
+                        const finalEl = document.createElement('div');
+                        finalEl.className = 'tf-arrival-line tf-arrival-line--visible';
+                        finalEl.textContent = '[ TERMINAL FLOOR ACTIVE — PROCEED TO OPERATIONS ]';
+                        linesEl.appendChild(finalEl);
+                        tapEl.classList.remove('hidden');
+
+                        // Tap anywhere to advance to status screen
+                        function dismiss() {
+                            overlay.classList.add('hidden');
+                            player.hasSeenTerminalFloor = true;
+                            savePlayer();
+                            // Don't auto-navigate — leave operator on Terminal Floor
+                            // so they can explore. First Transmission fires from status.
+                            runFirstTransmission();
+                            showScreen('screen-status');
+                        }
+                        overlay.addEventListener('click', dismiss, { once: true });
+                    }, 500);
+                }, totalIllumTime);
+            }, 300);
+            return;
+        }
+
+        const { text, dim } = lines[idx];
+        const lineEl = document.createElement('div');
+        lineEl.className = 'tf-arrival-line' + (dim ? ' tf-arrival-line--dim' : '');
+        linesEl.appendChild(lineEl);
+
+        // Typewriter
+        let charIdx = 0;
+        lineEl.textContent = '';
+        const iv = setInterval(() => {
+            lineEl.textContent += text[charIdx];
+            charIdx++;
+            if (charIdx >= text.length) {
+                clearInterval(iv);
+                lineEl.classList.add('tf-arrival-line--visible');
+                idx++;
+                setTimeout(nextLine, 400);
+            }
+        }, 28);
+        // Make the line visible as it types
+        requestAnimationFrame(() => requestAnimationFrame(() => lineEl.classList.add('tf-arrival-line--visible')));
+    }
+
+    nextLine();
 }
 
 // renderArchetypeIdentity — called from updateStatusScreen to show/hide
@@ -1226,6 +1506,8 @@ function loadPlayer() {
     if(typeof p.sigil === 'undefined') p.sigil = null;
     // Existing players predate the tutorial — mark as completed so it never fires
     if(typeof p.hasCompletedTutorial === 'undefined') p.hasCompletedTutorial = true;
+    // Existing players predate the Terminal Floor — mark as seen so arrival never fires
+    if(typeof p.hasSeenTerminalFloor === 'undefined') p.hasSeenTerminalFloor = true;
     return p;
 }
 function savePlayer() { localStorage.setItem(STORAGE_KEY,JSON.stringify(player)); }
@@ -1235,7 +1517,7 @@ function createPlayer(name) {
     const maxHp=calcMaxHp(1);
     player={name,stats,completedToday:[],lastQuestDate:today(),consecutiveDays:1,momentum:1.0,
         lastActiveDate:today(),hp:maxHp,maxHp,corrupted:false,gold:0,buffs:defaultBuffs(),
-        mapMilestones:{},hasSeenBriefing:false,hasCompletedTutorial:false};
+        mapMilestones:{},hasSeenBriefing:false,hasCompletedTutorial:false,hasSeenTerminalFloor:false};
     savePlayer();
     dailyQuests=getDailyQuests(allQuests,calculateLevel(),effectiveGear());
     recordReferralIfPresent();

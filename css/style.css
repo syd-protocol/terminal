@@ -3690,3 +3690,428 @@ body {
     letter-spacing: 3px;
     font-weight: 700;
 }
+
+
+/* ════════════════════════════════════════════════════════════════
+   STAGE 6C — TERMINAL FLOOR (WORLD STRIP)
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Keyframes ─────────────────────────────────────────────────── */
+
+/* Perspective grid scrolls slowly toward viewer, giving depth illusion */
+@keyframes tf-grid-scroll {
+    0%   { background-position: 50% 0%; }
+    100% { background-position: 50% 100%; }
+}
+
+/* Structures illuminate: opacity 0 → 1 staggered per structure */
+@keyframes tf-illuminate {
+    from { opacity: 0; filter: brightness(0.1); }
+    to   { opacity: 1; filter: brightness(1); }
+}
+
+/* Avatar materialises: drops from above with a brief bounce */
+@keyframes tf-avatar-drop {
+    0%   { transform: translateY(-28px); opacity: 0; }
+    70%  { transform: translateY(4px);   opacity: 1; }
+    100% { transform: translateY(0);     opacity: 1; }
+}
+
+/* Slow breathing glow on each structure's inner element */
+@keyframes tf-structure-breathe {
+    0%, 100% { box-shadow: 0 0 6px rgba(79,195,247,0.15); }
+    50%       { box-shadow: 0 0 14px rgba(79,195,247,0.35); }
+}
+
+/* Active state pulse — OPERATIONS when directives incomplete */
+@keyframes tf-pulse-warn {
+    0%, 100% { box-shadow: 0 0 4px rgba(255,82,82,0.2); }
+    50%       { box-shadow: 0 0 16px rgba(255,82,82,0.7); }
+}
+
+/* NEURAL blink indicator — when active incursions/bosses present */
+@keyframes tf-blink-neural {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
+}
+
+/* Avatar glow pulse */
+@keyframes tf-avatar-glow {
+    0%, 100% { filter: brightness(1); }
+    50%       { filter: brightness(1.4); }
+}
+
+/* ── Screen wrapper ─────────────────────────────────────────────── */
+#screen-terminal {
+    position: relative;
+    overflow: hidden;
+    min-height: 420px;
+    display: none;
+    flex-direction: column;
+    padding: 0;
+}
+#screen-terminal.active { display: flex; }
+
+/* ── Layer 1: Perspective background grid ─────────────────────── */
+.tf-bg-grid {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+}
+.tf-grid-lines {
+    position: absolute;
+    inset: -20% -20%;
+    /* Perspective grid: a repeating pattern that recedes to a vanishing point.
+       Uses two background images:
+         - Horizontal bands (narrowing toward top to simulate perspective)
+         - Vertical lines converging at centre
+       Colour: barely visible dark-blue on near-black */
+    background-image:
+        linear-gradient(to bottom,
+            transparent 0%,
+            rgba(79,195,247,0.04) 1px,
+            transparent 1px,
+            transparent 7%
+        ),
+        linear-gradient(to right,
+            transparent 0%,
+            rgba(79,195,247,0.025) 1px,
+            transparent 1px,
+            transparent 12%
+        );
+    background-size: 100% 7%, 12% 100%;
+    animation: tf-grid-scroll 18s linear infinite;
+    transform-origin: 50% 100%;
+    transform: perspective(300px) rotateX(25deg) scaleX(1.4);
+    opacity: 0.7;
+}
+
+/* ── Arrival overlay (cinematic text, one-time) ──────────────── */
+.tf-arrival-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 32px 24px;
+    pointer-events: all;
+}
+.tf-arrival-lines {
+    font-family: var(--mono, 'Share Tech Mono', monospace);
+    font-size: 0.75rem;
+    color: var(--accent);
+    letter-spacing: 1px;
+    line-height: 2.2;
+    margin-bottom: 32px;
+}
+.tf-arrival-line {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.tf-arrival-line--visible { opacity: 1; }
+.tf-arrival-line--dim     { color: var(--text-dim); }
+.tf-arrival-tap {
+    font-family: var(--mono, 'Share Tech Mono', monospace);
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    animation: blink 1.2s step-end infinite;
+    margin-top: 8px;
+}
+
+/* ── Layer 2: Stage (structures container) ─────────────────────── */
+.tf-stage {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;          /* structures sit on the ground plane */
+    justify-content: space-around;
+    padding: 40px 12px 0;
+    gap: 4px;
+    flex: 1;
+}
+
+/* ── Structure base ─────────────────────────────────────────── */
+.tf-structure {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    position: relative;
+    /* Starts dark — JS illuminates staggered on arrival */
+    opacity: 0;
+    transition: opacity 0.35s ease, transform 0.2s ease;
+}
+.tf-structure:hover { transform: translateY(-2px); }
+.tf-structure:active { transform: translateY(0); }
+
+/* Illuminated state (added by JS after arrival or on return visit) */
+.tf-structure--lit { opacity: 1; }
+
+/* Active state: structure has something requiring attention */
+.tf-structure--active .tf-struct-inner {
+    animation: tf-pulse-warn 1.6s ease-in-out infinite;
+}
+
+.tf-struct-inner {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: tf-structure-breathe 4s ease-in-out infinite;
+}
+.tf-struct-label {
+    font-family: var(--mono, 'Share Tech Mono', monospace);
+    font-size: 0.42rem;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    text-align: center;
+    line-height: 1.3;
+    margin-top: 2px;
+    transition: color 0.3s;
+}
+.tf-structure--lit .tf-struct-label { color: var(--accent); }
+
+/* Blink indicator (small dot) */
+.tf-struct-blink {
+    position: absolute;
+    top: 3px;
+    right: -4px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--red);
+    display: none;
+}
+.tf-struct-blink--active {
+    display: block;
+    animation: tf-blink-neural 0.9s step-end infinite;
+}
+/* Neural blink uses same keyframe but different colour when needed */
+.tf-struct-blink--neural.tf-struct-blink--active {
+    background: var(--purple);
+}
+
+/* ── Structure: FIELD ARCHIVE (comms tower/antenna) ──────────── */
+.tf-structure--archive .tf-struct-inner { gap: 0; }
+
+.tf-antenna-mast {
+    width: 3px;
+    height: 56px;
+    background: var(--accent);
+    opacity: 0.7;
+    position: relative;
+}
+.tf-antenna-mast::before,
+.tf-antenna-mast::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0.5;
+}
+.tf-antenna-mast::before { top: 12px; width: 18px; }
+.tf-antenna-mast::after  { top: 24px; width: 12px; }
+
+.tf-antenna-arms {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+.tf-antenna-arm {
+    width: 2px;
+    height: 18px;
+    background: var(--accent);
+    opacity: 0.5;
+    transform-origin: top center;
+}
+.tf-antenna-arm--l { transform: rotate(-28deg); }
+.tf-antenna-arm--r { transform: rotate(28deg); }
+
+.tf-antenna-base {
+    width: 28px;
+    height: 6px;
+    background: linear-gradient(to bottom, var(--panel), var(--border));
+    border: 1px solid var(--border);
+}
+
+/* ── Structure: SUPPLY CACHE (container stack) ────────────────── */
+.tf-structure--cache .tf-struct-inner { gap: 3px; }
+
+.tf-container {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    position: relative;
+}
+.tf-container::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1px solid rgba(79,195,247,0.08);
+}
+.tf-container--top { width: 36px; height: 14px; }
+.tf-container--mid { width: 44px; height: 16px; }
+.tf-container--bot { width: 50px; height: 18px; }
+
+/* ── Structure: COMMAND POST (terminal + monitor) ─────────────── */
+.tf-structure--command .tf-struct-inner { gap: 0; }
+
+.tf-monitor {
+    width: 42px;
+    height: 30px;
+    border: 2px solid var(--accent);
+    border-bottom: none;
+    background: var(--panel);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px 2px 0 0;
+    position: relative;
+}
+.tf-monitor-screen {
+    width: 28px;
+    height: 18px;
+    background: rgba(79,195,247,0.12);
+    border: 1px solid rgba(79,195,247,0.25);
+    animation: tf-structure-breathe 3s ease-in-out infinite;
+}
+.tf-desk {
+    width: 52px;
+    height: 8px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent);
+}
+
+/* ── Structure: OPERATIONS (mission board / briefing wall) ───── */
+.tf-structure--ops .tf-struct-inner { gap: 0; }
+
+.tf-board {
+    width: 38px;
+    height: 52px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    padding: 4px;
+}
+.tf-board-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 2px;
+    height: 100%;
+}
+.tf-board-grid > div {
+    background: rgba(79,195,247,0.08);
+    border: 1px solid rgba(79,195,247,0.12);
+}
+
+/* ── Structure: NEURAL LINK (server rack) ─────────────────────── */
+.tf-structure--neural .tf-struct-inner { gap: 2px; }
+
+.tf-rack {
+    width: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    padding: 4px 3px;
+}
+.tf-rack-unit {
+    height: 7px;
+    background: rgba(79,195,247,0.06);
+    border: 1px solid rgba(79,195,247,0.1);
+    position: relative;
+}
+.tf-rack-unit::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--text-dim);
+}
+.tf-rack-unit--active::before {
+    background: var(--accent);
+    box-shadow: 0 0 4px var(--accent);
+    animation: tf-blink-neural 1.4s step-end infinite;
+}
+
+/* ── Layer 3: Ground plane + avatar ──────────────────────────── */
+.tf-ground-wrap {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    height: 32px;
+}
+.tf-ground-line {
+    position: absolute;
+    bottom: 16px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--accent) 20%, var(--accent) 80%, transparent);
+    opacity: 0.35;
+}
+
+/* Avatar container — slides horizontally with CSS transition */
+.tf-avatar {
+    position: absolute;
+    bottom: 17px;           /* sits on the ground line */
+    left: 0;
+    width: 20px;
+    height: 28px;
+    transform: translateX(0);
+    transition: transform 0.4s ease;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+.tf-avatar-shape {
+    width: 18px;
+    height: 26px;
+    /* clip-path applied by JS from player sigil */
+    /* default fallback: simple rectangle */
+    clip-path: polygon(30% 0%, 70% 0%, 75% 25%, 80% 25%, 80% 50%, 70% 50%, 72% 65%, 80% 68%, 78% 85%, 60% 85%, 58% 100%, 42% 100%, 40% 85%, 22% 85%, 20% 68%, 28% 65%, 30% 50%, 20% 50%, 20% 25%, 25% 25%);
+    background: var(--accent);  /* overridden by JS with archetype colour */
+    animation: tf-avatar-glow 3s ease-in-out infinite;
+}
+
+/* Avatar appearing for the first time */
+.tf-avatar--materialise { animation: tf-avatar-drop 0.5s ease both; }
+
+/* ── Back link ────────────────────────────────────────────────── */
+.tf-back-link {
+    position: relative;
+    z-index: 10;
+    margin: 12px 0 4px;
+    text-align: center;
+    padding-bottom: 4px;
+}
+
+/* ── Nav button variant for Terminal Floor ──────────────────── */
+.nav-btn--terminal-floor {
+    background: transparent;
+    border-color: var(--accent-dim);
+    color: var(--text-dim);
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    margin-top: 6px;
+}
+.nav-btn--terminal-floor:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
