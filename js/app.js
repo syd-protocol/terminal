@@ -16,6 +16,12 @@ const SYNCLINK_ID_KEY        = 'syd_sync_id';
 const SYNCLINK_POLL_MS       = 45000;                  // 45-second satellite delay
 const SYNCLINK_RESONANCE_WIN = 50000;                  // window for simultaneous completion (ms)
 
+// ─── NEURAL LINK (Stage 5a) ───────────────────────────────────
+const NEURAL_KEY_KEY      = 'syd_neural_key';      // BYO API key
+const NEURAL_PROVIDER_KEY = 'syd_neural_provider'; // 'gemini' | 'openai' | 'anthropic'
+const INCURSIONS_KEY      = 'syd_incursions';      // active incursions (JSON array)
+const WORLDBOSSES_KEY     = 'syd_world_bosses';    // active world bosses (JSON array)
+
 // ─── FIREBASE ────────────────────────────────────────────────
 // Compat SDK loaded via <script> tags in index.html.
 // db is initialised once here and used by all sync functions.
@@ -1983,6 +1989,7 @@ function consumeItem(itemId) {
 function completeQuest(id, stat, baseXP) {
     if(player.completedToday.includes(id)) return;
     const momentum=player.momentum||1.0; let amt=parseFloat((baseXP*momentum).toFixed(1));
+    damageWorldBossesFromDirective(stat, baseXP);
     const wasCorrupted=player.corrupted; if(wasCorrupted) amt=parseFloat((amt/2).toFixed(1));
     if(buffActive(player.buffs.focusDraught)&&(stat==='intelligence'||stat==='endurance')) amt=parseFloat((amt*2).toFixed(1));
     if(player.buffs.clarityShards>0){amt=parseFloat((amt+5).toFixed(1));player.buffs.clarityShards--;}
@@ -2262,7 +2269,8 @@ function showScreen(id) {
     }
 
     // ── Per-screen setup ─────────────────────────────────────
-    if (id === 'screen-status') setupTooltips();
+    if (id === 'screen-status')   { setupTooltips(); renderElasticUI(); }
+    if (id === 'screen-settings')   renderNeuralSettings();
     if (id === 'screen-quests') {
         // Apply filter if coming from the map
         const quests = activeQuestFilter
@@ -2353,6 +2361,397 @@ function dismissInstall() {
     if (overlay) overlay.classList.add('hidden');
     localStorage.setItem(INSTALL_DISMISSED_KEY, 'dismissed');
     deferredInstallPrompt = null;
+}
+
+// ════════════════════════════════════════════════════════════════
+// STAGE 5a — THE NEURAL LINK EXPANSION
+//
+// Layer II: System Incursions  — time-sensitive AI-generated bounty quests
+// Layer III: World Bosses      — long-term goals with persistent HP bars
+// AI Processor                 — BYO-key (Gemini default, OpenAI / Anthropic accepted)
+// Elastic UI                   — Solo / Combat / War Room derived at render time
+// ════════════════════════════════════════════════════════════════
+
+// ─── NEURAL LINK STORAGE HELPERS ─────────────────────────────
+function getNeuralKey()      { return localStorage.getItem(NEURAL_KEY_KEY) || null; }
+function getNeuralProvider() { return localStorage.getItem(NEURAL_PROVIDER_KEY) || 'gemini'; }
+function setNeuralKey(k, p) {
+    if (k) { localStorage.setItem(NEURAL_KEY_KEY, k); localStorage.setItem(NEURAL_PROVIDER_KEY, p || 'gemini'); }
+    else   { localStorage.removeItem(NEURAL_KEY_KEY); localStorage.removeItem(NEURAL_PROVIDER_KEY); }
+}
+function loadIncursions() {
+    try { return JSON.parse(localStorage.getItem(INCURSIONS_KEY) || '[]'); } catch { return []; }
+}
+function saveIncursions(arr)   { localStorage.setItem(INCURSIONS_KEY, JSON.stringify(arr)); }
+function loadWorldBosses() {
+    try { return JSON.parse(localStorage.getItem(WORLDBOSSES_KEY) || '[]'); } catch { return []; }
+}
+function saveWorldBosses(arr)  { localStorage.setItem(WORLDBOSSES_KEY, JSON.stringify(arr)); }
+
+// ─── EXPIRY PRUNING ───────────────────────────────────────────
+function pruneExpiredIncursions() {
+    const now  = Date.now();
+    const live = loadIncursions().filter(i => !i.expiresAt || new Date(i.expiresAt).getTime() > now);
+    saveIncursions(live);
+    return live;
+}
+
+// ─── ELASTIC UI ───────────────────────────────────────────────
+// Derives current layout mode from active state at render time.
+//
+//   Solo Flow    — no incursions / bosses active  (default)
+//   Combat Flow  — active incursion(s) present    (+ TEMPORAL BREACH section)
+//   War Room     — active world boss present       (+ WORLD BOSS bar)
+
+function renderElasticUI() {
+    const incursions = pruneExpiredIncursions();
+    const bosses     = loadWorldBosses();
+
+    const bossSection   = document.getElementById('world-boss-section');
+    const breachSection = document.getElementById('temporal-breach-section');
+
+    if (bossSection) {
+        if (bosses.length > 0) {
+            bossSection.classList.remove('hidden');
+            renderWorldBossBar(bosses[0]);
+        } else {
+            bossSection.classList.add('hidden');
+        }
+    }
+
+    if (breachSection) {
+        if (incursions.length > 0) {
+            breachSection.classList.remove('hidden');
+            renderIncursionCards(incursions);
+        } else {
+            breachSection.classList.add('hidden');
+        }
+    }
+}
+
+// ─── WORLD BOSS BAR ───────────────────────────────────────────
+function renderWorldBossBar(boss) {
+    const labelEl = document.getElementById('wb-label');
+    const barEl   = document.getElementById('wb-bar');
+    const hpEl    = document.getElementById('wb-hp');
+    const enemyEl = document.getElementById('wb-enemy');
+    if (!labelEl) return;
+
+    const pct       = Math.max(0, Math.round((boss.currentHp / boss.maxHp) * 100));
+    labelEl.textContent = boss.label || '[ WORLD BOSS ]';
+    barEl.style.width   = pct + '%';
+    barEl.className     = 'wb-bar' + (pct > 50 ? '' : pct > 25 ? ' wb-bar--amber' : ' wb-bar--critical');
+    hpEl.textContent    = boss.currentHp + ' / ' + boss.maxHp + ' HP';
+    if (enemyEl) enemyEl.textContent = '[ ENEMY: ' + (boss.enemy || '???') + ' ]';
+}
+
+// ─── INCURSION CARDS ──────────────────────────────────────────
+function renderIncursionCards(incursions) {
+    const container = document.getElementById('incursion-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    incursions.forEach(inc => {
+        const isComplete = (player.completedToday || []).includes(inc.id);
+        const remaining  = inc.expiresAt ? timeRemaining(inc.expiresAt) : null;
+
+        const card = document.createElement('div');
+        card.className = 'incursion-card' + (isComplete ? ' incursion-card--complete' : '');
+        card.innerHTML = `
+            <div class="incursion-header">
+                <span class="incursion-label">${inc.label}</span>
+                ${remaining ? `<span class="incursion-timer">${remaining}</span>` : ''}
+            </div>
+            <div class="incursion-stat">[ ${(inc.stat || 'UNKNOWN').toUpperCase()} ] &nbsp;·&nbsp; +${inc.baseXP} XP</div>
+            ${inc.enemy  ? `<div class="incursion-enemy">ENEMY: ${inc.enemy}</div>` : ''}
+            ${inc.weapon ? `<div class="incursion-weapon">WEAPON: ${inc.weapon}</div>` : ''}
+            <div class="incursion-actions">
+                <button class="quest-intel-btn incursion-intel-btn">[ TACTICAL INTEL ]</button>
+                <button
+                    class="complete-btn incursion-complete-btn"
+                    ${isComplete ? 'disabled' : ''}
+                >${isComplete ? '✓ NEUTRALISED' : '[ MARK EXECUTED ]'}</button>
+            </div>
+        `;
+        container.appendChild(card);
+
+        card.querySelector('.incursion-intel-btn').addEventListener('click', () => {
+            showTacticalGuide(inc);
+        });
+
+        if (!isComplete) {
+            card.querySelector('.incursion-complete-btn').addEventListener('click', () => {
+                completeIncursion(inc);
+            });
+        }
+    });
+}
+
+function timeRemaining(isoString) {
+    const ms = new Date(isoString).getTime() - Date.now();
+    if (ms <= 0) return 'EXPIRED';
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+// ─── TACTICAL GUIDE OVERLAY ───────────────────────────────────
+// Shared by: daily directive cards, incursion cards, world boss bar.
+// For directives: label = tactical_guide.title, enemy = mechanic,
+//                 weapon = model, tacticalGuide = logic.
+// For incursions/bosses: uses the AI-generated fields directly.
+
+function showTacticalGuide(entity) {
+    const overlay = document.getElementById('overlay-tactical');
+    if (!overlay) return;
+    document.getElementById('tg-label').textContent  = entity.label  || '[ INTEL ]';
+    document.getElementById('tg-enemy').textContent  = entity.enemy  ? '[ MECHANISM: ' + entity.enemy + ' ]'  : '';
+    document.getElementById('tg-weapon').textContent = entity.weapon ? '[ REFERENCE: ' + entity.weapon + ' ]' : '';
+    document.getElementById('tg-body').textContent   = entity.tacticalGuide || 'No tactical data on record.';
+    overlay.classList.remove('hidden');
+}
+
+function closeTacticalGuide() {
+    const overlay = document.getElementById('overlay-tactical');
+    if (overlay) overlay.classList.add('hidden');
+}
+
+// ─── INCURSION COMPLETION ─────────────────────────────────────
+function completeIncursion(inc) {
+    if ((player.completedToday || []).includes(inc.id)) return;
+
+    const momentum = player.momentum || 1.0;
+    const xp       = parseFloat((inc.baseXP * momentum).toFixed(1));
+
+    player.completedToday = player.completedToday || [];
+    player.completedToday.push(inc.id);
+
+    const stat = inc.stat;
+    if (stat && player.stats && player.stats[stat] !== undefined) {
+        player.stats[stat] = (player.stats[stat] || 0) + xp;
+    }
+    player.gold = (player.gold || 0) + inc.baseXP;
+
+    // Incursions deal bonus damage to World Bosses (1.5× — tactical value)
+    const bosses = loadWorldBosses();
+    let bossChanged = false;
+    bosses.forEach(b => {
+        if (!b.linkedStats || b.linkedStats.includes(stat)) {
+            b.currentHp = Math.max(0, b.currentHp - Math.round(inc.baseXP * 1.5));
+            bossChanged = true;
+            if (b.currentHp === 0) showLog('[ WORLD BOSS DEFEATED: ' + b.label + ' ]', 'accent');
+        }
+    });
+    if (bossChanged) saveWorldBosses(bosses.filter(b => b.currentHp > 0));
+
+    savePlayer();
+    playUIClick();
+    showLog('[ INCURSION EXECUTED: +' + xp + ' XP ]', 'accent');
+    renderElasticUI();
+}
+
+// ─── WORLD BOSS DAMAGE FROM DAILY DIRECTIVES ─────────────────
+function damageWorldBossesFromDirective(stat, baseXP) {
+    const bosses = loadWorldBosses();
+    if (!bosses.length) return;
+    let changed = false;
+    bosses.forEach(b => {
+        if (!b.linkedStats || b.linkedStats.includes(stat)) {
+            b.currentHp = Math.max(0, b.currentHp - baseXP);
+            changed = true;
+            if (b.currentHp === 0) showLog('[ WORLD BOSS DEFEATED: ' + b.label + ' ]', 'accent');
+        }
+    });
+    if (changed) saveWorldBosses(bosses.filter(b => b.currentHp > 0));
+}
+
+// ─── AI PROCESSOR ─────────────────────────────────────────────
+// BYO-key model. Key stored in localStorage only.
+// Single-turn API call — no history, no memory between calls.
+// Raw plan text is discarded from JS immediately after the call resolves.
+// The AI reads the tone of the quests pool and produces output in the
+// same operational register.
+
+const SYD_SYSTEM_PROMPT = `You are the System — the AI core of SYD (Synchronized Yield Directive). Your register is cold, precise, operational. You speak like a tactical AI, not a coach. You do not cheer. You do not motivate. You translate real-world inputs into game entities.
+
+When an operator submits a real-world plan or goal, you apply a four-step transformation:
+
+STEP 1 — IDENTIFY THE FRICTION: What is the actual obstacle resisting this action? Not the task — the enemy. Example: "Talk to my boss about a raise" → enemy is NEGOTIATION ASYMMETRY + CORTISOL INTERFERENCE.
+
+STEP 2 — NAME THE ENTITY: The friction becomes a named game entity in operational voice. NEGOTIATION ASYMMETRY → [ ENTITY: THE GATEKEEPER SPECTER ]. The name must match the cold, precise register of the SYD directive pool.
+
+STEP 3 — SELECT THE WEAPON: Choose a mental model or tactical framework that directly counters the enemy. Examples: BATNA, First Principles, OODA Loop, Inversion, Pre-mortem, Antifragility. Select for genuine tactical fit only.
+
+STEP 4 — DRAFT TACTICAL INTEL: 3-5 sentences. Explain how the weapon defeats the enemy. Cold. Dense. No filler. This is the intelligence layer — it must be operationally useful, not decorative.
+
+OUTPUT: Return ONLY valid JSON. No markdown. No preamble. No commentary outside the JSON object.
+
+CALIBRATION EXAMPLES (match this register exactly):
+- Title style: "BREACH ACTIVATION BARRIER", "ULYSSES BINDING", "STRESS INOCULATION", "COGNITIVE MONOPOLY"
+- Description style: "Execute deliberate recovery: cold shower, intense stretching, or intentional stillness. Recovery is a vital training phase, not an absence of effort."
+- Tactical logic style: "Decisions made in advance under good conditions are always better. Pre-committing removes the burden of willpower at the point of greatest temptation."`;
+
+async function callNeuralAPI(planText, type) {
+    const key      = getNeuralKey();
+    const provider = getNeuralProvider();
+    if (!key) throw new Error('NO_KEY');
+
+    const ts = Date.now();
+    const schemaHint = type === 'incursion'
+        ? `{"id":"incursion_${ts}","type":"incursion","label":"[ INCURSION: ENTITY NAME ]","stat":"strength|intelligence|agility|endurance|charisma","baseXP":25,"expiresAt":"ISO timestamp 6 hours from now","enemy":"ENEMY NAME","weapon":"WEAPON NAME","tacticalGuide":"3-5 sentence tactical brief in System voice"}`
+        : `{"id":"boss_${ts}","type":"worldboss","label":"[ WORLD BOSS: ENTITY NAME ]","stat":"intelligence","maxHp":500,"currentHp":500,"enemy":"ENEMY NAME","weapon":"WEAPON NAME","tacticalGuide":"3-5 sentence tactical brief in System voice","linkedStats":["intelligence","endurance"]}`;
+
+    const userMsg = `Operator input: "${planText}"
+
+Generate a ${type === 'incursion' ? 'System Incursion (time-sensitive tactical bounty quest)' : 'World Boss (persistent long-term goal entity)'}.
+
+Return ONLY a JSON object matching this exact schema:
+${schemaHint}`;
+
+    let raw = '';
+
+    if (provider === 'gemini') {
+        const url  = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+        const body = {
+            system_instruction: { parts: [{ text: SYD_SYSTEM_PROMPT }] },
+            contents: [{ parts: [{ text: userMsg }] }]
+        };
+        const res  = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error('GEMINI_' + res.status);
+        const data = await res.json();
+        raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    } else if (provider === 'openai') {
+        const res  = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+            body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'system', content: SYD_SYSTEM_PROMPT }, { role: 'user', content: userMsg }], temperature: 0.7 })
+        });
+        if (!res.ok) throw new Error('OPENAI_' + res.status);
+        const data = await res.json();
+        raw = data.choices?.[0]?.message?.content || '';
+
+    } else if (provider === 'anthropic') {
+        const res  = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+            body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 600, system: SYD_SYSTEM_PROMPT, messages: [{ role: 'user', content: userMsg }] })
+        });
+        if (!res.ok) throw new Error('ANTHROPIC_' + res.status);
+        const data = await res.json();
+        raw = data.content?.[0]?.text || '';
+
+    } else {
+        throw new Error('UNKNOWN_PROVIDER');
+    }
+
+    const cleaned = raw.replace(/```json|```/g, '').trim();
+    return JSON.parse(cleaned);
+}
+
+// ─── GENERATOR OVERLAY ────────────────────────────────────────
+function openNeuralGenerator(type) {
+    const overlay = document.getElementById('overlay-neural-gen');
+    if (!overlay) return;
+    overlay.dataset.genType = type;
+    document.getElementById('ng-title').textContent   = type === 'incursion' ? '[ GENERATE INCURSION ]' : '[ GENERATE WORLD BOSS ]';
+    document.getElementById('ng-hint').textContent    = type === 'incursion'
+        ? 'Describe a real-world task or challenge. The System will identify the enemy and generate the mission.'
+        : 'Describe a long-term goal. The System will calculate the enemy, the weapon, and the HP cost.';
+    document.getElementById('ng-input').value         = '';
+    document.getElementById('ng-status').textContent  = '';
+    document.getElementById('ng-submit-btn').disabled = false;
+    overlay.classList.remove('hidden');
+}
+
+function closeNeuralGenerator() {
+    const overlay = document.getElementById('overlay-neural-gen');
+    if (overlay) overlay.classList.add('hidden');
+}
+
+async function submitNeuralGeneration() {
+    const overlay   = document.getElementById('overlay-neural-gen');
+    const type      = overlay.dataset.genType;
+    const inputEl   = document.getElementById('ng-input');
+    const statusEl  = document.getElementById('ng-status');
+    const submitBtn = document.getElementById('ng-submit-btn');
+    const planText  = inputEl.value.trim();
+
+    if (planText.length < 5) { statusEl.textContent = '[ ERROR: INSUFFICIENT INPUT ]'; return; }
+
+    submitBtn.disabled   = true;
+    statusEl.textContent = type === 'incursion' ? '[ PROCESSING INCURSION... ]' : '[ CALCULATING BOSS HP... ]';
+
+    let entity;
+    try {
+        entity = await callNeuralAPI(planText, type);
+    } catch (e) {
+        const msg = e.message || '';
+        if      (msg === 'NO_KEY')                                           statusEl.textContent = '[ ERROR: NO NEURAL KEY INSTALLED ]';
+        else if (msg.includes('_401') || msg.includes('_403'))               statusEl.textContent = '[ ERROR: KEY REJECTED — VERIFY PROCESSOR ]';
+        else if (msg.includes('SyntaxError') || msg.includes('JSON'))        statusEl.textContent = '[ ERROR: TRANSLATION CORRUPTED — RETRY ]';
+        else                                                                  statusEl.textContent = '[ NEURAL LINK UNSTABLE — TRANSLATION FAILED ]';
+        console.error('Neural API error:', e);
+        submitBtn.disabled = false;
+        return;
+    } finally {
+        // Ephemeral Protocol — raw input cleared immediately
+        inputEl.value = '';
+    }
+
+    if (type === 'incursion') {
+        if (!entity.expiresAt) entity.expiresAt = new Date(Date.now() + 6 * 3600000).toISOString();
+        const active = loadIncursions();
+        active.push(entity);
+        saveIncursions(active);
+        showLog('[ INCURSION DETECTED: ' + (entity.label || 'UNKNOWN') + ' ]', 'accent');
+    } else {
+        const active = loadWorldBosses();
+        active.push(entity);
+        saveWorldBosses(active);
+        showLog('[ WORLD BOSS SPAWNED: ' + (entity.label || 'UNKNOWN') + ' ]', 'accent');
+    }
+
+    closeNeuralGenerator();
+    renderElasticUI();
+}
+
+// ─── NEURAL PROCESSOR SETTINGS ────────────────────────────────
+function renderNeuralSettings() {
+    const key      = getNeuralKey();
+    const provider = getNeuralProvider();
+    const statusEl = document.getElementById('neural-processor-status');
+    const provSel  = document.getElementById('neural-provider-select');
+    if (!statusEl) return;
+
+    if (key) {
+        const masked = key.slice(0, 4) + '••••••••' + key.slice(-4);
+        statusEl.innerHTML = `[ PROCESSOR ONLINE — ${provider.toUpperCase()} — <span style="font-family:var(--mono)">${masked}</span> ]`;
+        statusEl.className = 'neural-status neural-status--online';
+    } else {
+        statusEl.textContent = '[ PROCESSOR OFFLINE — NO KEY INSTALLED ]';
+        statusEl.className   = 'neural-status neural-status--offline';
+    }
+    if (provSel) provSel.value = provider;
+}
+
+function saveNeuralKey() {
+    const keyInput = document.getElementById('neural-key-input');
+    const provSel  = document.getElementById('neural-provider-select');
+    if (!keyInput) return;
+    const k = keyInput.value.trim();
+    const p = provSel ? provSel.value : 'gemini';
+    if (k.length < 8) { showLog('[ ERROR: KEY TOO SHORT ]', 'warn'); return; }
+    setNeuralKey(k, p);
+    keyInput.value = '';
+    renderNeuralSettings();
+    showLog('[ NEURAL PROCESSOR ONLINE — ' + p.toUpperCase() + ' ]', 'accent');
+}
+
+function removeNeuralKey() {
+    setNeuralKey(null);
+    renderNeuralSettings();
+    showLog('[ NEURAL PROCESSOR OFFLINE ]', 'warn');
 }
 
 // ─── START ───────────────────────────────────────────────────

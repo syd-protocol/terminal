@@ -1,4 +1,4 @@
-const CACHE_NAME = 'syd-v5';
+const CACHE_NAME = 'syd-v6';
 
 // These are the app shell files we want to pre-cache during install.
 // On every new deploy, bump CACHE_NAME so the install event fires again,

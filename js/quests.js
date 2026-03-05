@@ -151,7 +151,7 @@ function renderQuests(quests, completedIds, momentum) {
         const effectiveXP = Math.round(quest.xp * (momentum || 1) * 10) / 10;
 
         const card     = document.createElement('div');
-        card.className = 'quest-card' + (isComplete ? ' completed' : '');
+        card.className = 'quest-card' + (isComplete ? ' quest-card--done' : '');
         card.id        = 'quest-card-' + quest.id;
 
         // Show effective XP only if momentum bonus is active and directive not yet done
@@ -159,11 +159,22 @@ function renderQuests(quests, completedIds, momentum) {
             ? `<div class="quest-xp-effective">→ +${effectiveXP}</div>`
             : '';
 
-        // Model and why section — always shown
-        const modelSection = (quest.model && quest.why)
-            ? `<div class="quest-model">
-                   <span class="quest-model-name">${quest.model}</span>
-                   <span class="quest-model-why">"${quest.why}"</span>
+        // Model section — always shown when model exists
+        const modelSection = quest.model
+            ? `<div class="qc-model">
+                   <span class="qc-model-name">REF: ${quest.model}</span>
+               </div>`
+            : '';
+
+        // Tactical Guide section — shown on all quests that have it (new schema)
+        const tg = quest.tactical_guide;
+        const tacticalSection = tg
+            ? `<div class="qc-intel-strip">
+                   <div class="qc-intel-meta">
+                       <span class="qc-intel-mechanic">[ ${tg.mechanic.toUpperCase()} ]</span>
+                       <span class="qc-intel-guide-title">${tg.title}</span>
+                   </div>
+                   <button class="qc-intel-btn" data-quest-id="${quest.id}">INTEL ›</button>
                </div>`
             : '';
 
@@ -186,13 +197,20 @@ function renderQuests(quests, completedIds, momentum) {
                </div>`
             : '';
 
+        const tierLabel  = quest.tier === 3 ? 'MASTERY' : quest.tier === 2 ? 'ADVANCED' : 'BASIC';
+        const statColour = { strength:'var(--stat-str)', intelligence:'var(--stat-int)', agility:'var(--stat-agi)', endurance:'var(--stat-end)', charisma:'var(--stat-cha)' }[quest.stat] || 'var(--accent)';
+
         card.innerHTML = `
-            <div class="quest-card-left">
-                <div class="quest-stat">[ ${quest.stat.toUpperCase()} ]</div>
-                <div class="quest-title">${quest.title}</div>
-                <div class="quest-desc">${quest.desc}</div>
-                ${modelSection}
-                ${reflectionSection}
+            <div class="qc-header">
+                <span class="qc-stat" style="color:${statColour}">[ ${quest.stat.toUpperCase()} ]</span>
+                <span class="qc-tier qc-tier--${quest.tier}">${tierLabel}</span>
+            </div>
+            <div class="qc-title">${quest.title}</div>
+            <div class="qc-desc">${quest.desc}</div>
+            ${modelSection}
+            ${tacticalSection}
+            ${reflectionSection}
+            <div class="qc-footer">
                 <button
                     class="complete-btn"
                     id="complete-btn-${quest.id}"
@@ -202,15 +220,32 @@ function renderQuests(quests, completedIds, momentum) {
                     ${quest._requiresReflection ? 'data-requires-reflection="true"' : ''}
                     ${isComplete ? 'disabled' : ''}
                 >
-                    ${isComplete ? '✓ EXECUTED' : 'MARK DONE'}
+                    ${isComplete ? '[ ✓ EXECUTED ]' : '[ MARK EXECUTED ]'}
                 </button>
-            </div>
-            <div class="quest-card-right">
-                <div class="quest-xp">+${quest.xp} XP</div>
-                ${xpBonus}
+                <div class="qc-xp-block">
+                    <div class="qc-xp">+${quest.xp} <span class="qc-xp-label">XP</span></div>
+                    ${xpBonus}
+                </div>
             </div>
         `;
         list.appendChild(card);
+
+        // Wire Tactical Intel button — opens the tactical guide overlay
+        if (quest.tactical_guide) {
+            const intelBtn = card.querySelector('.qc-intel-btn[data-quest-id="' + quest.id + '"]');
+            if (intelBtn) {
+                intelBtn.addEventListener('click', () => {
+                    if (typeof showTacticalGuide === 'function') {
+                        showTacticalGuide({
+                            label:         '[ ' + quest.tactical_guide.title + ' ]',
+                            enemy:         quest.tactical_guide.mechanic,
+                            weapon:        quest.model || '',
+                            tacticalGuide: quest.tactical_guide.logic
+                        });
+                    }
+                });
+            }
+        }
 
         // Wire reflection textarea — complete button locked until 10+ characters written.
         if (quest._requiresReflection && !isComplete) {

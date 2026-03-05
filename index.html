@@ -76,6 +76,19 @@
             </div>
         </div>
 
+        <!-- ── WORLD BOSS BAR — War Room Flow ── -->
+        <div class="world-boss-section hidden" id="world-boss-section">
+            <div class="wb-label" id="wb-label">[ WORLD BOSS ]</div>
+            <div class="wb-enemy" id="wb-enemy"></div>
+            <div class="wb-bar-wrap">
+                <div class="wb-bar" id="wb-bar"></div>
+            </div>
+            <div class="wb-hp-row">
+                <span class="wb-hp" id="wb-hp"></span>
+                <button class="wb-intel-btn" onclick="if(loadWorldBosses().length) showTacticalGuide(loadWorldBosses()[0])">[ INTEL ]</button>
+            </div>
+        </div>
+
         <div class="stat-block">
             <div class="stat-row tappable" data-stat="strength" data-tip="strength">
                 <span class="stat-label">STRENGTH</span>
@@ -162,6 +175,13 @@
             act. Execute the act, then consume the item. That is the correct order.
             <br><br>
             <em class="tip-flavour">"You earn it by showing up. You spend it by showing up harder."</em>
+        </div>
+
+        <!-- ── TEMPORAL BREACH — Combat Flow ── -->
+        <div class="temporal-breach-section hidden" id="temporal-breach-section">
+            <div class="breach-header">[ TEMPORAL BREACH ]</div>
+            <div class="breach-sub">ACTIVE INCURSIONS — EXECUTE BEFORE EXPIRY</div>
+            <div class="incursion-list" id="incursion-list"></div>
         </div>
 
         <button class="nav-btn" id="view-directives-btn">VIEW TODAY'S DIRECTIVES</button>
@@ -488,6 +508,53 @@
             <div class="sync-status" id="synclink-status"></div>
         </div>
 
+        <!-- ── NEURAL LINK ── -->
+        <div class="settings-section" id="neural-section">
+            <div class="settings-section-title">NEURAL LINK</div>
+
+            <div class="neural-status" id="neural-processor-status">[ PROCESSOR OFFLINE — NO KEY INSTALLED ]</div>
+
+            <p class="neural-desc">
+                Install an AI processor key to translate real-world plans into Incursions and World Bosses.
+                Your key is stored locally only — transmitted only to your chosen AI provider, never to any server.
+            </p>
+
+            <div class="neural-key-section">
+                <div class="neural-field-label">PROVIDER</div>
+                <select class="neural-provider-select" id="neural-provider-select">
+                    <option value="gemini">GEMINI — Google AI Studio (free tier, no billing card)</option>
+                    <option value="openai">OPENAI — GPT-4o-mini</option>
+                    <option value="anthropic">ANTHROPIC — Claude Haiku</option>
+                </select>
+
+                <div class="neural-field-label">API KEY</div>
+                <input
+                    type="password"
+                    class="neural-key-input"
+                    id="neural-key-input"
+                    placeholder="Paste key here..."
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                />
+                <div class="neural-key-hint">
+                    Gemini keys are free at <strong>aistudio.google.com/app/apikey</strong> — no billing card required.
+                </div>
+                <div class="neural-btn-row">
+                    <button class="neural-save-btn" onclick="saveNeuralKey()">[ INSTALL PROCESSOR ]</button>
+                    <button class="neural-remove-btn" onclick="removeNeuralKey()">[ REMOVE ]</button>
+                </div>
+            </div>
+
+            <div class="neural-generate-row">
+                <div class="neural-gen-label">GENERATE FROM REAL-WORLD INPUT</div>
+                <div class="neural-gen-btn-row">
+                    <button class="neural-gen-btn" onclick="openNeuralGenerator('incursion')">+ INCURSION</button>
+                    <button class="neural-gen-btn neural-gen-btn--boss" onclick="openNeuralGenerator('worldboss')">+ WORLD BOSS</button>
+                </div>
+            </div>
+        </div>
+
         <div class="danger-zone">
             <div class="settings-section-title">DANGER ZONE</div>
             <button class="danger-btn" id="reset-btn">WIPE PROFILE</button>
@@ -708,5 +775,44 @@
 
     <script src="js/quests.js"></script>
     <script src="js/app.js"></script>
+<!-- ═══════════════════════════════════════════════
+         NEURAL GENERATOR OVERLAY
+    ═══════════════════════════════════════════════ -->
+    <div class="overlay hidden" id="overlay-neural-gen">
+        <div class="overlay-content neural-gen-overlay">
+            <div class="overlay-system">[ NEURAL LINK ]</div>
+            <div class="ng-title" id="ng-title">[ GENERATE INCURSION ]</div>
+            <div class="ng-hint"  id="ng-hint"></div>
+            <textarea
+                class="ng-input"
+                id="ng-input"
+                placeholder="Describe the operation..."
+                rows="4"
+                autocorrect="off"
+                spellcheck="false"
+            ></textarea>
+            <div class="ng-status" id="ng-status"></div>
+            <div class="ng-btn-row">
+                <button class="overlay-dismiss-btn" onclick="closeNeuralGenerator()">ABORT</button>
+                <button class="ng-submit-btn" id="ng-submit-btn" onclick="submitNeuralGeneration()">TRANSLATE →</button>
+            </div>
+            <div class="ng-ephemeral">[ EPHEMERAL PROTOCOL ACTIVE — INPUT IS NOT STORED ]</div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         TACTICAL GUIDE OVERLAY
+    ═══════════════════════════════════════════════ -->
+    <div class="overlay hidden" id="overlay-tactical">
+        <div class="overlay-content tactical-overlay">
+            <div class="overlay-system">[ TACTICAL INTEL ]</div>
+            <div class="tg-label"  id="tg-label"></div>
+            <div class="tg-enemy"  id="tg-enemy"></div>
+            <div class="tg-weapon" id="tg-weapon"></div>
+            <div class="tg-body"   id="tg-body"></div>
+            <button class="overlay-dismiss-btn" onclick="closeTacticalGuide()">ACKNOWLEDGED</button>
+        </div>
+    </div>
+
 </body>
 </html>
