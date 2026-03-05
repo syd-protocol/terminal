@@ -34,6 +34,11 @@
             <div class="player-title tappable" id="player-title" data-tip="title">[ THE BEGINNER ]</div>
             <div class="rank-badge tappable rank-f" id="rank-badge" data-tip="rank">F</div>
             <h1 class="player-name" id="player-name">PLAYER</h1>
+            <!-- Archetype badge + sigil (Stage 6a) -- hidden until archetype assigned -->
+            <div class="archetype-identity hidden" id="archetype-identity">
+                <div class="status-sigil" id="status-sigil"></div>
+                <span class="archetype-badge" id="archetype-badge"></span>
+            </div>
             <div class="player-level tappable" id="player-level-row" data-tip="level">
                 LEVEL <span id="player-level">1</span>
             </div>
@@ -587,6 +592,65 @@
                        maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false" />
             </div>
             <button class="nav-btn hidden" id="start-btn">INITIALISE</button>
+        </div>
+    </div>
+
+    <!-- ═════════════════════════════════════════════
+         ARCHETYPE SCAN SCREEN (Stage 6a)
+         Fires once after name entry, before status screen.
+         The System presents a profile. The operator confirms.
+    ═════════════════════════════════════════════ -->
+    <div class="screen hidden" id="screen-archetype">
+        <div class="archetype-scan-wrap">
+            <div class="archetype-scan-header">
+                <div class="archetype-sys-label">[ SYSTEM ]</div>
+                <div class="archetype-scan-lines" id="archetype-scan-lines"></div>
+            </div>
+
+            <!-- Archetype cards: System presents four, operator confirms one -->
+            <div class="archetype-cards" id="archetype-cards">
+                <div class="archetype-card" data-archetype="ghost">
+                    <div class="archetype-card-id">01</div>
+                    <div class="archetype-card-name">GHOST</div>
+                    <div class="archetype-card-desc">Moves unseen. Adapts before others notice the shift.</div>
+                    <div class="archetype-card-confirm">[ CONFIRM PROFILE ]</div>
+                </div>
+                <div class="archetype-card" data-archetype="architect">
+                    <div class="archetype-card-id">02</div>
+                    <div class="archetype-card-name">ARCHITECT</div>
+                    <div class="archetype-card-desc">Builds systems. Controls outcomes through structure.</div>
+                    <div class="archetype-card-confirm">[ CONFIRM PROFILE ]</div>
+                </div>
+                <div class="archetype-card" data-archetype="enforcer">
+                    <div class="archetype-card-id">03</div>
+                    <div class="archetype-card-name">ENFORCER</div>
+                    <div class="archetype-card-desc">Direct force. Eliminates friction through presence.</div>
+                    <div class="archetype-card-confirm">[ CONFIRM PROFILE ]</div>
+                </div>
+                <div class="archetype-card" data-archetype="phantom">
+                    <div class="archetype-card-id">04</div>
+                    <div class="archetype-card-name">PHANTOM</div>
+                    <div class="archetype-card-desc">Pattern recognition. Exploits gaps others cannot see.</div>
+                    <div class="archetype-card-confirm">[ CONFIRM PROFILE ]</div>
+                </div>
+            </div>
+
+            <!-- Sigil picker: shown after archetype confirmed -->
+            <div class="sigil-picker hidden" id="sigil-picker">
+                <div class="sigil-picker-label" id="sigil-picker-label">[ SELECT FIELD SIGIL ]</div>
+                <div class="sigil-picker-hint">The System has assigned two variants. Choose your field identity.</div>
+                <div class="sigil-options" id="sigil-options">
+                    <div class="sigil-option" data-sigil="A">
+                        <div class="sigil-shape" id="sigil-preview-A"></div>
+                        <div class="sigil-option-label">VARIANT A</div>
+                    </div>
+                    <div class="sigil-option" data-sigil="B">
+                        <div class="sigil-shape" id="sigil-preview-B"></div>
+                        <div class="sigil-option-label">VARIANT B</div>
+                    </div>
+                </div>
+                <button class="nav-btn hidden" id="sigil-confirm-btn">[ CONFIRM SIGIL ]</button>
+            </div>
         </div>
     </div>
 

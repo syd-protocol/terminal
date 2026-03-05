@@ -3462,3 +3462,199 @@ body {
 .ns-list-label--defeated {
     margin-top: 1.2rem;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   STAGE 6A — CHARACTER CREATION: ARCHETYPE SCAN + SIGIL PICKER
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Archetype scan screen wrapper ── */
+.archetype-scan-wrap {
+    padding: 24px 20px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.archetype-scan-header {
+    text-align: left;
+}
+
+.archetype-sys-label {
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+}
+
+.archetype-scan-lines {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.9;
+    letter-spacing: 1px;
+    min-height: 96px;
+}
+
+/* ── Archetype cards grid ── */
+.archetype-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.archetype-card {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    padding: 16px 14px;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
+    --archetype-colour: var(--accent);
+}
+
+.archetype-card:hover {
+    border-color: var(--archetype-colour, var(--accent));
+    box-shadow: 0 0 14px color-mix(in srgb, var(--archetype-colour, var(--accent)) 30%, transparent);
+}
+
+.archetype-card--selected {
+    border-color: var(--archetype-colour, var(--accent)) !important;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--archetype-colour, var(--accent)) 40%, transparent) !important;
+}
+
+.archetype-card--dim {
+    opacity: 0.35;
+}
+
+.archetype-card-id {
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+}
+
+.archetype-card-name {
+    font-size: 0.95rem;
+    color: #fff;
+    letter-spacing: 2px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.archetype-card-desc {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    line-height: 1.55;
+    margin-bottom: 12px;
+}
+
+.archetype-card-confirm {
+    font-size: 0.62rem;
+    color: var(--archetype-colour, var(--accent));
+    letter-spacing: 2px;
+    opacity: 0.7;
+}
+
+.archetype-card:hover .archetype-card-confirm,
+.archetype-card--selected .archetype-card-confirm {
+    opacity: 1;
+}
+
+/* Per-archetype colour accents on card hover/selected */
+.archetype-card[data-archetype="ghost"]     { --archetype-colour: #42a5f5; }
+.archetype-card[data-archetype="architect"] { --archetype-colour: #ab47bc; }
+.archetype-card[data-archetype="enforcer"]  { --archetype-colour: #ef5350; }
+.archetype-card[data-archetype="phantom"]   { --archetype-colour: #ffa726; }
+
+/* ── Sigil picker ── */
+.sigil-picker {
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    animation: fadeIn 0.4s ease;
+}
+
+.sigil-picker-label {
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 3px;
+}
+
+.sigil-picker-hint {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    line-height: 1.5;
+}
+
+.sigil-options {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+}
+
+.sigil-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 16px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    min-width: 100px;
+}
+
+.sigil-option:hover {
+    border-color: var(--accent);
+}
+
+.sigil-option--selected {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 16px rgba(79, 195, 247, 0.3);
+}
+
+/* The sigil shape: a solid colour block with clip-path applied via JS */
+.sigil-shape {
+    width: 56px;
+    height: 72px;
+    background: var(--accent);
+    /* clip-path applied dynamically in JS */
+    transition: box-shadow 0.25s ease;
+}
+
+.sigil-option-label {
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+}
+
+/* ── Archetype identity row on status screen ── */
+.archetype-identity {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 4px;
+    margin-bottom: 2px;
+}
+
+.status-sigil {
+    width: 18px;
+    height: 24px;
+    flex-shrink: 0;
+    /* clip-path and bg applied via JS */
+}
+
+.archetype-badge {
+    font-size: 0.62rem;
+    letter-spacing: 3px;
+    padding: 2px 8px;
+    border: 1px solid currentColor;
+    /* color and border-color applied via JS */
+    opacity: 0.85;
+}

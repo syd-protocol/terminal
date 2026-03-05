@@ -968,6 +968,210 @@ function runAwakenSequence(name) {
     next();
 }
 
+// ─── STAGE 6A: ARCHETYPE SCAN ─────────────────────────
+// Archetype colour map — used for card glows, badge, and sigil halo.
+const ARCHETYPE_COLOURS = {
+    ghost:     '#42a5f5',
+    architect: '#ab47bc',
+    enforcer:  '#ef5350',
+    phantom:   '#ffa726'
+};
+
+// Archetype display names (all caps for System voice).
+const ARCHETYPE_NAMES = {
+    ghost:     'GHOST',
+    architect: 'ARCHITECT',
+    enforcer:  'ENFORCER',
+    phantom:   'PHANTOM'
+};
+
+// Sigil clip-paths — two CSS clip-path polygon variants per archetype.
+// These are abstract silhouettes read by outline, not face. Narrow/slight
+// (Ghost), upright/square (Architect), broad/planted (Enforcer),
+// asymmetric/offset (Phantom). Each has a Variant A and Variant B.
+const SIGIL_CLIPS = {
+    ghost: {
+        A: 'polygon(40% 0%, 60% 0%, 65% 22%, 75% 22%, 72% 45%, 62% 45%, 60% 55%, 70% 55%, 68% 75%, 55% 75%, 53% 100%, 47% 100%, 45% 75%, 32% 75%, 30% 55%, 40% 55%, 38% 45%, 28% 45%, 35% 22%, 45% 22%)',
+        B: 'polygon(42% 0%, 58% 0%, 62% 18%, 70% 18%, 74% 40%, 62% 42%, 65% 55%, 72% 58%, 68% 78%, 56% 78%, 54% 100%, 46% 100%, 44% 78%, 32% 78%, 28% 58%, 35% 55%, 38% 42%, 26% 40%, 30% 18%, 38% 18%)'
+    },
+    architect: {
+        A: 'polygon(30% 0%, 70% 0%, 75% 20%, 75% 20%, 80% 20%, 80% 45%, 70% 45%, 70% 55%, 80% 55%, 80% 75%, 68% 75%, 65% 100%, 35% 100%, 32% 75%, 20% 75%, 20% 55%, 30% 55%, 30% 45%, 20% 45%, 20% 20%, 25% 20%)',
+        B: 'polygon(28% 0%, 72% 0%, 78% 18%, 82% 18%, 82% 42%, 70% 42%, 72% 55%, 82% 58%, 80% 78%, 66% 78%, 63% 100%, 37% 100%, 34% 78%, 20% 78%, 18% 58%, 28% 55%, 30% 42%, 18% 42%, 18% 18%, 22% 18%)'
+    },
+    enforcer: {
+        A: 'polygon(25% 0%, 75% 0%, 82% 22%, 88% 22%, 88% 50%, 75% 50%, 78% 65%, 88% 68%, 85% 85%, 65% 85%, 62% 100%, 38% 100%, 35% 85%, 15% 85%, 12% 68%, 22% 65%, 25% 50%, 12% 50%, 12% 22%, 18% 22%)',
+        B: 'polygon(22% 0%, 78% 0%, 85% 20%, 90% 24%, 90% 52%, 76% 52%, 80% 68%, 90% 72%, 86% 88%, 64% 88%, 60% 100%, 40% 100%, 36% 88%, 14% 88%, 10% 72%, 20% 68%, 24% 52%, 10% 52%, 10% 24%, 15% 20%)'
+    },
+    phantom: {
+        A: 'polygon(38% 0%, 62% 0%, 66% 20%, 80% 18%, 82% 38%, 68% 40%, 70% 55%, 82% 60%, 78% 80%, 60% 80%, 58% 100%, 45% 100%, 42% 80%, 25% 75%, 22% 55%, 35% 52%, 33% 38%, 18% 36%, 20% 16%, 34% 20%)',
+        B: 'polygon(36% 0%, 60% 0%, 64% 18%, 78% 15%, 82% 35%, 66% 38%, 68% 52%, 80% 58%, 76% 78%, 58% 76%, 55% 100%, 43% 100%, 40% 75%, 22% 72%, 18% 52%, 32% 48%, 30% 35%, 16% 32%, 18% 12%, 32% 18%)'
+    }
+};
+
+// runArchetypeScan — fires after Awaken, before status screen.
+// Shows scan lines, reveals cards, wires confirm + sigil logic.
+function runArchetypeScan() {
+    const scanLinesEl  = document.getElementById('archetype-scan-lines');
+    const cardsEl      = document.getElementById('archetype-cards');
+    const sigilPicker  = document.getElementById('sigil-picker');
+    const sigilConfBtn = document.getElementById('sigil-confirm-btn');
+
+    scanLinesEl.innerHTML = '';
+    cardsEl.classList.add('hidden');
+    sigilPicker.classList.add('hidden');
+
+    const scanLines = [
+        '> SCANNING OPERATOR PROFILE...',
+        '> ANALYSING BEHAVIOURAL VECTOR...',
+        '> CROSS-REFERENCING FIELD PATTERNS...',
+        '> INITIAL OPERATOR PROFILE COMPLETE.',
+        '> CONFIRM YOUR CLASSIFICATION.'
+    ];
+
+    let idx = 0;
+    function nextLine() {
+        if (idx >= scanLines.length) {
+            // All scan lines done — reveal archetype cards
+            setTimeout(() => {
+                cardsEl.classList.remove('hidden');
+                // Stagger card entry
+                const cards = cardsEl.querySelectorAll('.archetype-card');
+                cards.forEach((c, i) => {
+                    c.style.opacity    = '0';
+                    c.style.transform  = 'translateY(12px)';
+                    c.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+                    setTimeout(() => {
+                        c.style.opacity   = '1';
+                        c.style.transform = 'translateY(0)';
+                    }, i * 120);
+                });
+                wireArchetypeCards();
+            }, 300);
+            return;
+        }
+        const line = document.createElement('div');
+        line.style.opacity    = '0';
+        line.style.transition = 'opacity 0.25s ease';
+        line.textContent      = scanLines[idx];
+        if (idx === scanLines.length - 1) line.style.color = 'var(--accent)';
+        scanLinesEl.appendChild(line);
+        requestAnimationFrame(() => requestAnimationFrame(() => line.style.opacity = '1'));
+        idx++;
+        setTimeout(nextLine, 340);
+    }
+    nextLine();
+
+    // Wire card confirm buttons
+    function wireArchetypeCards() {
+        document.querySelectorAll('.archetype-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const archetype = card.dataset.archetype;
+                selectArchetype(archetype);
+            });
+        });
+    }
+
+    // selectArchetype — highlights chosen card, shows sigil picker
+    let chosenArchetype = null;
+    function selectArchetype(archetype) {
+        chosenArchetype = archetype;
+        const colour = ARCHETYPE_COLOURS[archetype];
+
+        // Highlight selected, dim others
+        document.querySelectorAll('.archetype-card').forEach(c => {
+            const isChosen = c.dataset.archetype === archetype;
+            c.classList.toggle('archetype-card--selected', isChosen);
+            c.classList.toggle('archetype-card--dim', !isChosen);
+            if (isChosen) c.style.setProperty('--archetype-colour', colour);
+        });
+
+        // Update scan label
+        const lastLine = scanLinesEl.lastElementChild;
+        if (lastLine) {
+            lastLine.textContent = '> PROFILE CONFIRMED: ' + ARCHETYPE_NAMES[archetype];
+        }
+
+        // Show sigil picker after a brief pause
+        setTimeout(() => {
+            sigilPicker.classList.remove('hidden');
+            document.getElementById('sigil-picker-label').textContent =
+                '[ ' + ARCHETYPE_NAMES[archetype] + ' — SELECT FIELD SIGIL ]';
+            renderSigilPreviews(archetype);
+            wireSigilOptions();
+        }, 400);
+    }
+
+    // renderSigilPreviews — applies the correct clip-path and glow to each preview
+    function renderSigilPreviews(archetype) {
+        const colour = ARCHETYPE_COLOURS[archetype];
+        const clips  = SIGIL_CLIPS[archetype];
+        ['A', 'B'].forEach(variant => {
+            const el = document.getElementById('sigil-preview-' + variant);
+            if (!el) return;
+            el.style.clipPath   = clips[variant];
+            el.style.background = colour;
+            el.style.boxShadow  = '0 0 12px ' + colour + '55';
+        });
+    }
+
+    // Wire sigil option selection
+    let chosenSigil = null;
+    function wireSigilOptions() {
+        document.querySelectorAll('.sigil-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                chosenSigil = opt.dataset.sigil;
+                document.querySelectorAll('.sigil-option').forEach(o => {
+                    o.classList.toggle('sigil-option--selected', o.dataset.sigil === chosenSigil);
+                });
+                sigilConfBtn.classList.remove('hidden');
+            });
+        });
+    }
+
+    // Confirm sigil — save both fields to player, proceed to status screen
+    sigilConfBtn.addEventListener('click', () => {
+        if (!chosenArchetype || !chosenSigil) return;
+        player.archetype = chosenArchetype;
+        player.sigil     = chosenArchetype + '_' + chosenSigil; // e.g. 'ghost_A'
+        savePlayer();
+        playUIClick();
+        updateStatusScreen();
+        showScreen('screen-status');
+        runFirstTransmission();
+    });
+}
+
+// renderArchetypeIdentity — called from updateStatusScreen to show/hide
+// the archetype badge and sigil shape on the status screen.
+function renderArchetypeIdentity() {
+    const identityEl = document.getElementById('archetype-identity');
+    const badgeEl    = document.getElementById('archetype-badge');
+    const sigilEl    = document.getElementById('status-sigil');
+    if (!identityEl || !badgeEl || !sigilEl) return;
+
+    if (!player || !player.archetype) {
+        identityEl.classList.add('hidden');
+        return;
+    }
+
+    const archetype = player.archetype;
+    const colour    = ARCHETYPE_COLOURS[archetype];
+
+    identityEl.classList.remove('hidden');
+    badgeEl.textContent    = ARCHETYPE_NAMES[archetype];
+    badgeEl.style.color    = colour;
+    badgeEl.style.borderColor = colour;
+
+    // Render sigil clip-path shape
+    if (player.sigil && SIGIL_CLIPS[archetype]) {
+        const variant = player.sigil.split('_')[1] || 'A';
+        const clip    = SIGIL_CLIPS[archetype][variant];
+        sigilEl.style.clipPath  = clip;
+        sigilEl.style.background = colour;
+        sigilEl.style.boxShadow  = '0 0 10px ' + colour + '66';
+    }
+}
+
 // ─── PLAYER MANAGEMENT ───────────────────────────────────────
 function calcMaxHp(level) { return 100+level*5; }
 function loadPlayer() {
@@ -980,6 +1184,8 @@ function loadPlayer() {
     if(typeof p.hasSeenBriefing === 'undefined') p.hasSeenBriefing=true;
     // Save frequency — generated on first push, not on creation
     if(!p.saveFrequency) p.saveFrequency = null;
+    if(typeof p.archetype === 'undefined') p.archetype = null;
+    if(typeof p.sigil === 'undefined') p.sigil = null;
     return p;
 }
 function savePlayer() { localStorage.setItem(STORAGE_KEY,JSON.stringify(player)); }
@@ -993,10 +1199,16 @@ function createPlayer(name) {
     savePlayer();
     dailyQuests=getDailyQuests(allQuests,calculateLevel(),effectiveGear());
     recordReferralIfPresent();
-    // Show status screen first (invisible behind overlay), then fire briefing
+    // If operator has not yet chosen an archetype, route to archetype scan.
+    // Otherwise (e.g. player loaded from localStorage) go straight to status.
     updateStatusScreen();
-    showScreen('screen-status');
-    runFirstTransmission();
+    if (!player.archetype) {
+        showScreen('screen-archetype');
+        runArchetypeScan();
+    } else {
+        showScreen('screen-status');
+        runFirstTransmission();
+    }
 }
 function effectiveGear() {
     return (player&&player.buffs&&buffActive(player.buffs.sprintScroll))?Math.min(3,currentGear+1):currentGear;
@@ -2113,6 +2325,7 @@ function updateStatusScreen(animate) {
     const luck=calculateLuck(),lv=Math.floor(luck),lp=Math.min(100,((luck-STAT_FLOOR)/90)*100);
     if(animate){animateNumber('val-luck',0,lv,700);setTimeout(()=>document.getElementById('bar-luck').style.width=lp+'%',100);}
     else{document.getElementById('val-luck').textContent=lv;document.getElementById('bar-luck').style.width=lp+'%';}
+    renderArchetypeIdentity();
 }
 
 function rankCssClass(rank) {
