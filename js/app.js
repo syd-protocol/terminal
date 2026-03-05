@@ -2599,7 +2599,9 @@ function completeIncursion(inc) {
         const dmg          = Math.max(1, Math.round(inc.baseXP * multiplier));
         b.currentHp = Math.max(0, b.currentHp - dmg);
         bossChanged = true;
-        if (b.currentHp === 0) showLog('[ WORLD BOSS DEFEATED: ' + b.label + ' ]', 'accent');
+        if (b.currentHp === 0) {
+            showBossDefeatedOverlay(b);
+        }
     });
     if (bossChanged) saveWorldBosses(bosses.filter(b => b.currentHp > 0));
 
@@ -2624,7 +2626,9 @@ function damageWorldBossesFromDirective(stat, baseXP) {
         const dmg          = Math.max(1, Math.round(baseXP * multiplier));
         b.currentHp = Math.max(0, b.currentHp - dmg);
         changed = true;
-        if (b.currentHp === 0) showLog('[ WORLD BOSS DEFEATED: ' + b.label + ' ]', 'accent');
+        if (b.currentHp === 0) {
+            showBossDefeatedOverlay(b);
+        }
     });
     if (changed) saveWorldBosses(bosses.filter(b => b.currentHp > 0));
 }
@@ -2998,6 +3002,7 @@ function switchNeuralTab(tab) {
         bossTab.classList.add('ns-tab--active');
         incTab.classList.remove('ns-tab--active');
         renderNeuralBossList();
+        renderDefeatedBossList();
     }
 }
 
@@ -3039,6 +3044,46 @@ function renderNeuralIncursionList() {
                 updateNeuralBadge();
             });
         }
+    });
+}
+
+function showBossDefeatedOverlay(boss) {
+    // Record in defeated log before showing
+    const log = JSON.parse(localStorage.getItem('syd_defeated_bosses') || '[]');
+    log.push({ label: boss.label, enemy: boss.enemy, weapon: boss.weapon, defeatedAt: new Date().toISOString() });
+    localStorage.setItem('syd_defeated_bosses', JSON.stringify(log));
+
+    const overlay = document.getElementById('overlay-boss-defeated');
+    if (!overlay) { showLog('[ WORLD BOSS DEFEATED: ' + boss.label + ' ]', 'accent'); return; }
+    document.getElementById('bd-label').textContent  = boss.label || '[ WORLD BOSS ]';
+    document.getElementById('bd-enemy').textContent  = 'ENEMY NEUTRALISED: ' + (boss.enemy || '???');
+    document.getElementById('bd-weapon').textContent = 'WEAPON: ' + (boss.weapon || '???');
+    overlay.classList.remove('hidden');
+    playLevelUp && playLevelUp();
+}
+
+function renderDefeatedBossList() {
+    const container = document.getElementById('ns-defeated-list');
+    if (!container) return;
+    const log = JSON.parse(localStorage.getItem('syd_defeated_bosses') || '[]').reverse();
+    if (!log.length) {
+        container.innerHTML = '<div class="ns-empty">[ NO DEFEATED ENEMIES ON RECORD ]</div>';
+        return;
+    }
+    container.innerHTML = '';
+    log.forEach(b => {
+        const date = new Date(b.defeatedAt).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+        const el = document.createElement('div');
+        el.className = 'ns-entity-card ns-entity-card--defeated';
+        el.innerHTML = `
+            <div class="ns-entity-header">
+                <span class="ns-entity-label ns-entity-label--defeated">${b.label}</span>
+                <span class="ns-entity-timer">${date}</span>
+            </div>
+            ${b.enemy  ? `<div class="ns-entity-enemy">ENEMY: ${b.enemy}</div>` : ''}
+            ${b.weapon ? `<div class="ns-entity-weapon">WEAPON: ${b.weapon}</div>` : ''}
+        `;
+        container.appendChild(el);
     });
 }
 

@@ -810,9 +810,26 @@
             </div>
             <div class="ns-list-label">ACTIVE WORLD BOSSES</div>
             <div id="ns-boss-list" class="ns-entity-list"></div>
+
+            <div class="ns-list-label ns-list-label--defeated">DEFEATED ENEMIES</div>
+            <div id="ns-defeated-list" class="ns-entity-list"></div>
         </div>
 
         <div class="back-link" id="neural-back-link">← RETURN TO STATUS</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         BOSS DEFEATED OVERLAY
+    ═══════════════════════════════════════════════ -->
+    <div class="overlay hidden" id="overlay-boss-defeated" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="overlay-content boss-defeated-overlay">
+            <div class="overlay-system">[ THREAT NEUTRALISED ]</div>
+            <div class="bd-label" id="bd-label"></div>
+            <div class="bd-enemy" id="bd-enemy"></div>
+            <div class="bd-weapon" id="bd-weapon"></div>
+            <div class="bd-body">The System has confirmed termination of this entity. Its influence is no longer a viable obstacle. Archive sealed.</div>
+            <button class="overlay-dismiss-btn" onclick="document.getElementById('overlay-boss-defeated').classList.add('hidden')">[ ACKNOWLEDGED ]</button>
+        </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════
