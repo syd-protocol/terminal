@@ -752,8 +752,10 @@ async function init() {
     document.getElementById('shop-back-link-bottom').addEventListener('click',()=>navTo('screen-status'));
     document.getElementById('settings-header-back').addEventListener('click',()=>navTo('screen-status'));
     document.getElementById('settings-back-link-bottom').addEventListener('click',()=>navTo('screen-status'));
-    document.getElementById('neural-header-back').addEventListener('click',       ()=>navTo('screen-status'));
-    document.getElementById('neural-back-link').addEventListener('click',         ()=>navTo('screen-status'));
+    const neuralHeaderBack = document.getElementById('neural-header-back');
+    const neuralBackLink   = document.getElementById('neural-back-link');
+    if (neuralHeaderBack) neuralHeaderBack.addEventListener('click', ()=>navTo('screen-status'));
+    if (neuralBackLink)   neuralBackLink.addEventListener('click',   ()=>navTo('screen-status'));
 
     setupTooltips();
 
