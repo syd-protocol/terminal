@@ -274,13 +274,43 @@ function getNoiseBuffer() {
 // screens. Only the filtered noise floor and intermittent crackle
 // remain — they read as atmospheric texture, not intrusive hum.
 // ════════════════════════════════════════════════════════════════
-const SQ_NOISE_GAIN  = 0.012;   // slightly quieter than map
-const SQ_NOISE_FREQ  = 900;
-const SQ_NOISE_Q     = 1.8;
-const SQ_CRACKLE     = true;
-const SQ_CRACKLE_GAIN = 0.025;  // softer than map crackle
+const SQ_NOISE_GAIN   = 0.012;   // slightly quieter than map
+const SQ_NOISE_FREQ   = 900;
+const SQ_NOISE_Q      = 1.8;
+const SQ_CRACKLE      = true;
+const SQ_CRACKLE_GAIN = 0.025;   // softer than map crackle
 const SQ_CRACKLE_MIN  = 15000;
 const SQ_CRACKLE_MAX  = 28000;
+
+// ─── AUDIO HABITUATION FADE ───────────────────────────────────
+// After the player has heard the ambient audio for a cumulative total,
+// its volume gently reduces so it stops feeling intrusive.
+// Thresholds are in total minutes heard (tracked across sessions).
+// Full vol → 0-30 min | gradual fade → 30-90 min | floor (40%) → 90+ min
+const AUDIO_MINUTES_KEY   = 'syd_audio_min';      // localStorage key
+const AUDIO_FADE_START    = 30;   // minutes before fade begins
+const AUDIO_FADE_END      = 90;   // minutes at which floor is reached
+const AUDIO_FADE_FLOOR    = 0.4;  // multiplier at maximum fade (40% of original)
+let   _audioSessionStart  = null; // set when ambient starts, null when stopped
+
+function getAudioMinutes()  { return parseFloat(localStorage.getItem(AUDIO_MINUTES_KEY) || '0'); }
+function saveAudioMinutes(m){ localStorage.setItem(AUDIO_MINUTES_KEY, m.toFixed(2)); }
+
+function getAudioGainMultiplier() {
+    const mins = getAudioMinutes();
+    if (mins <= AUDIO_FADE_START) return 1.0;
+    if (mins >= AUDIO_FADE_END)   return AUDIO_FADE_FLOOR;
+    // Linear interpolation between 1.0 and AUDIO_FADE_FLOOR
+    const t = (mins - AUDIO_FADE_START) / (AUDIO_FADE_END - AUDIO_FADE_START);
+    return 1.0 - t * (1.0 - AUDIO_FADE_FLOOR);
+}
+
+function accumulateAudioMinutes() {
+    if (!_audioSessionStart) return;
+    const elapsed = (Date.now() - _audioSessionStart) / 60000; // ms → minutes
+    saveAudioMinutes(getAudioMinutes() + elapsed);
+    _audioSessionStart = null;
+}
 
 let sqNoiseNode=null, sqNoiseGain=null;
 let sqCrackleTimer=null;
@@ -295,9 +325,11 @@ function startStatusAmbient() {
         f.type='bandpass'; f.frequency.value=SQ_NOISE_FREQ; f.Q.value=SQ_NOISE_Q;
         sqNoiseNode.buffer=getNoiseBuffer(); sqNoiseNode.loop=true;
         sqNoiseNode.connect(f); f.connect(sqNoiseGain); sqNoiseGain.connect(ctx.destination);
+        const targetGain = SQ_NOISE_GAIN * getAudioGainMultiplier();
         sqNoiseGain.gain.setValueAtTime(0,now);
-        sqNoiseGain.gain.linearRampToValueAtTime(SQ_NOISE_GAIN,now+3.5);
+        sqNoiseGain.gain.linearRampToValueAtTime(targetGain,now+3.5);
         sqNoiseNode.start(now);
+        _audioSessionStart = Date.now();
         if (SQ_CRACKLE) scheduleSqCrackle();
     } catch(e) {}
 }
@@ -324,6 +356,7 @@ function fireSqCrackle() {
 }
 
 function stopStatusAmbient() {
+    accumulateAudioMinutes(); // log how long this session lasted before stopping
     if (sqCrackleTimer) { clearTimeout(sqCrackleTimer); sqCrackleTimer=null; }
     if (!sqNoiseNode) return;
     try {
@@ -1994,6 +2027,7 @@ function completeQuest(id, stat, baseXP) {
     if(player.completedToday.includes(id)) return;
     const momentum=player.momentum||1.0; let amt=parseFloat((baseXP*momentum).toFixed(1));
     damageWorldBossesFromDirective(stat, baseXP);
+    recordTraceEntry(stat, baseXP);
     const wasCorrupted=player.corrupted; if(wasCorrupted) amt=parseFloat((amt/2).toFixed(1));
     if(buffActive(player.buffs.focusDraught)&&(stat==='intelligence'||stat==='endurance')) amt=parseFloat((amt*2).toFixed(1));
     if(player.buffs.clarityShards>0){amt=parseFloat((amt+5).toFixed(1));player.buffs.clarityShards--;}
@@ -2443,11 +2477,28 @@ function renderWorldBossBar(boss) {
     if (!labelEl) return;
 
     const pct       = Math.max(0, Math.round((boss.currentHp / boss.maxHp) * 100));
+    const statColours = { strength:'#ef5350', intelligence:'#42a5f5', agility:'#66bb6a', endurance:'#ffa726', charisma:'#ab47bc' };
+    const bossStatColour = statColours[boss.stat] || 'rgba(255,255,255,0.4)';
+    const linkedLabel = Array.isArray(boss.linkedStats) && boss.linkedStats.length
+        ? boss.linkedStats.map(s => s.toUpperCase()).join(' · ')
+        : null;
+
     labelEl.textContent = boss.label || '[ WORLD BOSS ]';
     barEl.style.width   = pct + '%';
     barEl.className     = 'wb-bar' + (pct > 50 ? '' : pct > 25 ? ' wb-bar--amber' : ' wb-bar--critical');
     hpEl.textContent    = boss.currentHp + ' / ' + boss.maxHp + ' HP';
     if (enemyEl) enemyEl.textContent = '[ ENEMY: ' + (boss.enemy || '???') + ' ]';
+
+    // Primary damage stat display — tells the player which directives hit hardest
+    let statEl = document.getElementById('wb-stat-hint');
+    if (!statEl) {
+        statEl = document.createElement('div');
+        statEl.id = 'wb-stat-hint';
+        statEl.className = 'wb-stat-hint';
+        hpEl.parentNode.insertBefore(statEl, hpEl.nextSibling);
+    }
+    statEl.innerHTML = `PRIMARY DAMAGE: <span style="color:${bossStatColour}">${(boss.stat || '???').toUpperCase()}</span>`
+        + (linkedMatch => linkedMatch ? ` <span class="wb-linked-stats">· ${linkedMatch}</span>` : '')(linkedLabel);
 }
 
 // ─── INCURSION CARDS ──────────────────────────────────────────
@@ -2536,16 +2587,19 @@ function completeIncursion(inc) {
         player.stats[stat] = (player.stats[stat] || 0) + xp;
     }
     player.gold = (player.gold || 0) + inc.baseXP;
+    recordTraceEntry(inc.stat, inc.baseXP);
 
-    // Incursions deal bonus damage to World Bosses (1.5× — tactical value)
+    // Incursions deal bonus damage to World Bosses (1.5× on match, 0.4× off-stat)
     const bosses = loadWorldBosses();
     let bossChanged = false;
     bosses.forEach(b => {
-        if (!b.linkedStats || b.linkedStats.includes(stat)) {
-            b.currentHp = Math.max(0, b.currentHp - Math.round(inc.baseXP * 1.5));
-            bossChanged = true;
-            if (b.currentHp === 0) showLog('[ WORLD BOSS DEFEATED: ' + b.label + ' ]', 'accent');
-        }
+        const primaryMatch = b.stat === stat;
+        const linkedMatch  = Array.isArray(b.linkedStats) && b.linkedStats.includes(stat);
+        const multiplier   = (primaryMatch || linkedMatch) ? 1.5 : 0.4;
+        const dmg          = Math.max(1, Math.round(inc.baseXP * multiplier));
+        b.currentHp = Math.max(0, b.currentHp - dmg);
+        bossChanged = true;
+        if (b.currentHp === 0) showLog('[ WORLD BOSS DEFEATED: ' + b.label + ' ]', 'accent');
     });
     if (bossChanged) saveWorldBosses(bosses.filter(b => b.currentHp > 0));
 
@@ -2561,11 +2615,16 @@ function damageWorldBossesFromDirective(stat, baseXP) {
     if (!bosses.length) return;
     let changed = false;
     bosses.forEach(b => {
-        if (!b.linkedStats || b.linkedStats.includes(stat)) {
-            b.currentHp = Math.max(0, b.currentHp - baseXP);
-            changed = true;
-            if (b.currentHp === 0) showLog('[ WORLD BOSS DEFEATED: ' + b.label + ' ]', 'accent');
-        }
+        // Stat-weighted damage:
+        //   Full damage (1.0×)  — directive stat matches boss primary stat or linkedStats
+        //   Partial damage (0.25×) — unrelated stat; all effort contributes, but targeting matters
+        const primaryMatch = b.stat === stat;
+        const linkedMatch  = Array.isArray(b.linkedStats) && b.linkedStats.includes(stat);
+        const multiplier   = (primaryMatch || linkedMatch) ? 1.0 : 0.25;
+        const dmg          = Math.max(1, Math.round(baseXP * multiplier));
+        b.currentHp = Math.max(0, b.currentHp - dmg);
+        changed = true;
+        if (b.currentHp === 0) showLog('[ WORLD BOSS DEFEATED: ' + b.label + ' ]', 'accent');
     });
     if (changed) saveWorldBosses(bosses.filter(b => b.currentHp > 0));
 }
@@ -2595,6 +2654,156 @@ CALIBRATION EXAMPLES (match this register exactly):
 - Title style: "BREACH ACTIVATION BARRIER", "ULYSSES BINDING", "STRESS INOCULATION", "COGNITIVE MONOPOLY"
 - Description style: "Execute deliberate recovery: cold shower, intense stretching, or intentional stillness. Recovery is a vital training phase, not an absence of effort."
 - Tactical logic style: "Decisions made in advance under good conditions are always better. Pre-committing removes the burden of willpower at the point of greatest temptation."`;
+
+// ─── 30-DAY BEHAVIOURAL TRACE ─────────────────────────────────
+// Non-intrusive rolling log of what the player has actually done.
+// Stored as an array of daily summary objects in localStorage.
+// Each entry: { date, completed: [{stat, xp}], loggedIn: true }
+// Entries older than 30 days are pruned on read.
+
+const TRACE_KEY = 'syd_trace';
+
+function loadTrace() {
+    try {
+        const raw = localStorage.getItem(TRACE_KEY);
+        const trace = raw ? JSON.parse(raw) : [];
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 30);
+        return trace.filter(e => new Date(e.date) >= cutoff);
+    } catch { return []; }
+}
+
+function saveTrace(trace) {
+    localStorage.setItem(TRACE_KEY, JSON.stringify(trace));
+}
+
+function recordTraceEntry(stat, xp) {
+    const trace   = loadTrace();
+    const todayStr = today();
+    let entry = trace.find(e => e.date === todayStr);
+    if (!entry) {
+        entry = { date: todayStr, completed: [], loggedIn: true };
+        trace.push(entry);
+    }
+    entry.completed.push({ stat, xp });
+    saveTrace(trace);
+}
+
+function buildTraceSummary() {
+    const trace = loadTrace();
+    if (!trace.length) return null;
+
+    const statCounts   = {};
+    const statXP       = {};
+    let   totalEntries = 0;
+    const STATS = ['strength','intelligence','agility','endurance','charisma'];
+
+    STATS.forEach(s => { statCounts[s] = 0; statXP[s] = 0; });
+
+    trace.forEach(entry => {
+        (entry.completed || []).forEach(c => {
+            if (statCounts[c.stat] !== undefined) {
+                statCounts[c.stat]++;
+                statXP[c.stat] += c.xp || 0;
+                totalEntries++;
+            }
+        });
+    });
+
+    if (!totalEntries) return null;
+
+    // Sort stats by activity
+    const sorted = STATS.slice().sort((a, b) => statCounts[b] - statCounts[a]);
+    const highMomentumStat  = sorted[0];
+    const neglectedStat     = sorted[sorted.length - 1];
+    const activeDays        = trace.filter(e => e.completed && e.completed.length > 0).length;
+    const recentGap         = (() => {
+        const last = trace.filter(e => e.completed && e.completed.length > 0).pop();
+        if (!last) return 0;
+        return Math.round((new Date() - new Date(last.date)) / 86400000);
+    })();
+
+    return {
+        activeDays,
+        totalDirectives: totalEntries,
+        highMomentumStat,
+        neglectedStat,
+        statCounts,
+        recentGap,
+        raw: trace
+    };
+}
+
+// ─── INCURSION SEEDS ─────────────────────────────────────────
+// Three Strategic Openings generated from Trace + active bosses.
+// Displayed in the neural generator overlay as tactical suggestions.
+// The player can use them as seeds or ignore them entirely.
+
+async function generateIncursionSeeds() {
+    const key = getNeuralKey();
+    if (!key) return null;
+
+    const trace  = buildTraceSummary();
+    const bosses = loadWorldBosses();
+
+    if (!trace && !bosses.length) return null;
+
+    const bossContext = bosses.length
+        ? bosses.map(b => `${b.label} [primary stat: ${b.stat}, enemy: ${b.enemy || '?'}]`).join('; ')
+        : 'No active World Bosses.';
+
+    const traceContext = trace
+        ? `Active days (last 30): ${trace.activeDays}. Total directives: ${trace.totalDirectives}. High-momentum stat: ${trace.highMomentumStat.toUpperCase()}. Most neglected stat: ${trace.neglectedStat.toUpperCase()}. Days since last directive: ${trace.recentGap}.`
+        : 'No behavioural data available yet.';
+
+    const seedPrompt = `You are the System. Analyse this operator's behavioural footprint and active World Bosses, then generate exactly three Incursion Seed suggestions.
+
+BEHAVIOURAL TRACE (last 30 days):
+${traceContext}
+
+ACTIVE WORLD BOSSES:
+${bossContext}
+
+Generate three strategic incursion openings as a JSON array. Each seed is a one-line real-world challenge the operator could attempt TODAY to progress against their active enemies. Do not invent fictional tasks. These must be real-world actions.
+
+The three seeds must follow this exact strategic logic:
+1. POWER PLAY — Use the operator's high-momentum stat (${trace ? trace.highMomentumStat.toUpperCase() : 'strongest stat'}) to make unexpected progress on a boss of a different type.
+2. EFFICIENCY BRIDGE — Target the most neglected stat (${trace ? trace.neglectedStat.toUpperCase() : 'weakest stat'}) by layering a small action onto an existing habit. Low activation energy.
+3. CRITICAL OPENING — A Tier 1 micro-action (under 10 minutes) that hits a boss weak point with disproportionate effect.
+
+Return ONLY a JSON array with exactly 3 objects, each with: {"type": "power_play"|"efficiency_bridge"|"critical_opening", "label": "SHORT TACTICAL NAME", "seed": "One-sentence real-world action the operator could take today."}
+
+No markdown. No preamble. Only the JSON array.`;
+
+    try {
+        const provider = getNeuralProvider();
+        let raw;
+        if (provider === 'gemini') {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`;
+            const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ system_instruction:{ parts:[{ text: SYD_SYSTEM_PROMPT }] }, contents:[{ parts:[{ text: seedPrompt }] }] }) });
+            if (!res.ok) return null;
+            const data = await res.json();
+            raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        } else if (provider === 'openai') {
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+                body: JSON.stringify({ model:'gpt-4o-mini', messages:[{role:'system',content:SYD_SYSTEM_PROMPT},{role:'user',content:seedPrompt}], temperature:0.7 }) });
+            if (!res.ok) return null;
+            const data = await res.json();
+            raw = data?.choices?.[0]?.message?.content || '';
+        } else {
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+                method:'POST', headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
+                body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:600, system:SYD_SYSTEM_PROMPT, messages:[{role:'user',content:seedPrompt}] }) });
+            if (!res.ok) return null;
+            const data = await res.json();
+            raw = data?.content?.[0]?.text || '';
+        }
+        const clean = raw.replace(/```json|```/g, '').trim();
+        return JSON.parse(clean);
+    } catch { return null; }
+}
 
 async function callNeuralAPI(planText, type) {
     const key      = getNeuralKey();
@@ -2655,7 +2864,7 @@ ${schemaHint}`;
 }
 
 // ─── GENERATOR OVERLAY ────────────────────────────────────────
-function openNeuralGenerator(type) {
+async function openNeuralGenerator(type) {
     const overlay = document.getElementById('overlay-neural-gen');
     if (!overlay) return;
     overlay.dataset.genType = type;
@@ -2666,7 +2875,40 @@ function openNeuralGenerator(type) {
     document.getElementById('ng-input').value         = '';
     document.getElementById('ng-status').textContent  = '';
     document.getElementById('ng-submit-btn').disabled = false;
+
+    // Clear any previous seeds
+    const seedsEl = document.getElementById('ng-seeds');
+    if (seedsEl) seedsEl.innerHTML = '';
+
     overlay.classList.remove('hidden');
+
+    // Only generate seeds for incursions (bosses don't benefit from the trace in the same way)
+    if (type === 'incursion') {
+        const seedsContainer = document.getElementById('ng-seeds');
+        if (seedsContainer) {
+            seedsContainer.innerHTML = '<div class="ng-seeds-loading">[ SCANNING BEHAVIOURAL TRACE... ]</div>';
+            const seeds = await generateIncursionSeeds();
+            if (seeds && seeds.length) {
+                const typeLabels = { power_play: 'POWER PLAY', efficiency_bridge: 'EFFICIENCY BRIDGE', critical_opening: 'CRITICAL OPENING' };
+                seedsContainer.innerHTML = '<div class="ng-seeds-label">[ STRATEGIC OPENINGS — TAP TO USE AS SEED ]</div>'
+                    + seeds.map(s => `
+                        <div class="ng-seed-card" data-seed="${s.seed.replace(/"/g, '&quot;')}">
+                            <span class="ng-seed-type">${typeLabels[s.type] || s.type}</span>
+                            <span class="ng-seed-text">${s.seed}</span>
+                        </div>`).join('');
+                // Wire tap-to-fill
+                seedsContainer.querySelectorAll('.ng-seed-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        document.getElementById('ng-input').value = card.dataset.seed;
+                        seedsContainer.querySelectorAll('.ng-seed-card').forEach(c => c.classList.remove('ng-seed-card--selected'));
+                        card.classList.add('ng-seed-card--selected');
+                    });
+                });
+            } else {
+                seedsContainer.innerHTML = '';
+            }
+        }
+    }
 }
 
 function closeNeuralGenerator() {
