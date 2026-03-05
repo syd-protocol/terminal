@@ -48,6 +48,44 @@ function getDB() {
 const STAT_NAMES  = ['strength', 'intelligence', 'agility', 'endurance', 'charisma'];
 const STAT_FLOOR  = 10;
 
+// ─── STAGE 6B: TUTORIAL DIRECTIVE ────────────────────────
+// Injected at the top of the directive list on day one only.
+// XP = 0 (calibration, not execution). Never repeats.
+const TUTORIAL_QUEST = {
+    id:       'tutorial_orientation',
+    _tutorial: true,
+    title:    'INITIAL SYSTEMS ASSESSMENT',
+    desc:     'The System has logged your presence. Before you execute, you must orient. Navigate to your status screen. Identify the five core attributes. Locate the one that currently sits lowest — this is your primary weakness. The System will now direct effort toward it. Acknowledge to proceed.',
+    stat:     'intelligence',
+    xp:       0,
+    tier:     1
+};
+
+// ─── STAGE 6B: TUTORIAL HELPERS ─────────────────────────────
+// injectTutorial(quests) — prepends TUTORIAL_QUEST to the quest list
+// on day one only (hasCompletedTutorial === false). Returns a new array;
+// the original dailyQuests is never mutated.
+function injectTutorial(quests) {
+    if (!player || player.hasCompletedTutorial !== false) return quests;
+    // Don't duplicate if somehow already present
+    if (quests.some(q => q.id === TUTORIAL_QUEST.id)) return quests;
+    return [TUTORIAL_QUEST, ...quests];
+}
+
+// completeTutorialQuest — called when the operator marks the tutorial executed.
+// XP is 0 so no stat changes. Fires a System acknowledgement log entry.
+function completeTutorialQuest() {
+    if (!player || player.hasCompletedTutorial) return;
+    player.hasCompletedTutorial = true;
+    player.completedToday = player.completedToday || [];
+    player.completedToday.push(TUTORIAL_QUEST.id);
+    savePlayer();
+    playQuestComplete();
+    showLog('[ ASSESSMENT LOGGED. PRIMARY WEAKNESS IDENTIFIED. DIRECTIVES WILL NOW TARGET YOUR WEAK POINTS. EXECUTE CONSISTENTLY. ]', 'accent');
+    renderQuests(injectTutorial(dailyQuests), player.completedToday, player.momentum || 1.0);
+    updateStatusScreen();
+}
+
 // ─── LEVEL FORMULA ───────────────────────────────────────────
 function xpForLevel(n) {
     if (n <= 1) return 0;
@@ -743,7 +781,7 @@ function applyQuestFilter() {
         clearBtn.onclick = () => {
             playUIClick();
             activeQuestFilter = null;
-            renderQuests(dailyQuests, player.completedToday, player.momentum||1.0);
+            renderQuests(injectTutorial(dailyQuests), player.completedToday, player.momentum||1.0);
             applyQuestFilter();
         };
     } else {
@@ -1186,6 +1224,8 @@ function loadPlayer() {
     if(!p.saveFrequency) p.saveFrequency = null;
     if(typeof p.archetype === 'undefined') p.archetype = null;
     if(typeof p.sigil === 'undefined') p.sigil = null;
+    // Existing players predate the tutorial — mark as completed so it never fires
+    if(typeof p.hasCompletedTutorial === 'undefined') p.hasCompletedTutorial = true;
     return p;
 }
 function savePlayer() { localStorage.setItem(STORAGE_KEY,JSON.stringify(player)); }
@@ -1195,7 +1235,7 @@ function createPlayer(name) {
     const maxHp=calcMaxHp(1);
     player={name,stats,completedToday:[],lastQuestDate:today(),consecutiveDays:1,momentum:1.0,
         lastActiveDate:today(),hp:maxHp,maxHp,corrupted:false,gold:0,buffs:defaultBuffs(),
-        mapMilestones:{},hasSeenBriefing:false};
+        mapMilestones:{},hasSeenBriefing:false,hasCompletedTutorial:false};
     savePlayer();
     dailyQuests=getDailyQuests(allQuests,calculateLevel(),effectiveGear());
     recordReferralIfPresent();
@@ -2282,7 +2322,7 @@ function completeQuest(id, stat, baseXP) {
     const prevLevel=levelFromXP(xpBefore),newLevel=calculateLevel();
     const prevRank=rankFromLevel(prevLevel),newRank=rankFromLevel(newLevel);
     if(wasCorrupted&&!player.corrupted) setTimeout(()=>showLog('[SYSTEM_RESTORED: CORRUPTION_CLEARED]','accent'),400);
-    renderQuests(dailyQuests,player.completedToday,player.momentum);
+    renderQuests(injectTutorial(dailyQuests),player.completedToday,player.momentum);
     updateStatusScreen();
     if(newRank!==prevRank){setTimeout(()=>{showLog('[RECLASSIFIED: '+newRank+'-RANK CONFIRMED]','accent');showRankUpOverlay(newRank,newLevel);},600);}
     else if(newLevel>prevLevel){setTimeout(()=>{showLog('[THRESHOLD: LEVEL '+newLevel+' REACHED]','accent');showLevelUpOverlay(newLevel);},600);}
@@ -2430,7 +2470,7 @@ function saveGear(gear){
     currentGear=gear;localStorage.setItem(GEAR_KEY,String(gear));
     dailyQuests=getDailyQuests(allQuests,calculateLevel(),effectiveGear());
     if(document.getElementById('screen-quests').classList.contains('active'))
-        renderQuests(dailyQuests,player.completedToday,player.momentum||1.0);
+        renderQuests(injectTutorial(dailyQuests),player.completedToday,player.momentum||1.0);
 }
 
 // ─── SETTINGS ────────────────────────────────────────────────
@@ -2551,11 +2591,12 @@ function showScreen(id) {
     if (id === 'screen-settings')   renderNeuralSettings();
     if (id === 'screen-neural')     renderNeuralScreen();
     if (id === 'screen-quests') {
-        // Apply filter if coming from the map
-        const quests = activeQuestFilter
+        // Apply filter if coming from the map.
+        // Tutorial quest always shown regardless of stat filter.
+        const filtered = activeQuestFilter
             ? dailyQuests.filter(q => q.stat === activeQuestFilter)
             : dailyQuests;
-        renderQuests(quests, player.completedToday, player.momentum||1.0);
+        renderQuests(injectTutorial(filtered), player.completedToday, player.momentum||1.0);
         applyQuestFilter();
     }
     // Clear filter when leaving the quests screen for anywhere other than back-to-map

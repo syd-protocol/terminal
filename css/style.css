@@ -3658,3 +3658,35 @@ body {
     /* color and border-color applied via JS */
     opacity: 0.85;
 }
+
+
+/* ════════════════════════════════════════════════════════════════
+   STAGE 6B — TUTORIAL DIRECTIVE: ORIENTATION PROTOCOL CARD
+   ════════════════════════════════════════════════════════════════ */
+
+/* Accent-bordered card with a subtle top glow — visually distinct
+   from standard quest cards without being loud */
+.quest-card--tutorial {
+    border-color: var(--accent);
+    box-shadow: 0 0 18px rgba(79, 195, 247, 0.12), inset 0 0 0 0 transparent;
+    position: relative;
+}
+
+/* Thin accent line at the top of the card */
+.quest-card--tutorial::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+/* Orientation protocol label — replaces the stat/tier header */
+.qc-tutorial-label {
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 3px;
+    font-weight: 700;
+}

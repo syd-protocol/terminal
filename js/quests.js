@@ -151,7 +151,10 @@ function renderQuests(quests, completedIds, momentum) {
         const effectiveXP = Math.round(quest.xp * (momentum || 1) * 10) / 10;
 
         const card     = document.createElement('div');
-        card.className = 'quest-card' + (isComplete ? ' quest-card--done' : '');
+        const isTutorial = quest._tutorial === true;
+        card.className = 'quest-card'
+            + (isComplete   ? ' quest-card--done'     : '')
+            + (isTutorial   ? ' quest-card--tutorial' : '');
         card.id        = 'quest-card-' + quest.id;
 
         // Show effective XP only if momentum bonus is active and directive not yet done
@@ -200,11 +203,18 @@ function renderQuests(quests, completedIds, momentum) {
         const tierLabel  = quest.tier === 3 ? 'MASTERY' : quest.tier === 2 ? 'ADVANCED' : 'BASIC';
         const statColour = { strength:'var(--stat-str)', intelligence:'var(--stat-int)', agility:'var(--stat-agi)', endurance:'var(--stat-end)', charisma:'var(--stat-cha)' }[quest.stat] || 'var(--accent)';
 
+        // Tutorial card header replaces stat/tier with the orientation protocol label
+        const headerHtml = isTutorial
+            ? `<div class="qc-header">
+                   <span class="qc-tutorial-label">[ ORIENTATION PROTOCOL ]</span>
+               </div>`
+            : `<div class="qc-header">
+                   <span class="qc-stat" style="color:${statColour}">[ ${quest.stat.toUpperCase()} ]</span>
+                   <span class="qc-tier qc-tier--${quest.tier}">${tierLabel}</span>
+               </div>`;
+
         card.innerHTML = `
-            <div class="qc-header">
-                <span class="qc-stat" style="color:${statColour}">[ ${quest.stat.toUpperCase()} ]</span>
-                <span class="qc-tier qc-tier--${quest.tier}">${tierLabel}</span>
-            </div>
+            ${headerHtml}
             <div class="qc-title">${quest.title}</div>
             <div class="qc-desc">${quest.desc}</div>
             ${modelSection}
@@ -260,11 +270,16 @@ function renderQuests(quests, completedIds, momentum) {
     });
 
     // Attach complete button listeners (reflection-gated buttons are handled above;
-    // this catches all non-reflection buttons that are enabled)
+    // this catches all non-reflection buttons that are enabled).
+    // Tutorial quest routes to completeTutorialQuest() instead of completeQuest().
     document.querySelectorAll('.complete-btn:not([disabled])').forEach(btn => {
         btn.addEventListener('click', () => {
             const { id, stat, xp } = btn.dataset;
-            completeQuest(id, stat, parseInt(xp));
+            if (id === 'tutorial_orientation' && typeof completeTutorialQuest === 'function') {
+                completeTutorialQuest();
+            } else {
+                completeQuest(id, stat, parseInt(xp));
+            }
         });
     });
 }
