@@ -67,13 +67,21 @@ const TUTORIAL_QUEST = {
 // the original dailyQuests is never mutated.
 function injectTutorial(quests) {
     if (!player || player.hasCompletedTutorial !== false) return quests;
-    // Don't duplicate if somehow already present
     if (quests.some(q => q.id === TUTORIAL_QUEST.id)) return quests;
     return [TUTORIAL_QUEST, ...quests];
 }
 
+// getVisibleQuests(quests) — returns what the operator actually sees.
+// On day one, before completing the tutorial: only the tutorial card.
+// After completion, or on any subsequent day: the full directive list.
+// This gates the operator — they cannot scroll past orientation.
+function getVisibleQuests(quests) {
+    if (!player || player.hasCompletedTutorial !== false) return quests;
+    return [TUTORIAL_QUEST];
+}
+
 // completeTutorialQuest — called when the operator marks the tutorial executed.
-// XP is 0 so no stat changes. Fires a System acknowledgement log entry.
+// XP is 0 so no stat changes. Reveals the full directive list on completion.
 function completeTutorialQuest() {
     if (!player || player.hasCompletedTutorial) return;
     player.hasCompletedTutorial = true;
@@ -82,7 +90,8 @@ function completeTutorialQuest() {
     savePlayer();
     playQuestComplete();
     showLog('[ ASSESSMENT LOGGED. PRIMARY WEAKNESS IDENTIFIED. DIRECTIVES WILL NOW TARGET YOUR WEAK POINTS. EXECUTE CONSISTENTLY. ]', 'accent');
-    renderQuests(injectTutorial(dailyQuests), player.completedToday, player.momentum || 1.0);
+    // Tutorial complete — now reveal the full directive list
+    renderQuests(dailyQuests, player.completedToday, player.momentum || 1.0);
     updateStatusScreen();
 }
 
@@ -853,6 +862,11 @@ async function init() {
         allQuests = await questsPromise;
         showScreen('screen-onboarding');
         runOnboarding();
+        // Register the service worker for new players too, so SW_UPDATED is
+        // handled if the worker activates during the onboarding session.
+        // We guard against reloading mid-onboarding — if no player is saved yet
+        // when SW_UPDATED fires, we skip the reload entirely.
+        registerServiceWorker();
         return;
     }
 
@@ -929,8 +943,11 @@ function registerServiceWorker() {
 
     // Listen for SW_UPDATED — posted by the service worker after activation.
     // Reloads the page so open PWA instances always run fresh code after a deploy.
+    // Guard: if no player exists in localStorage yet (mid-onboarding), skip the
+    // reload — there's nothing stale to refresh and it would disrupt the flow.
     navigator.serviceWorker.addEventListener('message', e => {
         if (e.data && e.data.type === 'SW_UPDATED') {
+            if (!localStorage.getItem(STORAGE_KEY)) return; // mid-onboarding, ignore
             showLog('[ SYSTEM UPDATE DETECTED — RELOADING TERMINAL... ]', 'accent');
             setTimeout(() => window.location.reload(), 1500);
         }
@@ -2950,13 +2967,18 @@ function showScreen(id, isBack) {
     if (id === 'screen-settings')   renderNeuralSettings();
     if (id === 'screen-neural')     renderNeuralScreen();
     if (id === 'screen-quests') {
-        // Apply filter if coming from the map.
-        // Tutorial quest always shown regardless of stat filter.
-        const filtered = activeQuestFilter
-            ? dailyQuests.filter(q => q.stat === activeQuestFilter)
-            : dailyQuests;
-        renderQuests(injectTutorial(filtered), player.completedToday, player.momentum||1.0);
-        applyQuestFilter();
+        // If the tutorial is still pending, show only the tutorial card — no filter,
+        // no scrolling past it. Once complete, show the full (optionally filtered) list.
+        if (player && player.hasCompletedTutorial === false) {
+            renderQuests([TUTORIAL_QUEST], player.completedToday, player.momentum||1.0);
+            applyQuestFilter();
+        } else {
+            const filtered = activeQuestFilter
+                ? dailyQuests.filter(q => q.stat === activeQuestFilter)
+                : dailyQuests;
+            renderQuests(filtered, player.completedToday, player.momentum||1.0);
+            applyQuestFilter();
+        }
     }
     // Clear filter when leaving the quests screen for anywhere other than back-to-map
     // (back nav always goes to status, so always clear)
