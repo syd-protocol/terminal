@@ -1215,9 +1215,11 @@ function runArchetypeScan() {
     // fall back to status screen if Stage 6c HTML has not been deployed yet.
     sigilConfBtn.addEventListener('click', () => {
         if (!chosenArchetype || !chosenSigil) return;
+        console.log('[SYD] sigil confirmed:', chosenArchetype, chosenSigil);
         player.archetype = chosenArchetype;
-        player.sigil     = chosenArchetype + '_' + chosenSigil; // e.g. 'ghost_A'
+        player.sigil     = chosenArchetype + '_' + chosenSigil;
         savePlayer();
+        console.log('[SYD] player saved, routing to terminal floor');
         playUIClick();
         updateStatusScreen();
         if (document.getElementById('screen-terminal')) {
@@ -1564,7 +1566,9 @@ function loadPlayer() {
     return p;
 }
 function savePlayer() { localStorage.setItem(STORAGE_KEY,JSON.stringify(player)); }
+
 function createPlayer(name) {
+    console.log('[SYD] createPlayer:', name);
     const stats={};
     STAT_NAMES.forEach(s=>{stats[s]=STAT_FLOOR;});
     const maxHp=calcMaxHp(1);
@@ -1578,9 +1582,12 @@ function createPlayer(name) {
     dailyQuests=getDailyQuests(allQuests,calculateLevel(),effectiveGear());
     recordReferralIfPresent();
     updateStatusScreen();
+    console.log('[SYD] routing to screen-archetype');
     showScreen('screen-archetype');
+    console.log('[SYD] screen-archetype active:', document.getElementById('screen-archetype')?.classList.toString());
     runArchetypeScan();
 }
+
 function effectiveGear() {
     return (player&&player.buffs&&buffActive(player.buffs.sprintScroll))?Math.min(3,currentGear+1):currentGear;
 }
@@ -2930,6 +2937,13 @@ const STATUS_QUEST_SCREENS = ['screen-status','screen-quests'];
 function showScreen(id, isBack) {
     const prev   = document.querySelector('.screen.active');
     const prevId = prev ? prev.id : null;
+    console.log('[SYD NAV]', prevId, '→', id, isBack ? '(back)' : '');
+    const targetEl = document.getElementById(id);
+    if (!targetEl) { console.error('[SYD NAV] target not found:', id); return; }
+    if (targetEl.classList.contains('hidden')) {
+        console.warn('[SYD NAV] target has .hidden class — removing it:', id);
+        targetEl.classList.remove('hidden');
+    }
 
     // Push to history so goBack() can return here, unless:
     //  - This is already a back navigation (popped from stack)
