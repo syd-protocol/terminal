@@ -4293,3 +4293,41 @@ body {
 }
 
 /* Base Map arrival overlay reuses tf-arrival-overlay styles — no extra needed */
+
+/* ── Map avatar ─────────────────────────────────────────────── */
+#map-avatar {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 0.9rem;
+    color: var(--accent);
+    text-shadow: 0 0 10px rgba(79,195,247,0.9);
+    pointer-events: none;
+    z-index: 10;
+    transition: left 0.35s ease, top 0.35s ease;
+}
+
+#map-avatar.map-avatar--walking {
+    animation: avatar-walk 0.35s steps(2) forwards;
+}
+
+@keyframes avatar-walk {
+    0%   { opacity: 1;    text-shadow: 0 0 10px rgba(79,195,247,0.9); }
+    50%  { opacity: 0.55; text-shadow: 0 0 4px  rgba(79,195,247,0.4); }
+    100% { opacity: 1;    text-shadow: 0 0 10px rgba(79,195,247,0.9); }
+}
+
+/* ── Dot trail ──────────────────────────────────────────────── */
+.map-trail-dot {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 1rem;
+    color: rgba(79,195,247,0.25);
+    pointer-events: none;
+    z-index: 9;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.map-trail-dot--visible {
+    opacity: 1;
+}

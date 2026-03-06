@@ -562,6 +562,7 @@ function setupMapTaps() {
         if (!el) return;
         el.addEventListener('click', () => {
             playUIClick();
+            moveMapAvatar(key);
             const dest = FACILITY_NAV[key];
             if (key === 'log') {
                 openLogArchive();
@@ -571,6 +572,83 @@ function setupMapTaps() {
                 navTo(dest);
             }
         });
+    });
+}
+
+// ── Map avatar + dot trail ────────────────────────────────────
+// A decorative operator marker (◈) that moves between facility tiles.
+// Dots are drawn in a straight line between tile centres on each move,
+// then fade out. No animation loops — CSS transitions only.
+
+function initMapAvatar() {
+    const viewport = document.getElementById('map-viewport');
+    if (!viewport || document.getElementById('map-avatar')) return;
+
+    const avatar = document.createElement('div');
+    avatar.id = 'map-avatar';
+    avatar.textContent = '◈';
+    viewport.appendChild(avatar);
+
+    // Snap to last known position without animation
+    const node = (player && player.lastMapNode) || 'command';
+    const el   = document.getElementById('facility-' + node);
+    if (el) {
+        const pos = getTileCentre(el, viewport);
+        avatar.style.transition = 'none';
+        avatar.style.left = pos.x + 'px';
+        avatar.style.top  = pos.y + 'px';
+    }
+}
+
+function getTileCentre(tileEl, viewportEl) {
+    const vr = viewportEl.getBoundingClientRect();
+    const tr = tileEl.getBoundingClientRect();
+    return {
+        x: (tr.left - vr.left) + tr.width  / 2,
+        y: (tr.top  - vr.top)  + tr.height / 2
+    };
+}
+
+function moveMapAvatar(facilityKey) {
+    const viewport = document.getElementById('map-viewport');
+    const avatar   = document.getElementById('map-avatar');
+    const destEl   = document.getElementById('facility-' + facilityKey);
+    if (!viewport || !avatar || !destEl) return;
+
+    const from = { x: parseFloat(avatar.style.left), y: parseFloat(avatar.style.top) };
+    const to   = getTileCentre(destEl, viewport);
+
+    // Draw · · · trail between centres
+    drawDotTrail(viewport, from, to);
+
+    // Walk animation: toggle class while in transit
+    avatar.classList.add('map-avatar--walking');
+    avatar.style.transition = 'left 0.35s ease, top 0.35s ease';
+    avatar.style.left = to.x + 'px';
+    avatar.style.top  = to.y + 'px';
+
+    setTimeout(() => avatar.classList.remove('map-avatar--walking'), 380);
+
+    // Persist last position
+    if (player) { player.lastMapNode = facilityKey; savePlayer(); }
+}
+
+function drawDotTrail(viewport, from, to) {
+    // 3 dots at 25%, 50%, 75% along the line
+    [0.25, 0.5, 0.75].forEach((t, i) => {
+        const dot = document.createElement('span');
+        dot.className = 'map-trail-dot';
+        dot.textContent = '·';
+        dot.style.left = (from.x + (to.x - from.x) * t) + 'px';
+        dot.style.top  = (from.y + (to.y - from.y) * t) + 'px';
+        viewport.appendChild(dot);
+
+        // Stagger fade-in then fade out
+        setTimeout(() => dot.classList.add('map-trail-dot--visible'), i * 40);
+        setTimeout(() => {
+            dot.classList.remove('map-trail-dot--visible');
+            setTimeout(() => dot.remove(), 400);
+        }, 800 + i * 40);
     });
 }
 
@@ -2331,6 +2409,7 @@ function showScreen(id, isBack) {
     if (isMap) {
         if (droneEnabled && !mapOscA) startMapAudio();
         renderMap();
+        initMapAvatar();
         if (player && !player.hasSeenBaseMap) {
             setTimeout(runBaseMapArrival, 400);
         }
@@ -2631,13 +2710,13 @@ function completeIncursion(inc) {
     player.gold = (player.gold || 0) + inc.baseXP;
     recordTraceEntry(inc.stat, inc.baseXP);
 
-    // Incursions deal bonus damage to World Bosses (1.5× on match, 0.4× off-stat)
+    // Incursions deal bonus damage to World Bosses (1.5× on match, 0× off-stat)
     const bosses = loadWorldBosses();
     let bossChanged = false;
     bosses.forEach(b => {
         const primaryMatch = b.stat === stat;
         const linkedMatch  = Array.isArray(b.linkedStats) && b.linkedStats.includes(stat);
-        const multiplier   = (primaryMatch || linkedMatch) ? 1.5 : 0.4;
+        const multiplier   = (primaryMatch || linkedMatch) ? 1.5 : 0;
         const dmg          = Math.max(1, Math.round(inc.baseXP * multiplier));
         b.currentHp = Math.max(0, b.currentHp - dmg);
         bossChanged = true;
@@ -2660,11 +2739,11 @@ function damageWorldBossesFromDirective(stat, baseXP) {
     let changed = false;
     bosses.forEach(b => {
         // Stat-weighted damage:
-        //   Full damage (1.0×)  — directive stat matches boss primary stat or linkedStats
-        //   Partial damage (0.25×) — unrelated stat; all effort contributes, but targeting matters
+        //   Full damage (1.0×) — directive stat matches boss primary stat or linkedStats
+        //   No damage (0×)     — unrelated stat; only targeted effort moves the boss
         const primaryMatch = b.stat === stat;
         const linkedMatch  = Array.isArray(b.linkedStats) && b.linkedStats.includes(stat);
-        const multiplier   = (primaryMatch || linkedMatch) ? 1.0 : 0.25;
+        const multiplier   = (primaryMatch || linkedMatch) ? 1.0 : 0;
         const dmg          = Math.max(1, Math.round(baseXP * multiplier));
         b.currentHp = Math.max(0, b.currentHp - dmg);
         changed = true;
