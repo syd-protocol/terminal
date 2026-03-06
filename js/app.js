@@ -562,14 +562,16 @@ function setupMapTaps() {
         if (!el) return;
         el.addEventListener('click', () => {
             playUIClick();
-            moveMapAvatar(key);
-            const dest = FACILITY_NAV[key];
             if (key === 'log') {
+                // Log opens an overlay — map stays visible, no nav delay needed
+                moveMapAvatar(key);
                 openLogArchive();
-            } else if (dest === 'screen-status') {
-                showScreen('screen-status');
-            } else if (dest) {
-                navTo(dest);
+            } else {
+                moveMapAvatar(key, () => {
+                    const dest = FACILITY_NAV[key];
+                    if (dest === 'screen-status') showScreen('screen-status');
+                    else if (dest) navTo(dest);
+                });
             }
         });
     });
@@ -598,6 +600,19 @@ function initMapAvatar() {
         avatar.style.left = pos.x + 'px';
         avatar.style.top  = pos.y + 'px';
     }
+    updateCommandPin(node);
+}
+
+function updateCommandPin(currentNode) {
+    const pin = document.getElementById('facility-command-pin');
+    if (!pin) return;
+    // Show hollow ◇ (absence) when operator is elsewhere, hide when operator is here
+    // (the avatar itself shows presence at command post)
+    if (currentNode === 'command') {
+        pin.style.opacity = '0';
+    } else {
+        pin.style.opacity = '1';
+    }
 }
 
 function getTileCentre(tileEl, viewportEl) {
@@ -609,11 +624,14 @@ function getTileCentre(tileEl, viewportEl) {
     };
 }
 
-function moveMapAvatar(facilityKey) {
+// NAV_DELAY_MS — how long to show the walk animation before transitioning screen
+const MAP_NAV_DELAY = 420;
+
+function moveMapAvatar(facilityKey, onComplete) {
     const viewport = document.getElementById('map-viewport');
     const avatar   = document.getElementById('map-avatar');
     const destEl   = document.getElementById('facility-' + facilityKey);
-    if (!viewport || !avatar || !destEl) return;
+    if (!viewport || !avatar || !destEl) { if (onComplete) onComplete(); return; }
 
     const from = { x: parseFloat(avatar.style.left), y: parseFloat(avatar.style.top) };
     const to   = getTileCentre(destEl, viewport);
@@ -629,8 +647,19 @@ function moveMapAvatar(facilityKey) {
 
     setTimeout(() => avatar.classList.remove('map-avatar--walking'), 380);
 
+    // Update command post pin state
+    updateCommandPin(facilityKey);
+
     // Persist last position
     if (player) { player.lastMapNode = facilityKey; savePlayer(); }
+
+    // Fire callback after animation is visible
+    if (onComplete) setTimeout(onComplete, MAP_NAV_DELAY);
+}
+
+// Moves avatar home to command post then fires callback (used by return button)
+function returnAvatarToCommand(onComplete) {
+    moveMapAvatar('command', onComplete);
 }
 
 function drawDotTrail(viewport, from, to) {
@@ -786,7 +815,10 @@ async function init() {
     document.getElementById('quest-header-back').addEventListener('click',    ()=>goBack());
     document.getElementById('quests-back-link').addEventListener('click',     ()=>goBack());
     document.getElementById('map-header-back').addEventListener('click',      ()=>goBack());
-    document.getElementById('map-back-link').addEventListener('click',        ()=>goBack());
+    document.getElementById('map-back-link').addEventListener('click', () => {
+        playUIClick();
+        returnAvatarToCommand(() => goBack());
+    });
     document.getElementById('shop-header-back').addEventListener('click',     ()=>goBack());
     document.getElementById('shop-back-link-bottom').addEventListener('click',()=>goBack());
     document.getElementById('settings-header-back').addEventListener('click', ()=>goBack());

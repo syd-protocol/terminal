@@ -4269,9 +4269,11 @@ body {
 .facility-command-pin {
     font-size: 1.1rem;
     color: var(--accent);
-    text-shadow: 0 0 12px rgba(79,195,247,0.7);
+    text-shadow: 0 0 12px rgba(79,195,247,0.4);
     margin-bottom: 6px;
     animation: hub-pulse 2.4s ease-in-out infinite;
+    opacity: 1;
+    transition: opacity 0.3s ease;
 }
 
 /* Active blink indicator */
