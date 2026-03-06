@@ -1254,14 +1254,16 @@ function showTerminalFloor() {
     wireTfStructures();
     wireTfBackLink();
 
-    if (!player.hasSeenTerminalFloor) {
-        // First visit — run arrival cinematic then show the world
-        runTerminalArrival();
-    } else {
-        // Return visit — illuminate everything immediately, avatar at COMMAND POST
-        illuminateAllStructures(false);
-        positionAvatar(2, false); // COMMAND POST, no slide animation
-    }
+    // Defer layout-dependent work by one rAF so getBoundingClientRect() has
+    // valid dimensions after screen-terminal becomes the active screen.
+    requestAnimationFrame(() => {
+        if (!player.hasSeenTerminalFloor) {
+            runTerminalArrival();
+        } else {
+            illuminateAllStructures(false);
+            positionAvatar(2, false);
+        }
+    });
 }
 
 // ── renderTerminalAvatar ──────────────────────────────────────
@@ -1458,17 +1460,19 @@ function runTerminalArrival() {
                         linesEl.appendChild(finalEl);
                         tapEl.classList.remove('hidden');
 
-                        // Tap anywhere to advance to status screen
+                        // Tap anywhere to proceed — listener is deferred by 600ms so
+                        // any residual tap event from the sigil confirm button cannot
+                        // immediately fire dismiss before the operator has seen the screen.
                         function dismiss() {
                             overlay.classList.add('hidden');
                             player.hasSeenTerminalFloor = true;
                             savePlayer();
-                            // Don't auto-navigate — leave operator on Terminal Floor
-                            // so they can explore. First Transmission fires from status.
-                            runFirstTransmission();
-                            showScreen('screen-status');
+                            // Stay on the Terminal Floor — let the operator look around.
+                            // runFirstTransmission fires when they navigate to screen-status.
                         }
-                        overlay.addEventListener('click', dismiss, { once: true });
+                        setTimeout(() => {
+                            overlay.addEventListener('click', dismiss, { once: true });
+                        }, 600);
                     }, 500);
                 }, totalIllumTime);
             }, 300);
@@ -2962,7 +2966,7 @@ function showScreen(id, isBack) {
     }
 
     // ── Per-screen setup ─────────────────────────────────────
-    if (id === 'screen-status')   { setupTooltips(); renderElasticUI(); updateNeuralBadge(); }
+    if (id === 'screen-status')   { setupTooltips(); renderElasticUI(); updateNeuralBadge(); runFirstTransmission(); }
     if (id === 'screen-shop')       renderShop();
     if (id === 'screen-settings')   renderNeuralSettings();
     if (id === 'screen-neural')     renderNeuralScreen();
