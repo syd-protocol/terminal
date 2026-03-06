@@ -169,6 +169,7 @@
             <span class="gold-label tappable" id="gold-label-tap" data-tip="gold">◈ GOLD</span>
             <span class="gold-value" id="gold-value">0</span>
             <button class="invite-btn"   id="invite-btn">INVITE →</button>
+            <button class="log-archive-btn" id="log-archive-btn" title="System Log Archive">LOG</button>
             <button class="map-nav-btn"  id="map-btn">MAP →</button>
             <button class="shop-nav-btn" id="shop-btn">CACHE →</button>
         </div>
@@ -579,6 +580,20 @@
         </div>
 
         <div class="back-link" id="settings-back-link-bottom">← RETURN TO STATUS</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         LOG ARCHIVE SCREEN
+         All system log entries, newest first.
+         The terminal's black box — what happened and when.
+    ═══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-log">
+        <div class="log-archive-header">
+            <h2>[ SYSTEM LOG ]</h2>
+            <div class="log-archive-sub">TRANSMISSION RECORD — NEWEST FIRST</div>
+        </div>
+        <div class="log-archive-list" id="log-archive-list"></div>
+        <div class="back-link" id="log-archive-back">← RETURN</div>
     </div>
 
     <!-- ═══════════════════════════════════════════════

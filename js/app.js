@@ -795,8 +795,24 @@ let dailyQuests   = [];
 let allQuests     = [];
 let currentGear   = 1;
 
-// ─── NAV HELPER ──────────────────────────────────────────────
+// ─── NAV HELPER + HISTORY STACK ──────────────────────────────
+// A lightweight navigation history so back buttons always return
+// to wherever the operator actually came from — not a hardcoded
+// screen. The stack is capped at 10 entries to avoid bloat.
+// showScreen() pushes the previous screen; goBack() pops it.
+// Screens that should never appear as a back-destination are
+// excluded (onboarding, archetype, terminal floor arrival).
+
+const NAV_HISTORY = [];
+const NAV_EXCLUDE = ['screen-onboarding', 'screen-archetype'];
+
 function navTo(screenId) { playUIClick(); showScreen(screenId); }
+
+function goBack() {
+    playUIClick();
+    const dest = NAV_HISTORY.pop() || 'screen-status';
+    showScreen(dest, true); // true = coming from back navigation, don't push
+}
 
 // ─── INIT ────────────────────────────────────────────────────
 async function init() {
@@ -816,18 +832,20 @@ async function init() {
     document.getElementById('install-confirm-btn').addEventListener('click', ()=>{ playUIClick(); acceptInstall(); });
     document.getElementById('install-dismiss-btn').addEventListener('click', ()=>{ playUIClick(); dismissInstall(); });
     document.getElementById('terminal-floor-btn').addEventListener('click',  ()=>{ playUIClick(); showTerminalFloor(); });
-    document.getElementById('quest-header-back').addEventListener('click',   ()=>navTo('screen-status'));
-    document.getElementById('quests-back-link').addEventListener('click',    ()=>navTo('screen-status'));
-    document.getElementById('map-header-back').addEventListener('click',     ()=>navTo('screen-status'));
-    document.getElementById('map-back-link').addEventListener('click',       ()=>navTo('screen-status'));
-    document.getElementById('shop-header-back').addEventListener('click',    ()=>navTo('screen-status'));
-    document.getElementById('shop-back-link-bottom').addEventListener('click',()=>navTo('screen-status'));
-    document.getElementById('settings-header-back').addEventListener('click',()=>navTo('screen-status'));
-    document.getElementById('settings-back-link-bottom').addEventListener('click',()=>navTo('screen-status'));
+    document.getElementById('log-archive-btn').addEventListener('click',     ()=>openLogArchive());
+    document.getElementById('log-archive-back').addEventListener('click',    ()=>goBack());
+    document.getElementById('quest-header-back').addEventListener('click',    ()=>goBack());
+    document.getElementById('quests-back-link').addEventListener('click',     ()=>goBack());
+    document.getElementById('map-header-back').addEventListener('click',      ()=>goBack());
+    document.getElementById('map-back-link').addEventListener('click',        ()=>goBack());
+    document.getElementById('shop-header-back').addEventListener('click',     ()=>goBack());
+    document.getElementById('shop-back-link-bottom').addEventListener('click',()=>goBack());
+    document.getElementById('settings-header-back').addEventListener('click', ()=>goBack());
+    document.getElementById('settings-back-link-bottom').addEventListener('click',()=>goBack());
     const neuralHeaderBack = document.getElementById('neural-header-back');
     const neuralBackLink   = document.getElementById('neural-back-link');
-    if (neuralHeaderBack) neuralHeaderBack.addEventListener('click', ()=>navTo('screen-status'));
-    if (neuralBackLink)   neuralBackLink.addEventListener('click',   ()=>navTo('screen-status'));
+    if (neuralHeaderBack) neuralHeaderBack.addEventListener('click', ()=>goBack());
+    if (neuralBackLink)   neuralBackLink.addEventListener('click',   ()=>goBack());
 
     setupTooltips();
 
@@ -1300,7 +1318,7 @@ function wireTfBackLink() {
     if (!link) return;
     const fresh = link.cloneNode(true);
     link.parentNode.replaceChild(fresh, link);
-    fresh.addEventListener('click', () => { playUIClick(); navTo('screen-status'); });
+    fresh.addEventListener('click', () => goBack());
 }
 
 // ── positionAvatar ────────────────────────────────────────────
@@ -2518,10 +2536,26 @@ async function loadQuests() {
 
 // ─── SYSTEM LOG ──────────────────────────────────────────────
 const LOG_MAX=4, LOG_LINGER=3000, LOG_FADE=500;
-// Transmissions linger longer (7s) to ensure they are read
 const TRANSMISSION_LINGER=7000;
 
+// Log archive — stores the last 200 entries for operator review.
+// Persisted to localStorage so it survives reloads.
+const LOG_ARCHIVE_KEY = 'syd_log_archive';
+const LOG_ARCHIVE_MAX = 200;
+
+function getLogArchive() {
+    try { return JSON.parse(localStorage.getItem(LOG_ARCHIVE_KEY) || '[]'); }
+    catch(e) { return []; }
+}
+function appendLogArchive(msg, variant) {
+    const archive = getLogArchive();
+    archive.push({ msg, variant: variant || '', ts: Date.now() });
+    if (archive.length > LOG_ARCHIVE_MAX) archive.splice(0, archive.length - LOG_ARCHIVE_MAX);
+    localStorage.setItem(LOG_ARCHIVE_KEY, JSON.stringify(archive));
+}
+
 function showLog(msg, variant) {
+    appendLogArchive(msg, variant);
     const c=document.getElementById('system-log'); if(!c) return;
     const existing=c.querySelectorAll('.log-entry');
     if(existing.length>=LOG_MAX) existing[0].remove();
@@ -2535,6 +2569,33 @@ function showLog(msg, variant) {
     requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('log-entry--visible')));
     const linger = isTransmission ? TRANSMISSION_LINGER : LOG_LINGER;
     setTimeout(()=>{ el.classList.add('log-entry--fading'); setTimeout(()=>el.remove(),LOG_FADE); },linger);
+}
+
+// ─── LOG ARCHIVE SCREEN ──────────────────────────────────────
+function openLogArchive() {
+    playUIClick();
+    const container = document.getElementById('log-archive-list');
+    if (!container) return;
+    const archive = getLogArchive().slice().reverse(); // newest first
+    container.innerHTML = '';
+    if (!archive.length) {
+        container.innerHTML = '<div class="la-empty">[ NO TRANSMISSIONS ON RECORD ]</div>';
+    } else {
+        archive.forEach(entry => {
+            const el  = document.createElement('div');
+            const ts  = new Date(entry.ts);
+            const time = ts.toLocaleDateString('en-GB', { day:'numeric', month:'short' })
+                       + ' ' + String(ts.getHours()).padStart(2,'0')
+                       + ':' + String(ts.getMinutes()).padStart(2,'0');
+            el.className = 'la-entry'
+                + (entry.variant === 'warn'         ? ' la-entry--warn' : '')
+                + (entry.variant === 'accent'        ? ' la-entry--accent' : '')
+                + (entry.variant === 'transmission'  ? ' la-entry--transmission' : '');
+            el.innerHTML = '<span class="la-ts">' + time + '</span><span class="la-msg">' + entry.msg + '</span>';
+            container.appendChild(el);
+        });
+    }
+    showScreen('screen-log');
 }
 
 // ─── SHOP ────────────────────────────────────────────────────
@@ -2631,7 +2692,7 @@ function updateStatusScreen(animate) {
     const rankEl=document.getElementById('rank-badge');
     rankEl.textContent=rank; rankEl.className='rank-badge tappable '+rankCssClass(rank); rankEl.dataset.tip='rank';
     document.getElementById('level-progress-bar').style.width=pct+'%';
-    document.getElementById('level-progress-label').textContent=xpThis+' / '+xpNext+' XP  ('+pct+'%)';
+    document.getElementById('level-progress-label').textContent=Math.floor(xpThis)+' / '+Math.floor(xpNext)+' XP  ('+pct+'%)';
     const mPct=Math.round(((momentum-1.0)/0.5)*100);
     document.getElementById('momentum-bar').style.width=mPct+'%';
     document.getElementById('momentum-value').textContent=momentum.toFixed(2)+'x';
@@ -2835,9 +2896,18 @@ function setupTooltips(){
 // ─── SHOW SCREEN ─────────────────────────────────────────────
 const STATUS_QUEST_SCREENS = ['screen-status','screen-quests'];
 
-function showScreen(id) {
+function showScreen(id, isBack) {
     const prev   = document.querySelector('.screen.active');
     const prevId = prev ? prev.id : null;
+
+    // Push to history so goBack() can return here, unless:
+    //  - This is already a back navigation (popped from stack)
+    //  - The screen we're leaving is excluded from history
+    //  - We'd be pushing the same screen we're going to (no-op nav)
+    if (!isBack && prevId && prevId !== id && !NAV_EXCLUDE.includes(prevId)) {
+        NAV_HISTORY.push(prevId);
+        if (NAV_HISTORY.length > 10) NAV_HISTORY.shift();
+    }
 
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById(id).classList.add('active');

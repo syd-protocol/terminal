@@ -3693,6 +3693,111 @@ body {
 
 
 /* ════════════════════════════════════════════════════════════════
+   LOG ARCHIVE BUTTON (gold row)
+   ════════════════════════════════════════════════════════════════ */
+.log-archive-btn {
+    font-family: var(--mono, 'Share Tech Mono', monospace);
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    padding: 4px 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    border-radius: 2px;
+}
+.log-archive-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+
+/* ════════════════════════════════════════════════════════════════
+   LOG ARCHIVE SCREEN
+   ════════════════════════════════════════════════════════════════ */
+.log-archive-header {
+    padding: 20px 0 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+}
+.log-archive-header h2 {
+    font-family: var(--mono, 'Share Tech Mono', monospace);
+    color: var(--accent);
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+}
+.log-archive-sub {
+    font-family: var(--mono, 'Share Tech Mono', monospace);
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+}
+.log-archive-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-height: 72vh;
+    overflow-y: auto;
+}
+.la-entry {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(42,42,74,0.5);
+    font-family: var(--mono, 'Share Tech Mono', monospace);
+    font-size: 0.62rem;
+    line-height: 1.5;
+    color: var(--text-dim);
+}
+.la-entry--accent       { color: var(--accent); }
+.la-entry--warn         { color: var(--red); }
+.la-entry--transmission { color: var(--gold); }
+.la-ts {
+    font-size: 0.52rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+    opacity: 0.6;
+}
+.la-msg { flex: 1; word-break: break-word; }
+.la-empty {
+    font-family: var(--mono, 'Share Tech Mono', monospace);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 40px 0;
+    letter-spacing: 2px;
+}
+
+
+/* ════════════════════════════════════════════════════════════════
+   TERMINAL FLOOR — HEIGHT AND LAYOUT FIX
+   The scene needs to fill the viewport. The structures were
+   being cramped at the bottom with dead space above because
+   min-height + flex-direction:column wasn't stretching to the
+   full available height. We use 100vh with a minimum cap instead,
+   and push the stage to occupy all remaining vertical space.
+   ════════════════════════════════════════════════════════════════ */
+#screen-terminal {
+    min-height: calc(100vh - 80px);  /* fill viewport, account for body padding */
+    height: calc(100vh - 80px);
+}
+.tf-stage {
+    flex: 1;
+    align-items: flex-end;
+    padding-top: 60px;    /* more breathing room above the structures */
+}
+/* The background grid should fill the full screen height */
+.tf-grid-lines {
+    /* Override the inset to make the grid fill more space */
+    inset: -40% -20%;
+}
+
+
+/* ════════════════════════════════════════════════════════════════
    STAGE 6C — TERMINAL FLOOR (WORLD STRIP)
    ════════════════════════════════════════════════════════════════ */
 
