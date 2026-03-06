@@ -2710,13 +2710,16 @@ function completeIncursion(inc) {
     player.gold = (player.gold || 0) + inc.baseXP;
     recordTraceEntry(inc.stat, inc.baseXP);
 
-    // Incursions deal bonus damage to World Bosses (1.5× on match, 0× off-stat)
+    // Three-tier stat-weighted damage (incursions hit harder — targeted interventions):
+    //   1.5× — primary stat: direct assault on the core challenge
+    //   0.9× — linked stat:  meaningful flanking damage
+    //   0.15× — unrelated:   indirect, minor contribution
     const bosses = loadWorldBosses();
     let bossChanged = false;
     bosses.forEach(b => {
         const primaryMatch = b.stat === stat;
         const linkedMatch  = Array.isArray(b.linkedStats) && b.linkedStats.includes(stat);
-        const multiplier   = (primaryMatch || linkedMatch) ? 1.5 : 0;
+        const multiplier   = primaryMatch ? 1.5 : linkedMatch ? 0.9 : 0.15;
         const dmg          = Math.max(1, Math.round(inc.baseXP * multiplier));
         b.currentHp = Math.max(0, b.currentHp - dmg);
         bossChanged = true;
@@ -2738,12 +2741,13 @@ function damageWorldBossesFromDirective(stat, baseXP) {
     if (!bosses.length) return;
     let changed = false;
     bosses.forEach(b => {
-        // Stat-weighted damage:
-        //   Full damage (1.0×) — directive stat matches boss primary stat or linkedStats
-        //   No damage (0×)     — unrelated stat; only targeted effort moves the boss
+        // Three-tier stat-weighted damage:
+        //   1.0× — primary stat: core driver of this challenge
+        //   0.6× — linked stat:  genuinely related, meaningful but secondary
+        //   0.1× — unrelated:    indirect compound effect; not zero, but barely moves the needle
         const primaryMatch = b.stat === stat;
         const linkedMatch  = Array.isArray(b.linkedStats) && b.linkedStats.includes(stat);
-        const multiplier   = (primaryMatch || linkedMatch) ? 1.0 : 0;
+        const multiplier   = primaryMatch ? 1.0 : linkedMatch ? 0.6 : 0.1;
         const dmg          = Math.max(1, Math.round(baseXP * multiplier));
         b.currentHp = Math.max(0, b.currentHp - dmg);
         changed = true;
