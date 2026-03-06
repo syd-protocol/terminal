@@ -1185,8 +1185,9 @@ function runArchetypeScan() {
         });
     }
 
-    // Confirm sigil — save both fields to player, then route to Terminal Floor arrival.
-    // The arrival cinematic fires because hasSeenTerminalFloor is false for new players.
+    // Confirm sigil — save both fields to player.
+    // Route to Terminal Floor arrival if screen-terminal exists in the DOM;
+    // fall back to status screen if Stage 6c HTML has not been deployed yet.
     sigilConfBtn.addEventListener('click', () => {
         if (!chosenArchetype || !chosenSigil) return;
         player.archetype = chosenArchetype;
@@ -1194,7 +1195,12 @@ function runArchetypeScan() {
         savePlayer();
         playUIClick();
         updateStatusScreen();
-        showTerminalFloor();
+        if (document.getElementById('screen-terminal')) {
+            showTerminalFloor();
+        } else {
+            showScreen('screen-status');
+            runFirstTransmission();
+        }
     });
 }
 
@@ -2940,6 +2946,7 @@ function showScreen(id, isBack) {
 
     // ── Per-screen setup ─────────────────────────────────────
     if (id === 'screen-status')   { setupTooltips(); renderElasticUI(); updateNeuralBadge(); }
+    if (id === 'screen-shop')       renderShop();
     if (id === 'screen-settings')   renderNeuralSettings();
     if (id === 'screen-neural')     renderNeuralScreen();
     if (id === 'screen-quests') {
