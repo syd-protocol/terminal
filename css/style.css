@@ -4220,3 +4220,76 @@ body {
     border-color: var(--accent);
     color: var(--accent);
 }
+/* ════════════════════════════════════════════════════════════
+   BASE MAP — facility node styles
+   ════════════════════════════════════════════════════════════ */
+
+/* Facility node — shared base on top of existing .map-zone */
+.map-facility {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.map-facility:hover {
+    border-color: rgba(79,195,247,0.5);
+    box-shadow: inset 0 0 14px rgba(79,195,247,0.07);
+}
+
+.map-facility:active {
+    background: rgba(79,195,247,0.05);
+}
+
+.facility-label {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 2px;
+    color: rgba(200,214,229,0.7);
+    text-align: center;
+    line-height: 1.3;
+    padding: 0 4px;
+    text-shadow: 0 0 8px rgba(79,195,247,0.3);
+}
+
+/* COMMAND POST — centre anchor, slightly elevated */
+.map-facility--command {
+    border-color: rgba(79,195,247,0.35);
+    background: rgba(13,13,32,0.9);
+}
+.map-facility--command .facility-label {
+    color: var(--accent);
+    font-size: 0.65rem;
+    letter-spacing: 2.5px;
+}
+
+.facility-command-pin {
+    font-size: 1.1rem;
+    color: var(--accent);
+    text-shadow: 0 0 12px rgba(79,195,247,0.7);
+    margin-bottom: 6px;
+    animation: hub-pulse 2.4s ease-in-out infinite;
+}
+
+/* Active blink indicator */
+.facility-blink {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ff4444;
+    box-shadow: 0 0 6px rgba(255,68,68,0.8);
+    animation: blink-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes blink-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.15; }
+}
+
+/* Base Map arrival overlay reuses tf-arrival-overlay styles — no extra needed */

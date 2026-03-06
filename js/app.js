@@ -509,274 +509,137 @@ function stopMapAudio() {
 }
 
 // ════════════════════════════════════════════════════════════════
-// WORLD MAP — data + render + interactions
+// BASE MAP — facility node grid
 // ════════════════════════════════════════════════════════════════
 
-const ZONE_CONFIG = {
-    intelligence: {
-        chars: '┼ ┼ ┼ · ┼ ┼ + ┼ · ┼ ┼ ┼ + · ┼ ┼ ',
-        lore:  'SIGNAL GRID',
-        stat:  'INTELLIGENCE',
-        // Lore by tier: 0=uncharted, 1=faint, 2=partial, 3=clear
-        loreTier: [
-            null,  // tier 0 — handled by generic uncharted copy
-            'A faint transmission grid is detectable at this range. The frequencies are irregular — someone or something was broadcasting from this region. The System cannot yet render the topology. Increase Intelligence output to push the scan further.',
-            'Antenna towers emerge from the data haze. Signal pathways are visible between them, though most are dark. This region was designed for the rapid exchange of complex information. The architecture suggests whoever built it valued speed over redundancy. Two of the transmission nodes are still active.',
-            'The Signal Grid resolves fully. A cold, precise landscape of interconnected relay towers and underground data conduits. The System notes that field operators who develop this region consistently show accelerated decision quality across all other zones. Intelligence compounds differently from physical attributes — it reshapes how everything else is used.'
-        ]
-    },
-    strength: {
-        chars: '▲ ╱╲ ▲ ▲ ╱╲ ▲ ╱╲ ▲ ╱╲ ▲ ▲ ╱╲ ▲ ',
-        lore:  'THE IRON PEAKS',
-        stat:  'STRENGTH',
-        loreTier: [
-            null,
-            'Elevation signatures detected. The terrain is dense and resistant. The System can confirm this region exists but cannot yet render its features. Operators who have mapped this zone describe the ascent as non-negotiable. Increase Strength output to continue the survey.',
-            'The lower peaks are visible now. Iron-dark ridgelines cut across the scan, steep and unforgiving. There are signs of previous ascents — worn paths, abandoned camps. Whatever came before you tried this route. The System does not record whether they completed it.',
-            'The Iron Peaks are fully mapped. A brutal, vertical landscape of compressed iron ore and exposed rock face. The System has observed a consistent pattern across timelines: operators who develop this zone find that physical capacity bleeds into every other area of performance. Endurance extends. Clarity sharpens. The body, trained, becomes infrastructure.'
-        ]
-    },
-    charisma: {
-        chars: '✦ · ✦ ✦ · ✦ · ✦ ✦ · ✦ ✦ · ✦ · ',
-        lore:  'SOCIAL FOREST',
-        stat:  'CHARISMA',
-        loreTier: [
-            null,
-            'A dense canopy is registering at the edge of scan range. Acoustic signatures suggest the presence of others. The System cannot yet identify individuals or pathways. This region rewards patience and consistency more than direct approach. Increase Charisma output to proceed.',
-            'The upper forest layer is resolving. Pathways are visible between clusters — some well-worn, some overgrown. Light moves differently here than in other zones. The System notes that operators who enter this region often do not realise how isolated they had become until they see what is possible.',
-            'Social Forest is fully mapped. A living network of interconnected paths, clearing nodes, and deep canopy. The System has found no timeline in which sustained high performance was achieved in complete isolation. The operators who develop this zone do not merely become more likeable. They become harder to ignore, easier to trust, and far more effective at the only thing that ultimately matters: moving other people.'
-        ]
-    },
-    endurance: {
-        chars: '≈ ≈ ≈ ~ ≈ ≈ ~ ≈ ≈ ≈ ~ ≈ ≈ ~ ≈ ',
-        lore:  'THE DEAD SEA',
-        stat:  'ENDURANCE',
-        loreTier: [
-            null,
-            'A vast flat expanse is registering below the scan threshold. Water — or something behaving like water — covers most of this region. The stillness is not peaceful. It is the stillness of something that has been here longer than everything else. Increase Endurance output to begin mapping.',
-            'The surface is resolving. Salt formations and submerged structures are visible in the shallows. This region does not reward aggression. Everything moves slowly here by design. The System notes that operators who underinvest in this zone consistently plateau — not because they lack ability, but because they cannot sustain the conditions their ability requires.',
-            'The Dead Sea is fully mapped. A vast, low-pressure basin of mineral-rich water and ancient submerged terrain. Deceptively hostile to those who approach it wrong, and entirely navigable to those who do not. The System has observed that operators who develop this region stop breaking. Not gradually — at a certain threshold, the capacity for sustained effort simply stops being a limiting factor. Everything else becomes the constraint instead.'
-        ]
-    },
-    agility: {
-        chars: '. · . · , . · , . · . , · . · , ',
-        lore:  'ASHFIELD',
-        stat:  'AGILITY',
-        loreTier: [
-            null,
-            'Fractured terrain is registering across the scan. The ground here appears unstable — or rather, the instability appears to be the point. The System is detecting multiple overlapping signal paths, none of them fixed. Increase Agility output to continue mapping.',
-            'Ashfield is partially resolved. Broken ground, shifting dust formations, and an absence of straight lines. Every path appears to fork. The System notes that operators who avoid this region tend to perform well under stable conditions and poorly when conditions change — which, in every timeline observed, they eventually do.',
-            'Ashfield is fully mapped. A fractured, shifting landscape of dust plains and broken terrain that reconfigures itself at irregular intervals. The System has no record of a stable high-performing operator who did not develop some version of this zone. Agility is not speed. It is the capacity to remain functional while everything around you is moving. That capacity, once built, does not leave.'
-        ]
-    }
+// Facility navigation mapping
+const FACILITY_NAV = {
+    command: 'screen-status',
+    archive: 'screen-quests',
+    cache:   'screen-shop',
+    ops:     'screen-quests',
+    neural:  'screen-neural',
+    log:     null   // opens log archive overlay
 };
-
-// Hub lore by number of unlocked zones (0–5)
-const HUB_LORE = [
-    'THE CONVERGENCE POINT IS UNSTABLE. The System has located the field operator but cannot establish a stable coordinate. No territory has been mapped. Complete directives across any attribute to begin anchoring your position in this world.',
-    'A weak signal is holding at the convergence point. One territory is partially registering. The System can maintain the coordinate but the position remains fragile. Continue field operations to stabilise.',
-    'Two territories are now registering from this position. The convergence point is beginning to hold. The System notes that operators who develop across multiple zones consistently outperform those who specialise early. The world rewards range.',
-    'Three zones are visible from this point. The convergence is stable. The System can now render a reliable read of this operator\'s position in the field. The map will continue to resolve as output increases.',
-    'Four territories mapped. The System is reading a well-developed field profile from this coordinate. The operator has established meaningful presence across most of the known world. One zone remains dark. The System finds this statistically significant — every timeline has its resistance.',
-    'All five territories are mapped. The convergence point is fully anchored. The System has observed this moment across many timelines. It is not the end of anything. It is the first point at which the compound effect of all five attributes begins to express itself simultaneously. What happens next depends entirely on what you do tomorrow.'
-];
-
-// Milestone transmissions — fire once when a zone first hits tier 2 or 3
-const MILESTONE_TRANSMISSIONS = {
-    intelligence_2: '[ SIGNAL GRID: PARTIAL SCAN COMPLETE — NEW FREQUENCIES DETECTED ]',
-    intelligence_3: '[ SIGNAL GRID: FULLY MAPPED — TRANSMISSION CAPACITY UNLOCKED ]',
-    strength_2:     '[ IRON PEAKS: LOWER RIDGELINE CHARTED — ASCENT CONTINUES ]',
-    strength_3:     '[ IRON PEAKS: SUMMIT MAPPED — TERRAIN FULLY RENDERED ]',
-    charisma_2:     '[ SOCIAL FOREST: CANOPY LAYER VISIBLE — PATHWAYS EMERGING ]',
-    charisma_3:     '[ SOCIAL FOREST: FULLY MAPPED — ALL PATHWAYS OPEN ]',
-    endurance_2:    '[ DEAD SEA: SURFACE SCAN COMPLETE — DEPTH UNKNOWN ]',
-    endurance_3:    '[ DEAD SEA: FULLY MAPPED — BASIN CHARTED ]',
-    agility_2:      '[ ASHFIELD: FRACTURED TERRAIN PARTIALLY MAPPED — INSTABILITY NOTED ]',
-    agility_3:      '[ ASHFIELD: FULLY MAPPED — SHIFTING GROUND CATALOGUED ]'
-};
-
-function zoneTier(statValue) {
-    if (statValue <  11) return 0;
-    if (statValue <  30) return 1;
-    if (statValue <  60) return 2;
-    return 3;
-}
-function zoneTierLabel(tier) {
-    return ['[ UNCHARTED ]','[ SIGNAL FAINT ]','[ PARTIALLY MAPPED ]','[ FULLY SCANNED ]'][tier];
-}
-function hubUnlocked(stats) {
-    return STAT_NAMES.filter(s => (stats[s]||STAT_FLOOR) > STAT_FLOOR).length >= 3;
-}
-function unlockedZoneCount(stats) {
-    return STAT_NAMES.filter(s => (stats[s]||STAT_FLOOR) > STAT_FLOOR).length;
-}
-
-// Currently selected zone on the map ('hub', a stat name, or null)
-let selectedZone = null;
 
 function renderMap() {
     if (!player) return;
-    const stats=player.stats, level=calculateLevel(), rank=rankFromLevel(level), corrupt=!!player.corrupted;
-
+    const level = calculateLevel(), rank = rankFromLevel(level);
     document.getElementById('map-coords').textContent =
-        'OPR: '+player.name+'  ·  LV.'+level+'  ·  '+rank+'-RANK';
+        'OPR: ' + player.name + '  ·  LV.' + level + '  ·  ' + rank + '-RANK';
+    document.getElementById('map-scan-status').textContent =
+        player.corrupted ? 'CORRUPTED' : 'ACTIVE';
+    document.getElementById('map-viewport').classList.toggle('map--corrupted', !!player.corrupted);
 
-    document.getElementById('map-viewport').classList.toggle('map--corrupted', corrupt);
-    document.getElementById('map-scan-status').textContent = corrupt ? 'CORRUPTED' : 'ACTIVE';
+    // Active state: blink if directives incomplete or neural threats active
+    const allDone = dailyQuests.length > 0 &&
+        dailyQuests.every(q => (player.completedToday || []).includes(q.id));
+    const incursions   = pruneExpiredIncursions();
+    const bosses       = loadWorldBosses();
+    const neuralActive = incursions.filter(i => !(player.completedToday||[]).includes(i.id)).length + bosses.length > 0;
 
-    // Terrain fill (idempotent)
-    STAT_NAMES.forEach(stat => {
-        const el=document.getElementById('terrain-'+stat);
-        if (el && !el.textContent.trim()) el.textContent=ZONE_CONFIG[stat].chars.repeat(12);
-    });
+    const blinkArchive = document.getElementById('facility-blink-archive');
+    const blinkOps     = document.getElementById('facility-blink-ops');
+    const blinkNeural  = document.getElementById('facility-blink-neural');
 
-    // Check and fire milestones before updating classes
-    if (!player.mapMilestones) player.mapMilestones = {};
+    if (blinkArchive) blinkArchive.classList.toggle('hidden', allDone);
+    if (blinkOps)     blinkOps.classList.toggle('hidden', allDone);
+    if (blinkNeural)  blinkNeural.classList.toggle('hidden', !neuralActive);
+}
 
-    STAT_NAMES.forEach(stat => {
-        const val=Math.floor(stats[stat]||STAT_FLOOR);
-        const tier=zoneTier(val);
-        const zoneEl=document.getElementById('zone-'+stat);
-        const valEl =document.getElementById('zval-'+stat);
-        const tierEl=document.getElementById('ztier-'+stat);
-        if (!zoneEl) return;
-        zoneEl.classList.remove('tier-0','tier-1','tier-2','tier-3');
-        zoneEl.classList.add('tier-'+tier);
-        valEl.textContent  = tier>0 ? val : '??';
-        tierEl.textContent = zoneTierLabel(tier);
+function setupMapTaps() {
+    const facilityMap = {
+        'facility-archive': 'archive',
+        'facility-neural':  'neural',
+        'facility-cache':   'cache',
+        'facility-log':     'log',
+        'facility-command': 'command',
+        'facility-ops':     'ops'
+    };
 
-        // Milestone transmissions — fire once per threshold crossing
-        [2,3].forEach(t => {
-            const key=stat+'_'+t;
-            if (tier>=t && !player.mapMilestones[key]) {
-                player.mapMilestones[key]=true;
-                savePlayer();
-                setTimeout(()=>showLog(MILESTONE_TRANSMISSIONS[key],'transmission'), 600);
+    Object.entries(facilityMap).forEach(([elId, key]) => {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        el.addEventListener('click', () => {
+            playUIClick();
+            const dest = FACILITY_NAV[key];
+            if (key === 'log') {
+                openLogArchive();
+            } else if (dest === 'screen-status') {
+                showScreen('screen-status');
+            } else if (dest) {
+                navTo(dest);
             }
         });
     });
-
-    // Hub
-    const hubEl=document.getElementById('zone-hub');
-    const unlocked=hubUnlocked(stats);
-    hubEl.classList.toggle('hub-locked',   !unlocked);
-    hubEl.classList.toggle('hub-unlocked',  unlocked);
-    document.getElementById('hub-player-name').textContent=player.name;
-    document.getElementById('hub-rank').textContent=rank+'-RANK  ·  LV.'+level;
-    const pin=document.getElementById('hub-pin');
-    if (pin) {
-        pin.style.animationDuration=corrupt?'0.8s':'2.4s';
-        pin.style.color=corrupt?'#ff4444':'';
-        pin.style.textShadow=corrupt
-            ?'0 0 16px rgba(255,68,68,0.9), 0 0 32px rgba(255,68,68,0.4)':'';
-    }
-
-    // Re-render lore panel if a zone is already selected (stat may have changed)
-    if (selectedZone) openLorePanel(selectedZone, false);
 }
 
-// ── Zone tap handlers ─────────────────────────────────────────
-function setupMapTaps() {
-    // Zone tiles
-    STAT_NAMES.forEach(stat => {
-        const el=document.getElementById('zone-'+stat);
-        if (!el) return;
-        el.addEventListener('click', e => {
-            e.stopPropagation();
-            playUIClick();
-            if (selectedZone===stat) { closeLorePanel(); return; }
-            openLorePanel(stat, true);
-        });
-    });
-    // Hub
-    const hub=document.getElementById('zone-hub');
-    if (hub) hub.addEventListener('click', e => {
-        e.stopPropagation();
-        playUIClick();
-        if (selectedZone==='hub') { closeLorePanel(); return; }
-        openLorePanel('hub', true);
-    });
-    // Tapping anywhere else on the map closes the panel
-    document.getElementById('map-viewport').addEventListener('click', () => {
-        if (selectedZone) closeLorePanel();
-    });
-}
+// ── Base Map arrival cinematic ────────────────────────────────
+// Fires once when hasSeenBaseMap === false.
+function runBaseMapArrival() {
+    const overlay = document.getElementById('map-arrival-overlay');
+    const linesEl = document.getElementById('map-arrival-lines');
+    const tapEl   = document.getElementById('map-arrival-tap');
+    if (!overlay || !linesEl) return;
 
-function openLorePanel(zone, animate) {
-    selectedZone = zone;
-    const panel   = document.getElementById('map-lore-panel');
-    const tagEl   = document.getElementById('lore-zone-tag');
-    const nameEl  = document.getElementById('lore-zone-name');
-    const statEl  = document.getElementById('lore-zone-stat');
-    const textEl  = document.getElementById('lore-zone-text');
-    const actEl   = document.getElementById('lore-zone-actions');
+    overlay.classList.remove('hidden');
+    linesEl.innerHTML = '';
+    tapEl.classList.add('hidden');
 
-    // Clear selection highlight on all zones
-    document.querySelectorAll('.map-zone').forEach(z=>z.classList.remove('zone--selected'));
+    const lines = [
+        '[ COORDINATE LOCK ESTABLISHED ]',
+        '[ BASE SCAN COMPLETE ]',
+        '[ FACILITY NODES ONLINE ]'
+    ];
 
-    panel.classList.remove('lore-panel--hub','lore-panel--uncharted');
-    actEl.innerHTML = '';
-
-    if (zone === 'hub') {
-        document.getElementById('zone-hub').classList.add('zone--selected');
-        const count = unlockedZoneCount(player.stats);
-        tagEl.textContent  = '[ ZONE: THE CONVERGENCE ]';
-        nameEl.textContent = 'THE CONVERGENCE';
-        statEl.textContent = 'OPERATOR POSITION';
-        textEl.textContent = HUB_LORE[Math.min(count, HUB_LORE.length-1)];
-        panel.classList.add('lore-panel--hub');
-    } else {
-        const cfg   = ZONE_CONFIG[zone];
-        const val   = Math.floor(player.stats[zone]||STAT_FLOOR);
-        const tier  = zoneTier(val);
-        document.getElementById('zone-'+zone).classList.add('zone--selected');
-        tagEl.textContent  = '[ ZONE: '+cfg.lore+' ]';
-        nameEl.textContent = cfg.lore;
-        statEl.textContent = cfg.stat+'  ·  '+zoneTierLabel(tier)+'  ·  '+( tier>0 ? val : '??' );
-
-        if (tier === 0) {
-            panel.classList.add('lore-panel--uncharted');
-            textEl.textContent = '[ ZONE CLASSIFICATION: UNCHARTED ] — The System has detected this region but cannot render it. Insufficient field data. Complete directives in '+cfg.stat+' to begin mapping this territory.';
-        } else {
-            textEl.textContent = cfg.loreTier[tier];
-            // View zone directives button — available at any revealed tier
-            const btn = document.createElement('button');
-            btn.className   = 'lore-panel-btn';
-            btn.textContent = '[ VIEW '+cfg.stat+' DIRECTIVES ]';
-            btn.addEventListener('click', () => {
-                playUIClick();
-                openFilteredQuests(zone, cfg.lore, cfg.stat);
-            });
-            actEl.appendChild(btn);
+    let idx = 0;
+    function nextLine() {
+        if (idx >= lines.length) {
+            tapEl.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.addEventListener('click', dismiss, { once: true });
+            }, 400);
+            return;
         }
+        const el = document.createElement('div');
+        el.className = 'tf-arrival-line';
+        el.textContent = lines[idx];
+        linesEl.appendChild(el);
+        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('tf-arrival-line--visible')));
+        idx++;
+        setTimeout(nextLine, 500);
     }
 
-    if (animate) {
-        panel.classList.add('lore-panel--open');
-    } else {
-        // Re-render without animation (e.g. stat changed while panel open)
-        panel.classList.add('lore-panel--open');
+    function dismiss() {
+        overlay.classList.add('hidden');
+        player.hasSeenBaseMap = true;
+        savePlayer();
     }
+
+    nextLine();
 }
 
-function closeLorePanel() {
-    selectedZone = null;
-    document.getElementById('map-lore-panel').classList.remove('lore-panel--open');
-    document.querySelectorAll('.map-zone').forEach(z=>z.classList.remove('zone--selected'));
-}
+// Shim variables kept so ZONE_CONFIG / zone-related code doesn't crash
+// if referenced elsewhere (e.g. applyQuestFilter zone label display).
+// These are inert — map no longer renders zone lore.
+const ZONE_CONFIG = {
+    intelligence: { chars: '', lore: 'SIGNAL GRID',   stat: 'INTELLIGENCE', loreTier: [null,'','',''] },
+    strength:     { chars: '', lore: 'THE IRON PEAKS',stat: 'STRENGTH',     loreTier: [null,'','',''] },
+    charisma:     { chars: '', lore: 'SOCIAL FOREST', stat: 'CHARISMA',     loreTier: [null,'','',''] },
+    endurance:    { chars: '', lore: 'THE DEAD SEA',  stat: 'ENDURANCE',    loreTier: [null,'','',''] },
+    agility:      { chars: '', lore: 'ASHFIELD',      stat: 'AGILITY',      loreTier: [null,'','',''] }
+};
 
-// ── Filtered quest navigation ────────────────────────────────
-// Navigates to the quest screen showing only directives for one stat.
-// The filter bar at the top of screen-quests shows the zone name + clear button.
-// Back navigation is unchanged — tapping back always returns to status.
-
+let selectedZone = null;
 let activeQuestFilter = null;   // stat name string or null
-
+function openLorePanel()  {}   // no-op — lore panel removed
+function closeLorePanel() {}   // no-op
 function openFilteredQuests(stat, zoneLore, statLabel) {
     activeQuestFilter = stat;
-    // Render quests with filter applied then navigate
     showScreen('screen-quests');
 }
+
+
 
 function applyQuestFilter() {
     const bar      = document.getElementById('quest-filter-bar');
@@ -813,7 +676,7 @@ let currentGear   = 1;
 // excluded (onboarding, archetype, terminal floor arrival).
 
 const NAV_HISTORY = [];
-const NAV_EXCLUDE = ['screen-onboarding', 'screen-archetype'];
+const NAV_EXCLUDE = ['screen-onboarding'];
 
 function navTo(screenId) { playUIClick(); showScreen(screenId); }
 
@@ -840,7 +703,6 @@ async function init() {
     document.getElementById('view-directives-btn').addEventListener('click', ()=>navTo('screen-quests'));
     document.getElementById('install-confirm-btn').addEventListener('click', ()=>{ playUIClick(); acceptInstall(); });
     document.getElementById('install-dismiss-btn').addEventListener('click', ()=>{ playUIClick(); dismissInstall(); });
-    document.getElementById('terminal-floor-btn').addEventListener('click',  ()=>{ playUIClick(); showTerminalFloor(); });
     document.getElementById('log-archive-btn').addEventListener('click',     ()=>openLogArchive());
     document.getElementById('log-archive-back').addEventListener('click',    ()=>goBack());
     document.getElementById('quest-header-back').addEventListener('click',    ()=>goBack());
@@ -947,14 +809,11 @@ function registerServiceWorker() {
     // reload — there's nothing stale to refresh and it would disrupt the flow.
     navigator.serviceWorker.addEventListener('message', e => {
         if (e.data && e.data.type === 'SW_UPDATED') {
-            // Only reload if setup is fully complete — i.e. operator has an archetype.
-            // An incomplete player (no archetype) means we're mid-onboarding; reloading
-            // would skip the archetype scan and drop the operator on the status screen.
             try {
                 const raw = localStorage.getItem(STORAGE_KEY);
                 if (!raw) return;
                 const saved = JSON.parse(raw);
-                if (!saved.archetype) return; // still in onboarding, ignore
+                if (!saved.name) return; // still in onboarding, ignore
             } catch(e) { return; }
             showLog('[ SYSTEM UPDATE DETECTED — RELOADING TERMINAL... ]', 'accent');
             setTimeout(() => window.location.reload(), 1500);
@@ -1050,501 +909,6 @@ function runAwakenSequence(name) {
     next();
 }
 
-// ─── STAGE 6A: ARCHETYPE SCAN ─────────────────────────
-// Archetype colour map — used for card glows, badge, and sigil halo.
-const ARCHETYPE_COLOURS = {
-    ghost:     '#42a5f5',
-    architect: '#ab47bc',
-    enforcer:  '#ef5350',
-    phantom:   '#ffa726'
-};
-
-// Archetype display names (all caps for System voice).
-const ARCHETYPE_NAMES = {
-    ghost:     'GHOST',
-    architect: 'ARCHITECT',
-    enforcer:  'ENFORCER',
-    phantom:   'PHANTOM'
-};
-
-// Sigil clip-paths — two CSS clip-path polygon variants per archetype.
-// These are abstract silhouettes read by outline, not face. Narrow/slight
-// (Ghost), upright/square (Architect), broad/planted (Enforcer),
-// asymmetric/offset (Phantom). Each has a Variant A and Variant B.
-const SIGIL_CLIPS = {
-    ghost: {
-        A: 'polygon(40% 0%, 60% 0%, 65% 22%, 75% 22%, 72% 45%, 62% 45%, 60% 55%, 70% 55%, 68% 75%, 55% 75%, 53% 100%, 47% 100%, 45% 75%, 32% 75%, 30% 55%, 40% 55%, 38% 45%, 28% 45%, 35% 22%, 45% 22%)',
-        B: 'polygon(42% 0%, 58% 0%, 62% 18%, 70% 18%, 74% 40%, 62% 42%, 65% 55%, 72% 58%, 68% 78%, 56% 78%, 54% 100%, 46% 100%, 44% 78%, 32% 78%, 28% 58%, 35% 55%, 38% 42%, 26% 40%, 30% 18%, 38% 18%)'
-    },
-    architect: {
-        A: 'polygon(30% 0%, 70% 0%, 75% 20%, 75% 20%, 80% 20%, 80% 45%, 70% 45%, 70% 55%, 80% 55%, 80% 75%, 68% 75%, 65% 100%, 35% 100%, 32% 75%, 20% 75%, 20% 55%, 30% 55%, 30% 45%, 20% 45%, 20% 20%, 25% 20%)',
-        B: 'polygon(28% 0%, 72% 0%, 78% 18%, 82% 18%, 82% 42%, 70% 42%, 72% 55%, 82% 58%, 80% 78%, 66% 78%, 63% 100%, 37% 100%, 34% 78%, 20% 78%, 18% 58%, 28% 55%, 30% 42%, 18% 42%, 18% 18%, 22% 18%)'
-    },
-    enforcer: {
-        A: 'polygon(25% 0%, 75% 0%, 82% 22%, 88% 22%, 88% 50%, 75% 50%, 78% 65%, 88% 68%, 85% 85%, 65% 85%, 62% 100%, 38% 100%, 35% 85%, 15% 85%, 12% 68%, 22% 65%, 25% 50%, 12% 50%, 12% 22%, 18% 22%)',
-        B: 'polygon(22% 0%, 78% 0%, 85% 20%, 90% 24%, 90% 52%, 76% 52%, 80% 68%, 90% 72%, 86% 88%, 64% 88%, 60% 100%, 40% 100%, 36% 88%, 14% 88%, 10% 72%, 20% 68%, 24% 52%, 10% 52%, 10% 24%, 15% 20%)'
-    },
-    phantom: {
-        A: 'polygon(38% 0%, 62% 0%, 66% 20%, 80% 18%, 82% 38%, 68% 40%, 70% 55%, 82% 60%, 78% 80%, 60% 80%, 58% 100%, 45% 100%, 42% 80%, 25% 75%, 22% 55%, 35% 52%, 33% 38%, 18% 36%, 20% 16%, 34% 20%)',
-        B: 'polygon(36% 0%, 60% 0%, 64% 18%, 78% 15%, 82% 35%, 66% 38%, 68% 52%, 80% 58%, 76% 78%, 58% 76%, 55% 100%, 43% 100%, 40% 75%, 22% 72%, 18% 52%, 32% 48%, 30% 35%, 16% 32%, 18% 12%, 32% 18%)'
-    }
-};
-
-// runArchetypeScan — fires after Awaken, before status screen.
-// Shows scan lines, reveals cards, wires confirm + sigil logic.
-function runArchetypeScan() {
-    const scanLinesEl  = document.getElementById('archetype-scan-lines');
-    const cardsEl      = document.getElementById('archetype-cards');
-    const sigilPicker  = document.getElementById('sigil-picker');
-    const sigilConfBtn = document.getElementById('sigil-confirm-btn');
-
-    scanLinesEl.innerHTML = '';
-    cardsEl.classList.add('hidden');
-    sigilPicker.classList.add('hidden');
-
-    const scanLines = [
-        '> SCANNING OPERATOR PROFILE...',
-        '> ANALYSING BEHAVIOURAL VECTOR...',
-        '> CROSS-REFERENCING FIELD PATTERNS...',
-        '> INITIAL OPERATOR PROFILE COMPLETE.',
-        '> CONFIRM YOUR CLASSIFICATION.'
-    ];
-
-    let idx = 0;
-    function nextLine() {
-        if (idx >= scanLines.length) {
-            // All scan lines done — reveal archetype cards
-            setTimeout(() => {
-                cardsEl.classList.remove('hidden');
-                // Stagger card entry
-                const cards = cardsEl.querySelectorAll('.archetype-card');
-                cards.forEach((c, i) => {
-                    c.style.opacity    = '0';
-                    c.style.transform  = 'translateY(12px)';
-                    c.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
-                    setTimeout(() => {
-                        c.style.opacity   = '1';
-                        c.style.transform = 'translateY(0)';
-                    }, i * 120);
-                });
-                wireArchetypeCards();
-            }, 300);
-            return;
-        }
-        const line = document.createElement('div');
-        line.style.opacity    = '0';
-        line.style.transition = 'opacity 0.25s ease';
-        line.textContent      = scanLines[idx];
-        if (idx === scanLines.length - 1) line.style.color = 'var(--accent)';
-        scanLinesEl.appendChild(line);
-        requestAnimationFrame(() => requestAnimationFrame(() => line.style.opacity = '1'));
-        idx++;
-        setTimeout(nextLine, 340);
-    }
-    nextLine();
-
-    // Wire card confirm buttons
-    function wireArchetypeCards() {
-        document.querySelectorAll('.archetype-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const archetype = card.dataset.archetype;
-                selectArchetype(archetype);
-            });
-        });
-    }
-
-    // selectArchetype — highlights chosen card, shows sigil picker
-    let chosenArchetype = null;
-    function selectArchetype(archetype) {
-        chosenArchetype = archetype;
-        const colour = ARCHETYPE_COLOURS[archetype];
-
-        // Highlight selected, dim others
-        document.querySelectorAll('.archetype-card').forEach(c => {
-            const isChosen = c.dataset.archetype === archetype;
-            c.classList.toggle('archetype-card--selected', isChosen);
-            c.classList.toggle('archetype-card--dim', !isChosen);
-            if (isChosen) c.style.setProperty('--archetype-colour', colour);
-        });
-
-        // Update scan label
-        const lastLine = scanLinesEl.lastElementChild;
-        if (lastLine) {
-            lastLine.textContent = '> PROFILE CONFIRMED: ' + ARCHETYPE_NAMES[archetype];
-        }
-
-        // Show sigil picker after a brief pause
-        setTimeout(() => {
-            sigilPicker.classList.remove('hidden');
-            document.getElementById('sigil-picker-label').textContent =
-                '[ ' + ARCHETYPE_NAMES[archetype] + ' — SELECT FIELD SIGIL ]';
-            renderSigilPreviews(archetype);
-            wireSigilOptions();
-        }, 400);
-    }
-
-    // renderSigilPreviews — applies the correct clip-path and glow to each preview
-    function renderSigilPreviews(archetype) {
-        const colour = ARCHETYPE_COLOURS[archetype];
-        const clips  = SIGIL_CLIPS[archetype];
-        ['A', 'B'].forEach(variant => {
-            const el = document.getElementById('sigil-preview-' + variant);
-            if (!el) return;
-            el.style.clipPath   = clips[variant];
-            el.style.background = colour;
-            el.style.boxShadow  = '0 0 12px ' + colour + '55';
-        });
-    }
-
-    // Wire sigil option selection
-    let chosenSigil = null;
-    function wireSigilOptions() {
-        document.querySelectorAll('.sigil-option').forEach(opt => {
-            opt.addEventListener('click', () => {
-                chosenSigil = opt.dataset.sigil;
-                document.querySelectorAll('.sigil-option').forEach(o => {
-                    o.classList.toggle('sigil-option--selected', o.dataset.sigil === chosenSigil);
-                });
-                sigilConfBtn.classList.remove('hidden');
-            });
-        });
-    }
-
-    // Confirm sigil — save both fields to player.
-    // Route to Terminal Floor arrival if screen-terminal exists in the DOM;
-    // fall back to status screen if Stage 6c HTML has not been deployed yet.
-    sigilConfBtn.addEventListener('click', () => {
-        if (!chosenArchetype || !chosenSigil) return;
-        console.log('[SYD] sigil confirmed:', chosenArchetype, chosenSigil);
-        player.archetype = chosenArchetype;
-        player.sigil     = chosenArchetype + '_' + chosenSigil;
-        savePlayer();
-        console.log('[SYD] player saved, routing to terminal floor');
-        playUIClick();
-        updateStatusScreen();
-        if (document.getElementById('screen-terminal')) {
-            showTerminalFloor();
-        } else {
-            showScreen('screen-status');
-            runFirstTransmission();
-        }
-    });
-}
-
-// ════════════════════════════════════════════════════════════════
-// STAGE 6C — TERMINAL FLOOR
-// ════════════════════════════════════════════════════════════════
-
-// Zone-to-structure mapping — matches HTML data-screen attributes.
-// Order matches the visual left-to-right layout.
-const TF_STRUCTURES = [
-    { id: 'tf-struct-map',    screen: 'screen-map',    label: 'FIELD ARCHIVE'  },
-    { id: 'tf-struct-shop',   screen: 'screen-shop',   label: 'SUPPLY CACHE'   },
-    { id: 'tf-struct-status', screen: 'screen-status', label: 'COMMAND POST'   },
-    { id: 'tf-struct-quests', screen: 'screen-quests', label: 'OPERATIONS'     },
-    { id: 'tf-struct-neural', screen: 'screen-neural', label: 'NEURAL LINK'    }
-];
-
-// Avatar X positions (as percentage of container width) for each structure.
-// Indices match TF_STRUCTURES order (0=archive, 1=cache, 2=command, 3=ops, 4=neural).
-// These are set by JS after the stage is rendered so they align with actual positions.
-const TF_AVATAR_X_OFFSETS = [10, 28, 50, 70, 88]; // % of container width
-
-// Current avatar target index (default: COMMAND POST = index 2)
-let tfAvatarIndex = 2;
-
-// ── showTerminalFloor ─────────────────────────────────────────
-// Called from the Terminal Floor button on status screen and from
-// the sigil confirm in Stage 6a. Handles both arrival (first time)
-// and return visits.
-function showTerminalFloor() {
-    showScreen('screen-terminal');
-    renderTerminalAvatar();
-    updateTerminalActiveStates();
-    wireTfStructures();
-    wireTfBackLink();
-
-    // Defer layout-dependent work by one rAF so getBoundingClientRect() has
-    // valid dimensions after screen-terminal becomes the active screen.
-    requestAnimationFrame(() => {
-        if (!player.hasSeenTerminalFloor) {
-            runTerminalArrival();
-        } else {
-            illuminateAllStructures(false);
-            positionAvatar(2, false);
-        }
-    });
-}
-
-// ── renderTerminalAvatar ──────────────────────────────────────
-// Applies the operator's sigil clip-path and archetype colour to the avatar shape.
-function renderTerminalAvatar() {
-    const shapeEl = document.getElementById('tf-avatar-shape');
-    if (!shapeEl || !player) return;
-
-    const archetype = player.archetype || 'ghost';
-    const sigilKey  = player.sigil     || (archetype + '_A');
-    const variant   = sigilKey.split('_')[1] || 'A';
-    const colour    = ARCHETYPE_COLOURS[archetype] || 'var(--accent)';
-    const clip      = (SIGIL_CLIPS[archetype] && SIGIL_CLIPS[archetype][variant])
-                        || SIGIL_CLIPS.ghost.A;
-
-    shapeEl.style.clipPath  = clip;
-    shapeEl.style.background = colour;
-    shapeEl.style.boxShadow  = '0 0 8px ' + colour + '99';
-}
-
-// ── updateTerminalActiveStates ────────────────────────────────
-// Reads current game state and activates/deactivates blink indicators:
-//   - OPERATIONS blinks if today's directives are not all complete
-//   - NEURAL LINK blinks if active incursions or world bosses exist
-function updateTerminalActiveStates() {
-    // OPERATIONS
-    const questsEl  = document.getElementById('tf-struct-quests');
-    const blinkQ    = document.getElementById('tf-blink-quests');
-    const allDone   = player && dailyQuests.length > 0 &&
-                      dailyQuests.every(q => (player.completedToday || []).includes(q.id));
-    if (questsEl && blinkQ) {
-        questsEl.classList.toggle('tf-structure--active', !allDone);
-        blinkQ.classList.toggle('tf-struct-blink--active', !allDone);
-    }
-
-    // NEURAL LINK
-    const neuralEl  = document.getElementById('tf-struct-neural');
-    const blinkN    = document.getElementById('tf-blink-neural');
-    const incursions = pruneExpiredIncursions();
-    const bosses     = loadWorldBosses();
-    const neuralActive = incursions.filter(i => !(player.completedToday||[]).includes(i.id)).length + bosses.length > 0;
-    if (neuralEl && blinkN) {
-        blinkN.classList.toggle('tf-struct-blink--active', neuralActive);
-    }
-}
-
-// ── wireTfStructures ──────────────────────────────────────────
-// Wires tap handlers on every structure. Tap → avatar slides to
-// that structure → navTo that screen (except COMMAND POST which
-// is already the status screen — stay, no nav).
-function wireTfStructures() {
-    TF_STRUCTURES.forEach((cfg, idx) => {
-        const el = document.getElementById(cfg.id);
-        if (!el) return;
-        // Remove any previous listener by cloning
-        const fresh = el.cloneNode(true);
-        el.parentNode.replaceChild(fresh, el);
-        fresh.addEventListener('click', () => {
-            playUIClick();
-            positionAvatar(idx, true);
-            // Delay nav slightly so the slide is visible
-            setTimeout(() => {
-                if (cfg.screen === 'screen-status') {
-                    // COMMAND POST — return to status without re-running showTerminalFloor
-                    showScreen('screen-status');
-                } else {
-                    navTo(cfg.screen);
-                }
-            }, 420);
-        });
-    });
-}
-
-// ── wireTfBackLink ────────────────────────────────────────────
-function wireTfBackLink() {
-    const link = document.getElementById('tf-back-link');
-    if (!link) return;
-    const fresh = link.cloneNode(true);
-    link.parentNode.replaceChild(fresh, link);
-    fresh.addEventListener('click', () => goBack());
-}
-
-// ── positionAvatar ────────────────────────────────────────────
-// Moves the avatar to the structure at `index`.
-// If animate is false, the transition is suppressed (instant reposition).
-function positionAvatar(index, animate) {
-    tfAvatarIndex = index;
-    const avatarEl  = document.getElementById('tf-avatar');
-    const stageEl   = document.getElementById('tf-stage');
-    if (!avatarEl || !stageEl) return;
-
-    // Find the actual rendered x-centre of the target structure
-    const structs = stageEl.querySelectorAll('.tf-structure');
-    const target  = structs[index];
-    if (!target) return;
-
-    const stageRect  = stageEl.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
-    const centreX    = (targetRect.left + targetRect.width / 2) - stageRect.left;
-
-    if (!animate) {
-        avatarEl.style.transition = 'none';
-        avatarEl.style.left = (centreX - 10) + 'px'; // -10 = half avatar width
-        // Re-enable transition on next frame
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-            avatarEl.style.transition = '';
-        }));
-    } else {
-        avatarEl.style.left = (centreX - 10) + 'px';
-    }
-}
-
-// ── illuminateAllStructures ───────────────────────────────────
-// Makes all structures visible. On arrival, staggered with CSS animation.
-// On return visits, instant (no stagger).
-function illuminateAllStructures(stagger) {
-    const structs = document.querySelectorAll('.tf-structure');
-    structs.forEach((el, i) => {
-        if (stagger) {
-            el.style.animationDelay  = (i * 0.22) + 's';
-            el.style.animationName   = 'tf-illuminate';
-            el.style.animationDuration = '0.5s';
-            el.style.animationFillMode = 'both';
-            setTimeout(() => el.classList.add('tf-structure--lit'), i * 220);
-        } else {
-            el.classList.add('tf-structure--lit');
-        }
-    });
-}
-
-// ── runTerminalArrival ────────────────────────────────────────
-// One-time cinematic. Fires only when hasSeenTerminalFloor === false.
-// Sequence:
-//   1. Overlay covers the stage — typewriter lines appear
-//   2. Structures illuminate left to right (stagger)
-//   3. Avatar materialises at COMMAND POST (index 2) with drop animation
-//   4. Final System line appears
-//   5. "TAP ANYWHERE TO PROCEED" — tap dismisses to status screen
-function runTerminalArrival() {
-    const overlay  = document.getElementById('tf-arrival-overlay');
-    const linesEl  = document.getElementById('tf-arrival-lines');
-    const tapEl    = document.getElementById('tf-arrival-tap');
-    if (!overlay || !linesEl) return;
-
-    overlay.classList.remove('hidden');
-    linesEl.innerHTML = '';
-    tapEl.classList.add('hidden');
-
-    const name      = player ? player.name     : 'OPERATOR';
-    const archetype = player ? (ARCHETYPE_NAMES[player.archetype] || 'UNKNOWN') : 'UNKNOWN';
-
-    const lines = [
-        { text: '[ COORDINATE LOCK ESTABLISHED ]',               dim: false },
-        { text: '[ OPERATOR: ' + name + ' DETECTED ]',           dim: false },
-        { text: '[ ARCHETYPE: ' + archetype + ' — CONFIRMED ]',  dim: false },
-        { text: '[ ASSIGNING FIELD POSITION... ]',                dim: false }
-    ];
-
-    let idx = 0;
-    function nextLine() {
-        if (idx >= lines.length) {
-            // All scan lines done — illuminate structures, then materialise avatar
-            setTimeout(() => {
-                overlay.classList.add('hidden');
-                illuminateAllStructures(true);
-
-                // Avatar materialises at COMMAND POST after structures light up
-                const totalIllumTime = TF_STRUCTURES.length * 220 + 100;
-                setTimeout(() => {
-                    positionAvatar(2, false);
-                    const avatarEl    = document.getElementById('tf-avatar');
-                    const avatarShape = document.getElementById('tf-avatar-shape');
-                    if (avatarEl) {
-                        avatarEl.style.opacity = '0';
-                        // Small delay so position is set before we fade in
-                        setTimeout(() => {
-                            avatarEl.style.opacity = '1';
-                            if (avatarShape) {
-                                avatarShape.classList.remove('tf-avatar--materialise');
-                                void avatarShape.offsetWidth; // force reflow
-                                avatarShape.classList.add('tf-avatar--materialise');
-                            }
-                        }, 80);
-                    }
-
-                    // Final System line — appears below the structures
-                    setTimeout(() => {
-                        // Re-show overlay briefly for final line, then tap-to-proceed
-                        overlay.classList.remove('hidden');
-                        linesEl.innerHTML = '';
-                        const finalEl = document.createElement('div');
-                        finalEl.className = 'tf-arrival-line tf-arrival-line--visible';
-                        finalEl.textContent = '[ TERMINAL FLOOR ACTIVE — PROCEED TO OPERATIONS ]';
-                        linesEl.appendChild(finalEl);
-                        tapEl.classList.remove('hidden');
-
-                        // Tap anywhere to proceed — listener is deferred by 600ms so
-                        // any residual tap event from the sigil confirm button cannot
-                        // immediately fire dismiss before the operator has seen the screen.
-                        function dismiss() {
-                            overlay.classList.add('hidden');
-                            player.hasSeenTerminalFloor = true;
-                            savePlayer();
-                            // Stay on the Terminal Floor — let the operator look around.
-                            // runFirstTransmission fires when they navigate to screen-status.
-                        }
-                        setTimeout(() => {
-                            overlay.addEventListener('click', dismiss, { once: true });
-                        }, 600);
-                    }, 500);
-                }, totalIllumTime);
-            }, 300);
-            return;
-        }
-
-        const { text, dim } = lines[idx];
-        const lineEl = document.createElement('div');
-        lineEl.className = 'tf-arrival-line' + (dim ? ' tf-arrival-line--dim' : '');
-        linesEl.appendChild(lineEl);
-
-        // Typewriter
-        let charIdx = 0;
-        lineEl.textContent = '';
-        const iv = setInterval(() => {
-            lineEl.textContent += text[charIdx];
-            charIdx++;
-            if (charIdx >= text.length) {
-                clearInterval(iv);
-                lineEl.classList.add('tf-arrival-line--visible');
-                idx++;
-                setTimeout(nextLine, 400);
-            }
-        }, 28);
-        // Make the line visible as it types
-        requestAnimationFrame(() => requestAnimationFrame(() => lineEl.classList.add('tf-arrival-line--visible')));
-    }
-
-    nextLine();
-}
-
-// renderArchetypeIdentity — called from updateStatusScreen to show/hide
-// the archetype badge and sigil shape on the status screen.
-function renderArchetypeIdentity() {
-    const identityEl = document.getElementById('archetype-identity');
-    const badgeEl    = document.getElementById('archetype-badge');
-    const sigilEl    = document.getElementById('status-sigil');
-    if (!identityEl || !badgeEl || !sigilEl) return;
-
-    if (!player || !player.archetype) {
-        identityEl.classList.add('hidden');
-        return;
-    }
-
-    const archetype = player.archetype;
-    const colour    = ARCHETYPE_COLOURS[archetype];
-
-    identityEl.classList.remove('hidden');
-    badgeEl.textContent    = ARCHETYPE_NAMES[archetype];
-    badgeEl.style.color    = colour;
-    badgeEl.style.borderColor = colour;
-
-    // Render sigil clip-path shape
-    if (player.sigil && SIGIL_CLIPS[archetype]) {
-        const variant = player.sigil.split('_')[1] || 'A';
-        const clip    = SIGIL_CLIPS[archetype][variant];
-        sigilEl.style.clipPath  = clip;
-        sigilEl.style.background = colour;
-        sigilEl.style.boxShadow  = '0 0 10px ' + colour + '66';
-    }
-}
-
 // ─── PLAYER MANAGEMENT ───────────────────────────────────────
 function calcMaxHp(level) { return 100+level*5; }
 function loadPlayer() {
@@ -1557,12 +921,10 @@ function loadPlayer() {
     if(typeof p.hasSeenBriefing === 'undefined') p.hasSeenBriefing=true;
     // Save frequency — generated on first push, not on creation
     if(!p.saveFrequency) p.saveFrequency = null;
-    if(typeof p.archetype === 'undefined') p.archetype = null;
-    if(typeof p.sigil === 'undefined') p.sigil = null;
     // Existing players predate the tutorial — mark as completed so it never fires
     if(typeof p.hasCompletedTutorial === 'undefined') p.hasCompletedTutorial = true;
-    // Existing players predate the Terminal Floor — mark as seen so arrival never fires
-    if(typeof p.hasSeenTerminalFloor === 'undefined') p.hasSeenTerminalFloor = true;
+    // Existing players predate the Base Map — mark as seen so arrival never fires
+    if(typeof p.hasSeenBaseMap === 'undefined') p.hasSeenBaseMap = true;
     return p;
 }
 function savePlayer() { localStorage.setItem(STORAGE_KEY,JSON.stringify(player)); }
@@ -1574,18 +936,13 @@ function createPlayer(name) {
     const maxHp=calcMaxHp(1);
     player={name,stats,completedToday:[],lastQuestDate:today(),consecutiveDays:1,momentum:1.0,
         lastActiveDate:today(),hp:maxHp,maxHp,corrupted:false,gold:0,buffs:defaultBuffs(),
-        mapMilestones:{},hasSeenBriefing:false,hasCompletedTutorial:false,hasSeenTerminalFloor:false};
-    // Do NOT savePlayer() here — writing to localStorage before archetype selection
-    // causes the SW_UPDATED guard to pass, which triggers a page reload mid-onboarding
-    // and skips the archetype scan entirely on the reload. We save once setup is complete,
-    // inside the sigilConfBtn handler where archetype and sigil are both confirmed.
+        mapMilestones:{},hasSeenBriefing:false,hasCompletedTutorial:false,hasSeenBaseMap:false};
+    savePlayer();
     dailyQuests=getDailyQuests(allQuests,calculateLevel(),effectiveGear());
     recordReferralIfPresent();
     updateStatusScreen();
-    console.log('[SYD] routing to screen-archetype');
-    showScreen('screen-archetype');
-    console.log('[SYD] screen-archetype active:', document.getElementById('screen-archetype')?.classList.toString());
-    runArchetypeScan();
+    showScreen('screen-status');
+    runFirstTransmission();
 }
 
 function effectiveGear() {
@@ -2746,7 +2103,6 @@ function updateStatusScreen(animate) {
     const luck=calculateLuck(),lv=Math.floor(luck),lp=Math.min(100,((luck-STAT_FLOOR)/90)*100);
     if(animate){animateNumber('val-luck',0,lv,700);setTimeout(()=>document.getElementById('bar-luck').style.width=lp+'%',100);}
     else{document.getElementById('val-luck').textContent=lv;document.getElementById('bar-luck').style.width=lp+'%';}
-    renderArchetypeIdentity();
 }
 
 function rankCssClass(rank) {
@@ -2975,7 +2331,9 @@ function showScreen(id, isBack) {
     if (isMap) {
         if (droneEnabled && !mapOscA) startMapAudio();
         renderMap();
-        closeLorePanel();
+        if (player && !player.hasSeenBaseMap) {
+            setTimeout(runBaseMapArrival, 400);
+        }
     }
     if (!isMap && wasMap) {
         stopMapAudio();

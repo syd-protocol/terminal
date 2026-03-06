@@ -34,11 +34,7 @@
             <div class="player-title tappable" id="player-title" data-tip="title">[ THE BEGINNER ]</div>
             <div class="rank-badge tappable rank-f" id="rank-badge" data-tip="rank">F</div>
             <h1 class="player-name" id="player-name">PLAYER</h1>
-            <!-- Archetype badge + sigil (Stage 6a) -- hidden until archetype assigned -->
-            <div class="archetype-identity hidden" id="archetype-identity">
-                <div class="status-sigil" id="status-sigil"></div>
-                <span class="archetype-badge" id="archetype-badge"></span>
-            </div>
+
             <div class="player-level tappable" id="player-level-row" data-tip="level">
                 LEVEL <span id="player-level">1</span>
             </div>
@@ -196,7 +192,6 @@
             ⬡ NEURAL LINK
             <span class="neural-link-badge hidden" id="neural-link-badge">0</span>
         </button>
-        <button class="nav-btn nav-btn--terminal-floor" id="terminal-floor-btn">[ TERMINAL FLOOR ]</button>
     </div>
 
     <!-- ═══════════════════════════════════════════════
@@ -220,12 +215,12 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════
-         WORLD MAP SCREEN
+         BASE MAP SCREEN
     ═══════════════════════════════════════════════ -->
     <div class="screen" id="screen-map">
 
         <div class="map-header" id="map-header-back">
-            <h2>[ WORLD MAP ]</h2>
+            <h2>[ BASE MAP ]</h2>
             <div class="map-header-sub" id="map-coords"></div>
         </div>
 
@@ -234,89 +229,44 @@
 
             <div class="map-grid" id="map-grid">
                 <!-- Row 1 -->
-                <div class="map-void"></div>
-                <div class="map-zone" id="zone-intelligence" data-zone="intelligence">
-                    <div class="zone-fog" id="fog-intelligence"></div>
-                    <div class="zone-terrain" id="terrain-intelligence"></div>
-                    <div class="zone-content">
-                        <div class="zone-name">SIGNAL GRID</div>
-                        <div class="zone-stat-name">INTELLIGENCE</div>
-                        <div class="zone-value" id="zval-intelligence">—</div>
-                        <div class="zone-tier"  id="ztier-intelligence"></div>
-                    </div>
+                <div class="map-zone map-facility" id="facility-archive" data-facility="archive">
+                    <div class="facility-blink hidden" id="facility-blink-archive"></div>
+                    <div class="facility-label">FIELD ARCHIVE</div>
                 </div>
-                <div class="map-void"></div>
+                <div class="map-zone map-facility" id="facility-neural" data-facility="neural">
+                    <div class="facility-blink hidden" id="facility-blink-neural"></div>
+                    <div class="facility-label">NEURAL LINK</div>
+                </div>
+                <div class="map-zone map-facility" id="facility-cache" data-facility="cache">
+                    <div class="facility-label">SUPPLY CACHE</div>
+                </div>
 
                 <!-- Row 2 -->
-                <div class="map-zone" id="zone-strength" data-zone="strength">
-                    <div class="zone-fog" id="fog-strength"></div>
-                    <div class="zone-terrain" id="terrain-strength"></div>
-                    <div class="zone-content">
-                        <div class="zone-name">THE IRON PEAKS</div>
-                        <div class="zone-stat-name">STRENGTH</div>
-                        <div class="zone-value" id="zval-strength">—</div>
-                        <div class="zone-tier"  id="ztier-strength"></div>
-                    </div>
+                <div class="map-zone map-facility" id="facility-log" data-facility="log">
+                    <div class="facility-label">LOG ARCHIVE</div>
+                </div>
+                <div class="map-zone map-facility map-facility--command" id="facility-command" data-facility="command">
+                    <div class="facility-label">COMMAND POST</div>
+                    <div class="facility-command-pin">◈</div>
+                </div>
+                <div class="map-zone map-facility" id="facility-ops" data-facility="ops">
+                    <div class="facility-blink hidden" id="facility-blink-ops"></div>
+                    <div class="facility-label">OPERATIONS</div>
                 </div>
 
-                <div class="map-zone map-zone--hub" id="zone-hub">
-                    <div class="zone-fog" id="fog-hub"></div>
-                    <div class="zone-content zone-content--hub">
-                        <div class="hub-pin"  id="hub-pin">◈</div>
-                        <div class="hub-label">THE CONVERGENCE</div>
-                        <div class="hub-name"  id="hub-player-name"></div>
-                        <div class="hub-rank"  id="hub-rank"></div>
-                    </div>
-                </div>
-
-                <div class="map-zone" id="zone-charisma" data-zone="charisma">
-                    <div class="zone-fog" id="fog-charisma"></div>
-                    <div class="zone-terrain" id="terrain-charisma"></div>
-                    <div class="zone-content">
-                        <div class="zone-name">SOCIAL FOREST</div>
-                        <div class="zone-stat-name">CHARISMA</div>
-                        <div class="zone-value" id="zval-charisma">—</div>
-                        <div class="zone-tier"  id="ztier-charisma"></div>
-                    </div>
-                </div>
-
-                <!-- Row 3 -->
+                <!-- Row 3 — void tiles -->
                 <div class="map-void"></div>
-                <div class="map-zone" id="zone-endurance" data-zone="endurance">
-                    <div class="zone-fog" id="fog-endurance"></div>
-                    <div class="zone-terrain" id="terrain-endurance"></div>
-                    <div class="zone-content">
-                        <div class="zone-name">THE DEAD SEA</div>
-                        <div class="zone-stat-name">ENDURANCE</div>
-                        <div class="zone-value" id="zval-endurance">—</div>
-                        <div class="zone-tier"  id="ztier-endurance"></div>
-                    </div>
-                </div>
-                <div class="map-zone" id="zone-agility" data-zone="agility">
-                    <div class="zone-fog" id="fog-agility"></div>
-                    <div class="zone-terrain" id="terrain-agility"></div>
-                    <div class="zone-content">
-                        <div class="zone-name">ASHFIELD</div>
-                        <div class="zone-stat-name">AGILITY</div>
-                        <div class="zone-value" id="zval-agility">—</div>
-                        <div class="zone-tier"  id="ztier-agility"></div>
-                    </div>
-                </div>
+                <div class="map-void"></div>
+                <div class="map-void"></div>
             </div>
             <!-- end map-grid -->
         </div>
         <!-- end map-viewport -->
 
-        <!-- Zone lore panel — slides open when a zone is tapped -->
-        <div class="map-lore-panel" id="map-lore-panel">
-            <div class="lore-panel-inner">
-                <div class="lore-panel-zone-tag"  id="lore-zone-tag"></div>
-                <div class="lore-panel-zone-name" id="lore-zone-name"></div>
-                <div class="lore-panel-stat"       id="lore-zone-stat"></div>
-                <hr class="lore-panel-divider" />
-                <div class="lore-panel-text"       id="lore-zone-text"></div>
-                <div class="lore-panel-actions"    id="lore-zone-actions"></div>
-            </div>
+        <!-- Base Map arrival overlay — fires once on hasSeenBaseMap === false -->
+        <div class="tf-arrival-overlay hidden" id="map-arrival-overlay">
+            <div class="tf-arrival-lines" id="map-arrival-lines"></div>
+            <div class="tf-arrival-tap" id="map-arrival-tap">[ TAP ANYWHERE TO PROCEED ]</div>
         </div>
 
         <div class="map-status-bar">
@@ -611,165 +561,6 @@
         </div>
     </div>
 
-    <!-- ═════════════════════════════════════════════
-         ARCHETYPE SCAN SCREEN (Stage 6a)
-         Fires once after name entry, before status screen.
-         The System presents a profile. The operator confirms.
-    ═════════════════════════════════════════════ -->
-    <div class="screen" id="screen-archetype">
-        <div class="archetype-scan-wrap">
-            <div class="archetype-scan-header">
-                <div class="archetype-sys-label">[ SYSTEM ]</div>
-                <div class="archetype-scan-lines" id="archetype-scan-lines"></div>
-            </div>
-
-            <!-- Archetype cards: System presents four, operator confirms one -->
-            <div class="archetype-cards" id="archetype-cards">
-                <div class="archetype-card" data-archetype="ghost">
-                    <div class="archetype-card-id">01</div>
-                    <div class="archetype-card-name">GHOST</div>
-                    <div class="archetype-card-desc">Moves unseen. Adapts before others notice the shift.</div>
-                    <div class="archetype-card-confirm">[ CONFIRM PROFILE ]</div>
-                </div>
-                <div class="archetype-card" data-archetype="architect">
-                    <div class="archetype-card-id">02</div>
-                    <div class="archetype-card-name">ARCHITECT</div>
-                    <div class="archetype-card-desc">Builds systems. Controls outcomes through structure.</div>
-                    <div class="archetype-card-confirm">[ CONFIRM PROFILE ]</div>
-                </div>
-                <div class="archetype-card" data-archetype="enforcer">
-                    <div class="archetype-card-id">03</div>
-                    <div class="archetype-card-name">ENFORCER</div>
-                    <div class="archetype-card-desc">Direct force. Eliminates friction through presence.</div>
-                    <div class="archetype-card-confirm">[ CONFIRM PROFILE ]</div>
-                </div>
-                <div class="archetype-card" data-archetype="phantom">
-                    <div class="archetype-card-id">04</div>
-                    <div class="archetype-card-name">PHANTOM</div>
-                    <div class="archetype-card-desc">Pattern recognition. Exploits gaps others cannot see.</div>
-                    <div class="archetype-card-confirm">[ CONFIRM PROFILE ]</div>
-                </div>
-            </div>
-
-            <!-- Sigil picker: shown after archetype confirmed -->
-            <div class="sigil-picker hidden" id="sigil-picker">
-                <div class="sigil-picker-label" id="sigil-picker-label">[ SELECT FIELD SIGIL ]</div>
-                <div class="sigil-picker-hint">The System has assigned two variants. Choose your field identity.</div>
-                <div class="sigil-options" id="sigil-options">
-                    <div class="sigil-option" data-sigil="A">
-                        <div class="sigil-shape" id="sigil-preview-A"></div>
-                        <div class="sigil-option-label">VARIANT A</div>
-                    </div>
-                    <div class="sigil-option" data-sigil="B">
-                        <div class="sigil-shape" id="sigil-preview-B"></div>
-                        <div class="sigil-option-label">VARIANT B</div>
-                    </div>
-                </div>
-                <button class="nav-btn hidden" id="sigil-confirm-btn">[ CONFIRM SIGIL ]</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         TERMINAL FLOOR SCREEN (Stage 6c)
-         A spatial 1D scene — the operator's field position.
-         On first visit (post archetype): arrival cinematic.
-         On return visits: live world, avatar at COMMAND POST.
-    ═══════════════════════════════════════════════ -->
-    <div class="screen" id="screen-terminal">
-
-        <!-- Layer 1: perspective grid background (CSS animation only) -->
-        <div class="tf-bg-grid" id="tf-bg-grid" aria-hidden="true">
-            <div class="tf-grid-lines"></div>
-        </div>
-
-        <!-- Arrival sequence text (typewriter lines, hidden after first visit) -->
-        <div class="tf-arrival-overlay hidden" id="tf-arrival-overlay">
-            <div class="tf-arrival-lines" id="tf-arrival-lines"></div>
-            <div class="tf-arrival-tap" id="tf-arrival-tap">[ TAP ANYWHERE TO PROCEED ]</div>
-        </div>
-
-        <!-- Layer 2: structures mid-ground -->
-        <div class="tf-stage" id="tf-stage">
-
-            <!-- Structure 1: FIELD ARCHIVE — Map (comms tower / antenna array) -->
-            <div class="tf-structure tf-structure--archive" id="tf-struct-map" data-screen="screen-map" title="FIELD ARCHIVE">
-                <div class="tf-struct-inner">
-                    <div class="tf-antenna-mast"></div>
-                    <div class="tf-antenna-arms">
-                        <div class="tf-antenna-arm tf-antenna-arm--l"></div>
-                        <div class="tf-antenna-arm tf-antenna-arm--r"></div>
-                    </div>
-                    <div class="tf-antenna-base"></div>
-                    <div class="tf-struct-blink" id="tf-blink-map"></div>
-                </div>
-                <div class="tf-struct-label">FIELD ARCHIVE</div>
-            </div>
-
-            <!-- Structure 2: SUPPLY CACHE — Shop (reinforced container stack) -->
-            <div class="tf-structure tf-structure--cache" id="tf-struct-shop" data-screen="screen-shop" title="SUPPLY CACHE">
-                <div class="tf-struct-inner">
-                    <div class="tf-container tf-container--top"></div>
-                    <div class="tf-container tf-container--mid"></div>
-                    <div class="tf-container tf-container--bot"></div>
-                </div>
-                <div class="tf-struct-label">SUPPLY CACHE</div>
-            </div>
-
-            <!-- Structure 3: COMMAND POST — Status (terminal desk + screen glow) -->
-            <div class="tf-structure tf-structure--command" id="tf-struct-status" data-screen="screen-status" title="COMMAND POST">
-                <div class="tf-struct-inner">
-                    <div class="tf-monitor">
-                        <div class="tf-monitor-screen"></div>
-                    </div>
-                    <div class="tf-desk"></div>
-                </div>
-                <div class="tf-struct-label">COMMAND POST</div>
-            </div>
-
-            <!-- Structure 4: OPERATIONS — Directives (mission board / briefing wall) -->
-            <div class="tf-structure tf-structure--ops" id="tf-struct-quests" data-screen="screen-quests" title="OPERATIONS">
-                <div class="tf-struct-inner">
-                    <div class="tf-board">
-                        <div class="tf-board-grid">
-                            <div></div><div></div><div></div>
-                            <div></div><div></div><div></div>
-                            <div></div><div></div><div></div>
-                        </div>
-                    </div>
-                    <div class="tf-struct-blink" id="tf-blink-quests"></div>
-                </div>
-                <div class="tf-struct-label">OPERATIONS</div>
-            </div>
-
-            <!-- Structure 5: NEURAL LINK — Neural screen (server rack) -->
-            <div class="tf-structure tf-structure--neural" id="tf-struct-neural" data-screen="screen-neural" title="NEURAL LINK">
-                <div class="tf-struct-inner">
-                    <div class="tf-rack">
-                        <div class="tf-rack-unit"></div>
-                        <div class="tf-rack-unit"></div>
-                        <div class="tf-rack-unit"></div>
-                        <div class="tf-rack-unit tf-rack-unit--active"></div>
-                    </div>
-                    <div class="tf-struct-blink tf-struct-blink--neural" id="tf-blink-neural"></div>
-                </div>
-                <div class="tf-struct-label">NEURAL LINK</div>
-            </div>
-
-        </div>
-        <!-- end tf-stage -->
-
-        <!-- Layer 3: ground plane + avatar -->
-        <div class="tf-ground-wrap">
-            <div class="tf-ground-line"></div>
-            <!-- Avatar — clip-path silhouette applied by JS from player sigil -->
-            <div class="tf-avatar" id="tf-avatar">
-                <div class="tf-avatar-shape" id="tf-avatar-shape"></div>
-            </div>
-        </div>
-
-        <div class="back-link tf-back-link" id="tf-back-link">← RETURN</div>
-    </div>
 
     <!-- ═══════════════════════════════════════════════
          LEVEL UP OVERLAY
