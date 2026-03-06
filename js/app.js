@@ -2985,7 +2985,7 @@ async function submitNeuralGeneration() {
         else if (msg.includes('_401') || msg.includes('_403'))            errText = '[ ERROR: KEY REJECTED — CHECK YOUR PROVIDER KEY ]';
         else if (msg.includes('_429'))                                    errText = '[ RATE LIMIT HIT — WAIT 60 SECONDS AND RETRY ]';
         else if (msg.includes('SyntaxError') || msg.includes('JSON'))    errText = '[ TRANSLATION CORRUPTED — RETRY ]';
-        else                                                              errText = '[ NEURAL LINK UNSTABLE — RETRY ]';
+        else                                                              errText = '[ DIRECTIVE UPLOAD UNSTABLE — RETRY ]';
         statusEl.textContent  = errText;
         statusEl.className    = 'ng-status ng-status--error';
         console.error('Neural API error:', e);
