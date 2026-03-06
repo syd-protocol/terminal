@@ -947,7 +947,15 @@ function registerServiceWorker() {
     // reload — there's nothing stale to refresh and it would disrupt the flow.
     navigator.serviceWorker.addEventListener('message', e => {
         if (e.data && e.data.type === 'SW_UPDATED') {
-            if (!localStorage.getItem(STORAGE_KEY)) return; // mid-onboarding, ignore
+            // Only reload if setup is fully complete — i.e. operator has an archetype.
+            // An incomplete player (no archetype) means we're mid-onboarding; reloading
+            // would skip the archetype scan and drop the operator on the status screen.
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+                const saved = JSON.parse(raw);
+                if (!saved.archetype) return; // still in onboarding, ignore
+            } catch(e) { return; }
             showLog('[ SYSTEM UPDATE DETECTED — RELOADING TERMINAL... ]', 'accent');
             setTimeout(() => window.location.reload(), 1500);
         }
@@ -1563,19 +1571,15 @@ function createPlayer(name) {
     player={name,stats,completedToday:[],lastQuestDate:today(),consecutiveDays:1,momentum:1.0,
         lastActiveDate:today(),hp:maxHp,maxHp,corrupted:false,gold:0,buffs:defaultBuffs(),
         mapMilestones:{},hasSeenBriefing:false,hasCompletedTutorial:false,hasSeenTerminalFloor:false};
-    savePlayer();
+    // Do NOT savePlayer() here — writing to localStorage before archetype selection
+    // causes the SW_UPDATED guard to pass, which triggers a page reload mid-onboarding
+    // and skips the archetype scan entirely on the reload. We save once setup is complete,
+    // inside the sigilConfBtn handler where archetype and sigil are both confirmed.
     dailyQuests=getDailyQuests(allQuests,calculateLevel(),effectiveGear());
     recordReferralIfPresent();
-    // If operator has not yet chosen an archetype, route to archetype scan.
-    // Otherwise (e.g. player loaded from localStorage) go straight to status.
     updateStatusScreen();
-    if (!player.archetype) {
-        showScreen('screen-archetype');
-        runArchetypeScan();
-    } else {
-        showScreen('screen-status');
-        runFirstTransmission();
-    }
+    showScreen('screen-archetype');
+    runArchetypeScan();
 }
 function effectiveGear() {
     return (player&&player.buffs&&buffActive(player.buffs.sprintScroll))?Math.min(3,currentGear+1):currentGear;
