@@ -93,26 +93,19 @@ terminal/
 | 4 | ✅ Complete | World Map — fog of war, zone lore, directive filter, territory transmissions |
 | 4.5 | ✅ Complete | First Transmission, PWA install prompt, referral stub, SYD rebrand |
 | 5b | ✅ Complete | Sync-Link — cloud persistence, co-op tether, referral payout, Telegram comms |
-| 5a | 🔲 In progress | Neural Link — AI processor, System Incursions, World Boss HP bars |
+| 5a | ✅ Complete | Neural Link — AI processor, System Incursions, World Boss HP bars |
+| 5.5 | ✅ Complete | Base Map refactor — facility grid, operator avatar, Directive Upload rename, OG share image, three-tier boss damage |
 
 ---
 
 ## Roadmap
-
-### Stage 5a — The Neural Link Expansion *(next)*
-
-A BYO-Key AI layer that translates the operator's real-world plans into structured game entities using the **SYD-Prompt architecture** — a four-step transformation chain that surfaces the underlying friction of any task, gamifies it into a named enemy entity, selects a tactical mental model as the counter-weapon, and produces a dense Tactical Guide the operator can read before executing.
-
-Input: *"Big presentation at 2pm."*
-Output: `[INCURSION: THE ARBITER — INTELLIGENCE — 45 XP — EXPIRES 14:00]` with a full Tactical Guide on tap.
-
-The operator supplies their own API key (Gemini by default — free tier, no billing card). Stored locally only, never persisted, purged immediately after each translation (Ephemeral Protocol). The UI is elastic — Solo mode for daily directives, Combat mode when Incursions are active, War Room mode when a World Boss HP bar is in play.
 
 ### Beyond Stage 5
 
 - World Boss Raids and Temporal Rifts (co-op encounters mapped to real-world events)
 - Public bulletin board for shared Raids visible on the World Map
 - Tightened Firestore security rules once an operator identity model is defined
+- Expanded directive pool and alt quest system
 
 ---
 
