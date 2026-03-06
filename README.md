@@ -126,13 +126,28 @@ Do not open `index.html` directly as a `file:///` path. Service Workers refuse t
 
 ## Contributing
 
-SYD is a solo dev project in active development. Not currently open for external contributions.
+SYD is open to contributions, particularly in areas that make the game more engaging and accessible. If you want to help, the highest-value areas are:
+
+- **Game design** — making directives, incursions, and world bosses feel more alive, varied, and genuinely fun to engage with
+- **Performance** — keeping the app fast and smooth on low-end devices and slow mobile networks; no bloat, no unnecessary dependencies
+- **Accessibility** — making sure the terminal works for as many operators as possible
+- **Quest content** — well-written directives that fit the System voice and genuinely challenge real-world behaviour
+
+If you're contributing code, please read the technical stack section first. SYD has no build tools and no framework by design — contributions must respect that constraint. Open a discussion before starting large changes so effort isn't wasted.
+
+All contributions remain subject to the project licence below.
 
 ---
 
 ## Licence
 
-Private — all rights reserved. Not open source at this stage.
+Licensed under the **GNU Affero General Public Licence v3.0 (AGPL-3.0)**.
+
+You are free to use, study, modify, and distribute this project, but any derivative work — including network-deployed services built on SYD — must be released under the same licence with full source code made publicly available. Commercial use without explicit written permission from the project owner is not permitted.
+
+In plain terms: contribute freely, build on it freely, but you cannot take SYD, modify it, and profit from it without giving back to this project. Any revenue generated from a derivative must be directed back to the original project.
+
+See the [AGPL-3.0 licence](https://www.gnu.org/licenses/agpl-3.0.en.html) for full terms.
 
 ---
 
