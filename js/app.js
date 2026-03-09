@@ -48,6 +48,49 @@ function getDB() {
 const STAT_NAMES  = ['strength', 'intelligence', 'agility', 'endurance', 'charisma'];
 const STAT_FLOOR  = 10;
 
+// ─── KEYWORD-TO-STAT CLASSIFIER ──────────────────────────
+// Used by Tutorial 1 to map a free-text goal to a primary stat
+// and up to two linked stats — without requiring an AI call.
+// Logic: lowercase goal text → count keyword matches per stat →
+//   primaryStat  = highest match count
+//   linkedStats  = 2nd and 3rd highest (only if count > 0)
+// Tie-break order: strength → intelligence → endurance → agility → charisma
+const STAT_KEYWORDS = {
+    strength:     ['fitness','gym','health','weight','run','walk','exercise','body','eat','sleep','energy','strong','physical','diet','training','workout','sport','lift','muscle','cardio','stamina','nutrition','hydrat','rest','recover'],
+    intelligence: ['learn','study','read','skill','career','business','build','create','write','code','design','knowledge','degree','course','research','understand','develop','think','problem','solve','analys','strateg','plan','innovat','curious'],
+    agility:      ['adapt','change','flexible','anxiety','stress','fear','habit','routine','comfort','new','risk','decision','pivot','challenge','difficult','cope','adjust','spontan','uncertain','overwhelm','pressure','react','respond'],
+    endurance:    ['finish','complete','consistent','discipline','focus','distract','procrastin','motivat','persist','follow','through','commit','goal','long','project','task','deadline','productiv','deliver','execute','sustain','daily','routine','schedule'],
+    charisma:     ['relationship','social','friend','network','communicat','speak','influenc','connect','people','family','date','love','confident','presence','lead','public','audience','persuad','negotiat','team','collaborat','interpersonal','assertiv','shy']
+};
+
+/**
+ * classifyGoal(text)
+ * Accepts a free-text goal string.
+ * Returns { primaryStat, linkedStats[] } where linkedStats has 0–2 entries.
+ * Falls back to 'endurance' as primary if no keywords match at all.
+ */
+function classifyGoal(text) {
+    const lower = text.toLowerCase();
+    const TIE_BREAK = ['strength','intelligence','endurance','agility','charisma'];
+
+    // Count keyword hits per stat
+    const scores = {};
+    for (const stat of TIE_BREAK) {
+        scores[stat] = STAT_KEYWORDS[stat].filter(kw => lower.includes(kw)).length;
+    }
+
+    // Sort by score desc, then by tie-break order
+    const ranked = TIE_BREAK.slice().sort((a, b) => {
+        if (scores[b] !== scores[a]) return scores[b] - scores[a];
+        return TIE_BREAK.indexOf(a) - TIE_BREAK.indexOf(b);
+    });
+
+    const primaryStat  = ranked[0];
+    const linkedStats  = ranked.slice(1).filter(s => scores[s] > 0).slice(0, 2);
+
+    return { primaryStat, linkedStats };
+}
+
 // ─── STAGE 6B: TUTORIAL DIRECTIVE ────────────────────────
 // Injected at the top of the directive list on day one only.
 // XP = 0 (calibration, not execution). Never repeats.
