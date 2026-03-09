@@ -55,7 +55,7 @@ const TUTORIAL_QUEST = {
     id:       'tutorial_orientation',
     _tutorial: true,
     title:    'INITIAL SYSTEMS ASSESSMENT',
-    desc:     'The System has logged your presence. Before you execute, you must orient. Navigate to your status screen. Identify the five core attributes. Locate the one that currently sits lowest — this is your primary weakness. The System will now direct effort toward it. Acknowledge to proceed.',
+    desc:     'The System has logged your presence. Before directives are issued, you must orient.\n\nStep 1: Tap the [ STATUS ] button below to view your five core attributes — Strength, Intelligence, Agility, Endurance, Charisma.\n\nStep 2: Identify the attribute sitting lowest. That is your primary weakness. Remember it.\n\nStep 3: Tap [ DIRECTIVES ] on the status screen to return here, then mark this card executed to begin your first directives.',
     stat:     'intelligence',
     xp:       0,
     tier:     1
@@ -89,10 +89,12 @@ function completeTutorialQuest() {
     player.completedToday.push(TUTORIAL_QUEST.id);
     savePlayer();
     playQuestComplete();
-    showLog('[ ASSESSMENT LOGGED. PRIMARY WEAKNESS IDENTIFIED. DIRECTIVES WILL NOW TARGET YOUR WEAK POINTS. EXECUTE CONSISTENTLY. ]', 'accent');
-    // Tutorial complete — now reveal the full directive list
-    renderQuests(dailyQuests, player.completedToday, player.momentum || 1.0);
+    showLog('[ ASSESSMENT LOGGED. PRIMARY WEAKNESS IDENTIFIED. DIRECTIVES NOW UNLOCKED. ]', 'accent');
+    // Navigate to status screen — operator sees their full stat readout.
+    // The VIEW DIRECTIVES button on the status screen then takes them to their
+    // first full directive list. This confirms the navigation pattern for them.
     updateStatusScreen();
+    showScreen('screen-status');
 }
 
 // ─── LEVEL FORMULA ───────────────────────────────────────────
@@ -1052,9 +1054,7 @@ function createPlayer(name) {
     recordReferralIfPresent();
     updateStatusScreen();
     showScreen('screen-status');
-    // runFirstTransmission is called by the showScreen('screen-status') handler above.
-    // Calling it here a second time causes two concurrent line-append chains on the
-    // same container, producing duplicate text. One call is enough.
+    runFirstTransmission();
 }
 
 function effectiveGear() {
@@ -1072,7 +1072,7 @@ const BRIEFING_LINES = [
     { text: 'YOUR STATS ARE NOT SCORES. THEY ARE CONSEQUENCES. COMPLETE DIRECTIVES AND THEY RISE. NEGLECT THEM AND THEY DO NOT FALL — BUT YOU WILL NOTICE THE DIFFERENCE.', highlight: false },
     { text: 'MOMENTUM TRACKS YOUR CONSISTENCY. CONSECUTIVE DAYS COMPOUND IT. MISS DAYS AND IT DECAYS. THE SYSTEM CANNOT FORCE YOU TO SHOW UP. THAT IS YOUR JOB.', highlight: false },
     { text: 'GOLD IS EARNED BY COMPLETING DIRECTIVES. SPEND IT IN THE SUPPLY CACHE ON TOOLS THAT HELP YOU PERFORM BETTER. EVERY ITEM CORRESPONDS TO A REAL-WORLD ACT.', highlight: false },
-    { text: 'THE WORLD MAP SHOWS YOU THE TERRITORY YOUR STATS HAVE REVEALED. IT EXPANDS AS YOU GROW. NEGLECTED STATS REMAIN DARK.', highlight: false },
+    { text: 'THE WORLD MAP IS YOUR OPERATIONAL HUB. SIX FACILITY NODES — COMMAND POST, FIELD ARCHIVE, SUPPLY CACHE, OPS CENTRE, DIRECTIVE UPLOAD, SIGNAL LOG. YOUR OPERATOR AVATAR MOVES BETWEEN THEM. USE IT TO NAVIGATE THE TERMINAL.', highlight: false },
     { text: '[ STANDING BY. YOUR FIRST DIRECTIVES HAVE BEEN ISSUED. ]', highlight: true }
 ];
 const BRIEFING_DELAY_BETWEEN = 1100;  // ms between each line appearing
@@ -2400,19 +2400,8 @@ function savePlayerName(){
 function showConfirmReset(){document.getElementById('confirm-box').classList.remove('hidden');}
 
 function resetProfile(){
-    // Full wipe — every localStorage key SYD writes
-    [
-        STORAGE_KEY, SOUND_KEY, 'syd_sound', GEAR_KEY,
-        NEURAL_KEY_KEY, NEURAL_PROVIDER_KEY,
-        INCURSIONS_KEY, WORLDBOSSES_KEY, 'syd_defeated_bosses',
-        TRACE_KEY,
-        SAVE_FREQ_KEY, SYNC_OPTED_IN_KEY, SYNC_LAST_PUSH_KEY, SYNC_ADVISORY_KEY,
-        SYNCLINK_ID_KEY,
-        LOG_ARCHIVE_KEY,
-        INSTALL_DISMISSED_KEY,
-        'syd_pending_ref',
-        AUDIO_MINUTES_KEY
-    ].forEach(k => localStorage.removeItem(k));
+    localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(SOUND_KEY);
+    localStorage.removeItem('syd_sound');localStorage.removeItem(GEAR_KEY);
     window.location.reload();
 }
 
@@ -2495,16 +2484,16 @@ function showScreen(id, isBack) {
     if (id === 'screen-quests') {
         // If the tutorial is still pending, show only the tutorial card — no filter,
         // no scrolling past it. Once complete, show the full (optionally filtered) list.
-        // getVisibleQuests gates the directive list:
-        //   hasCompletedTutorial === false → only the tutorial card (full gate)
-        //   hasCompletedTutorial === true  → full daily list (Tier 0 track or regular)
-        // This ensures the operator cannot scroll past the orientation card on day one.
-        const visibleBase = getVisibleQuests(dailyQuests);
-        const filtered = (player && player.hasCompletedTutorial !== false && activeQuestFilter)
-            ? dailyQuests.filter(q => q.stat === activeQuestFilter)
-            : visibleBase;
-        renderQuests(filtered, player.completedToday, player.momentum||1.0);
-        applyQuestFilter();
+        if (player && player.hasCompletedTutorial === false) {
+            renderQuests([TUTORIAL_QUEST], player.completedToday, player.momentum||1.0);
+            applyQuestFilter();
+        } else {
+            const filtered = activeQuestFilter
+                ? dailyQuests.filter(q => q.stat === activeQuestFilter)
+                : dailyQuests;
+            renderQuests(filtered, player.completedToday, player.momentum||1.0);
+            applyQuestFilter();
+        }
     }
     // Clear filter when leaving the quests screen for anywhere other than back-to-map
     // (back nav always goes to status, so always clear)

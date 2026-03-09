@@ -43,7 +43,7 @@ function getDailyQuests(allQuests, level, gear) {
 
         if (gearLevel === 1) {
             // ── Gear 1: single directive from full tier-filtered pool ──
-            const pool = allQuests.filter(q => q.stat === stat && q.tier >= 1 && q.tier <= tier);
+            const pool = allQuests.filter(q => q.stat === stat && q.tier <= tier);
             if (!pool.length) return;
             const seed   = dateNum + statIndex;
             const picked = pool[seed % pool.length];
@@ -52,7 +52,7 @@ function getDailyQuests(allQuests, level, gear) {
         } else if (gearLevel === 2) {
             // ── Gear 2: two directives from full tier-filtered pool ──
             // Different seeds (offset by a prime) ensure different directives are picked.
-            const pool = allQuests.filter(q => q.stat === stat && q.tier >= 1 && q.tier <= tier);
+            const pool = allQuests.filter(q => q.stat === stat && q.tier <= tier);
             if (!pool.length) return;
 
             const seed1 = dateNum + statIndex;
@@ -145,7 +145,7 @@ function getDailyQuests(allQuests, level, gear) {
             const bossStat = boss.stat;
             const hasMatch = daily.some(q => q.stat === bossStat);
             if (!hasMatch && daily.length > 0) {
-                const bossPool = allQuests.filter(q => q.stat === bossStat && q.tier >= 1 && q.tier <= tier);
+                const bossPool = allQuests.filter(q => q.stat === bossStat && q.tier <= tier);
                 if (bossPool.length > 0) {
                     const seed        = dateToNumber(today) + 99;
                     const replacement = bossPool[seed % bossPool.length];
@@ -168,6 +168,14 @@ function renderQuests(quests, completedIds, momentum) {
     const dateEl = document.getElementById('quest-date');
     list.innerHTML = '';
     dateEl.textContent = new Date().toDateString().toUpperCase();
+
+    // Hide the RETURN back-link during tutorial — operator has no prior screen to go back to,
+    // and seeing '← RETURN' would be confusing. Show it again once tutorial is complete.
+    const backLink = document.getElementById('quests-back-link');
+    if (backLink) {
+        const isTutorialActive = quests.length === 1 && quests[0] && quests[0]._tutorial === true;
+        backLink.classList.toggle('hidden', isTutorialActive);
+    }
 
     quests.forEach(quest => {
         if (!quest) return;
@@ -237,13 +245,28 @@ function renderQuests(quests, completedIds, momentum) {
                    <span class="qc-tier qc-tier--${quest.tier}">${tierLabel}</span>
                </div>`;
 
+        // Tutorial card gets a VIEW STATUS button and nav hint instead of XP block.
+        // The RETURN link is hidden via CSS class added to the back-link element.
+        const tutorialNavSection = isTutorial && !isComplete
+            ? `<div class="qc-tutorial-nav">
+                   <button class="qc-tutorial-status-btn" onclick="navTo('screen-status')">
+                       [ VIEW STATUS → ]
+                   </button>
+                   <div class="qc-tutorial-nav-hint">
+                       Tap VIEW STATUS to see your attributes. Then tap
+                       [ DIRECTIVES ] on the status screen to return here.
+                   </div>
+               </div>`
+            : '';
+
         card.innerHTML = `
             ${headerHtml}
             <div class="qc-title">${quest.title}</div>
-            <div class="qc-desc">${quest.desc}</div>
+            <div class="qc-desc" style="white-space:pre-line">${quest.desc}</div>
             ${modelSection}
             ${tacticalSection}
             ${reflectionSection}
+            ${tutorialNavSection}
             <div class="qc-footer">
                 <button
                     class="complete-btn"
@@ -257,8 +280,7 @@ function renderQuests(quests, completedIds, momentum) {
                     ${isComplete ? '[ ✓ EXECUTED ]' : '[ MARK EXECUTED ]'}
                 </button>
                 <div class="qc-xp-block">
-                    <div class="qc-xp">+${quest.xp} <span class="qc-xp-label">XP</span></div>
-                    ${xpBonus}
+                    ${!isTutorial ? `<div class="qc-xp">+${quest.xp} <span class="qc-xp-label">XP</span></div>${xpBonus}` : ''}
                 </div>
             </div>
         `;
