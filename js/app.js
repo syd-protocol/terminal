@@ -55,11 +55,55 @@ const TUTORIAL_QUEST = {
     id:       'tutorial_orientation',
     _tutorial: true,
     title:    'INITIAL SYSTEMS ASSESSMENT',
-    desc:     'The System has logged your presence. Before directives are issued, you must orient.\n\nStep 1: Tap the [ STATUS ] button below to view your five core attributes — Strength, Intelligence, Agility, Endurance, Charisma.\n\nStep 2: Identify the attribute sitting lowest. That is your primary weakness. Remember it.\n\nStep 3: Tap [ DIRECTIVES ] on the status screen to return here, then mark this card executed to begin your first directives.',
+    desc:     'You have been registered in the System. Five core attributes will govern your progression: Strength, Intelligence, Agility, Endurance, Charisma.\n\nStep 1: Tap [ STATUS ] below to view your attribute readout. All attributes begin at the same baseline — they rise through execution, not intention.\n\nStep 2: Tap [ DIRECTIVES ] on the status screen to return here, then mark this card executed to unlock your first directive set.',
     stat:     'intelligence',
     xp:       0,
     tier:     1
 };
+
+// ─── STAGE 6: KEYWORD-TO-STAT MAPPING ───────────────────────
+const STAT_KEYWORDS = {
+    strength:     ['fitness','gym','health','weight','run','walk','exercise','body','eat','sleep','energy','strong','physical','diet','training','workout','sport'],
+    intelligence: ['learn','study','read','skill','career','business','build','create','write','code','design','knowledge','degree','course','research','understand','develop'],
+    agility:      ['adapt','change','flexible','anxiety','stress','fear','habit','routine','comfort','new','risk','decision','pivot','challenge','difficult'],
+    endurance:    ['finish','complete','consistent','discipline','focus','distraction','procrastin','motivation','persist','follow','through','commit','goal','long','project','task'],
+    charisma:     ['relationship','social','friend','network','communicate','speak','influence','connect','people','family','date','love','confident','presence','leader']
+};
+
+function classifyGoal(text) {
+    const lower = (text || '').toLowerCase();
+    const counts = {};
+    Object.keys(STAT_KEYWORDS).forEach(stat => {
+        counts[stat] = STAT_KEYWORDS[stat].filter(kw => lower.includes(kw)).length;
+    });
+    const order = ['strength','intelligence','endurance','agility','charisma'];
+    const sorted = order.slice().sort((a, b) => counts[b] - counts[a]);
+    return {
+        primaryStat:  sorted[0],
+        linkedStats:  [sorted[1], sorted[2]].filter(s => counts[s] > 0 || true)
+    };
+}
+
+function createWorldBossFromGoal(goalText) {
+    const { primaryStat, linkedStats } = classifyGoal(goalText);
+    const words = goalText.trim().toUpperCase().replace(/[^A-Z0-9\s]/g,'').split(/\s+/);
+    const noun   = words.slice(0, 3).join(' ') || 'THE OBSTACLE';
+    const label  = `[ WORLD BOSS: ${noun} ]`;
+    const boss = {
+        id:          'boss_' + Date.now(),
+        label,
+        enemy:       goalText.trim(),
+        stat:        primaryStat,
+        linkedStats: linkedStats.slice(0,2),
+        maxHp:       500,
+        currentHp:   500
+    };
+    const existing = [];
+    try { const raw = localStorage.getItem(WORLDBOSSES_KEY); if (raw) existing.push(...JSON.parse(raw)); } catch(e){}
+    existing.unshift(boss);
+    localStorage.setItem(WORLDBOSSES_KEY, JSON.stringify(existing));
+    return boss;
+}
 
 // ─── STAGE 6B: TUTORIAL HELPERS ─────────────────────────────
 // injectTutorial(quests) — prepends TUTORIAL_QUEST to the quest list
@@ -851,7 +895,7 @@ async function init() {
     if (!allQuests.length) allQuests = await questsPromise;
 
     checkDailyReset();
-    dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear());
+    dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear(), player?.operatorDays);
     updateStatusScreen();
     await runRelaunchBoot();
     showScreen('screen-status');
@@ -948,6 +992,11 @@ function runOnboarding() {
     const nameInput=document.getElementById('name-input');
     const startBtn=document.getElementById('start-btn');
 
+    // Onboarding step sections
+    const neuralSection  = document.getElementById('onboarding-neural-section');
+    const goalSection    = document.getElementById('onboarding-goal-section');
+    const profileSection = document.getElementById('onboarding-profile-section');
+
     function runSignalPhase() {
         loreEl.innerHTML=''; nameSection.classList.add('hidden'); startBtn.classList.add('hidden');
         const sig=['> SIGNAL DETECTED','> LOCATING SURVIVOR...','> CONNECTION ESTABLISHED'];
@@ -1002,6 +1051,110 @@ function runOnboarding() {
     runSignalPhase();
 }
 
+// Called after awaken completes — runs the three onboarding steps before createPlayer
+function runOnboardingSteps(name) {
+    const loreEl         = document.getElementById('lore-lines');
+    const nameSection    = document.getElementById('name-section');
+    const startBtn       = document.getElementById('start-btn');
+    const neuralSection  = document.getElementById('onboarding-neural-section');
+    const goalSection    = document.getElementById('onboarding-goal-section');
+    const profileSection = document.getElementById('onboarding-profile-section');
+    const neuralKey      = document.getElementById('onboarding-neural-key');
+    const neuralProvider = document.getElementById('onboarding-neural-provider');
+    const goalInput      = document.getElementById('onboarding-goal-input');
+    const profileInput   = document.getElementById('onboarding-profile-input');
+
+    // Helper: clear lore and show a section with a typed prompt
+    function showStep(lines, section, inputEl, btnLabel, onSubmit) {
+        loreEl.innerHTML='';
+        nameSection.classList.add('hidden');
+        neuralSection.classList.add('hidden');
+        goalSection.classList.add('hidden');
+        profileSection.classList.add('hidden');
+        startBtn.classList.add('hidden');
+        startBtn.textContent = btnLabel || 'CONFIRM';
+
+        let idx=0;
+        function next() {
+            if(idx>=lines.length){
+                setTimeout(()=>{
+                    section.classList.remove('hidden');
+                    if(inputEl) inputEl.focus();
+                    startBtn.classList.remove('hidden');
+                },400);
+                return;
+            }
+            const el=document.createElement('div'); el.className='lore-line lore-prompt';
+            const cur=document.createElement('span'); cur.className='terminal-cursor';
+            loreEl.appendChild(el); el.appendChild(cur);
+            typeText(el,lines[idx],45,()=>{cur.remove();idx++;setTimeout(next,300);});
+        }
+        next();
+
+        // Replace start-btn listener each step
+        const newBtn = startBtn.cloneNode(true);
+        startBtn.parentNode.replaceChild(newBtn, startBtn);
+        // reassign reference for future steps
+        document.getElementById('start-btn').addEventListener('click',()=>{playUIClick(); onSubmit();});
+    }
+
+    function stepNeural() {
+        showStep(
+            [
+                'This System\'s predictive capacity is degraded.',
+                'A temporary cognitive interface is required.',
+                'Confiscate one.'
+            ],
+            neuralSection,
+            neuralKey,
+            'LINK',
+            ()=>{
+                const k = neuralKey.value.trim();
+                const p = neuralProvider.value;
+                if(k) saveNeuralKey(k, p);
+                stepGoal();
+            }
+        );
+    }
+
+    function stepGoal() {
+        showStep(
+            [
+                'Threat mapping requires a primary objective.',
+                'State the obstacle between you and where you need to be.'
+            ],
+            goalSection,
+            goalInput,
+            'CONFIRM',
+            ()=>{
+                const g = goalInput.value.trim();
+                if(g) createWorldBossFromGoal(g);
+                stepProfile();
+            }
+        );
+    }
+
+    function stepProfile() {
+        showStep(
+            [
+                'Critical operator data was lost in transmission.',
+                'Reconstruct your context. Routines. Constraints.',
+                'The System will extract what it needs.'
+            ],
+            profileSection,
+            profileInput,
+            'EXECUTE',
+            ()=>{
+                const prof = profileInput.value.trim();
+                // Profile is stored when createPlayer sets up the player object
+                createPlayer(name, prof);
+            }
+        );
+    }
+
+    stepNeural();
+}
+
 // ─── AWAKEN SEQUENCE ─────────────────────────────────────────
 function runAwakenSequence(name) {
     const overlay=document.getElementById('overlay-awaken'); overlay.classList.remove('hidden');
@@ -1011,7 +1164,7 @@ function runAwakenSequence(name) {
     let idx=0;
     function next() {
         if(idx>=bl.length){
-            setTimeout(()=>typeText(nameEl,name,80,()=>setTimeout(()=>typeText(statusEl,'[ AWAKENING... ]',60,()=>setTimeout(()=>{overlay.classList.add('hidden');createPlayer(name);},800)),400)),300);
+            setTimeout(()=>typeText(nameEl,name,80,()=>setTimeout(()=>typeText(statusEl,'[ AWAKENING... ]',60,()=>setTimeout(()=>{overlay.classList.add('hidden');runOnboardingSteps(name);},800)),400)),300);
             return;
         }
         const l=document.createElement('div'); l.style.opacity='0'; l.style.transition='opacity 0.3s ease'; l.textContent=bl[idx];
@@ -1037,24 +1190,28 @@ function loadPlayer() {
     if(typeof p.hasCompletedTutorial === 'undefined') p.hasCompletedTutorial = true;
     // Existing players predate the Base Map — mark as seen so arrival never fires
     if(typeof p.hasSeenBaseMap === 'undefined') p.hasSeenBaseMap = true;
+    // Existing players predate operatorDays — set high so they skip Tier 0 path entirely
+    if(typeof p.operatorDays === 'undefined') p.operatorDays = 999;
     return p;
 }
 function savePlayer() { localStorage.setItem(STORAGE_KEY,JSON.stringify(player)); }
 
-function createPlayer(name) {
+function createPlayer(name, operatorProfile) {
     console.log('[SYD] createPlayer:', name);
     const stats={};
     STAT_NAMES.forEach(s=>{stats[s]=STAT_FLOOR;});
     const maxHp=calcMaxHp(1);
-    player={name,stats,completedToday:[],lastQuestDate:today(),consecutiveDays:1,momentum:1.0,
+    player={name,stats,completedToday:[],lastQuestDate:today(),consecutiveDays:1,operatorDays:1,momentum:1.0,
         lastActiveDate:today(),hp:maxHp,maxHp,corrupted:false,gold:0,buffs:defaultBuffs(),
-        mapMilestones:{},hasSeenBriefing:false,hasCompletedTutorial:false,hasSeenBaseMap:false};
+        mapMilestones:{},hasSeenBriefing:false,hasCompletedTutorial:false,hasSeenBaseMap:false,
+        operatorProfile: operatorProfile || ''};
     savePlayer();
-    dailyQuests=getDailyQuests(allQuests,calculateLevel(),effectiveGear());
+    dailyQuests=getDailyQuests(allQuests,calculateLevel(),effectiveGear(),player?.operatorDays);
     recordReferralIfPresent();
     updateStatusScreen();
     showScreen('screen-status');
-    runFirstTransmission();
+    // runFirstTransmission is triggered by showScreen when id === 'screen-status'
+    // Calling it here again would double-fire before hasSeenBriefing is set to true.
 }
 
 function effectiveGear() {
@@ -2028,6 +2185,7 @@ function checkDailyReset() {
     if(!buffActive(player.buffs.focusDraught)) player.buffs.focusDraught=null;
     if(!buffActive(player.buffs.sprintScroll)) player.buffs.sprintScroll=null;
     player.completedToday=[]; player.lastQuestDate=todayStr; player.lastActiveDate=todayStr;
+    player.operatorDays = (player.operatorDays || 1) + 1;
     savePlayer();
 }
 function today() {
@@ -2143,7 +2301,7 @@ function consumeItem(itemId) {
     switch(itemId){
         case 'focusDraught':   player.buffs.focusDraught=endOfDayISO(); break;
         case 'vitalityTonic':{const mh=player.maxHp||calcMaxHp(calculateLevel());player.hp=Math.min(mh,(player.hp||mh)+20);const pct=Math.round((player.hp/mh)*100);const hEl=document.getElementById('hp-bar'),hV=document.getElementById('hp-value');if(hEl)hEl.style.width=pct+'%';if(hV)hV.textContent=player.hp+' / '+mh;showLog('[VITALITY_TONIC: +20 HP]');break;}
-        case 'sprintScroll':   player.buffs.sprintScroll=endOfDayISO();dailyQuests=getDailyQuests(allQuests,calculateLevel(),effectiveGear());showLog('[GEAR_SHIFT: GEAR_'+effectiveGear()+'_ENGAGED]');break;
+        case 'sprintScroll':   player.buffs.sprintScroll=endOfDayISO();dailyQuests=getDailyQuests(allQuests,calculateLevel(),effectiveGear(),player?.operatorDays);showLog('[GEAR_SHIFT: GEAR_'+effectiveGear()+'_ENGAGED]');break;
         case 'restSigil':      player.buffs.restSigil=in24hISO();showLog('[REST_SIGIL: MOMENTUM_PROTECTED_24H]');break;
         case 'clarityShards':  player.buffs.clarityShards=(player.buffs.clarityShards||0)+3;break;
     }
@@ -2317,7 +2475,7 @@ function spawnParticles(cId,count,color){
 function loadGear(){const s=parseInt(localStorage.getItem(GEAR_KEY),10);return(s===2||s===3)?s:1;}
 function saveGear(gear){
     currentGear=gear;localStorage.setItem(GEAR_KEY,String(gear));
-    dailyQuests=getDailyQuests(allQuests,calculateLevel(),effectiveGear());
+    dailyQuests=getDailyQuests(allQuests,calculateLevel(),effectiveGear(),player?.operatorDays);
     if(document.getElementById('screen-quests').classList.contains('active'))
         renderQuests(injectTutorial(dailyQuests),player.completedToday,player.momentum||1.0);
 }

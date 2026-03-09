@@ -31,7 +31,31 @@ function getCurrentTier(level) {
 //   This prevents stacking multiple multi-day mastery tasks in the same day,
 //   and gives each day a natural rhythm of depth: mastery → framework → foundation.
 
-function getDailyQuests(allQuests, level, gear) {
+// ─── TIER 0: OPERATOR DAYS 1-7 ───────────────────────────────
+// New operators are served deterministic day-matched Tier 0 directives
+// for their first 7 operator days. Each day has exactly one Tier 0 quest
+// per stat (35 total: 5 stats × 7 days). operatorDays is never decremented.
+// After day 7, the standard tier pool takes over permanently.
+
+function getTier0DayQuests(allQuests, operatorDays) {
+    const stats   = ['strength','intelligence','agility','endurance','charisma'];
+    const daySlot = Math.min(Math.max(operatorDays, 1), 7);
+    const result  = [];
+    stats.forEach(stat => {
+        const pool = allQuests.filter(q => q.stat === stat && q.tier === 0 && q.day === daySlot);
+        if (pool.length > 0) result.push(pool[0]);
+    });
+    return result;
+}
+
+function getDailyQuests(allQuests, level, gear, operatorDays) {
+    // ── Tier 0: days 1-7 — deterministic day-matched beginner quests ──
+    if (typeof operatorDays === 'number' && operatorDays <= 7) {
+        const tier0 = getTier0DayQuests(allQuests, operatorDays);
+        if (tier0.length > 0) return tier0;
+        // If Tier 0 pool is empty for this day (data gap), fall through to standard selection
+    }
+
     const today     = new Date().toISOString().slice(0, 10);
     const stats     = ['strength', 'intelligence', 'agility', 'endurance', 'charisma'];
     const tier      = getCurrentTier(level || 1);

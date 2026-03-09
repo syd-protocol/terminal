@@ -625,6 +625,39 @@
                 <input type="text" id="name-input" placeholder="ENTER DESIGNATION..."
                        maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false" />
             </div>
+
+            <!-- STEP: NEURAL LINK KEY -->
+            <div id="onboarding-neural-section" class="hidden">
+                <div class="onboarding-step-label">[ NEURAL LINK ACQUISITION ]</div>
+                <select id="onboarding-neural-provider" class="settings-name-input" style="margin-bottom:0.6em;">
+                    <option value="gemini">GEMINI (DEFAULT)</option>
+                    <option value="openai">OPENAI</option>
+                    <option value="anthropic">ANTHROPIC</option>
+                </select>
+                <input type="text" id="onboarding-neural-key" placeholder="PASTE API KEY..."
+                       autocomplete="off" autocorrect="off" spellcheck="false"
+                       class="settings-name-input" style="margin-bottom:0.4em;" />
+                <div class="onboarding-step-note">Compatible unit detected at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--accent);">aistudio.google.com/app/apikey</a> — no credentials required for acquisition. Key also accessible later via Settings &gt; Neural Link.</div>
+            </div>
+
+            <!-- STEP: GOAL / WORLD BOSS SEED -->
+            <div id="onboarding-goal-section" class="hidden">
+                <div class="onboarding-step-label">[ THREAT MAPPING — INITIALISE ]</div>
+                <textarea id="onboarding-goal-input" placeholder="State the obstacle..."
+                          rows="3" autocomplete="off" autocorrect="off" spellcheck="false"
+                          class="settings-name-input" style="resize:none;margin-bottom:0.4em;"></textarea>
+                <div class="onboarding-step-note">This input seeds a World Boss — a persistent enemy entity representing a long-term goal. It will appear on your status screen with an HP bar that depletes as you execute relevant directives.</div>
+            </div>
+
+            <!-- STEP: OPERATOR PROFILE -->
+            <div id="onboarding-profile-section" class="hidden">
+                <div class="onboarding-step-label">[ OPERATOR DATA — RECONSTRUCT ]</div>
+                <textarea id="onboarding-profile-input" placeholder="Describe your routines, constraints, context..."
+                          rows="4" autocomplete="off" autocorrect="off" spellcheck="false"
+                          class="settings-name-input" style="resize:none;margin-bottom:0.4em;"></textarea>
+                <div class="onboarding-step-note">This context is injected into all AI directive generation when Neural Link is active. Stored locally and synced. Editable later via Settings &gt; System.</div>
+            </div>
+
             <button class="nav-btn hidden" id="start-btn">INITIALISE</button>
         </div>
     </div>

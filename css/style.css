@@ -790,6 +790,54 @@ body {
 
 #name-input:focus { border-color: var(--accent); }
 
+/* ── ONBOARDING STEP SECTIONS ───────────────────────────────── */
+.onboarding-step-label {
+    color: var(--accent);
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    margin-bottom: 0.8em;
+    text-align: left;
+}
+
+.onboarding-step-note {
+    font-size: 0.7rem;
+    color: var(--text-dim, #666);
+    text-align: left;
+    line-height: 1.5;
+    margin-top: 0.4em;
+}
+
+.onboarding-step-note a { text-decoration: underline; }
+
+#onboarding-neural-section,
+#onboarding-goal-section,
+#onboarding-profile-section {
+    width: 100%;
+    text-align: left;
+    margin-bottom: 0.8em;
+}
+
+#onboarding-neural-key,
+#onboarding-goal-input,
+#onboarding-profile-input,
+#onboarding-neural-provider {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: #fff;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    padding: 10px 12px;
+    outline: none;
+    box-sizing: border-box;
+    display: block;
+}
+
+#onboarding-neural-key:focus,
+#onboarding-goal-input:focus,
+#onboarding-profile-input:focus,
+#onboarding-neural-provider:focus { border-color: var(--accent); }
+
 /* ── OVERLAYS ───────────────────────────────────────────────── */
 .overlay {
     position: fixed;
