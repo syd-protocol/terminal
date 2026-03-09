@@ -43,7 +43,7 @@ function getDailyQuests(allQuests, level, gear) {
 
         if (gearLevel === 1) {
             // ── Gear 1: single directive from full tier-filtered pool ──
-            const pool = allQuests.filter(q => q.stat === stat && q.tier <= tier);
+            const pool = allQuests.filter(q => q.stat === stat && q.tier >= 1 && q.tier <= tier);
             if (!pool.length) return;
             const seed   = dateNum + statIndex;
             const picked = pool[seed % pool.length];
@@ -52,7 +52,7 @@ function getDailyQuests(allQuests, level, gear) {
         } else if (gearLevel === 2) {
             // ── Gear 2: two directives from full tier-filtered pool ──
             // Different seeds (offset by a prime) ensure different directives are picked.
-            const pool = allQuests.filter(q => q.stat === stat && q.tier <= tier);
+            const pool = allQuests.filter(q => q.stat === stat && q.tier >= 1 && q.tier <= tier);
             if (!pool.length) return;
 
             const seed1 = dateNum + statIndex;
@@ -145,7 +145,7 @@ function getDailyQuests(allQuests, level, gear) {
             const bossStat = boss.stat;
             const hasMatch = daily.some(q => q.stat === bossStat);
             if (!hasMatch && daily.length > 0) {
-                const bossPool = allQuests.filter(q => q.stat === bossStat && q.tier <= tier);
+                const bossPool = allQuests.filter(q => q.stat === bossStat && q.tier >= 1 && q.tier <= tier);
                 if (bossPool.length > 0) {
                     const seed        = dateToNumber(today) + 99;
                     const replacement = bossPool[seed % bossPool.length];
