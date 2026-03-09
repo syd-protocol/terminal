@@ -2596,8 +2596,31 @@ function savePlayerName(){
 function showConfirmReset(){document.getElementById('confirm-box').classList.remove('hidden');}
 
 function resetProfile(){
-    localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(SOUND_KEY);
-    localStorage.removeItem('syd_sound');localStorage.removeItem(GEAR_KEY);
+    // Player + progression
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(GEAR_KEY);
+    // Sound
+    localStorage.removeItem(SOUND_KEY);
+    localStorage.removeItem('syd_sound');
+    localStorage.removeItem(AUDIO_MINUTES_KEY);
+    // Neural Link
+    localStorage.removeItem(NEURAL_KEY_KEY);
+    localStorage.removeItem(NEURAL_PROVIDER_KEY);
+    // Missions
+    localStorage.removeItem(INCURSIONS_KEY);
+    localStorage.removeItem(WORLDBOSSES_KEY);
+    localStorage.removeItem('syd_defeated_bosses');
+    localStorage.removeItem(TRACE_KEY);
+    // Sync
+    localStorage.removeItem(SAVE_FREQ_KEY);
+    localStorage.removeItem(SYNC_OPTED_IN_KEY);
+    localStorage.removeItem(SYNC_LAST_PUSH_KEY);
+    localStorage.removeItem(SYNC_ADVISORY_KEY);
+    localStorage.removeItem(SYNCLINK_ID_KEY);
+    // UI state
+    localStorage.removeItem(LOG_ARCHIVE_KEY);
+    localStorage.removeItem(INSTALL_DISMISSED_KEY);
+    localStorage.removeItem('syd_pending_ref');
     window.location.reload();
 }
 
