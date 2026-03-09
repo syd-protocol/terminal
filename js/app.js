@@ -1052,7 +1052,9 @@ function createPlayer(name) {
     recordReferralIfPresent();
     updateStatusScreen();
     showScreen('screen-status');
-    runFirstTransmission();
+    // runFirstTransmission is called by the showScreen('screen-status') handler above.
+    // Calling it here a second time causes two concurrent line-append chains on the
+    // same container, producing duplicate text. One call is enough.
 }
 
 function effectiveGear() {
@@ -2398,8 +2400,19 @@ function savePlayerName(){
 function showConfirmReset(){document.getElementById('confirm-box').classList.remove('hidden');}
 
 function resetProfile(){
-    localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(SOUND_KEY);
-    localStorage.removeItem('syd_sound');localStorage.removeItem(GEAR_KEY);
+    // Full wipe — every localStorage key SYD writes
+    [
+        STORAGE_KEY, SOUND_KEY, 'syd_sound', GEAR_KEY,
+        NEURAL_KEY_KEY, NEURAL_PROVIDER_KEY,
+        INCURSIONS_KEY, WORLDBOSSES_KEY, 'syd_defeated_bosses',
+        TRACE_KEY,
+        SAVE_FREQ_KEY, SYNC_OPTED_IN_KEY, SYNC_LAST_PUSH_KEY, SYNC_ADVISORY_KEY,
+        SYNCLINK_ID_KEY,
+        LOG_ARCHIVE_KEY,
+        INSTALL_DISMISSED_KEY,
+        'syd_pending_ref',
+        AUDIO_MINUTES_KEY
+    ].forEach(k => localStorage.removeItem(k));
     window.location.reload();
 }
 
@@ -2482,16 +2495,16 @@ function showScreen(id, isBack) {
     if (id === 'screen-quests') {
         // If the tutorial is still pending, show only the tutorial card — no filter,
         // no scrolling past it. Once complete, show the full (optionally filtered) list.
-        if (player && player.hasCompletedTutorial === false) {
-            renderQuests([TUTORIAL_QUEST], player.completedToday, player.momentum||1.0);
-            applyQuestFilter();
-        } else {
-            const filtered = activeQuestFilter
-                ? dailyQuests.filter(q => q.stat === activeQuestFilter)
-                : dailyQuests;
-            renderQuests(filtered, player.completedToday, player.momentum||1.0);
-            applyQuestFilter();
-        }
+        // getVisibleQuests gates the directive list:
+        //   hasCompletedTutorial === false → only the tutorial card (full gate)
+        //   hasCompletedTutorial === true  → full daily list (Tier 0 track or regular)
+        // This ensures the operator cannot scroll past the orientation card on day one.
+        const visibleBase = getVisibleQuests(dailyQuests);
+        const filtered = (player && player.hasCompletedTutorial !== false && activeQuestFilter)
+            ? dailyQuests.filter(q => q.stat === activeQuestFilter)
+            : visibleBase;
+        renderQuests(filtered, player.completedToday, player.momentum||1.0);
+        applyQuestFilter();
     }
     // Clear filter when leaving the quests screen for anywhere other than back-to-map
     // (back nav always goes to status, so always clear)
