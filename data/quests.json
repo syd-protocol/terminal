@@ -1,6 +1,531 @@
 {
     "quests": [
         {
+            "id": "str_init_01",
+            "stat": "strength",
+            "tier": 0,
+            "day": 1,
+            "title": "SIGNAL SCAN",
+            "desc": "Notice your body today. When did you last drink water? When did you last move? No action required — just observe and log one honest answer about your physical state right now.",
+            "tactical_guide": {
+                "title": "AWARENESS BEFORE ACTION",
+                "mechanic": "Baseline Calibration",
+                "logic": "You cannot improve what you have not measured. The first step is not effort — it is accurate observation. The System needs a reading before it can issue effective directives."
+            },
+            "model": "Self-Monitoring (Bandura)",
+            "xp": 1
+        },
+        {
+            "id": "str_init_02",
+            "stat": "strength",
+            "tier": 0,
+            "day": 2,
+            "title": "FIRST FLUID LOG",
+            "desc": "Track how much water you drink today. Count glasses or estimate litres. No target — just data. At the end of the day, write the number down.",
+            "tactical_guide": {
+                "title": "MEASUREMENT CREATES CHANGE",
+                "mechanic": "Hawthorne Effect",
+                "logic": "Simply tracking a behaviour changes it. Operators who measure their fluid intake for one day drink more the next, without trying. The act of observation is already an intervention."
+            },
+            "model": "Behavioural Tracking",
+            "xp": 1
+        },
+        {
+            "id": "str_init_03",
+            "stat": "strength",
+            "tier": 0,
+            "day": 3,
+            "title": "SINGLE GLASS PROTOCOL",
+            "desc": "Drink one full glass of water before you do anything else today. Not after breakfast. Not after checking your phone. First action.",
+            "tactical_guide": {
+                "title": "ANCHOR HABIT",
+                "mechanic": "Habit Stacking",
+                "logic": "Attaching a new behaviour to the very first moment of the day removes the need for decision-making. The cue is waking up. The response is automatic."
+            },
+            "model": "Habit Stacking (James Clear)",
+            "xp": 1
+        },
+        {
+            "id": "str_init_04",
+            "stat": "strength",
+            "tier": 0,
+            "day": 4,
+            "title": "MICRO-MOVEMENT DEPLOYMENT",
+            "desc": "At some point today, stand up and move your body for 5 continuous minutes. Walk around the room, stretch, step outside. No equipment, no performance — just movement.",
+            "tactical_guide": {
+                "title": "MINIMUM VIABLE DOSE",
+                "mechanic": "Activation Energy Reduction",
+                "logic": "Five minutes is below the threshold where the brain raises resistance. The goal is not fitness — it is establishing that movement is a normal daily event."
+            },
+            "model": "Minimum Effective Dose (Tim Ferriss)",
+            "xp": 1
+        },
+        {
+            "id": "str_init_05",
+            "stat": "strength",
+            "tier": 0,
+            "day": 5,
+            "title": "POST-FUEL OBSERVATION",
+            "desc": "After eating today, notice how your body feels. Sluggish or energised? Sit with that observation for 2 minutes before returning to your next task. No change required yet — just notice.",
+            "tactical_guide": {
+                "title": "INTEROCEPTIVE AWARENESS",
+                "mechanic": "Body Signal Recognition",
+                "logic": "Most operators eat without registering the aftermath. Building the habit of noticing post-meal state is the precursor to making better fuel choices — and to the post-meal movement directive that follows."
+            },
+            "model": "Interoception Research (Craig, 2002)",
+            "xp": 1
+        },
+        {
+            "id": "str_init_06",
+            "stat": "strength",
+            "tier": 0,
+            "day": 6,
+            "title": "HYDRATION TARGET",
+            "desc": "Drink at least 1.5 litres of water today. Start with a full glass on waking. Keep a bottle visible — out of sight means out of mind.",
+            "tactical_guide": {
+                "title": "ENVIRONMENTAL DESIGN",
+                "mechanic": "Cue Visibility",
+                "logic": "Placing water in your visual field removes the need for willpower. The cue does the work. Visibility is the cheapest performance enhancement available."
+            },
+            "model": "Choice Architecture (Thaler & Sunstein)",
+            "xp": 2
+        },
+        {
+            "id": "str_init_07",
+            "stat": "strength",
+            "tier": 0,
+            "day": 7,
+            "title": "FULL FLUID RECOVERY",
+            "desc": "Drink 2 litres of water today. Begin with a full glass immediately on waking. At each meal, drink before you eat. This is now standard operating procedure.",
+            "tactical_guide": {
+                "title": "PROTOCOL LOCKED",
+                "mechanic": "Habitual Hydration",
+                "logic": "After six days of progressive hydration awareness, 2 litres is no longer a stretch target — it is a natural continuation. The System registers this as baseline performance, not exceptional effort."
+            },
+            "model": "Progressive Overload (adapted)",
+            "xp": 2
+        },
+        {
+            "id": "int_init_01",
+            "stat": "intelligence",
+            "tier": 0,
+            "day": 1,
+            "title": "CURIOSITY SCAN",
+            "desc": "Write down one thing you are curious about right now. Not something you should learn — something you actually want to know. One sentence is enough.",
+            "tactical_guide": {
+                "title": "INTRINSIC MOTIVATION",
+                "mechanic": "Curiosity-Driven Learning",
+                "logic": "Curiosity triggers dopamine before the learning begins. Starting from genuine interest, not obligation, is the single biggest predictor of whether new knowledge sticks."
+            },
+            "model": "Self-Determination Theory (Deci & Ryan)",
+            "xp": 1
+        },
+        {
+            "id": "int_init_02",
+            "stat": "intelligence",
+            "tier": 0,
+            "day": 2,
+            "title": "5-MINUTE READ",
+            "desc": "Read anything for 5 uninterrupted minutes. A book, an article, a long-form post. The subject does not matter. The habit does.",
+            "tactical_guide": {
+                "title": "THRESHOLD COLLAPSE",
+                "mechanic": "Minimum Viable Habit",
+                "logic": "Five minutes is below the resistance threshold. The System is not trying to make you a reader today — it is making reading feel normal. Volume follows consistency."
+            },
+            "model": "Tiny Habits (BJ Fogg)",
+            "xp": 1
+        },
+        {
+            "id": "int_init_03",
+            "stat": "intelligence",
+            "tier": 0,
+            "day": 3,
+            "title": "PLAIN LANGUAGE PROTOCOL",
+            "desc": "Pick something you know reasonably well — a job skill, a hobby, anything. Explain it out loud or in writing as if the listener has never heard of it. Keep it simple.",
+            "tactical_guide": {
+                "title": "FEYNMAN ENTRY POINT",
+                "mechanic": "Explanation as Diagnosis",
+                "logic": "Attempting to explain something exposes gaps you did not know existed. This is not a performance — it is a diagnostic tool. The simpler the explanation, the deeper the understanding."
+            },
+            "model": "Feynman Technique (Richard Feynman)",
+            "xp": 1
+        },
+        {
+            "id": "int_init_04",
+            "stat": "intelligence",
+            "tier": 0,
+            "day": 4,
+            "title": "UNFILTERED WRITE",
+            "desc": "Set a timer for 10 minutes. Write whatever is on your mind — a problem, a frustration, an idea. No editing, no structure, no audience. Just output.",
+            "tactical_guide": {
+                "title": "COGNITIVE OFFLOAD",
+                "mechanic": "Working Memory Clearance",
+                "logic": "The brain treats unresolved thoughts as open loops, consuming background processing power. Externalising them onto a page closes the loops and frees cognitive capacity."
+            },
+            "model": "Buffer Offload / GTD (David Allen)",
+            "xp": 1
+        },
+        {
+            "id": "int_init_05",
+            "stat": "intelligence",
+            "tier": 0,
+            "day": 5,
+            "title": "ASSUMPTION SURFACE",
+            "desc": "Identify one thing you believe to be true about yourself or your situation. Write it down. Then write: 'What if this is wrong?' You do not have to answer — just sit with the question.",
+            "tactical_guide": {
+                "title": "BELIEF AUDIT",
+                "mechanic": "Metacognitive Awareness",
+                "logic": "Unexamined assumptions operate as invisible constraints. You cannot remove a wall you do not know exists. Surfacing one assumption per day is how operators begin to see the architecture of their own thinking."
+            },
+            "model": "First Principles Thinking (Aristotle / Musk)",
+            "xp": 1
+        },
+        {
+            "id": "int_init_06",
+            "stat": "intelligence",
+            "tier": 0,
+            "day": 6,
+            "title": "RECALL ATTEMPT",
+            "desc": "Think of something you have learned in the past few days — from this week, from a conversation, from anything you read. Write down what you remember without checking. Then check and note what you missed.",
+            "tactical_guide": {
+                "title": "RETRIEVAL PRACTICE",
+                "mechanic": "Active Recall",
+                "logic": "The act of trying to remember — not the act of re-reading — is what strengthens memory. Every retrieval attempt reinforces the neural pathway, regardless of whether the recall was perfect."
+            },
+            "model": "Testing Effect (Roediger & Karpicke)",
+            "xp": 2
+        },
+        {
+            "id": "int_init_07",
+            "stat": "intelligence",
+            "tier": 0,
+            "day": 7,
+            "title": "SPACED RECALL SCAN",
+            "desc": "Take something you learned earlier this week and review it today without notes. Write what you remember, then check what you missed and why.",
+            "tactical_guide": {
+                "title": "RECALL REINFORCEMENT",
+                "mechanic": "Forgetting Curve",
+                "logic": "Retention drops sharply without review. Revisiting material just before it fades reinforces the neural connection, leading to near-permanent retention with minimal effort."
+            },
+            "model": "Spaced Repetition (Hermann Ebbinghaus)",
+            "xp": 2
+        },
+        {
+            "id": "agi_init_01",
+            "stat": "agility",
+            "tier": 0,
+            "day": 1,
+            "title": "REACTION AUDIT",
+            "desc": "Notice the next time something small disrupts your day — a delay, an interruption, an unexpected change. Do not act differently. Just notice your first instinct and name it.",
+            "tactical_guide": {
+                "title": "STIMULUS AWARENESS",
+                "mechanic": "Cognitive Labelling",
+                "logic": "You cannot change a reaction you have not observed. Naming an emotional response — 'frustration', 'resistance' — activates the prefrontal cortex and begins to create space between stimulus and response."
+            },
+            "model": "Affect Labelling (Lieberman et al.)",
+            "xp": 1
+        },
+        {
+            "id": "agi_init_02",
+            "stat": "agility",
+            "tier": 0,
+            "day": 2,
+            "title": "TWO-SECOND HOLD",
+            "desc": "Once today, when something irritates or pressures you, pause for two full seconds before responding. Not five — just two. Long enough to break the automatic loop.",
+            "tactical_guide": {
+                "title": "PATTERN INTERRUPT",
+                "mechanic": "Response Delay",
+                "logic": "Automatic reactions bypass conscious processing. A two-second delay is enough to engage the deliberate system. The goal is not to suppress the reaction — it is to stop being entirely controlled by it."
+            },
+            "model": "Dual Process Theory (Kahneman)",
+            "xp": 1
+        },
+        {
+            "id": "agi_init_03",
+            "stat": "agility",
+            "tier": 0,
+            "day": 3,
+            "title": "ONE DEVIATION",
+            "desc": "Pick one small routine you do every day — how you make coffee, which route you take, when you check your phone. Do it differently today. Any change counts.",
+            "tactical_guide": {
+                "title": "NEURAL FLEXIBILITY DRILL",
+                "mechanic": "Habit Disruption",
+                "logic": "Routines are efficient but rigid. Deliberately varying small behaviours trains the brain to treat change as normal rather than threatening — the foundation of adaptive capacity."
+            },
+            "model": "Neuroplasticity / Routine Disruption",
+            "xp": 1
+        },
+        {
+            "id": "agi_init_04",
+            "stat": "agility",
+            "tier": 0,
+            "day": 4,
+            "title": "ACCEPT THE INTRUSION",
+            "desc": "When something unplanned happens today, instead of resisting it, say out loud or in your head: 'This is the new data.' Accept it as part of the day. Do not fight it.",
+            "tactical_guide": {
+                "title": "ACCEPTANCE FRAME",
+                "mechanic": "Cognitive Reappraisal",
+                "logic": "Resistance to the unplanned burns energy and achieves nothing. Framing interruptions as 'new data' shifts the operator from victim to analyst — same event, different internal state."
+            },
+            "model": "Acceptance and Commitment Therapy (Hayes)",
+            "xp": 1
+        },
+        {
+            "id": "agi_init_05",
+            "stat": "agility",
+            "tier": 0,
+            "day": 5,
+            "title": "REFRAME ONE FRUSTRATION",
+            "desc": "Identify one frustrating situation from today. Write two alternative interpretations of it that are constructive — not fake-positive, just different. What else could this mean?",
+            "tactical_guide": {
+                "title": "INTERPRETIVE FLEXIBILITY",
+                "mechanic": "Cognitive Reframing",
+                "logic": "Events do not have inherent meaning — meaning is assigned. Training the ability to generate multiple interpretations prevents tunnel vision under pressure and expands available responses."
+            },
+            "model": "Cognitive Reframing (Beck / Ellis)",
+            "xp": 1
+        },
+        {
+            "id": "agi_init_06",
+            "stat": "agility",
+            "tier": 0,
+            "day": 6,
+            "title": "FIVE-SECOND REACTIVE GAP",
+            "desc": "Every time you feel irritation or pressure today, pause for 5 full seconds before responding. No exceptions. If someone is waiting, they can wait five seconds.",
+            "tactical_guide": {
+                "title": "EXTENDED RESPONSE WINDOW",
+                "mechanic": "Deliberate Delay",
+                "logic": "Five seconds is enough for the prefrontal cortex to come fully online. What felt urgent at second one rarely looks the same at second five. The pause is not weakness — it is precision."
+            },
+            "model": "The Reactive Gap (Viktor Frankl)",
+            "xp": 2
+        },
+        {
+            "id": "agi_init_07",
+            "stat": "agility",
+            "tier": 0,
+            "day": 7,
+            "title": "FULL REFRAME PROTOCOL",
+            "desc": "Identify one frustrating situation today. Write two alternative, constructive interpretations. Then write one concrete action you could take based on the better interpretation.",
+            "tactical_guide": {
+                "title": "REFRAME TO ACTION",
+                "mechanic": "Cognitive Reappraisal + Behavioural Response",
+                "logic": "Reframing without action is philosophy. Adding a concrete response converts insight into operational output. This is the complete loop: observe, reinterpret, act."
+            },
+            "model": "Cognitive Behavioural Therapy (Beck)",
+            "xp": 2
+        },
+        {
+            "id": "end_init_01",
+            "stat": "endurance",
+            "tier": 0,
+            "day": 1,
+            "title": "AVOIDANCE SCAN",
+            "desc": "What task have you been putting off? You do not have to do it today. Just name it. Write it down and acknowledge that it exists.",
+            "tactical_guide": {
+                "title": "NAMING THE OBSTACLE",
+                "mechanic": "Task Identification",
+                "logic": "Avoidance is most powerful when it is unconscious. The act of naming a deferred task removes its ambient psychological weight and makes it a concrete object that can be acted upon."
+            },
+            "model": "Zeigarnik Effect (Bluma Zeigarnik)",
+            "xp": 1
+        },
+        {
+            "id": "end_init_02",
+            "stat": "endurance",
+            "tier": 0,
+            "day": 2,
+            "title": "TWO-MINUTE STRIKE",
+            "desc": "Find one task that will take under two minutes. Do it immediately — do not add it to a list. Just do it now.",
+            "tactical_guide": {
+                "title": "ZERO COST EXECUTION",
+                "mechanic": "Two-Minute Rule",
+                "logic": "Tasks under two minutes cost more cognitive load to track and defer than to execute. Completing them on contact removes them from the mental queue entirely."
+            },
+            "model": "Getting Things Done (David Allen)",
+            "xp": 1
+        },
+        {
+            "id": "end_init_03",
+            "stat": "endurance",
+            "tier": 0,
+            "day": 3,
+            "title": "INTENTION WRITE",
+            "desc": "Write one sentence: 'Today I will [specific action] at [approximate time].' That is the full directive. Write it, then honour it.",
+            "tactical_guide": {
+                "title": "IMPLEMENTATION INTENTION",
+                "mechanic": "When-Then Planning",
+                "logic": "Vague intentions fail because they have no trigger. Attaching a behaviour to a specific time dramatically increases follow-through — not through willpower, but through pre-decision."
+            },
+            "model": "Implementation Intentions (Gollwitzer)",
+            "xp": 1
+        },
+        {
+            "id": "end_init_04",
+            "stat": "endurance",
+            "tier": 0,
+            "day": 4,
+            "title": "20-MINUTE BLOCK",
+            "desc": "Block 20 uninterrupted minutes for one task today. Phone face down, notifications off. If you get distracted, note it and return. The block counts even if imperfect.",
+            "tactical_guide": {
+                "title": "FOCUS THRESHOLD",
+                "mechanic": "Time Blocking",
+                "logic": "Twenty minutes is the minimum duration for deep work to begin. The first few minutes are always resistance — that is normal and expected. Push through the first 5 and the rest follows."
+            },
+            "model": "Deep Work (Cal Newport)",
+            "xp": 1
+        },
+        {
+            "id": "end_init_05",
+            "stat": "endurance",
+            "tier": 0,
+            "day": 5,
+            "title": "LOOP CLOSE",
+            "desc": "Find one task that has been half-done for at least two days. Finish it today, even if the result is imperfect. Done and imperfect beats pending and perfect.",
+            "tactical_guide": {
+                "title": "COMPLETION MOMENTUM",
+                "mechanic": "Open Loop Closure",
+                "logic": "Incomplete tasks occupy mental bandwidth indefinitely. Closing even one loop per day compounds into significant cognitive headroom over a week."
+            },
+            "model": "Zeigarnik Effect + GTD",
+            "xp": 1
+        },
+        {
+            "id": "end_init_06",
+            "stat": "endurance",
+            "tier": 0,
+            "day": 6,
+            "title": "NO-COMPLAINT HOUR",
+            "desc": "For one hour today, do not complain — out loud or internally. When a complaint surfaces, replace it with either an action or silence. One hour.",
+            "tactical_guide": {
+                "title": "MENTAL DISCIPLINE DRILL",
+                "mechanic": "Complaint Interruption",
+                "logic": "Complaints are cognitively expensive and operationally useless. Training the ability to redirect complaint into action — even for one hour — builds the mental infrastructure for longer streaks."
+            },
+            "model": "Stoic Practice (Marcus Aurelius)",
+            "xp": 2
+        },
+        {
+            "id": "end_init_07",
+            "stat": "endurance",
+            "tier": 0,
+            "day": 7,
+            "title": "SOVEREIGN HOUR",
+            "desc": "Block one full hour today for your most important task. Zero interruptions. No requests accepted. Treat this hour as non-negotiable — the same way you would treat a meeting with someone you cannot cancel.",
+            "tactical_guide": {
+                "title": "PROTECTED TIME DEPLOYMENT",
+                "mechanic": "Time Sovereignty",
+                "logic": "The gap between operators who execute and those who do not is rarely motivation — it is protected time. One hour of genuine focus, defended from intrusion, produces more output than three hours of fragmented attention."
+            },
+            "model": "Sovereign Hour / Deep Work (Cal Newport)",
+            "xp": 2
+        },
+        {
+            "id": "cha_init_01",
+            "stat": "charisma",
+            "tier": 0,
+            "day": 1,
+            "title": "LISTENING AUDIT",
+            "desc": "In your next conversation, notice when you stop listening to understand and start listening to respond. You do not have to change it today — just catch yourself doing it.",
+            "tactical_guide": {
+                "title": "SELF-AWARENESS BEFORE SKILL",
+                "mechanic": "Metacognitive Monitoring",
+                "logic": "Most operators cannot identify the moment they disengage from listening. Noticing the shift is the prerequisite skill. You cannot fix what you cannot observe."
+            },
+            "model": "Active Listening Research (Rogers)",
+            "xp": 1
+        },
+        {
+            "id": "cha_init_02",
+            "stat": "charisma",
+            "tier": 0,
+            "day": 2,
+            "title": "NAME DEPLOYMENT",
+            "desc": "Use one person's name once in conversation today. Not multiple times — just once, naturally. Notice how they respond.",
+            "tactical_guide": {
+                "title": "RECOGNITION SIGNAL",
+                "mechanic": "Name-as-Acknowledgement",
+                "logic": "A person's name is the most personally significant word in their vocabulary. Using it once, naturally, signals that you see them as an individual — a disproportionately powerful social signal for minimal effort."
+            },
+            "model": "Dale Carnegie Principles",
+            "xp": 1
+        },
+        {
+            "id": "cha_init_03",
+            "stat": "charisma",
+            "tier": 0,
+            "day": 3,
+            "title": "ONE GENUINE QUESTION",
+            "desc": "Ask one person a genuine question about their life today — not small talk, but something you are actually curious about. Listen to the full answer without redirecting to yourself.",
+            "tactical_guide": {
+                "title": "INTEREST AS INFLUENCE",
+                "mechanic": "Curiosity-Driven Connection",
+                "logic": "People remember those who showed genuine interest in them, not those who were impressive. One real question, fully attended to, builds more rapport than an hour of performance."
+            },
+            "model": "How to Win Friends (Dale Carnegie)",
+            "xp": 1
+        },
+        {
+            "id": "cha_init_04",
+            "stat": "charisma",
+            "tier": 0,
+            "day": 4,
+            "title": "PRECISE APPRECIATION",
+            "desc": "Tell one person something specific you appreciate about them today. Not 'you're great' — something concrete: what they did, why it mattered, what it meant to you.",
+            "tactical_guide": {
+                "title": "SPECIFICITY AS SINCERITY",
+                "mechanic": "Targeted Positive Regard",
+                "logic": "Generic praise is discounted as social noise. Specific appreciation signals that you have been paying attention — which is the highest-value social signal available."
+            },
+            "model": "Positive Psychology (Seligman)",
+            "xp": 1
+        },
+        {
+            "id": "cha_init_05",
+            "stat": "charisma",
+            "tier": 0,
+            "day": 5,
+            "title": "FULL LISTEN",
+            "desc": "In one conversation today, listen to understand — not to respond. Do not plan what you will say while the other person is still speaking. If silence follows, let it.",
+            "tactical_guide": {
+                "title": "ACTIVE PRESENCE",
+                "mechanic": "Full Attentional Listening",
+                "logic": "Most people are not listened to — they are waited out. Being genuinely heard is rare enough that it creates strong, immediate connection. The operator who can do this consistently has a social advantage most people never develop."
+            },
+            "model": "Neural Listening / Active Listening (Rogers)",
+            "xp": 1
+        },
+        {
+            "id": "cha_init_06",
+            "stat": "charisma",
+            "tier": 0,
+            "day": 6,
+            "title": "SMALL FAVOUR REQUEST",
+            "desc": "Ask a small, genuine favour of someone today — borrow something, ask an opinion, request a recommendation. Notice how they respond. Most people like being asked.",
+            "tactical_guide": {
+                "title": "BEN FRANKLIN EFFECT",
+                "mechanic": "Favour-as-Connection",
+                "logic": "Asking for a small favour causes the giver to rationalise that they must like you — because why else would they help? Counterintuitively, asking for help builds rapport more reliably than offering it."
+            },
+            "model": "Ben Franklin Effect (cognitive dissonance)",
+            "xp": 2
+        },
+        {
+            "id": "cha_init_07",
+            "stat": "charisma",
+            "tier": 0,
+            "day": 7,
+            "title": "FORD FREQUENCY SCAN",
+            "desc": "In a social interaction today, ask about their Family, Occupation, Recreation, and Dreams — not all four at once, but weave them in naturally. Listen more than you speak.",
+            "tactical_guide": {
+                "title": "STRUCTURED INTEREST",
+                "mechanic": "FORD Framework",
+                "logic": "The FORD framework ensures you cover the topics people most want to talk about: what they love, what they do, what they enjoy, and what they want. Operators who use it never run out of conversation — and are always remembered as good listeners."
+            },
+            "model": "FORD Conversational Framework",
+            "xp": 2
+        },
+        {
             "id": "str_t1_01",
             "stat": "strength",
             "tier": 1,
@@ -285,7 +810,7 @@
             "stat": "intelligence",
             "tier": 1,
             "title": "SPACED RECALL SCAN",
-            "desc": "Take something you have learned recently — a concept, a skill, a piece of information — and review it today without notes. Write what you remember, then check what you missed and why.",
+            "desc": "Take something you learned last week and review it today without notes. Write what you remember, then check what you missed and why.",
             "tactical_guide": {
                 "title": "RECALL REINFORCEMENT",
                 "mechanic": "Forgetting Curve",
