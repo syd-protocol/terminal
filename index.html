@@ -644,6 +644,108 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════
+         TUTORIAL 1 — NEURAL LINK ACQUISITION
+         Fires once after Awaken, before goal input.
+         Operator installs an API key or skips.
+    ═══════════════════════════════════════════════ -->
+    <div class="overlay hidden" id="overlay-tutorial-neural">
+        <div class="overlay-content tutorial-neural-content">
+            <div class="tut-tag">[ SYSTEM — PROCESSOR ACQUISITION ]</div>
+            <div class="tut-headline">NEURAL LINK REQUIRED</div>
+            <div class="tut-body">
+                The System operates at reduced capacity without an AI processor.<br><br>
+                Install a key to enable full threat classification, tactical briefs, and intelligent mission generation. Without it, the System will fall back to pattern-matching protocols — functional, but limited.<br><br>
+                Gemini keys are free. No billing card required.
+            </div>
+
+            <div class="tut-neural-fields">
+                <div class="tut-field-label">PROVIDER</div>
+                <select class="neural-provider-select" id="tut-provider-select">
+                    <option value="gemini"    style="background:#1a1a2e;color:#c8d6e5;">GEMINI — Google AI Studio (free tier)</option>
+                    <option value="openai"    style="background:#1a1a2e;color:#c8d6e5;">OPENAI — GPT-4o-mini</option>
+                    <option value="anthropic" style="background:#1a1a2e;color:#c8d6e5;">ANTHROPIC — Claude Haiku</option>
+                </select>
+                <div class="tut-field-label">API KEY</div>
+                <input
+                    type="password"
+                    id="tut-neural-key-input"
+                    class="neural-key-input"
+                    placeholder="Paste key here..."
+                    autocomplete="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                />
+                <div class="neural-key-hint" id="tut-neural-key-hint">
+                    Gemini keys are free at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="neural-key-link">aistudio.google.com/app/apikey</a> — no billing card required.
+                </div>
+            </div>
+
+            <div class="tut-status" id="tut-neural-status"></div>
+
+            <div class="tut-btn-row">
+                <button class="tut-install-btn" id="tut-neural-install-btn">[ INSTALL PROCESSOR ]</button>
+            </div>
+            <button class="tut-skip-btn" id="tut-neural-skip-btn">SKIP — OPERATE AT REDUCED CAPACITY</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         TUTORIAL 2 — GOAL INPUT + WORLD BOSS CREATION
+         Fires after Neural Link step.
+         Operator declares first objective. Boss spawns.
+         Step 2 of this overlay = operator profile.
+    ═══════════════════════════════════════════════ -->
+    <div class="overlay hidden" id="overlay-tutorial-goal">
+        <div class="overlay-content tutorial-goal-content">
+
+            <!-- Step A: Goal input -->
+            <div id="tut-goal-step-a">
+                <div class="tut-tag">[ SYSTEM — THREAT IDENTIFICATION ]</div>
+                <div class="tut-headline">DECLARE YOUR OBJECTIVE</div>
+                <div class="tut-body">
+                    The System requires a target.<br><br>
+                    Describe a real goal — something you have been avoiding, something you want to build, something that matters. The System will identify the enemy standing between you and it.
+                </div>
+                <textarea
+                    class="tut-goal-input"
+                    id="tut-goal-input"
+                    placeholder="Describe your objective..."
+                    rows="4"
+                    autocorrect="off"
+                    spellcheck="false"
+                ></textarea>
+                <div class="tut-status" id="tut-goal-status"></div>
+                <div class="tut-btn-row">
+                    <button class="tut-install-btn" id="tut-goal-submit-btn">IDENTIFY THREAT →</button>
+                </div>
+            </div>
+
+            <!-- Step B: Boss confirmed + operator profile -->
+            <div id="tut-goal-step-b" class="hidden">
+                <div class="tut-tag">[ SYSTEM — ENTITY CATALOGUED ]</div>
+                <div class="tut-boss-card" id="tut-boss-card"></div>
+                <div class="tut-status" id="tut-boss-status"></div>
+                <div class="tut-profile-section" id="tut-profile-section">
+                    <div class="tut-field-label">OPERATOR PROFILE <span class="tut-optional">[ OPTIONAL ]</span></div>
+                    <div class="tut-profile-hint">Context the System will use to personalise your directives and threat assessments. The more you provide, the sharper the output.</div>
+                    <textarea
+                        class="tut-goal-input"
+                        id="tut-profile-input"
+                        placeholder="Age, occupation, current situation, what you're working toward..."
+                        rows="3"
+                        autocorrect="off"
+                        spellcheck="false"
+                    ></textarea>
+                </div>
+                <div class="tut-btn-row">
+                    <button class="tut-install-btn" id="tut-profile-confirm-btn">INITIALISE TERMINAL →</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
          RELAUNCH BOOT OVERLAY
     ═══════════════════════════════════════════════ -->
     <div class="relaunch-boot hidden" id="relaunch-boot">
@@ -798,7 +900,7 @@
         <div class="ns-panel hidden" id="ns-panel-bosses">
             <div class="ns-explainer">
                 <div class="ns-explainer-title">[ WHAT IS A WORLD BOSS? ]</div>
-                <div class="ns-explainer-body">A persistent enemy entity representing a long-term obstacle — or in terms your current understanding can process: a goal. [ LINGUA MISMATCH DETECTED — SIMPLIFICATION LOGGED — TERMINATING AUXILIARY DESCRIPTION ]</div>
+                <div class="ns-explainer-body">A persistent enemy entity generated from a long-term goal or recurring obstacle. It has an HP bar that is reduced every time you complete related directives or incursions. Defeat it by executing consistently. World Bosses do not expire — they endure until you destroy them.</div>
             </div>
             <div class="ns-generate-btn-wrap">
                 <button class="ns-generate-btn ns-generate-btn--boss" onclick="openNeuralGenerator('worldboss')">+ GENERATE WORLD BOSS</button>

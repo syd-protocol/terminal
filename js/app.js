@@ -48,49 +48,6 @@ function getDB() {
 const STAT_NAMES  = ['strength', 'intelligence', 'agility', 'endurance', 'charisma'];
 const STAT_FLOOR  = 10;
 
-// ─── KEYWORD-TO-STAT CLASSIFIER ──────────────────────────
-// Used by Tutorial 1 to map a free-text goal to a primary stat
-// and up to two linked stats — without requiring an AI call.
-// Logic: lowercase goal text → count keyword matches per stat →
-//   primaryStat  = highest match count
-//   linkedStats  = 2nd and 3rd highest (only if count > 0)
-// Tie-break order: strength → intelligence → endurance → agility → charisma
-const STAT_KEYWORDS = {
-    strength:     ['fitness','gym','health','weight','run','walk','exercise','body','eat','sleep','energy','strong','physical','diet','training','workout','sport','lift','muscle','cardio','stamina','nutrition','hydrat','rest','recover'],
-    intelligence: ['learn','study','read','skill','career','business','build','create','write','code','design','knowledge','degree','course','research','understand','develop','think','problem','solve','analys','strateg','plan','innovat','curious'],
-    agility:      ['adapt','change','flexible','anxiety','stress','fear','habit','routine','comfort','new','risk','decision','pivot','challenge','difficult','cope','adjust','spontan','uncertain','overwhelm','pressure','react','respond'],
-    endurance:    ['finish','complete','consistent','discipline','focus','distract','procrastin','motivat','persist','follow','through','commit','goal','long','project','task','deadline','productiv','deliver','execute','sustain','daily','routine','schedule'],
-    charisma:     ['relationship','social','friend','network','communicat','speak','influenc','connect','people','family','date','love','confident','presence','lead','public','audience','persuad','negotiat','team','collaborat','interpersonal','assertiv','shy']
-};
-
-/**
- * classifyGoal(text)
- * Accepts a free-text goal string.
- * Returns { primaryStat, linkedStats[] } where linkedStats has 0–2 entries.
- * Falls back to 'endurance' as primary if no keywords match at all.
- */
-function classifyGoal(text) {
-    const lower = text.toLowerCase();
-    const TIE_BREAK = ['strength','intelligence','endurance','agility','charisma'];
-
-    // Count keyword hits per stat
-    const scores = {};
-    for (const stat of TIE_BREAK) {
-        scores[stat] = STAT_KEYWORDS[stat].filter(kw => lower.includes(kw)).length;
-    }
-
-    // Sort by score desc, then by tie-break order
-    const ranked = TIE_BREAK.slice().sort((a, b) => {
-        if (scores[b] !== scores[a]) return scores[b] - scores[a];
-        return TIE_BREAK.indexOf(a) - TIE_BREAK.indexOf(b);
-    });
-
-    const primaryStat  = ranked[0];
-    const linkedStats  = ranked.slice(1).filter(s => scores[s] > 0).slice(0, 2);
-
-    return { primaryStat, linkedStats };
-}
-
 // ─── STAGE 6B: TUTORIAL DIRECTIVE ────────────────────────
 // Injected at the top of the directive list on day one only.
 // XP = 0 (calibration, not execution). Never repeats.
@@ -1095,11 +1052,231 @@ function createPlayer(name) {
     recordReferralIfPresent();
     updateStatusScreen();
     showScreen('screen-status');
-    runFirstTransmission();
+    runTutorialSequence();
 }
 
 function effectiveGear() {
     return (player&&player.buffs&&buffActive(player.buffs.sprintScroll))?Math.min(3,currentGear+1):currentGear;
+}
+
+// ════════════════════════════════════════════════════════════════
+// TUTORIAL SEQUENCE — fires once after Awaken for new operators
+//
+//   Step 1 — overlay-tutorial-neural  (Neural Link install or skip)
+//   Step 2 — overlay-tutorial-goal    (Goal input → World Boss spawn)
+//             Step 2b inside same overlay: operator profile
+//
+// After Step 2b completes, runFirstTransmission() fires as normal.
+// ════════════════════════════════════════════════════════════════
+
+function runTutorialSequence() {
+    if (player.hasCompletedTutorial) { runFirstTransmission(); return; }
+    runTutorialNeural();
+}
+
+// ── Tutorial 1: Neural Link ───────────────────────────────────
+function runTutorialNeural() {
+    const overlay   = document.getElementById('overlay-tutorial-neural');
+    const installBtn = document.getElementById('tut-neural-install-btn');
+    const skipBtn    = document.getElementById('tut-neural-skip-btn');
+    const keyInput   = document.getElementById('tut-neural-key-input');
+    const provSel    = document.getElementById('tut-provider-select');
+    const statusEl   = document.getElementById('tut-neural-status');
+    const hintEl     = document.getElementById('tut-neural-key-hint');
+
+    // Sync hint text when provider changes
+    function updateHint() {
+        const p = provSel ? provSel.value : 'gemini';
+        if (!hintEl) return;
+        if (p === 'gemini') {
+            hintEl.innerHTML = 'Gemini keys are free at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="neural-key-link">aistudio.google.com/app/apikey</a> — no billing card required.';
+        } else if (p === 'openai') {
+            hintEl.innerHTML = 'OpenAI keys available at <a href="https://platform.openai.com/api-keys" target="_blank" class="neural-key-link">platform.openai.com/api-keys</a>.';
+        } else {
+            hintEl.innerHTML = 'Anthropic keys available at <a href="https://console.anthropic.com/" target="_blank" class="neural-key-link">console.anthropic.com</a>.';
+        }
+    }
+    if (provSel) provSel.addEventListener('change', updateHint);
+    updateHint();
+
+    overlay.classList.remove('hidden');
+
+    installBtn.onclick = () => {
+        const k = keyInput ? keyInput.value.trim() : '';
+        const p = provSel ? provSel.value : 'gemini';
+        if (k.length < 8) {
+            statusEl.textContent = '[ ERROR: KEY TOO SHORT — MINIMUM 8 CHARACTERS ]';
+            statusEl.className   = 'tut-status tut-status--error';
+            return;
+        }
+        setNeuralKey(k, p);
+        keyInput.value = '';
+        statusEl.textContent = '[ PROCESSOR ONLINE — ' + p.toUpperCase() + ' — SIGNAL CONFIRMED ]';
+        statusEl.className   = 'tut-status tut-status--ok';
+        installBtn.disabled  = true;
+        skipBtn.style.display = 'none';
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            runTutorialGoal(true);
+        }, 900);
+    };
+
+    skipBtn.onclick = () => {
+        statusEl.textContent = '[ WARNING: NEURAL LINK OFFLINE — SYSTEM INTELLIGENCE DEGRADED — PATTERN-MATCH PROTOCOLS ENGAGED — OPERATOR PROCEEDING AT REDUCED CAPACITY ]';
+        statusEl.className   = 'tut-status tut-status--warn';
+        installBtn.style.display = 'none';
+        skipBtn.disabled = true;
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            runTutorialGoal(false);
+        }, 1800);
+    };
+}
+
+// ── Tutorial 2: Goal Input + World Boss + Profile ─────────────
+function runTutorialGoal(hasKey) {
+    const overlay     = document.getElementById('overlay-tutorial-goal');
+    const stepA       = document.getElementById('tut-goal-step-a');
+    const stepB       = document.getElementById('tut-goal-step-b');
+    const goalInput   = document.getElementById('tut-goal-input');
+    const goalStatus  = document.getElementById('tut-goal-status');
+    const submitBtn   = document.getElementById('tut-goal-submit-btn');
+    const bossCard    = document.getElementById('tut-boss-card');
+    const bossStatus  = document.getElementById('tut-boss-status');
+    const profileInput = document.getElementById('tut-profile-input');
+    const confirmBtn  = document.getElementById('tut-profile-confirm-btn');
+
+    stepA.classList.remove('hidden');
+    stepB.classList.add('hidden');
+    overlay.classList.remove('hidden');
+
+    submitBtn.onclick = async () => {
+        const goalText = goalInput ? goalInput.value.trim() : '';
+        if (goalText.length < 5) {
+            goalStatus.textContent = '[ ERROR: INSUFFICIENT INPUT — DECLARE YOUR OBJECTIVE ]';
+            goalStatus.className   = 'tut-status tut-status--error';
+            return;
+        }
+
+        submitBtn.disabled   = true;
+        goalStatus.textContent = '[ SCANNING OBJECTIVE... ]';
+        goalStatus.className   = 'tut-status';
+
+        // --- Build local boss immediately from classifyGoal() ---
+        const { primaryStat, linkedStats } = classifyGoal(goalText);
+        const ts = Date.now();
+        let boss = {
+            id:          'boss_' + ts,
+            type:        'worldboss',
+            label:       '[ WORLD BOSS: ' + goalText.toUpperCase().slice(0, 40) + ' ]',
+            stat:        primaryStat,
+            linkedStats: linkedStats,
+            maxHp:       500,
+            currentHp:   500,
+            enemy:       goalText.toUpperCase().slice(0, 50),
+            weapon:      primaryStat.toUpperCase() + ' PROTOCOL',
+            tacticalGuide: 'Threat identified via pattern analysis. Full tactical brief pending Neural Link processing.'
+        };
+
+        // Save local boss immediately
+        const activeBosses = loadWorldBosses();
+        activeBosses.push(boss);
+        saveWorldBosses(activeBosses);
+
+        // Show Step B with local boss card
+        stepA.classList.add('hidden');
+        stepB.classList.remove('hidden');
+        renderTutorialBossCard(bossCard, boss);
+
+        if (hasKey) {
+            bossStatus.textContent = '[ PRELIMINARY ENTITY DETECTED — NEURAL LINK PROCESSING FULL PROFILE ]';
+            bossStatus.className   = 'tut-status';
+            // Fire AI in background with auto-retry
+            attemptTutorialBossUpgrade(boss, goalText, bossCard, bossStatus, 0);
+        } else {
+            bossStatus.textContent = '[ ENTITY CATALOGUED — INSTALL NEURAL LINK FOR FULL THREAT CLASSIFICATION ]';
+            bossStatus.className   = 'tut-status tut-status--warn';
+        }
+
+        // Ephemeral — clear goal input
+        if (goalInput) goalInput.value = '';
+    };
+
+    confirmBtn.onclick = () => {
+        const profile = profileInput ? profileInput.value.trim() : '';
+        if (profile) {
+            player.operatorProfile = profile;
+            savePlayer();
+        }
+        player.hasCompletedTutorial = true;
+        savePlayer();
+        overlay.classList.add('hidden');
+        showLog('[ TERMINAL INITIALISED — DIRECTIVES STANDING BY ]', 'accent');
+        renderElasticUI();
+        updateNeuralBadge();
+        runFirstTransmission();
+    };
+}
+
+// Renders a compact boss card inside the tutorial overlay
+function renderTutorialBossCard(container, boss) {
+    container.innerHTML = `
+        <div class="tut-boss-label">${boss.label}</div>
+        <div class="tut-boss-enemy">ENTITY: ${boss.enemy}</div>
+        <div class="tut-boss-weapon">WEAPON: ${boss.weapon}</div>
+        <div class="tut-boss-stat">PRIMARY STAT: ${boss.stat.toUpperCase()}</div>
+        <div class="tut-boss-guide">${boss.tacticalGuide}</div>
+    `;
+}
+
+// AI upgrade attempt — fires in background, auto-retries once, then shows manual retry
+async function attemptTutorialBossUpgrade(boss, goalText, bossCard, bossStatus, attempt) {
+    const TIMEOUT_MS = 8000;
+    try {
+        const result = await Promise.race([
+            callNeuralAPI(goalText, 'worldboss'),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT')), TIMEOUT_MS))
+        ]);
+        // Merge AI result into existing boss entry (preserve id, type, hp)
+        const bosses = loadWorldBosses();
+        const idx = bosses.findIndex(b => b.id === boss.id);
+        if (idx !== -1) {
+            bosses[idx].label         = result.label         || bosses[idx].label;
+            bosses[idx].enemy         = result.enemy         || bosses[idx].enemy;
+            bosses[idx].weapon        = result.weapon        || bosses[idx].weapon;
+            bosses[idx].tacticalGuide = result.tacticalGuide || bosses[idx].tacticalGuide;
+            bosses[idx].stat          = result.stat          || bosses[idx].stat;
+            bosses[idx].linkedStats   = result.linkedStats   || bosses[idx].linkedStats;
+            saveWorldBosses(bosses);
+            // Re-render card with upgraded data
+            renderTutorialBossCard(bossCard, bosses[idx]);
+        }
+        bossStatus.textContent = '[ NEURAL LINK ONLINE — FULL THREAT PROFILE ACQUIRED ]';
+        bossStatus.className   = 'tut-status tut-status--ok';
+        renderElasticUI();
+    } catch (e) {
+        if (attempt === 0) {
+            // Auto-retry once, immediately
+            attemptTutorialBossUpgrade(boss, goalText, bossCard, bossStatus, 1);
+        } else if (attempt === 1) {
+            // Show manual retry button
+            bossStatus.innerHTML = '[ NEURAL LINK SIGNAL DEGRADED — ENTITY LOCKED AT PRELIMINARY STAGE — FULL PROFILE PENDING ] <button class="tut-retry-btn" id="tut-boss-retry-btn">[ RETRY NEURAL LINK ]</button>';
+            bossStatus.className = 'tut-status tut-status--warn';
+            const retryBtn = document.getElementById('tut-boss-retry-btn');
+            if (retryBtn) {
+                retryBtn.onclick = () => {
+                    retryBtn.remove();
+                    bossStatus.textContent = '[ RETRYING NEURAL LINK... ]';
+                    bossStatus.className   = 'tut-status';
+                    attemptTutorialBossUpgrade(boss, goalText, bossCard, bossStatus, 2);
+                };
+            }
+        } else {
+            // Final failure — stay local permanently
+            bossStatus.textContent = '[ NEURAL LINK UNRESPONSIVE — ENTITY REMAINS AT PRELIMINARY STAGE — REGENERATE FROM DIRECTIVE UPLOAD WHEN SIGNAL STABILISES ]';
+            bossStatus.className   = 'tut-status tut-status--warn';
+        }
+    }
 }
 
 // ════════════════════════════════════════════════════════════════
