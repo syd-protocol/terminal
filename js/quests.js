@@ -131,6 +131,30 @@ function getDailyQuests(allQuests, level, gear) {
         }
     });
 
+    // ── Item 5: Guaranteed World Boss directive slot ──────────────
+    // If an active world boss exists and none of the selected directives
+    // match its primary stat, replace the last directive in the list with
+    // a random directive from the boss's stat pool (tier-filtered).
+    // This ensures the operator always has at least one actionable strike
+    // against their active boss every day.
+    try {
+        const bossRaw = localStorage.getItem('syd_world_bosses');
+        const bosses  = bossRaw ? JSON.parse(bossRaw) : [];
+        if (bosses.length > 0) {
+            const boss     = bosses[0];
+            const bossStat = boss.stat;
+            const hasMatch = daily.some(q => q.stat === bossStat);
+            if (!hasMatch && daily.length > 0) {
+                const bossPool = allQuests.filter(q => q.stat === bossStat && q.tier <= tier);
+                if (bossPool.length > 0) {
+                    const seed        = dateToNumber(today) + 99;
+                    const replacement = bossPool[seed % bossPool.length];
+                    daily[daily.length - 1] = replacement;
+                }
+            }
+        }
+    } catch(e) { /* localStorage unavailable — skip silently */ }
+
     return daily;
 }
 

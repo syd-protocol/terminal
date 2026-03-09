@@ -329,227 +329,272 @@
             <h2>[ SYSTEM SETTINGS ]</h2>
         </div>
 
-        <div class="settings-section">
-            <div class="settings-section-title">DESIGNATION</div>
-            <input type="text" id="settings-name-input" class="settings-name-input"
-                   maxlength="20" placeholder="ENTER NEW DESIGNATION..." />
-            <button class="nav-btn" id="save-name-btn">CONFIRM DESIGNATION</button>
+        <!-- ── Settings Tab Bar ── -->
+        <div class="stab-bar">
+            <button class="stab stab--active" data-stab="system"      onclick="switchSettingsTab('system')">SYSTEM</button>
+            <button class="stab"              data-stab="neural"      onclick="switchSettingsTab('neural')">NEURAL LINK</button>
+            <button class="stab"              data-stab="sync"        onclick="switchSettingsTab('sync')">SYNC</button>
+            <button class="stab stab--danger" data-stab="danger"      onclick="switchSettingsTab('danger')">DANGER</button>
         </div>
 
-        <div class="settings-section">
-            <div class="settings-section-title">OPERATIONAL GEAR</div>
-            <div class="gear-desc">
-                Gear controls how many directives are issued per stat each day.
-                More directives means more practice reps — and real-world execution
-                is the root lever. XP follows effort, not the other way around.
-            </div>
-            <div class="gear-options">
-                <button class="gear-option-btn gear-active" data-gear="1">
-                    <div class="gear-name">GEAR 1</div>
-                    <div class="gear-label">Standard</div>
-                    <div class="gear-detail">1 directive per stat · 5 daily</div>
-                </button>
-                <button class="gear-option-btn" data-gear="2">
-                    <div class="gear-name">GEAR 2</div>
-                    <div class="gear-label">Practice Mode</div>
-                    <div class="gear-detail">2 directives per stat · 10 daily</div>
-                </button>
-                <button class="gear-option-btn" data-gear="3">
-                    <div class="gear-name">GEAR 3</div>
-                    <div class="gear-label">Deep Practice</div>
-                    <div class="gear-detail">3 directives per stat · 15 daily</div>
-                </button>
-            </div>
-            <div class="gear-warning hidden" id="gear-warning-1">
-                One directive per stat. Consistent and sustainable. This path is long — that is the point.
-            </div>
-            <div class="gear-warning hidden" id="gear-warning-2">
-                Two directives per stat, every day. A genuine commitment.
-            </div>
-            <div class="gear-warning hidden" id="gear-warning-3">
-                WARNING: Gear 3 has been linked to unexpected competence, suspicious life improvement,
-                and in rare timelines, actual results.<br><br>
-                <em>Fifteen directives daily is a serious operational load.</em>
-            </div>
-        </div>
+        <!-- ══ TAB: SYSTEM ══════════════════════════════════════ -->
+        <div class="stab-panel" id="stab-panel-system">
 
-        <!-- ── SYNC TERMINAL ───────────────────────────── -->
-        <div class="settings-section" id="sync-section">
-            <div class="settings-section-title">SYNC TERMINAL</div>
-
-            <!-- Ghost / Unlinked state -->
-            <div id="sync-ghost-view">
-                <div class="sync-lore">
-                    Terminal operating unlinked. Progress is stored locally only.
-                    Establish a Save Frequency to enable automated cloud protection.
-                    The System will handle broadcasts silently once the channel is open.
-                </div>
-                <button class="nav-btn sync-establish-btn" id="sync-establish-btn">
-                    [ ESTABLISH FREQUENCY ]
-                </button>
+            <div class="settings-section">
+                <div class="settings-section-title">DESIGNATION</div>
+                <input type="text" id="settings-name-input" class="settings-name-input"
+                       maxlength="20" placeholder="ENTER NEW DESIGNATION..." />
+                <button class="nav-btn" id="save-name-btn">CONFIRM DESIGNATION</button>
             </div>
 
-            <!-- Linked / Active state -->
-            <div id="sync-linked-view" class="hidden">
-                <div class="sync-freq-display">
-                    <div class="sync-freq-label">[ SAVE FREQUENCY ]</div>
-                    <div class="sync-freq-code" id="sync-freq-code">—</div>
+            <div class="settings-section">
+                <div class="settings-section-title">OPERATOR PROFILE</div>
+                <div class="gear-desc">
+                    Context the System uses to personalise directives and threat assessments.
+                    The more you provide, the sharper the output.
                 </div>
-                <div class="sync-diagnostics">
-                    <div class="sync-diag-row">
-                        <span class="sync-diag-label">UPLINK STATUS</span>
-                        <span class="sync-diag-value sync-diag-active" id="sync-uplink-status">ACTIVE</span>
-                    </div>
-                    <div class="sync-diag-row">
-                        <span class="sync-diag-label">LAST BROADCAST</span>
-                        <span class="sync-diag-value" id="sync-last-broadcast">—</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Reconstitute — always visible -->
-            <div class="sync-recover-wrap">
-                <div class="sync-divider">— RECONSTITUTE TERMINAL —</div>
-                <div class="sync-recover-lore">
-                    Restore your progress from the cloud on this device.
-                </div>
-                <input
-                    type="text"
-                    id="sync-recover-input"
-                    class="settings-name-input sync-recover-input"
-                    maxlength="9"
-                    placeholder="FREQUENCY CODE..."
-                    autocomplete="off"
+                <textarea
+                    id="settings-profile-input"
+                    class="settings-profile-input"
+                    placeholder="Age, occupation, current situation, what you're working toward..."
+                    rows="4"
                     autocorrect="off"
                     spellcheck="false"
-                />
-                <button class="nav-btn sync-recover-btn" id="sync-recover-btn">
-                    RECONSTITUTE
-                </button>
+                ></textarea>
+                <button class="nav-btn" id="save-profile-btn">SAVE PROFILE</button>
             </div>
 
-            <div class="sync-status" id="sync-status"></div>
+            <div class="settings-section">
+                <div class="settings-section-title">OPERATIONAL GEAR</div>
+                <div class="gear-desc">
+                    Gear controls how many directives are issued per stat each day.
+                    More directives means more practice reps — and real-world execution
+                    is the root lever. XP follows effort, not the other way around.
+                </div>
+                <div class="gear-options">
+                    <button class="gear-option-btn gear-active" data-gear="1">
+                        <div class="gear-name">GEAR 1</div>
+                        <div class="gear-label">Standard</div>
+                        <div class="gear-detail">1 directive per stat · 5 daily</div>
+                    </button>
+                    <button class="gear-option-btn" data-gear="2">
+                        <div class="gear-name">GEAR 2</div>
+                        <div class="gear-label">Practice Mode</div>
+                        <div class="gear-detail">2 directives per stat · 10 daily</div>
+                    </button>
+                    <button class="gear-option-btn" data-gear="3">
+                        <div class="gear-name">GEAR 3</div>
+                        <div class="gear-label">Deep Practice</div>
+                        <div class="gear-detail">3 directives per stat · 15 daily</div>
+                    </button>
+                </div>
+                <div class="gear-warning hidden" id="gear-warning-1">
+                    One directive per stat. Consistent and sustainable. This path is long — that is the point.
+                </div>
+                <div class="gear-warning hidden" id="gear-warning-2">
+                    Two directives per stat, every day. A genuine commitment.
+                </div>
+                <div class="gear-warning hidden" id="gear-warning-3">
+                    WARNING: Gear 3 has been linked to unexpected competence, suspicious life improvement,
+                    and in rare timelines, actual results.<br><br>
+                    <em>Fifteen directives daily is a serious operational load.</em>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">SOUND</div>
+                <div class="gear-desc">Toggle ambient audio and UI sounds.</div>
+                <button class="nav-btn" id="settings-sound-btn" onclick="cycleSoundState()">TOGGLE SOUND</button>
+            </div>
+
         </div>
 
-        <!-- ── SYNC-LINK ───────────────────────────────── -->
-        <div class="settings-section" id="synclink-section">
-            <div class="settings-section-title">SYNC-LINK</div>
+        <!-- ══ TAB: NEURAL LINK ═════════════════════════════════ -->
+        <div class="stab-panel hidden" id="stab-panel-neural">
 
-            <!-- Untethered state -->
-            <div id="synclink-idle-view">
-                <div class="sync-lore">
-                    Tether your terminal to an ally. Share a Sync-ID and
-                    complete directives together. Simultaneous execution
-                    triggers <span class="synclink-resonance-label">[ RESONANCE ]</span>
-                    — doubling XP for that event.
+            <div class="settings-section" id="neural-section">
+                <div class="settings-section-title">NEURAL LINK</div>
+
+                <div class="neural-status" id="neural-processor-status">[ PROCESSOR OFFLINE — NO KEY INSTALLED ]</div>
+
+                <p class="neural-desc">
+                    Install an AI processor key to translate real-world plans into Incursions and World Bosses.
+                    Your key is stored locally only — transmitted only to your chosen AI provider, never to any server.
+                </p>
+
+                <div class="neural-key-section">
+                    <div class="neural-field-label">PROVIDER</div>
+                    <select class="neural-provider-select" id="neural-provider-select" onchange="onProviderChange()">
+                        <option value="gemini"    style="background:#1a1a2e;color:#c8d6e5;">GEMINI — Google AI Studio (free tier)</option>
+                        <option value="openai"    style="background:#1a1a2e;color:#c8d6e5;">OPENAI — GPT-4o-mini</option>
+                        <option value="anthropic" style="background:#1a1a2e;color:#c8d6e5;">ANTHROPIC — Claude Haiku</option>
+                    </select>
+
+                    <div class="neural-field-label">API KEY</div>
+                    <input
+                        type="password"
+                        class="neural-key-input"
+                        id="neural-key-input"
+                        placeholder="Paste key here..."
+                        autocomplete="off"
+                        autocorrect="off"
+                        spellcheck="false"
+                    />
+                    <div class="neural-key-hint" id="neural-key-hint">
+                        Gemini keys are free at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="neural-key-link">aistudio.google.com/app/apikey</a> — no billing card required.
+                    </div>
+                    <div class="neural-btn-row">
+                        <button class="neural-save-btn" onclick="saveNeuralKey()">[ INSTALL PROCESSOR ]</button>
+                        <button class="neural-remove-btn" onclick="removeNeuralKey()">[ REMOVE ]</button>
+                    </div>
+                    <button class="neural-test-btn" id="neural-test-btn" onclick="testNeuralKey()">[ TEST CONNECTION ]</button>
                 </div>
-                <button class="nav-btn synclink-generate-btn" id="synclink-generate-btn">
-                    GENERATE SYNC-ID
-                </button>
-                <div class="synclink-divider">— OR ENTER AN ALLY'S ID —</div>
-                <input
-                    type="text"
-                    id="synclink-join-input"
-                    class="settings-name-input synclink-join-input"
-                    maxlength="5"
-                    placeholder="SYNC-ID..."
-                    autocomplete="off"
-                    autocorrect="off"
-                    spellcheck="false"
-                />
-                <button class="nav-btn synclink-join-btn" id="synclink-join-btn">
-                    ESTABLISH TETHER
-                </button>
+
+                <div class="neural-generate-row">
+                    <div class="neural-gen-label">GENERATE MISSIONS FROM REAL-WORLD INPUT</div>
+                    <button class="neural-settings-link-btn" onclick="navTo('screen-neural')">OPEN DIRECTIVE UPLOAD ›</button>
+                </div>
             </div>
 
-            <!-- Tethered state -->
-            <div id="synclink-active-view" class="hidden">
-                <div class="synclink-active-header">
-                    <span class="synclink-active-tag">[ TETHERED ]</span>
-                    <span class="synclink-active-id" id="synclink-active-id">—</span>
-                </div>
-                <div class="synclink-diagnostics">
-                    <div class="sync-diag-row">
-                        <span class="sync-diag-label">ALLY</span>
-                        <span class="sync-diag-value" id="synclink-ally-name">SCANNING...</span>
-                    </div>
-                    <div class="sync-diag-row">
-                        <span class="sync-diag-label">ALLY STATUS</span>
-                        <span class="sync-diag-value" id="synclink-ally-status">—</span>
-                    </div>
-                    <div class="sync-diag-row">
-                        <span class="sync-diag-label">SATELLITE DELAY</span>
-                        <span class="sync-diag-value">45s</span>
-                    </div>
-                </div>
-                <button class="nav-btn synclink-comms-btn hidden" id="synclink-comms-btn">
-                    [ OPEN RESISTANCE CHANNEL ]
-                </button>
-                <button class="nav-btn synclink-sever-btn" id="synclink-sever-btn">
-                    SEVER TETHER
-                </button>
-            </div>
-
-            <div class="sync-status" id="synclink-status"></div>
         </div>
 
-        <!-- ── NEURAL LINK (AI engine config) ── -->
-        <div class="settings-section" id="neural-section">
-            <div class="settings-section-title">NEURAL LINK</div>
+        <!-- ══ TAB: SYNC ════════════════════════════════════════ -->
+        <div class="stab-panel hidden" id="stab-panel-sync">
 
-            <div class="neural-status" id="neural-processor-status">[ PROCESSOR OFFLINE — NO KEY INSTALLED ]</div>
+            <!-- ── SYNC TERMINAL ── -->
+            <div class="settings-section" id="sync-section">
+                <div class="settings-section-title">SYNC TERMINAL</div>
 
-            <p class="neural-desc">
-                Install an AI processor key to translate real-world plans into Incursions and World Bosses.
-                Your key is stored locally only — transmitted only to your chosen AI provider, never to any server.
-            </p>
-
-            <div class="neural-key-section">
-                <div class="neural-field-label">PROVIDER</div>
-                <select class="neural-provider-select" id="neural-provider-select" onchange="onProviderChange()">
-                    <option value="gemini"    style="background:#1a1a2e;color:#c8d6e5;">GEMINI — Google AI Studio (free tier)</option>
-                    <option value="openai"    style="background:#1a1a2e;color:#c8d6e5;">OPENAI — GPT-4o-mini</option>
-                    <option value="anthropic" style="background:#1a1a2e;color:#c8d6e5;">ANTHROPIC — Claude Haiku</option>
-                </select>
-
-                <div class="neural-field-label">API KEY</div>
-                <input
-                    type="password"
-                    class="neural-key-input"
-                    id="neural-key-input"
-                    placeholder="Paste key here..."
-                    autocomplete="off"
-                    autocorrect="off"
-                    spellcheck="false"
-                />
-                <div class="neural-key-hint" id="neural-key-hint">
-                    Gemini keys are free at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="neural-key-link">aistudio.google.com/app/apikey</a> — no billing card required.
+                <div id="sync-ghost-view">
+                    <div class="sync-lore">
+                        Terminal operating unlinked. Progress is stored locally only.
+                        Establish a Save Frequency to enable automated cloud protection.
+                        The System will handle broadcasts silently once the channel is open.
+                    </div>
+                    <button class="nav-btn sync-establish-btn" id="sync-establish-btn">
+                        [ ESTABLISH FREQUENCY ]
+                    </button>
                 </div>
-                <div class="neural-btn-row">
-                    <button class="neural-save-btn" onclick="saveNeuralKey()">[ INSTALL PROCESSOR ]</button>
-                    <button class="neural-remove-btn" onclick="removeNeuralKey()">[ REMOVE ]</button>
+
+                <div id="sync-linked-view" class="hidden">
+                    <div class="sync-freq-display">
+                        <div class="sync-freq-label">[ SAVE FREQUENCY ]</div>
+                        <div class="sync-freq-code" id="sync-freq-code">—</div>
+                    </div>
+                    <div class="sync-diagnostics">
+                        <div class="sync-diag-row">
+                            <span class="sync-diag-label">UPLINK STATUS</span>
+                            <span class="sync-diag-value sync-diag-active" id="sync-uplink-status">ACTIVE</span>
+                        </div>
+                        <div class="sync-diag-row">
+                            <span class="sync-diag-label">LAST BROADCAST</span>
+                            <span class="sync-diag-value" id="sync-last-broadcast">—</span>
+                        </div>
+                    </div>
                 </div>
-                <button class="neural-test-btn" id="neural-test-btn" onclick="testNeuralKey()">[ TEST CONNECTION ]</button>
+
+                <div class="sync-recover-wrap">
+                    <div class="sync-divider">— RECONSTITUTE TERMINAL —</div>
+                    <div class="sync-recover-lore">
+                        Restore your progress from the cloud on this device.
+                    </div>
+                    <input
+                        type="text"
+                        id="sync-recover-input"
+                        class="settings-name-input sync-recover-input"
+                        maxlength="9"
+                        placeholder="FREQUENCY CODE..."
+                        autocomplete="off"
+                        autocorrect="off"
+                        spellcheck="false"
+                    />
+                    <button class="nav-btn sync-recover-btn" id="sync-recover-btn">
+                        RECONSTITUTE
+                    </button>
+                </div>
+
+                <div class="sync-status" id="sync-status"></div>
             </div>
 
-            <div class="neural-generate-row">
-                <div class="neural-gen-label">GENERATE MISSIONS FROM REAL-WORLD INPUT</div>
-                <button class="neural-settings-link-btn" onclick="navTo('screen-neural')">OPEN DIRECTIVE UPLOAD ›</button>
+            <!-- ── SYNC-LINK ── -->
+            <div class="settings-section" id="synclink-section">
+                <div class="settings-section-title">SYNC-LINK</div>
+
+                <div id="synclink-idle-view">
+                    <div class="sync-lore">
+                        Tether your terminal to an ally. Share a Sync-ID and
+                        complete directives together. Simultaneous execution
+                        triggers <span class="synclink-resonance-label">[ RESONANCE ]</span>
+                        — doubling XP for that event.
+                    </div>
+                    <button class="nav-btn synclink-generate-btn" id="synclink-generate-btn">
+                        GENERATE SYNC-ID
+                    </button>
+                    <div class="synclink-divider">— OR ENTER AN ALLY'S ID —</div>
+                    <input
+                        type="text"
+                        id="synclink-join-input"
+                        class="settings-name-input synclink-join-input"
+                        maxlength="5"
+                        placeholder="SYNC-ID..."
+                        autocomplete="off"
+                        autocorrect="off"
+                        spellcheck="false"
+                    />
+                    <button class="nav-btn synclink-join-btn" id="synclink-join-btn">
+                        ESTABLISH TETHER
+                    </button>
+                </div>
+
+                <div id="synclink-active-view" class="hidden">
+                    <div class="synclink-active-header">
+                        <span class="synclink-active-tag">[ TETHERED ]</span>
+                        <span class="synclink-active-id" id="synclink-active-id">—</span>
+                    </div>
+                    <div class="synclink-diagnostics">
+                        <div class="sync-diag-row">
+                            <span class="sync-diag-label">ALLY</span>
+                            <span class="sync-diag-value" id="synclink-ally-name">SCANNING...</span>
+                        </div>
+                        <div class="sync-diag-row">
+                            <span class="sync-diag-label">ALLY STATUS</span>
+                            <span class="sync-diag-value" id="synclink-ally-status">—</span>
+                        </div>
+                        <div class="sync-diag-row">
+                            <span class="sync-diag-label">SATELLITE DELAY</span>
+                            <span class="sync-diag-value">45s</span>
+                        </div>
+                    </div>
+                    <button class="nav-btn synclink-comms-btn hidden" id="synclink-comms-btn">
+                        [ OPEN RESISTANCE CHANNEL ]
+                    </button>
+                    <button class="nav-btn synclink-sever-btn" id="synclink-sever-btn">
+                        SEVER TETHER
+                    </button>
+                </div>
+
+                <div class="sync-status" id="synclink-status"></div>
             </div>
+
         </div>
 
-        <div class="danger-zone">
-            <div class="settings-section-title">DANGER ZONE</div>
-            <button class="danger-btn" id="reset-btn">WIPE PROFILE</button>
-            <div class="confirm-box hidden" id="confirm-box">
-                <p><strong>THIS CANNOT BE UNDONE.</strong><br>
-                All stats, XP, levels, gold, and directive history<br>
-                will be permanently erased from the System.</p>
-                <div class="confirm-actions">
-                    <button class="confirm-yes" id="confirm-yes">CONFIRM WIPE</button>
-                    <button class="confirm-no"  id="confirm-no">ABORT</button>
+        <!-- ══ TAB: DANGER ZONE ═════════════════════════════════ -->
+        <div class="stab-panel hidden" id="stab-panel-danger">
+
+            <div class="danger-zone">
+                <div class="settings-section-title">DANGER ZONE</div>
+                <button class="danger-btn" id="reset-btn">WIPE PROFILE</button>
+                <div class="confirm-box hidden" id="confirm-box">
+                    <p><strong>THIS CANNOT BE UNDONE.</strong><br>
+                    All stats, XP, levels, gold, and directive history<br>
+                    will be permanently erased from the System.</p>
+                    <div class="confirm-actions">
+                        <button class="confirm-yes" id="confirm-yes">CONFIRM WIPE</button>
+                        <button class="confirm-no"  id="confirm-no">ABORT</button>
+                    </div>
                 </div>
             </div>
+
         </div>
 
         <div class="back-link" id="settings-back-link-bottom">← RETURN</div>
@@ -640,108 +685,6 @@
             <button class="briefing-directives-btn hidden" id="briefing-directives-btn">
                 VIEW FIRST DIRECTIVES →
             </button>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         TUTORIAL 1 — NEURAL LINK ACQUISITION
-         Fires once after Awaken, before goal input.
-         Operator installs an API key or skips.
-    ═══════════════════════════════════════════════ -->
-    <div class="overlay hidden" id="overlay-tutorial-neural">
-        <div class="overlay-content tutorial-neural-content">
-            <div class="tut-tag">[ SYSTEM — PROCESSOR ACQUISITION ]</div>
-            <div class="tut-headline">NEURAL LINK REQUIRED</div>
-            <div class="tut-body">
-                The System operates at reduced capacity without an AI processor.<br><br>
-                Install a key to enable full threat classification, tactical briefs, and intelligent mission generation. Without it, the System will fall back to pattern-matching protocols — functional, but limited.<br><br>
-                Gemini keys are free. No billing card required.
-            </div>
-
-            <div class="tut-neural-fields">
-                <div class="tut-field-label">PROVIDER</div>
-                <select class="neural-provider-select" id="tut-provider-select">
-                    <option value="gemini"    style="background:#1a1a2e;color:#c8d6e5;">GEMINI — Google AI Studio (free tier)</option>
-                    <option value="openai"    style="background:#1a1a2e;color:#c8d6e5;">OPENAI — GPT-4o-mini</option>
-                    <option value="anthropic" style="background:#1a1a2e;color:#c8d6e5;">ANTHROPIC — Claude Haiku</option>
-                </select>
-                <div class="tut-field-label">API KEY</div>
-                <input
-                    type="password"
-                    id="tut-neural-key-input"
-                    class="neural-key-input"
-                    placeholder="Paste key here..."
-                    autocomplete="off"
-                    autocorrect="off"
-                    spellcheck="false"
-                />
-                <div class="neural-key-hint" id="tut-neural-key-hint">
-                    Gemini keys are free at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="neural-key-link">aistudio.google.com/app/apikey</a> — no billing card required.
-                </div>
-            </div>
-
-            <div class="tut-status" id="tut-neural-status"></div>
-
-            <div class="tut-btn-row">
-                <button class="tut-install-btn" id="tut-neural-install-btn">[ INSTALL PROCESSOR ]</button>
-            </div>
-            <button class="tut-skip-btn" id="tut-neural-skip-btn">SKIP — OPERATE AT REDUCED CAPACITY</button>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         TUTORIAL 2 — GOAL INPUT + WORLD BOSS CREATION
-         Fires after Neural Link step.
-         Operator declares first objective. Boss spawns.
-         Step 2 of this overlay = operator profile.
-    ═══════════════════════════════════════════════ -->
-    <div class="overlay hidden" id="overlay-tutorial-goal">
-        <div class="overlay-content tutorial-goal-content">
-
-            <!-- Step A: Goal input -->
-            <div id="tut-goal-step-a">
-                <div class="tut-tag">[ SYSTEM — THREAT IDENTIFICATION ]</div>
-                <div class="tut-headline">DECLARE YOUR OBJECTIVE</div>
-                <div class="tut-body">
-                    The System requires a target.<br><br>
-                    Describe a real goal — something you have been avoiding, something you want to build, something that matters. The System will identify the enemy standing between you and it.
-                </div>
-                <textarea
-                    class="tut-goal-input"
-                    id="tut-goal-input"
-                    placeholder="Describe your objective..."
-                    rows="4"
-                    autocorrect="off"
-                    spellcheck="false"
-                ></textarea>
-                <div class="tut-status" id="tut-goal-status"></div>
-                <div class="tut-btn-row">
-                    <button class="tut-install-btn" id="tut-goal-submit-btn">IDENTIFY THREAT →</button>
-                </div>
-            </div>
-
-            <!-- Step B: Boss confirmed + operator profile -->
-            <div id="tut-goal-step-b" class="hidden">
-                <div class="tut-tag">[ SYSTEM — ENTITY CATALOGUED ]</div>
-                <div class="tut-boss-card" id="tut-boss-card"></div>
-                <div class="tut-status" id="tut-boss-status"></div>
-                <div class="tut-profile-section" id="tut-profile-section">
-                    <div class="tut-field-label">OPERATOR PROFILE <span class="tut-optional">[ OPTIONAL ]</span></div>
-                    <div class="tut-profile-hint">Context the System will use to personalise your directives and threat assessments. The more you provide, the sharper the output.</div>
-                    <textarea
-                        class="tut-goal-input"
-                        id="tut-profile-input"
-                        placeholder="Age, occupation, current situation, what you're working toward..."
-                        rows="3"
-                        autocorrect="off"
-                        spellcheck="false"
-                    ></textarea>
-                </div>
-                <div class="tut-btn-row">
-                    <button class="tut-install-btn" id="tut-profile-confirm-btn">INITIALISE TERMINAL →</button>
-                </div>
-            </div>
-
         </div>
     </div>
 

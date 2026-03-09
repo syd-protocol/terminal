@@ -1052,231 +1052,11 @@ function createPlayer(name) {
     recordReferralIfPresent();
     updateStatusScreen();
     showScreen('screen-status');
-    runTutorialSequence();
+    runFirstTransmission();
 }
 
 function effectiveGear() {
     return (player&&player.buffs&&buffActive(player.buffs.sprintScroll))?Math.min(3,currentGear+1):currentGear;
-}
-
-// ════════════════════════════════════════════════════════════════
-// TUTORIAL SEQUENCE — fires once after Awaken for new operators
-//
-//   Step 1 — overlay-tutorial-neural  (Neural Link install or skip)
-//   Step 2 — overlay-tutorial-goal    (Goal input → World Boss spawn)
-//             Step 2b inside same overlay: operator profile
-//
-// After Step 2b completes, runFirstTransmission() fires as normal.
-// ════════════════════════════════════════════════════════════════
-
-function runTutorialSequence() {
-    if (player.hasCompletedTutorial) { runFirstTransmission(); return; }
-    runTutorialNeural();
-}
-
-// ── Tutorial 1: Neural Link ───────────────────────────────────
-function runTutorialNeural() {
-    const overlay   = document.getElementById('overlay-tutorial-neural');
-    const installBtn = document.getElementById('tut-neural-install-btn');
-    const skipBtn    = document.getElementById('tut-neural-skip-btn');
-    const keyInput   = document.getElementById('tut-neural-key-input');
-    const provSel    = document.getElementById('tut-provider-select');
-    const statusEl   = document.getElementById('tut-neural-status');
-    const hintEl     = document.getElementById('tut-neural-key-hint');
-
-    // Sync hint text when provider changes
-    function updateHint() {
-        const p = provSel ? provSel.value : 'gemini';
-        if (!hintEl) return;
-        if (p === 'gemini') {
-            hintEl.innerHTML = 'Gemini keys are free at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="neural-key-link">aistudio.google.com/app/apikey</a> — no billing card required.';
-        } else if (p === 'openai') {
-            hintEl.innerHTML = 'OpenAI keys available at <a href="https://platform.openai.com/api-keys" target="_blank" class="neural-key-link">platform.openai.com/api-keys</a>.';
-        } else {
-            hintEl.innerHTML = 'Anthropic keys available at <a href="https://console.anthropic.com/" target="_blank" class="neural-key-link">console.anthropic.com</a>.';
-        }
-    }
-    if (provSel) provSel.addEventListener('change', updateHint);
-    updateHint();
-
-    overlay.classList.remove('hidden');
-
-    installBtn.onclick = () => {
-        const k = keyInput ? keyInput.value.trim() : '';
-        const p = provSel ? provSel.value : 'gemini';
-        if (k.length < 8) {
-            statusEl.textContent = '[ ERROR: KEY TOO SHORT — MINIMUM 8 CHARACTERS ]';
-            statusEl.className   = 'tut-status tut-status--error';
-            return;
-        }
-        setNeuralKey(k, p);
-        keyInput.value = '';
-        statusEl.textContent = '[ PROCESSOR ONLINE — ' + p.toUpperCase() + ' — SIGNAL CONFIRMED ]';
-        statusEl.className   = 'tut-status tut-status--ok';
-        installBtn.disabled  = true;
-        skipBtn.style.display = 'none';
-        setTimeout(() => {
-            overlay.classList.add('hidden');
-            runTutorialGoal(true);
-        }, 900);
-    };
-
-    skipBtn.onclick = () => {
-        statusEl.textContent = '[ WARNING: NEURAL LINK OFFLINE — SYSTEM INTELLIGENCE DEGRADED — PATTERN-MATCH PROTOCOLS ENGAGED — OPERATOR PROCEEDING AT REDUCED CAPACITY ]';
-        statusEl.className   = 'tut-status tut-status--warn';
-        installBtn.style.display = 'none';
-        skipBtn.disabled = true;
-        setTimeout(() => {
-            overlay.classList.add('hidden');
-            runTutorialGoal(false);
-        }, 1800);
-    };
-}
-
-// ── Tutorial 2: Goal Input + World Boss + Profile ─────────────
-function runTutorialGoal(hasKey) {
-    const overlay     = document.getElementById('overlay-tutorial-goal');
-    const stepA       = document.getElementById('tut-goal-step-a');
-    const stepB       = document.getElementById('tut-goal-step-b');
-    const goalInput   = document.getElementById('tut-goal-input');
-    const goalStatus  = document.getElementById('tut-goal-status');
-    const submitBtn   = document.getElementById('tut-goal-submit-btn');
-    const bossCard    = document.getElementById('tut-boss-card');
-    const bossStatus  = document.getElementById('tut-boss-status');
-    const profileInput = document.getElementById('tut-profile-input');
-    const confirmBtn  = document.getElementById('tut-profile-confirm-btn');
-
-    stepA.classList.remove('hidden');
-    stepB.classList.add('hidden');
-    overlay.classList.remove('hidden');
-
-    submitBtn.onclick = async () => {
-        const goalText = goalInput ? goalInput.value.trim() : '';
-        if (goalText.length < 5) {
-            goalStatus.textContent = '[ ERROR: INSUFFICIENT INPUT — DECLARE YOUR OBJECTIVE ]';
-            goalStatus.className   = 'tut-status tut-status--error';
-            return;
-        }
-
-        submitBtn.disabled   = true;
-        goalStatus.textContent = '[ SCANNING OBJECTIVE... ]';
-        goalStatus.className   = 'tut-status';
-
-        // --- Build local boss immediately from classifyGoal() ---
-        const { primaryStat, linkedStats } = classifyGoal(goalText);
-        const ts = Date.now();
-        let boss = {
-            id:          'boss_' + ts,
-            type:        'worldboss',
-            label:       '[ WORLD BOSS: ' + goalText.toUpperCase().slice(0, 40) + ' ]',
-            stat:        primaryStat,
-            linkedStats: linkedStats,
-            maxHp:       500,
-            currentHp:   500,
-            enemy:       goalText.toUpperCase().slice(0, 50),
-            weapon:      primaryStat.toUpperCase() + ' PROTOCOL',
-            tacticalGuide: 'Threat identified via pattern analysis. Full tactical brief pending Neural Link processing.'
-        };
-
-        // Save local boss immediately
-        const activeBosses = loadWorldBosses();
-        activeBosses.push(boss);
-        saveWorldBosses(activeBosses);
-
-        // Show Step B with local boss card
-        stepA.classList.add('hidden');
-        stepB.classList.remove('hidden');
-        renderTutorialBossCard(bossCard, boss);
-
-        if (hasKey) {
-            bossStatus.textContent = '[ PRELIMINARY ENTITY DETECTED — NEURAL LINK PROCESSING FULL PROFILE ]';
-            bossStatus.className   = 'tut-status';
-            // Fire AI in background with auto-retry
-            attemptTutorialBossUpgrade(boss, goalText, bossCard, bossStatus, 0);
-        } else {
-            bossStatus.textContent = '[ ENTITY CATALOGUED — INSTALL NEURAL LINK FOR FULL THREAT CLASSIFICATION ]';
-            bossStatus.className   = 'tut-status tut-status--warn';
-        }
-
-        // Ephemeral — clear goal input
-        if (goalInput) goalInput.value = '';
-    };
-
-    confirmBtn.onclick = () => {
-        const profile = profileInput ? profileInput.value.trim() : '';
-        if (profile) {
-            player.operatorProfile = profile;
-            savePlayer();
-        }
-        player.hasCompletedTutorial = true;
-        savePlayer();
-        overlay.classList.add('hidden');
-        showLog('[ TERMINAL INITIALISED — DIRECTIVES STANDING BY ]', 'accent');
-        renderElasticUI();
-        updateNeuralBadge();
-        runFirstTransmission();
-    };
-}
-
-// Renders a compact boss card inside the tutorial overlay
-function renderTutorialBossCard(container, boss) {
-    container.innerHTML = `
-        <div class="tut-boss-label">${boss.label}</div>
-        <div class="tut-boss-enemy">ENTITY: ${boss.enemy}</div>
-        <div class="tut-boss-weapon">WEAPON: ${boss.weapon}</div>
-        <div class="tut-boss-stat">PRIMARY STAT: ${boss.stat.toUpperCase()}</div>
-        <div class="tut-boss-guide">${boss.tacticalGuide}</div>
-    `;
-}
-
-// AI upgrade attempt — fires in background, auto-retries once, then shows manual retry
-async function attemptTutorialBossUpgrade(boss, goalText, bossCard, bossStatus, attempt) {
-    const TIMEOUT_MS = 8000;
-    try {
-        const result = await Promise.race([
-            callNeuralAPI(goalText, 'worldboss'),
-            new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT')), TIMEOUT_MS))
-        ]);
-        // Merge AI result into existing boss entry (preserve id, type, hp)
-        const bosses = loadWorldBosses();
-        const idx = bosses.findIndex(b => b.id === boss.id);
-        if (idx !== -1) {
-            bosses[idx].label         = result.label         || bosses[idx].label;
-            bosses[idx].enemy         = result.enemy         || bosses[idx].enemy;
-            bosses[idx].weapon        = result.weapon        || bosses[idx].weapon;
-            bosses[idx].tacticalGuide = result.tacticalGuide || bosses[idx].tacticalGuide;
-            bosses[idx].stat          = result.stat          || bosses[idx].stat;
-            bosses[idx].linkedStats   = result.linkedStats   || bosses[idx].linkedStats;
-            saveWorldBosses(bosses);
-            // Re-render card with upgraded data
-            renderTutorialBossCard(bossCard, bosses[idx]);
-        }
-        bossStatus.textContent = '[ NEURAL LINK ONLINE — FULL THREAT PROFILE ACQUIRED ]';
-        bossStatus.className   = 'tut-status tut-status--ok';
-        renderElasticUI();
-    } catch (e) {
-        if (attempt === 0) {
-            // Auto-retry once, immediately
-            attemptTutorialBossUpgrade(boss, goalText, bossCard, bossStatus, 1);
-        } else if (attempt === 1) {
-            // Show manual retry button
-            bossStatus.innerHTML = '[ NEURAL LINK SIGNAL DEGRADED — ENTITY LOCKED AT PRELIMINARY STAGE — FULL PROFILE PENDING ] <button class="tut-retry-btn" id="tut-boss-retry-btn">[ RETRY NEURAL LINK ]</button>';
-            bossStatus.className = 'tut-status tut-status--warn';
-            const retryBtn = document.getElementById('tut-boss-retry-btn');
-            if (retryBtn) {
-                retryBtn.onclick = () => {
-                    retryBtn.remove();
-                    bossStatus.textContent = '[ RETRYING NEURAL LINK... ]';
-                    bossStatus.className   = 'tut-status';
-                    attemptTutorialBossUpgrade(boss, goalText, bossCard, bossStatus, 2);
-                };
-            }
-        } else {
-            // Final failure — stay local permanently
-            bossStatus.textContent = '[ NEURAL LINK UNRESPONSIVE — ENTITY REMAINS AT PRELIMINARY STAGE — REGENERATE FROM DIRECTIVE UPLOAD WHEN SIGNAL STABILISES ]';
-            bossStatus.className   = 'tut-status tut-status--warn';
-        }
-    }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2541,20 +2321,30 @@ function saveGear(gear){
 }
 
 // ─── SETTINGS ────────────────────────────────────────────────
-function openSettings(){
-    document.getElementById('settings-name-input').value=player.name;
+function openSettings(tab) {
+    document.getElementById('settings-name-input').value = player.name;
     document.getElementById('confirm-box').classList.add('hidden');
-    document.getElementById('save-name-btn').onclick=()=>{playUIClick();savePlayerName();};
-    document.getElementById('reset-btn').onclick=()=>{playUIClick();showConfirmReset();};
-    document.getElementById('confirm-yes').onclick=()=>{playUIClick();resetProfile();};
-    document.getElementById('confirm-no').onclick=()=>{playUIClick();document.getElementById('confirm-box').classList.add('hidden');};
+    document.getElementById('save-name-btn').onclick = () => { playUIClick(); savePlayerName(); };
+    document.getElementById('reset-btn').onclick     = () => { playUIClick(); showConfirmReset(); };
+    document.getElementById('confirm-yes').onclick   = () => { playUIClick(); resetProfile(); };
+    document.getElementById('confirm-no').onclick    = () => { playUIClick(); document.getElementById('confirm-box').classList.add('hidden'); };
+
+    // Operator profile
+    const profileInput = document.getElementById('settings-profile-input');
+    const saveProfileBtn = document.getElementById('save-profile-btn');
+    if (profileInput) profileInput.value = player.operatorProfile || '';
+    if (saveProfileBtn) saveProfileBtn.onclick = () => {
+        playUIClick();
+        player.operatorProfile = (profileInput ? profileInput.value.trim() : '') || '';
+        savePlayer();
+        showLog('[ OPERATOR PROFILE UPDATED ]', 'accent');
+    };
 
     // Sync Terminal wiring
     const establishBtn = document.getElementById('sync-establish-btn');
     const recoverBtn   = document.getElementById('sync-recover-btn');
     if (establishBtn) establishBtn.onclick = () => { playUIClick(); establishFrequency(); };
     if (recoverBtn)   recoverBtn.onclick   = () => { playUIClick(); reconstituteSaveState(); };
-
     setSyncStatus('', '');
     updateSyncSettingsView();
 
@@ -2568,16 +2358,28 @@ function openSettings(){
     setSynclinkStatus('', '');
     updateSynclinkView();
 
-    // Resistance Comms wiring — button only visible when a session comms link exists
+    // Resistance Comms wiring
     const synclinkComms = document.getElementById('synclink-comms-btn');
     if (synclinkComms) synclinkComms.onclick = () => { playUIClick(); openTelegramComms(); };
     _refreshCommsButton();
 
     updateGearUI(currentGear);
-    document.querySelectorAll('.gear-option-btn').forEach(btn=>{
-        btn.onclick=()=>{playUIClick();const g=parseInt(btn.dataset.gear,10);saveGear(g);updateGearUI(g);showLog('[GEAR_SHIFT: GEAR_'+g+'_ENGAGED]');};
+    document.querySelectorAll('.gear-option-btn').forEach(btn => {
+        btn.onclick = () => { playUIClick(); const g = parseInt(btn.dataset.gear, 10); saveGear(g); updateGearUI(g); showLog('[GEAR_SHIFT: GEAR_' + g + '_ENGAGED]'); };
     });
+
+    switchSettingsTab(tab || 'system');
     showScreen('screen-settings');
+}
+
+// ── Settings tab switcher ─────────────────────────────────────
+function switchSettingsTab(tabId) {
+    document.querySelectorAll('.stab-panel').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.stab').forEach(b => b.classList.remove('stab--active'));
+    const panel = document.getElementById('stab-panel-' + tabId);
+    const btn   = document.querySelector('[data-stab="' + tabId + '"]');
+    if (panel) panel.classList.remove('hidden');
+    if (btn)   btn.classList.add('stab--active');
 }
 
 function updateGearUI(gear){
@@ -2596,31 +2398,8 @@ function savePlayerName(){
 function showConfirmReset(){document.getElementById('confirm-box').classList.remove('hidden');}
 
 function resetProfile(){
-    // Player + progression
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(GEAR_KEY);
-    // Sound
-    localStorage.removeItem(SOUND_KEY);
-    localStorage.removeItem('syd_sound');
-    localStorage.removeItem(AUDIO_MINUTES_KEY);
-    // Neural Link
-    localStorage.removeItem(NEURAL_KEY_KEY);
-    localStorage.removeItem(NEURAL_PROVIDER_KEY);
-    // Missions
-    localStorage.removeItem(INCURSIONS_KEY);
-    localStorage.removeItem(WORLDBOSSES_KEY);
-    localStorage.removeItem('syd_defeated_bosses');
-    localStorage.removeItem(TRACE_KEY);
-    // Sync
-    localStorage.removeItem(SAVE_FREQ_KEY);
-    localStorage.removeItem(SYNC_OPTED_IN_KEY);
-    localStorage.removeItem(SYNC_LAST_PUSH_KEY);
-    localStorage.removeItem(SYNC_ADVISORY_KEY);
-    localStorage.removeItem(SYNCLINK_ID_KEY);
-    // UI state
-    localStorage.removeItem(LOG_ARCHIVE_KEY);
-    localStorage.removeItem(INSTALL_DISMISSED_KEY);
-    localStorage.removeItem('syd_pending_ref');
+    localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(SOUND_KEY);
+    localStorage.removeItem('syd_sound');localStorage.removeItem(GEAR_KEY);
     window.location.reload();
 }
 
@@ -2861,6 +2640,71 @@ function renderElasticUI() {
         } else {
             breachSection.classList.add('hidden');
         }
+    }
+
+    // ── Item 6: Suggested Strikes section ──────────────────────
+    // Shown on status screen when a world boss is active and no
+    // incursions are active. Displays 2 directives from the boss's
+    // primary stat pool as quick-access strike options.
+    renderSuggestedStrikes(bosses, incursions);
+}
+
+// ─── SUGGESTED STRIKES ───────────────────────────────────────
+// Shown on status screen when boss active + no incursions running.
+// Picks 2 directives from boss's primary stat pool as quick strikes.
+function renderSuggestedStrikes(bosses, incursions) {
+    // Remove any existing section first
+    const existing = document.getElementById('suggested-strikes-section');
+    if (existing) existing.remove();
+
+    // Conditions: boss present, no active incursions
+    if (!bosses.length || incursions.length > 0) return;
+
+    const boss      = bosses[0];
+    const bossStat  = boss.stat;
+    if (!allQuests || !allQuests.length) return;
+
+    const tier = getCurrentTier ? getCurrentTier(calculateLevel()) : 1;
+    const pool = allQuests.filter(q => q.stat === bossStat && q.tier <= tier && q.tier >= 1);
+    if (!pool.length) return;
+
+    // Pick 2 directives using today's date seed
+    const today   = new Date().toISOString().slice(0, 10);
+    const dateNum = parseInt(today.replace(/-/g, ''), 10);
+    const q1 = pool[dateNum % pool.length];
+    const q2 = pool[(dateNum + 17) % pool.length];
+    const strikes = q1 && q2 && q1.id !== q2.id ? [q1, q2] : q1 ? [q1] : [];
+    if (!strikes.length) return;
+
+    // Build section
+    const section = document.createElement('div');
+    section.id        = 'suggested-strikes-section';
+    section.className = 'suggested-strikes-section';
+
+    const statColours = { strength:'#ef5350', intelligence:'#42a5f5', agility:'#66bb6a', endurance:'#ffa726', charisma:'#ab47bc' };
+    const col = statColours[bossStat] || 'rgba(79,195,247,0.8)';
+
+    section.innerHTML = `
+        <div class="ss-header">
+            <span class="ss-icon">⚔</span>
+            <span class="ss-label" style="color:${col}">STRIKES: ${(boss.enemy || bossStat).toUpperCase()}</span>
+        </div>
+        <div class="ss-cards">
+            ${strikes.map(q => `
+                <div class="ss-card">
+                    <div class="ss-card-title">${q.title}</div>
+                    <div class="ss-card-desc">${q.desc.slice(0, 90)}${q.desc.length > 90 ? '…' : ''}</div>
+                    <div class="ss-card-xp">+${q.xp} XP · ${q.stat.toUpperCase()}</div>
+                </div>`).join('')}
+        </div>
+        <button class="ss-view-btn" onclick="navTo('screen-quests')">VIEW ALL DIRECTIVES →</button>
+    `;
+
+    // Insert between world-boss-section and view-directives-btn
+    const bossSection = document.getElementById('world-boss-section');
+    const directivesBtn = document.getElementById('view-directives-btn');
+    if (bossSection && directivesBtn && directivesBtn.parentNode) {
+        directivesBtn.parentNode.insertBefore(section, directivesBtn);
     }
 }
 

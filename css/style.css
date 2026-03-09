@@ -4335,86 +4335,65 @@ body {
 }
 
 /* ═══════════════════════════════════════════════
-   TUTORIAL OVERLAYS — Neural Link + Goal Input
+   SETTINGS TABS (Item 7)
    ═══════════════════════════════════════════════ */
 
-.tutorial-neural-content,
-.tutorial-goal-content {
-    width: min(480px, 92vw);
-    max-height: 90vh;
-    overflow-y: auto;
-    padding: 28px 24px 32px;
+.stab-bar {
     display: flex;
-    flex-direction: column;
-    gap: 18px;
-    align-items: flex-start;
-    background: var(--bg, #0f0f1a);
-    border: 1px solid rgba(79, 195, 247, 0.25);
-    text-align: left;
-}
-
-.tut-tag {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.58rem;
-    letter-spacing: 3px;
-    color: var(--accent, #4fc3f7);
-    opacity: 0.6;
-    padding-bottom: 14px;
+    gap: 2px;
+    padding: 0 0 18px 0;
     border-bottom: 1px solid rgba(79, 195, 247, 0.12);
-    width: 100%;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
 }
 
-.tut-headline {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 1.05rem;
-    letter-spacing: 3px;
-    color: var(--accent, #4fc3f7);
-    margin-bottom: 2px;
-}
-
-.tut-body {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.68rem;
-    line-height: 1.8;
-    letter-spacing: 0.4px;
-    color: var(--text-dim, rgba(200, 214, 229, 0.6));
-    width: 100%;
-}
-
-.tut-neural-fields {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.tut-field-label {
+.stab {
     font-family: 'Share Tech Mono', monospace;
     font-size: 0.58rem;
-    letter-spacing: 2.5px;
+    letter-spacing: 2px;
+    color: rgba(200, 214, 229, 0.4);
+    background: transparent;
+    border: 1px solid rgba(200, 214, 229, 0.1);
+    padding: 7px 13px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    flex: 1;
+    text-align: center;
+    min-width: 60px;
+}
+.stab:hover {
+    color: rgba(200, 214, 229, 0.7);
+    border-color: rgba(79, 195, 247, 0.25);
+}
+.stab--active {
     color: var(--accent, #4fc3f7);
-    opacity: 0.65;
-    margin-top: 4px;
+    border-color: rgba(79, 195, 247, 0.5);
+    background: rgba(79, 195, 247, 0.06);
+}
+.stab--danger {
+    color: rgba(255, 83, 112, 0.45);
+    border-color: rgba(255, 83, 112, 0.15);
+}
+.stab--danger:hover {
+    color: rgba(255, 83, 112, 0.7);
+    border-color: rgba(255, 83, 112, 0.35);
+}
+.stab--danger.stab--active {
+    color: #ff5370;
+    border-color: rgba(255, 83, 112, 0.6);
+    background: rgba(255, 83, 112, 0.06);
 }
 
-.tut-optional {
-    opacity: 0.45;
-    font-size: 0.55rem;
+.stab-panel {
+    width: 100%;
 }
 
-.tut-profile-hint {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.62rem;
-    line-height: 1.7;
-    color: var(--text-dim, rgba(200, 214, 229, 0.5));
-    margin-bottom: 4px;
-}
-
-.tut-goal-input {
+/* Operator profile textarea in SYSTEM tab */
+.settings-profile-input {
     width: 100%;
     box-sizing: border-box;
-    background: rgba(79, 195, 247, 0.04);
-    border: 1px solid rgba(79, 195, 247, 0.2);
+    background: rgba(79, 195, 247, 0.03);
+    border: 1px solid rgba(79, 195, 247, 0.18);
     color: var(--text, #c8d6e5);
     font-family: 'Share Tech Mono', monospace;
     font-size: 0.68rem;
@@ -4422,117 +4401,88 @@ body {
     padding: 10px 12px;
     resize: vertical;
     outline: none;
+    margin-bottom: 8px;
 }
-.tut-goal-input:focus {
-    border-color: rgba(79, 195, 247, 0.5);
+.settings-profile-input:focus {
+    border-color: rgba(79, 195, 247, 0.45);
 }
 
-.tut-status {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 1.5px;
-    line-height: 1.7;
-    color: var(--accent, #4fc3f7);
-    min-height: 1.2em;
-    width: 100%;
-}
-.tut-status--ok   { color: #69f0ae; }
-.tut-status--warn { color: #ffd54f; }
-.tut-status--error { color: #ff5370; }
 
-.tut-btn-row {
+/* ═══════════════════════════════════════════════
+   SUGGESTED STRIKES (Item 6)
+   ═══════════════════════════════════════════════ */
+
+.suggested-strikes-section {
     width: 100%;
+    margin: 14px 0 4px 0;
     display: flex;
+    flex-direction: column;
     gap: 10px;
 }
 
-.tut-install-btn {
-    flex: 1;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.68rem;
-    letter-spacing: 2px;
-    color: var(--accent, #4fc3f7);
-    background: transparent;
-    border: 1px solid var(--accent, #4fc3f7);
-    padding: 11px 16px;
-    cursor: pointer;
-    text-align: center;
-    transition: background 0.2s ease;
-}
-.tut-install-btn:hover:not(:disabled) { background: rgba(79, 195, 247, 0.1); }
-.tut-install-btn:disabled { opacity: 0.4; cursor: default; }
-
-.tut-skip-btn {
-    width: 100%;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.58rem;
-    letter-spacing: 1.5px;
-    color: rgba(200, 214, 229, 0.35);
-    background: transparent;
-    border: none;
-    padding: 6px 0;
-    cursor: pointer;
-    text-align: center;
-    transition: color 0.2s ease;
-}
-.tut-skip-btn:hover:not(:disabled) { color: rgba(200, 214, 229, 0.6); }
-.tut-skip-btn:disabled { opacity: 0.3; cursor: default; }
-
-/* Boss card inside tutorial */
-.tut-boss-card {
-    width: 100%;
-    background: rgba(79, 195, 247, 0.04);
-    border: 1px solid rgba(79, 195, 247, 0.2);
-    padding: 14px;
+.ss-header {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    box-sizing: border-box;
+    align-items: center;
+    gap: 8px;
 }
-.tut-boss-label {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.68rem;
-    letter-spacing: 2px;
-    color: var(--accent, #4fc3f7);
+.ss-icon {
+    font-size: 0.8rem;
+    opacity: 0.7;
 }
-.tut-boss-enemy,
-.tut-boss-weapon,
-.tut-boss-stat {
+.ss-label {
     font-family: 'Share Tech Mono', monospace;
     font-size: 0.62rem;
-    letter-spacing: 1px;
-    color: var(--text-dim, rgba(200, 214, 229, 0.7));
-}
-.tut-boss-guide {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.6rem;
-    line-height: 1.75;
-    color: rgba(200, 214, 229, 0.5);
-    margin-top: 6px;
-    border-top: 1px solid rgba(79, 195, 247, 0.1);
-    padding-top: 8px;
+    letter-spacing: 2.5px;
 }
 
-.tut-profile-section {
-    width: 100%;
+.ss-cards {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(79, 195, 247, 0.1);
+    gap: 8px;
 }
 
-.tut-retry-btn {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.58rem;
-    letter-spacing: 1.5px;
-    color: #ffd54f;
-    background: transparent;
-    border: 1px solid rgba(255, 213, 79, 0.4);
-    padding: 5px 10px;
-    cursor: pointer;
-    margin-top: 6px;
-    display: inline-block;
-    transition: background 0.2s ease;
+.ss-card {
+    background: rgba(79, 195, 247, 0.04);
+    border: 1px solid rgba(79, 195, 247, 0.15);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
-.tut-retry-btn:hover { background: rgba(255, 213, 79, 0.08); }
+.ss-card-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 1.5px;
+    color: var(--accent, #4fc3f7);
+}
+.ss-card-desc {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    line-height: 1.65;
+    color: rgba(200, 214, 229, 0.55);
+}
+.ss-card-xp {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.56rem;
+    letter-spacing: 1px;
+    color: rgba(200, 214, 229, 0.35);
+    margin-top: 2px;
+}
+
+.ss-view-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    color: rgba(200, 214, 229, 0.4);
+    background: transparent;
+    border: 1px solid rgba(200, 214, 229, 0.12);
+    padding: 8px 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: color 0.15s ease, border-color 0.15s ease;
+    width: 100%;
+}
+.ss-view-btn:hover {
+    color: var(--accent, #4fc3f7);
+    border-color: rgba(79, 195, 247, 0.3);
+}
