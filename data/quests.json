@@ -285,7 +285,7 @@
             "stat": "intelligence",
             "tier": 1,
             "title": "SPACED RECALL SCAN",
-            "desc": "Take something you learned last week and review it today without notes. Write what you remember, then check what you missed and why.",
+            "desc": "Take something you have learned recently — a concept, a skill, a piece of information — and review it today without notes. Write what you remember, then check what you missed and why.",
             "tactical_guide": {
                 "title": "RECALL REINFORCEMENT",
                 "mechanic": "Forgetting Curve",
