@@ -212,7 +212,7 @@
 
         <button class="nav-btn" id="view-directives-btn">VIEW TODAY'S DIRECTIVES</button>
         <button class="nav-btn nav-btn--neural" id="neural-link-btn" onclick="navTo('screen-neural')">
-            ⬡ UPLOAD DIRECTIVE
+            ⬡ THREAT & MISSION CONTROL
             <span class="neural-link-badge hidden" id="neural-link-badge">0</span>
         </button>
     </div>
@@ -258,7 +258,7 @@
                 </div>
                 <div class="map-zone map-facility" id="facility-neural" data-facility="neural">
                     <div class="facility-blink hidden" id="facility-blink-neural"></div>
-                    <div class="facility-label">DIRECTIVE UPLOAD</div>
+                    <div class="facility-label">THREAT & MISSION CONTROL</div>
                 </div>
                 <div class="map-zone map-facility" id="facility-cache" data-facility="cache">
                     <div class="facility-label">SUPPLY CACHE</div>
@@ -452,7 +452,7 @@
 
                 <div class="neural-generate-row">
                     <div class="neural-gen-label">GENERATE MISSIONS FROM REAL-WORLD INPUT</div>
-                    <button class="neural-settings-link-btn" onclick="navTo('screen-neural')">OPEN DIRECTIVE UPLOAD ›</button>
+                    <button class="neural-settings-link-btn" onclick="navTo('screen-neural')">OPEN THREAT & MISSION CONTROL ›</button>
                 </div>
             </div>
 
@@ -847,11 +847,11 @@
 
     <!-- Firebase SDK (compat build — no bundler required) -->
     <!-- ═══════════════════════════════════════════════
-         DIRECTIVE UPLOAD SCREEN
+         THREAT & MISSION CONTROL SCREEN
     ═══════════════════════════════════════════════ -->
     <div class="screen" id="screen-neural">
         <div class="neural-header" id="neural-header-back">
-            <h2>DIRECTIVE UPLOAD</h2>
+            <h2>THREAT & MISSION CONTROL</h2>
         </div>
 
         <div class="neural-screen-tabs">
@@ -910,7 +910,7 @@
     ═══════════════════════════════════════════════ -->
     <div class="overlay hidden" id="overlay-neural-gen" onclick="if(event.target===this)closeNeuralGenerator()">
         <div class="overlay-content neural-gen-overlay">
-            <div class="overlay-system">[ DIRECTIVE UPLOAD ]</div>
+            <div class="overlay-system">[ THREAT & MISSION CONTROL ]</div>
             <div class="ng-title" id="ng-title">[ GENERATE INCURSION ]</div>
             <div class="ng-hint"  id="ng-hint"></div>
             <div id="ng-seeds" class="ng-seeds"></div>

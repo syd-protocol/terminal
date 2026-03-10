@@ -55,7 +55,7 @@ const TUTORIAL_QUEST = {
     id:       'tutorial_orientation',
     _tutorial: true,
     title:    'INITIAL SYSTEMS ASSESSMENT',
-    desc:     'You have been registered in the System. Five core attributes will govern your progression: Strength, Intelligence, Agility, Endurance, Charisma.\n\nStep 1: Tap [ STATUS ] below to view your attribute readout. All attributes begin at the same baseline — they rise through execution, not intention.\n\nStep 2: Tap [ DIRECTIVES ] on the status screen to return here, then mark this card executed to unlock your first directive set.',
+    desc:     'You have been registered in the System. Five core attributes will govern your progression: Strength, Intelligence, Agility, Endurance, Charisma.\n\nStep 1: Tap [ STATUS ] below to view your attribute readout. All attributes begin at the same baseline — they rise through execution, not intention.\n\nStep 2: Tap [ VIEW TODAY\'S DIRECTIVES ] on the status screen to return here, then mark this card executed to unlock your first directive set.',
     stat:     'intelligence',
     xp:       0,
     tier:     1
@@ -1130,10 +1130,66 @@ function runOnboardingSteps(name) {
             goalSection,
             goalInput,
             'CONFIRM',
-            ()=>{
+            async ()=>{
                 const g = goalInput.value.trim();
-                if(g) createWorldBossFromGoal(g);
-                stepProfile();
+                if (!g) { stepProfile(); return; }
+
+                // Always run keyword classifier immediately — instant feedback
+                createWorldBossFromGoal(g);
+
+                // If a Neural Link key was set in this session, upgrade with AI
+                const key = getNeuralKey();
+                if (key) {
+                    // Show processing state inline
+                    goalSection.classList.add('hidden');
+                    document.getElementById('start-btn').classList.add('hidden');
+                    loreEl.innerHTML = '';
+                    const processingLines = [
+                        '> THREAT CLASSIFICATION INITIATED...',
+                        '> NEURAL LINK ENGAGED...',
+                        '> CALCULATING ENEMY PROFILE...'
+                    ];
+                    let idx = 0;
+                    function typeProcessing(onDone) {
+                        if (idx >= processingLines.length) { onDone(); return; }
+                        const el = document.createElement('div');
+                        el.className = 'lore-line lore-signal';
+                        loreEl.appendChild(el);
+                        typeText(el, processingLines[idx], 40, () => {
+                            idx++;
+                            setTimeout(() => typeProcessing(onDone), 200);
+                        });
+                    }
+                    typeProcessing(async () => {
+                        try {
+                            const entity = await callNeuralAPI(g, 'worldboss');
+                            // Replace the keyword-classified boss with the AI result
+                            const bosses = loadWorldBosses();
+                            if (bosses.length > 0) {
+                                bosses[0] = entity;
+                                saveWorldBosses(bosses);
+                            }
+                            loreEl.innerHTML = '';
+                            const doneEl = document.createElement('div');
+                            doneEl.className = 'lore-line lore-signal';
+                            loreEl.appendChild(doneEl);
+                            typeText(doneEl, '> WORLD BOSS CONFIRMED: ' + (entity.enemy || g).toUpperCase(), 40, () => {
+                                setTimeout(() => stepProfile(), 800);
+                            });
+                        } catch(e) {
+                            // AI failed — keyword boss already saved, silently proceed
+                            loreEl.innerHTML = '';
+                            const fallbackEl = document.createElement('div');
+                            fallbackEl.className = 'lore-line lore-signal';
+                            loreEl.appendChild(fallbackEl);
+                            typeText(fallbackEl, '> THREAT LOGGED. NEURAL LINK DEGRADED — BASIC CLASSIFICATION APPLIED.', 35, () => {
+                                setTimeout(() => stepProfile(), 800);
+                            });
+                        }
+                    });
+                } else {
+                    stepProfile();
+                }
             }
         );
     }
@@ -1246,7 +1302,7 @@ const BRIEFING_LINES = [
     { text: 'YOUR STATS ARE NOT SCORES. THEY ARE CONSEQUENCES. COMPLETE DIRECTIVES AND THEY RISE. NEGLECT THEM AND THEY DO NOT FALL — BUT YOU WILL NOTICE THE DIFFERENCE.', highlight: false },
     { text: 'MOMENTUM TRACKS YOUR CONSISTENCY. CONSECUTIVE DAYS COMPOUND IT. MISS DAYS AND IT DECAYS. THE SYSTEM CANNOT FORCE YOU TO SHOW UP. THAT IS YOUR JOB.', highlight: false },
     { text: 'GOLD IS EARNED BY COMPLETING DIRECTIVES. SPEND IT IN THE SUPPLY CACHE ON TOOLS THAT HELP YOU PERFORM BETTER. EVERY ITEM CORRESPONDS TO A REAL-WORLD ACT.', highlight: false },
-    { text: 'THE WORLD MAP IS YOUR OPERATIONAL HUB. SIX FACILITY NODES — COMMAND POST, FIELD ARCHIVE, SUPPLY CACHE, OPS CENTRE, DIRECTIVE UPLOAD, SIGNAL LOG. YOUR OPERATOR AVATAR MOVES BETWEEN THEM. USE IT TO NAVIGATE THE TERMINAL.', highlight: false },
+    { text: 'THE WORLD MAP IS YOUR OPERATIONAL HUB. SIX FACILITY NODES — COMMAND POST, FIELD ARCHIVE, SUPPLY CACHE, OPS CENTRE, THREAT & MISSION CONTROL, SIGNAL LOG. YOUR OPERATOR AVATAR MOVES BETWEEN THEM. USE IT TO NAVIGATE THE TERMINAL.', highlight: false },
     { text: '[ STANDING BY. YOUR FIRST DIRECTIVES HAVE BEEN ISSUED. ]', highlight: true }
 ];
 const BRIEFING_DELAY_BETWEEN = 1100;  // ms between each line appearing
@@ -2845,20 +2901,13 @@ function renderSuggestedStrikes(bosses, incursions) {
     // Conditions: boss present, no active incursions
     if (!bosses.length || incursions.length > 0) return;
 
-    const boss      = bosses[0];
-    const bossStat  = boss.stat;
-    if (!allQuests || !allQuests.length) return;
+    const boss     = bosses[0];
+    const bossStat = boss.stat;
 
-    const tier = getCurrentTier ? getCurrentTier(calculateLevel()) : 1;
-    const pool = allQuests.filter(q => q.stat === bossStat && q.tier <= tier && q.tier >= 1);
-    if (!pool.length) return;
-
-    // Pick 2 directives using today's date seed
-    const today   = new Date().toISOString().slice(0, 10);
-    const dateNum = parseInt(today.replace(/-/g, ''), 10);
-    const q1 = pool[dateNum % pool.length];
-    const q2 = pool[(dateNum + 17) % pool.length];
-    const strikes = q1 && q2 && q1.id !== q2.id ? [q1, q2] : q1 ? [q1] : [];
+    // Pull only from today's already-selected directives — not the full quest pool.
+    // If none of today's directives match the boss's primary stat, hide the section.
+    if (!dailyQuests || !dailyQuests.length) return;
+    const strikes = dailyQuests.filter(q => q && q.stat === bossStat);
     if (!strikes.length) return;
 
     // Build section
@@ -3373,7 +3422,7 @@ async function submitNeuralGeneration() {
         else if (msg.includes('_401') || msg.includes('_403'))            errText = '[ ERROR: KEY REJECTED — CHECK YOUR PROVIDER KEY ]';
         else if (msg.includes('_429'))                                    errText = '[ RATE LIMIT HIT — WAIT 60 SECONDS AND RETRY ]';
         else if (msg.includes('SyntaxError') || msg.includes('JSON'))    errText = '[ TRANSLATION CORRUPTED — RETRY ]';
-        else                                                              errText = '[ DIRECTIVE UPLOAD UNSTABLE — RETRY ]';
+        else                                                              errText = '[ THREAT & MISSION CONTROL UNSTABLE — RETRY ]';
         statusEl.textContent  = errText;
         statusEl.className    = 'ng-status ng-status--error';
         console.error('Neural API error:', e);
