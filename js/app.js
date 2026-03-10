@@ -1857,10 +1857,8 @@ async function reconstituteSaveState() {
         }
 
         setSyncStatus('[ FREQUENCY LOCKED — RECONSTITUTING TERMINAL... ]', 'accent');
-        // Neural key is stored locally only — it is never erased by reconstitute.
-        // If this is a fresh device, the operator will need to re-enter it in Settings.
         setTimeout(() => {
-            setSyncStatus('[ RECONSTITUTION COMPLETE — NEURAL PROCESSOR KEY IS DEVICE-LOCAL ]', '');
+            setSyncStatus('[ RECONSTITUTION COMPLETE — NEURAL PROCESSOR KEY IS DEVICE-LOCAL. ON A NEW DEVICE, YOU MAY NEED TO RECONFISCATE ONE VIA SETTINGS > NEURAL LINK ]', '');
         }, 400);
         setTimeout(() => window.location.reload(), 2400);
     } catch(e) {
@@ -2458,7 +2456,10 @@ function completeQuest(id, stat, baseXP) {
 
     // Save field note if one was entered (works for both required and optional notes)
     const fnInput = document.getElementById('fn-input-' + id);
-    if (fnInput && fnInput.value.trim()) saveFieldNote(id, fnInput.value.trim());
+    if (fnInput && fnInput.value.trim()) {
+        saveFieldNote(id, fnInput.value.trim());
+        showLog('[ FIELD NOTE LOGGED ]', '');
+    }
 
     const card=document.getElementById('quest-card-'+id);
     if(card){card.classList.add('completing');setTimeout(()=>card.classList.remove('completing'),400);}
@@ -2472,8 +2473,8 @@ function completeQuest(id, stat, baseXP) {
     if(newRank!==prevRank){setTimeout(()=>{showLog('[RECLASSIFIED: '+newRank+'-RANK CONFIRMED]','accent');showRankUpOverlay(newRank,newLevel);},600);}
     else if(newLevel>prevLevel){setTimeout(()=>{showLog('[THRESHOLD: LEVEL '+newLevel+' REACHED]','accent');showLevelUpOverlay(newLevel);},600);}
 
-    // Auto-push on directive completion (30-min cooldown)
-    autoPushIfLinked(false);
+    // Immediate push on directive completion — cross-device state must reflect instantly
+    autoPushIfLinked(true);
     // Notify Sync-Link of directive completion
     synclinkOnDirectiveComplete();
 }
@@ -2813,14 +2814,79 @@ function showScreen(id, isBack) {
 // The app can still receive push notifications while suspended
 // because the Service Worker runs independently of the page JS.
 // ════════════════════════════════════════════════════════════════
+// ── Pull-on-foreground ───────────────────────────────────────
+// When the app comes back into view, check if a newer save exists in the cloud.
+// If the cloud pushedAt timestamp is newer than our local last-push timestamp,
+// pull silently and reload. Cooldown: check at most once every 2 minutes so
+// rapid tab-switching doesn't hammer Firestore.
+const SYNC_LAST_PULL_CHECK_KEY = 'syd_sync_last_pull_check';
+const PULL_CHECK_COOLDOWN_MS   = 2 * 60 * 1000;
+
+async function checkAndPullIfStale() {
+    if (!isSyncLinked()) return;
+    const firestore = getDB();
+    if (!firestore) return;
+
+    // Cooldown — don't check more than once every 2 minutes
+    const lastCheck = localStorage.getItem(SYNC_LAST_PULL_CHECK_KEY);
+    if (lastCheck && (Date.now() - new Date(lastCheck).getTime()) < PULL_CHECK_COOLDOWN_MS) return;
+    localStorage.setItem(SYNC_LAST_PULL_CHECK_KEY, new Date().toISOString());
+
+    try {
+        const freq = getOrCreateSaveFrequency();
+        const doc  = await firestore.collection('save_states').doc(freq).get();
+        if (!doc.exists) return;
+
+        const cloudPushedAt = doc.data().pushedAt;
+        const localPushedAt = localStorage.getItem(SYNC_LAST_PUSH_KEY);
+
+        // Only pull if the cloud has a newer state than what we last pushed
+        if (!cloudPushedAt) return;
+        if (localPushedAt && new Date(cloudPushedAt) <= new Date(localPushedAt)) return;
+
+        // Cloud is ahead — pull and restore state without a full page reload
+        const data = doc.data();
+        if (data.playerBlob) {
+            const pulledPlayer = JSON.parse(data.playerBlob);
+            // Only apply if cloud player is meaningfully different (different completedToday or XP)
+            const localXP  = player ? JSON.stringify(player.stats) : '';
+            const cloudXP  = JSON.stringify(pulledPlayer.stats);
+            const localDone = player ? JSON.stringify(player.completedToday) : '';
+            const cloudDone = JSON.stringify(pulledPlayer.completedToday || []);
+            if (localXP === cloudXP && localDone === cloudDone) return; // identical — skip
+
+            // Apply pulled state
+            localStorage.setItem(STORAGE_KEY, data.playerBlob);
+            if (data.sidecar) {
+                try {
+                    const sc = JSON.parse(data.sidecar);
+                    if (sc.incursions)     localStorage.setItem(INCURSIONS_KEY,           sc.incursions);
+                    if (sc.worldBosses)    localStorage.setItem(WORLDBOSSES_KEY,          sc.worldBosses);
+                    if (sc.trace)          localStorage.setItem(TRACE_KEY,                sc.trace);
+                    if (sc.defeatedBosses) localStorage.setItem('syd_defeated_bosses',    sc.defeatedBosses);
+                    if (sc.audioMinutes)   localStorage.setItem(AUDIO_MINUTES_KEY,        sc.audioMinutes);
+                    if (sc.fieldNotes)     localStorage.setItem(FIELD_NOTES_KEY,          sc.fieldNotes);
+                } catch(e) { /* sidecar restore failed — continue */ }
+            }
+            localStorage.setItem(SYNC_LAST_PUSH_KEY, cloudPushedAt);
+            showLog('[ SIGNAL RECEIVED — TERMINAL SYNCHRONISED ]', 'accent');
+            // Reload game state in-place
+            setTimeout(() => window.location.reload(), 1200);
+        }
+    } catch(e) {
+        // Pull check failed silently — not critical
+    }
+}
+
 document.addEventListener('visibilitychange', () => {
     if (!audioCtx) return;
     if (document.visibilityState === 'hidden') {
         // App moved to background — suspend context silently
         audioCtx.suspend().catch(() => {});
     } else {
-        // App returned to foreground — resume where it left off
+        // App returned to foreground — resume audio and check for newer cloud state
         audioCtx.resume().catch(() => {});
+        checkAndPullIfStale();
     }
 });
 
@@ -2951,7 +3017,7 @@ function saveFieldNote(questId, text) {
         delete notes[key];
     }
     localStorage.setItem(FIELD_NOTES_KEY, JSON.stringify(notes));
-    autoPushIfLinked(false);
+    // Push handled by completeQuest() which calls autoPushIfLinked(true)
 }
 function loadFieldNote(questId) {
     const today = new Date().toISOString().slice(0, 10);
