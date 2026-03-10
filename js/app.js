@@ -1055,7 +1055,6 @@ function runOnboarding() {
 function runOnboardingSteps(name) {
     const loreEl         = document.getElementById('lore-lines');
     const nameSection    = document.getElementById('name-section');
-    const startBtn       = document.getElementById('start-btn');
     const neuralSection  = document.getElementById('onboarding-neural-section');
     const goalSection    = document.getElementById('onboarding-goal-section');
     const profileSection = document.getElementById('onboarding-profile-section');
@@ -1064,15 +1063,25 @@ function runOnboardingSteps(name) {
     const goalInput      = document.getElementById('onboarding-goal-input');
     const profileInput   = document.getElementById('onboarding-profile-input');
 
-    // Helper: clear lore and show a section with a typed prompt
+    // Helper: clear lore and show a section with a typed prompt.
+    // The start-btn is cloned on each step to remove stale listeners.
+    // All DOM lookups for the button use getElementById to always get
+    // the live node — never a cached reference that may be detached.
     function showStep(lines, section, inputEl, btnLabel, onSubmit) {
         loreEl.innerHTML='';
         nameSection.classList.add('hidden');
         neuralSection.classList.add('hidden');
         goalSection.classList.add('hidden');
         profileSection.classList.add('hidden');
-        startBtn.classList.add('hidden');
-        startBtn.textContent = btnLabel || 'CONFIRM';
+
+        // Clone the button NOW to clear previous listeners, before typing begins
+        const oldBtn = document.getElementById('start-btn');
+        oldBtn.textContent = btnLabel || 'CONFIRM';
+        oldBtn.classList.add('hidden');
+        const newBtn = oldBtn.cloneNode(true);
+        oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+        // Attach listener to the freshly inserted node
+        document.getElementById('start-btn').addEventListener('click', () => { playUIClick(); onSubmit(); });
 
         let idx=0;
         function next() {
@@ -1080,7 +1089,8 @@ function runOnboardingSteps(name) {
                 setTimeout(()=>{
                     section.classList.remove('hidden');
                     if(inputEl) inputEl.focus();
-                    startBtn.classList.remove('hidden');
+                    // Always look up the live node — never use a cached reference
+                    document.getElementById('start-btn').classList.remove('hidden');
                 },400);
                 return;
             }
@@ -1090,12 +1100,6 @@ function runOnboardingSteps(name) {
             typeText(el,lines[idx],45,()=>{cur.remove();idx++;setTimeout(next,300);});
         }
         next();
-
-        // Replace start-btn listener each step
-        const newBtn = startBtn.cloneNode(true);
-        startBtn.parentNode.replaceChild(newBtn, startBtn);
-        // reassign reference for future steps
-        document.getElementById('start-btn').addEventListener('click',()=>{playUIClick(); onSubmit();});
     }
 
     function stepNeural() {
@@ -1146,13 +1150,26 @@ function runOnboardingSteps(name) {
             'EXECUTE',
             ()=>{
                 const prof = profileInput.value.trim();
-                // Profile is stored when createPlayer sets up the player object
                 createPlayer(name, prof);
             }
         );
     }
 
     stepNeural();
+}
+
+// Updates the note text under the provider selector during onboarding.
+// Called by the select's onchange and on initial render.
+function updateOnboardingNeuralNote() {
+    const noteEl   = document.getElementById('onboarding-neural-note');
+    if (!noteEl) return;
+    const provider = (document.getElementById('onboarding-neural-provider') || {}).value || 'gemini';
+    const notes = {
+        gemini:    '[ FREE ] Compatible unit detected at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--accent);">aistudio.google.com/app/apikey</a> — no credentials required for acquisition. Key also accessible later via Settings &gt; Neural Link.',
+        openai:    'Acquire a key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="color:var(--accent);">platform.openai.com/api-keys</a> — billing account required. Key also accessible later via Settings &gt; Neural Link.',
+        anthropic: 'Acquire a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:var(--accent);">console.anthropic.com/settings/keys</a> — billing account required. Key also accessible later via Settings &gt; Neural Link.'
+    };
+    noteEl.innerHTML = notes[provider] || notes.gemini;
 }
 
 // ─── AWAKEN SEQUENCE ─────────────────────────────────────────

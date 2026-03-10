@@ -629,15 +629,15 @@
             <!-- STEP: NEURAL LINK KEY -->
             <div id="onboarding-neural-section" class="hidden">
                 <div class="onboarding-step-label">[ NEURAL LINK ACQUISITION ]</div>
-                <select id="onboarding-neural-provider" class="settings-name-input" style="margin-bottom:0.6em;">
-                    <option value="gemini">GEMINI (DEFAULT)</option>
-                    <option value="openai">OPENAI</option>
-                    <option value="anthropic">ANTHROPIC</option>
+                <select id="onboarding-neural-provider" class="settings-name-input" style="margin-bottom:0.6em;" onchange="updateOnboardingNeuralNote()">
+                    <option value="gemini">GEMINI — FREE TIER AVAILABLE</option>
+                    <option value="openai">OPENAI — GPT-4o-mini</option>
+                    <option value="anthropic">ANTHROPIC — Claude Haiku</option>
                 </select>
                 <input type="text" id="onboarding-neural-key" placeholder="PASTE API KEY..."
                        autocomplete="off" autocorrect="off" spellcheck="false"
                        class="settings-name-input" style="margin-bottom:0.4em;" />
-                <div class="onboarding-step-note">Compatible unit detected at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--accent);">aistudio.google.com/app/apikey</a> — no credentials required for acquisition. Key also accessible later via Settings &gt; Neural Link.</div>
+                <div class="onboarding-step-note" id="onboarding-neural-note">[ FREE ] Compatible unit detected at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--accent);">aistudio.google.com/app/apikey</a> — no credentials required for acquisition. Key also accessible later via Settings &gt; Neural Link.</div>
             </div>
 
             <!-- STEP: GOAL / WORLD BOSS SEED -->
