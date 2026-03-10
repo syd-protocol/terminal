@@ -646,6 +646,7 @@
                        autocomplete="off" autocorrect="off" spellcheck="false"
                        class="settings-name-input" style="margin-bottom:0.4em;" />
                 <div class="onboarding-step-note" id="onboarding-neural-note">[ FREE ] Compatible unit detected at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--accent);">aistudio.google.com/app/apikey</a> — no credentials required for acquisition. Key also accessible later via Settings &gt; Neural Link.</div>
+                <a id="onboarding-neural-cta" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="onboarding-key-cta">⬡ GET FREE GEMINI KEY →</a>
                 <div id="onboarding-neural-error" style="display:none;color:var(--warn,#ff6b6b);font-size:0.7rem;letter-spacing:1.5px;margin-top:0.5em;"></div>
                 <div style="text-align:right;margin-top:0.6em;">
                     <button id="onboarding-neural-skip" style="background:none;border:none;color:rgba(200,214,229,0.35);font-family:'Share Tech Mono',monospace;font-size:0.65rem;letter-spacing:1.5px;cursor:pointer;padding:0;">SKIP FOR NOW →</button>
@@ -710,6 +711,20 @@
             <div class="overlay-particles"   id="ru-particles"></div>
             <button class="overlay-share-btn"   id="ru-share-btn">⬆ BROADCAST THIS</button>
             <button class="overlay-dismiss-btn" id="ru-dismiss-btn">ACKNOWLEDGED</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         DAY 1 CLEAR OVERLAY
+    ═══════════════════════════════════════════════ -->
+    <div class="overlay hidden" id="overlay-day1-clear">
+        <div class="overlay-content day1-clear-content">
+            <div class="overlay-system">[ SYSTEM ]</div>
+            <div class="overlay-headline">DAY 1 CLEARED</div>
+            <div class="day1-clear-glyph">◈</div>
+            <div class="day1-clear-body">All directives executed. First day logged.<br>The System has registered your initial output.<br>Come back tomorrow — this compounds.</div>
+            <div class="overlay-particles" id="day1-particles"></div>
+            <button class="overlay-dismiss-btn" id="day1-dismiss-btn">CONTINUE</button>
         </div>
     </div>
 

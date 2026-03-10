@@ -258,7 +258,7 @@ function renderQuests(quests, completedIds, momentum) {
                    <textarea
                        class="reflection-input fn-input"
                        id="fn-input-${quest.id}"
-                       placeholder="What did you notice, feel, or learn?"
+                       placeholder="What did you notice, feel, or learn? (required to execute)"
                        rows="3"
                        maxlength="280"
                    >${savedNote}</textarea>
@@ -271,7 +271,7 @@ function renderQuests(quests, completedIds, momentum) {
                        <textarea
                            class="reflection-input fn-input"
                            id="fn-input-${quest.id}"
-                           placeholder="Brief note — max 280 characters."
+                           placeholder="Any thoughts on this directive — optional, not required."
                            rows="2"
                            maxlength="280"
                        >${savedNote}</textarea>

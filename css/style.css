@@ -566,9 +566,9 @@ body {
 
 /* ── Card description ── */
 .qc-desc {
-    font-size: 0.8rem;
+    font-size: 0.88rem;
     color: var(--text-dim);
-    line-height: 1.6;
+    line-height: 1.65;
 }
 
 /* ── Model reference ── */
@@ -683,12 +683,12 @@ body {
 
 .complete-btn {
     flex: 1;
-    padding: 8px 14px;
+    padding: 9px 14px;
     background: transparent;
     border: 1px solid var(--green);
     color: var(--green);
     font-family: 'Share Tech Mono', monospace;
-    font-size: 0.63rem;
+    font-size: 0.7rem;
     letter-spacing: 1.5px;
     cursor: pointer;
     transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
@@ -706,6 +706,15 @@ body {
     color: var(--text-dim);
     cursor: not-allowed;
     letter-spacing: 1px;
+}
+
+/* Tutorial hint — blink after operator returns from Status screen */
+.complete-btn--blink {
+    animation: complete-btn-blink 1.4s ease-in-out infinite;
+}
+@keyframes complete-btn-blink {
+    0%, 100% { border-color: var(--green); color: var(--green); background: transparent; box-shadow: none; }
+    50%       { border-color: var(--green); color: var(--bg); background: var(--green); box-shadow: 0 0 14px rgba(0,230,118,0.5); }
 }
 
 /* ── ONBOARDING LORE LINES ──────────────────────────────────── */
@@ -800,14 +809,34 @@ body {
 }
 
 .onboarding-step-note {
-    font-size: 0.7rem;
+    font-size: 0.78rem;
     color: var(--text-dim, #666);
     text-align: left;
-    line-height: 1.5;
+    line-height: 1.6;
     margin-top: 0.4em;
 }
 
 .onboarding-step-note a { text-decoration: underline; }
+
+/* Prominent key acquisition button — can't miss it */
+.onboarding-key-cta {
+    display: block;
+    margin-top: 0.75em;
+    padding: 10px 14px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1.5px;
+    text-align: center;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+}
+.onboarding-key-cta:hover,
+.onboarding-key-cta:active {
+    background: var(--accent);
+    color: var(--bg);
+}
 
 #onboarding-neural-section,
 #onboarding-goal-section,
@@ -915,6 +944,26 @@ body {
     line-height: 1;
     margin-bottom: 16px;
     animation: scaleIn 0.6s ease 0.4s both, rankGlow 1.5s ease 1s infinite;
+}
+
+/* ── DAY 1 CLEAR OVERLAY ────────────────────────────────────── */
+.day1-clear-content {
+    text-align: center;
+}
+.day1-clear-glyph {
+    font-size: 5rem;
+    color: var(--accent);
+    line-height: 1;
+    margin: 16px 0;
+    animation: scaleIn 0.5s ease 0.3s both;
+}
+.day1-clear-body {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text);
+    line-height: 1.8;
+    letter-spacing: 0.5px;
+    margin: 16px 0 24px;
 }
 
 /* ── AWAKEN BOOT OVERLAY ────────────────────────────────────── */
@@ -1307,7 +1356,7 @@ body {
 }
 
 .reflection-hint {
-    font-size: 0.65rem;
+    font-size: 0.72rem;
     color: var(--text-dim);
     letter-spacing: 0.5px;
     line-height: 1.6;
@@ -2095,6 +2144,16 @@ body {
     .zone-stat-name { font-size: 0.36rem; }
     .zone-value     { font-size: 0.62rem; }
     .hub-pin        { font-size: 1.1rem;  }
+}
+
+/* ── Mobile readability boost ───────────────────────────────── */
+/* Small screens need slightly larger body text — squinting is friction */
+@media (max-width: 480px) {
+    .qc-desc              { font-size: 0.92rem; }
+    .qc-title             { font-size: 1.08rem; }
+    .onboarding-step-note { font-size: 0.82rem; }
+    .reflection-hint      { font-size: 0.75rem; }
+    .complete-btn         { font-size: 0.73rem; padding: 10px 14px; }
 }
 
 /* ══════════════════════════════════════════════════════════════

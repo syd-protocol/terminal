@@ -1273,7 +1273,8 @@ function runOnboardingSteps(name) {
 // Updates the note text under the provider selector during onboarding.
 // Called by the select's onchange and on initial render.
 function updateOnboardingNeuralNote() {
-    const noteEl   = document.getElementById('onboarding-neural-note');
+    const noteEl = document.getElementById('onboarding-neural-note');
+    const ctaEl  = document.getElementById('onboarding-neural-cta');
     if (!noteEl) return;
     const provider = (document.getElementById('onboarding-neural-provider') || {}).value || 'gemini';
     const notes = {
@@ -1281,7 +1282,17 @@ function updateOnboardingNeuralNote() {
         openai:    'Acquire a key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="color:var(--accent);">platform.openai.com/api-keys</a> — billing account required. Key also accessible later via Settings &gt; Neural Link.',
         anthropic: 'Acquire a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:var(--accent);">console.anthropic.com/settings/keys</a> — billing account required. Key also accessible later via Settings &gt; Neural Link.'
     };
+    const ctas = {
+        gemini:    { href: 'https://aistudio.google.com/app/apikey',       label: '⬡ GET FREE GEMINI KEY →' },
+        openai:    { href: 'https://platform.openai.com/api-keys',         label: '⬡ GET OPENAI KEY →' },
+        anthropic: { href: 'https://console.anthropic.com/settings/keys',  label: '⬡ GET ANTHROPIC KEY →' }
+    };
     noteEl.innerHTML = notes[provider] || notes.gemini;
+    if (ctaEl) {
+        const c = ctas[provider] || ctas.gemini;
+        ctaEl.href        = c.href;
+        ctaEl.textContent = c.label;
+    }
 }
 
 // ─── AWAKEN SEQUENCE ─────────────────────────────────────────
@@ -1332,7 +1343,7 @@ function createPlayer(name, operatorProfile) {
     const maxHp=calcMaxHp(1);
     player={name,stats,completedToday:[],lastQuestDate:today(),consecutiveDays:1,operatorDays:1,momentum:1.0,
         lastActiveDate:today(),hp:maxHp,maxHp,corrupted:false,gold:0,buffs:defaultBuffs(),
-        mapMilestones:{},hasSeenBriefing:false,hasCompletedTutorial:false,hasSeenBaseMap:false,
+        mapMilestones:{},hasSeenBriefing:false,hasCompletedTutorial:false,hasSeenBaseMap:false,hasSeenDay1Clear:false,
         operatorProfile: operatorProfile || ''};
     savePlayer();
     dailyQuests=getDailyQuests(allQuests,calculateLevel(),effectiveGear(),player?.operatorDays);
@@ -2478,6 +2489,17 @@ function completeQuest(id, stat, baseXP) {
     autoPushIfLinked(true);
     // Notify Sync-Link of directive completion
     synclinkOnDirectiveComplete();
+
+    // Day 1 clear — fire once when all directives are done on operatorDays === 1
+    if (!player.hasSeenDay1Clear && (player.operatorDays || 1) <= 1) {
+        const allNowDone = dailyQuests.length > 0 &&
+            dailyQuests.every(q => (player.completedToday || []).includes(q.id));
+        if (allNowDone) {
+            player.hasSeenDay1Clear = true;
+            savePlayer();
+            setTimeout(() => showDay1ClearOverlay(), 900);
+        }
+    }
 }
 
 function calculateLevel() { return levelFromXP(Math.max(0,earnedXP(player.stats))); }
@@ -2565,6 +2587,17 @@ function showRankUpOverlay(rank,level) {
     document.getElementById('ru-dismiss-btn').onclick=()=>{playUIClick();ov.classList.add('hidden');};
     // Immediate push on rank-up — bypass cooldown
     autoPushIfLinked(true);
+}
+
+function showDay1ClearOverlay() {
+    const ov = document.getElementById('overlay-day1-clear');
+    if (!ov) return;
+    spawnParticles('day1-particles', 28, 'var(--accent)');
+    ov.classList.remove('hidden');
+    document.getElementById('day1-dismiss-btn').onclick = () => {
+        playUIClick();
+        ov.classList.add('hidden');
+    };
 }
 
 // ─── SHARE CARD ──────────────────────────────────────────────
@@ -2782,7 +2815,13 @@ function showScreen(id, isBack) {
     }
 
     // ── Per-screen setup ─────────────────────────────────────
-    if (id === 'screen-status')   { setupTooltips(); renderElasticUI(); updateNeuralBadge(); runFirstTransmission(); }
+    if (id === 'screen-status') {
+        setupTooltips(); renderElasticUI(); updateNeuralBadge(); runFirstTransmission();
+        // Mark that operator has visited Status during the tutorial — enables blink on return
+        if (player && player.hasCompletedTutorial === false) {
+            player.hasVisitedStatusDuringTutorial = true;
+        }
+    }
     if (id === 'screen-shop')       renderShop();
     if (id === 'screen-settings')   { renderNeuralSettings(); renderInstallSettingsBtn(); }
     if (id === 'screen-neural')     renderNeuralScreen();
@@ -2792,6 +2831,13 @@ function showScreen(id, isBack) {
         if (player && player.hasCompletedTutorial === false) {
             renderQuests([TUTORIAL_QUEST], player.completedToday, player.momentum||1.0);
             applyQuestFilter();
+            // Blink the complete button once operator has visited Status
+            if (player.hasVisitedStatusDuringTutorial) {
+                setTimeout(() => {
+                    const btn = document.getElementById('complete-btn-tutorial_orientation');
+                    if (btn && !btn.disabled) btn.classList.add('complete-btn--blink');
+                }, 300);
+            }
         } else {
             const filtered = activeQuestFilter
                 ? dailyQuests.filter(q => q.stat === activeQuestFilter)
