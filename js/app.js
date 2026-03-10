@@ -1115,10 +1115,39 @@ function runOnboardingSteps(name) {
             ()=>{
                 const k = neuralKey.value.trim();
                 const p = neuralProvider.value;
-                if(k) saveNeuralKey(k, p);
+                const errorEl = document.getElementById('onboarding-neural-error');
+
+                // Empty field — skip silently, no key saved
+                if (!k) { if (errorEl) errorEl.style.display = 'none'; stepGoal(); return; }
+
+                // Validate using the same minimum length as Settings (8 chars)
+                if (k.length < 8) {
+                    if (errorEl) {
+                        errorEl.textContent = '[ KEY TOO SHORT — CHECK YOU COPIED THE FULL KEY ]';
+                        errorEl.style.display = 'block';
+                    }
+                    neuralKey.focus();
+                    return; // Hold on this step — do not advance
+                }
+
+                // Valid — save using the correct low-level setter (same as Settings uses)
+                if (errorEl) errorEl.style.display = 'none';
+                setNeuralKey(k, p);
                 stepGoal();
             }
         );
+
+        // Wire the SKIP button — clears any error and advances without saving a key
+        const skipBtn = document.getElementById('onboarding-neural-skip');
+        if (skipBtn) {
+            const freshSkip = skipBtn.cloneNode(true);
+            skipBtn.parentNode.replaceChild(freshSkip, skipBtn);
+            document.getElementById('onboarding-neural-skip').addEventListener('click', () => {
+                const errorEl = document.getElementById('onboarding-neural-error');
+                if (errorEl) errorEl.style.display = 'none';
+                stepGoal();
+            });
+        }
     }
 
     function stepGoal() {
