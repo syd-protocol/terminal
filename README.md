@@ -67,6 +67,7 @@ The result is a system where the longer you play, the more the game resembles th
 - Tier 0 initialisation track — a seven-day onboarding sequence that eases new operators into full Tier 1 behaviour
 - Gear system — one, two, or three directives per stat per day, scaling with commitment
 - Guaranteed world boss directive slot — when a World Boss is active, at least one daily directive always targets its primary stat
+- Field notes — attach a short note to any directive at completion; required on Gear 3 slot-3 directives, optional on all others; stored locally and synced
 
 **World Boss system**
 - Set a real-world goal. The System catalogues it as a World Boss — a persistent enemy entity representing a long-term obstacle
@@ -83,15 +84,18 @@ The result is a system where the longer you play, the more the game resembles th
 
 **Infrastructure**
 - Cloud persistence via an 8-character Save Frequency code — ghost by default, syncing is a deliberate operator choice
+- Automatic pull-on-foreground — when the app returns to focus, it checks for a newer cloud state and reloads silently if one exists
+- Manual pull via Settings > Sync — force-syncs from cloud on demand; recommended on iOS PWA where automatic sync may not trigger
 - Sync-Link co-op tether — two operators share a Sync-ID; simultaneous directive completion triggers Resonance, doubling XP for that event
 - Referral network — 50 Gold paid automatically when a recruit awakens
-- PWA — installable on iOS, Android, and desktop; works offline
+- PWA — installable on iOS, Android, and desktop; works offline; install button accessible via Settings > System
 - Push notification re-engagement after three days of inactivity
 - Service Worker with network-first strategy and auto-update broadcast to connected clients
 
 **Settings**
-- Tabbed settings screen: System (designation, operator profile, gear, sound), Neural Link (AI config), Sync (cloud and co-op), and Danger Zone (wipe profile)
+- Tabbed settings screen: System (designation, operator profile, gear, sound, install), Neural Link (AI config), Sync (cloud and co-op), and Danger Zone (wipe profile)
 - Operator profile field — contextual data the AI uses to personalise incursions and boss assessments
+- Install button in System tab — anchors the terminal to the device for offline access; falls back to browser share menu instructions on iOS
 
 ---
 
@@ -156,6 +160,12 @@ As Neural Link matures, the AI layer could generate directives dynamically from 
 
 **Offline-first physical artefacts**
 Printed operator cards, stat sheets, or physical journals that sync via QR or NFC when brought near a device — for operators who want a tactile layer alongside the digital one. The System as object, not just interface.
+
+**Telegram notification layer**
+A Telegram bot that acts as the System's external comms channel — reaching the operator outside the terminal with a morning briefing and an end-of-day check-in. The operator links their Telegram account with a single tap via a frequency-coded deep link; no manual entry required. Escalating re-engagement if the operator goes dark, similar to Duolingo's streak-shame mechanic. Built on the Telegram Bot API against a lightweight serverless backend reading from Firestore — free to operate at any realistic indie scale.
+
+**Operator journal**
+A daily log screen where the operator records what happened in plain language — what they executed, what blocked them, what they intend differently tomorrow. Research on expressive writing (Pennebaker, 1997) shows meaningful psychological benefit from as few as three focused sentences. Journal entries stored locally and synced; when Neural Link is active, entries feed into the Behavioural Trace for AI pattern analysis and follow-up directive generation.
 
 ---
 

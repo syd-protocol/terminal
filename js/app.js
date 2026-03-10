@@ -2470,6 +2470,7 @@ function completeQuest(id, stat, baseXP) {
     if(wasCorrupted&&!player.corrupted) setTimeout(()=>showLog('[SYSTEM_RESTORED: CORRUPTION_CLEARED]','accent'),400);
     renderQuests(injectTutorial(dailyQuests),player.completedToday,player.momentum);
     updateStatusScreen();
+    renderElasticUI(); // Refreshes Suggested Strikes so completed directives are removed
     if(newRank!==prevRank){setTimeout(()=>{showLog('[RECLASSIFIED: '+newRank+'-RANK CONFIRMED]','accent');showRankUpOverlay(newRank,newLevel);},600);}
     else if(newLevel>prevLevel){setTimeout(()=>{showLog('[THRESHOLD: LEVEL '+newLevel+' REACHED]','accent');showLevelUpOverlay(newLevel);},600);}
 
@@ -2878,14 +2879,63 @@ async function checkAndPullIfStale() {
     }
 }
 
+// Manual pull — bypasses the 2-minute cooldown. For use from Settings
+// and as a fallback on devices where visibilitychange is unreliable (iOS PWA).
+async function forcePullFromCloud() {
+    if (!isSyncLinked()) {
+        setSyncStatus('[ TERMINAL NOT LINKED — ESTABLISH FREQUENCY FIRST ]', 'warn');
+        return;
+    }
+    const firestore = getDB();
+    if (!firestore) {
+        setSyncStatus('[ CLOUD UNREACHABLE — CHECK CONNECTION ]', 'warn');
+        return;
+    }
+    const btn = document.getElementById('sync-pull-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'SCANNING...'; }
+    setSyncStatus('[ SCANNING CLOUD... ]', '');
+
+    try {
+        const freq = getOrCreateSaveFrequency();
+        const doc  = await firestore.collection('save_states').doc(freq).get();
+        if (!doc.exists) {
+            setSyncStatus('[ NO SIGNAL FOUND AT THIS FREQUENCY ]', 'warn');
+            if (btn) { btn.disabled = false; btn.textContent = 'PULL NOW'; }
+            return;
+        }
+        const data = doc.data();
+        localStorage.setItem(STORAGE_KEY, data.playerBlob);
+        if (data.sidecar) {
+            try {
+                const sc = JSON.parse(data.sidecar);
+                if (sc.incursions)     localStorage.setItem(INCURSIONS_KEY,           sc.incursions);
+                if (sc.worldBosses)    localStorage.setItem(WORLDBOSSES_KEY,          sc.worldBosses);
+                if (sc.trace)          localStorage.setItem(TRACE_KEY,                sc.trace);
+                if (sc.defeatedBosses) localStorage.setItem('syd_defeated_bosses',    sc.defeatedBosses);
+                if (sc.audioMinutes)   localStorage.setItem(AUDIO_MINUTES_KEY,        sc.audioMinutes);
+                if (sc.fieldNotes)     localStorage.setItem(FIELD_NOTES_KEY,          sc.fieldNotes);
+            } catch(e) { /* sidecar restore failed */ }
+        }
+        if (data.pushedAt) localStorage.setItem(SYNC_LAST_PUSH_KEY, data.pushedAt);
+        // Reset pull-check cooldown so next foreground check runs fresh
+        localStorage.removeItem(SYNC_LAST_PULL_CHECK_KEY);
+        setSyncStatus('[ SIGNAL LOCKED — RELOADING TERMINAL... ]', 'accent');
+        setTimeout(() => window.location.reload(), 1200);
+    } catch(e) {
+        setSyncStatus('[ PULL FAILED — CHECK CONNECTION AND RETRY ]', 'warn');
+        if (btn) { btn.disabled = false; btn.textContent = 'PULL NOW'; }
+    }
+}
+
 document.addEventListener('visibilitychange', () => {
-    if (!audioCtx) return;
     if (document.visibilityState === 'hidden') {
-        // App moved to background — suspend context silently
-        audioCtx.suspend().catch(() => {});
+        // App moved to background — suspend audio context silently
+        if (audioCtx) audioCtx.suspend().catch(() => {});
     } else {
-        // App returned to foreground — resume audio and check for newer cloud state
-        audioCtx.resume().catch(() => {});
+        // App returned to foreground — resume audio and check for newer cloud state.
+        // Note: audioCtx may not exist on iOS PWA until the first user gesture,
+        // so the audio resume is guarded separately from the sync check.
+        if (audioCtx) audioCtx.resume().catch(() => {});
         checkAndPullIfStale();
     }
 });
@@ -3096,7 +3146,8 @@ function renderSuggestedStrikes(bosses, incursions) {
     // Pull only from today's already-selected directives — not the full quest pool.
     // If none of today's directives match the boss's primary stat, hide the section.
     if (!dailyQuests || !dailyQuests.length) return;
-    const strikes = dailyQuests.filter(q => q && q.stat === bossStat);
+    const completedIds = (player && player.completedToday) ? player.completedToday : [];
+    const strikes = dailyQuests.filter(q => q && q.stat === bossStat && !completedIds.includes(q.id));
     if (!strikes.length) return;
 
     // Build section
