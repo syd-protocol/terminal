@@ -2558,8 +2558,16 @@ function savePlayerName(){
 function showConfirmReset(){document.getElementById('confirm-box').classList.remove('hidden');}
 
 function resetProfile(){
-    localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(SOUND_KEY);
-    localStorage.removeItem('syd_sound');localStorage.removeItem(GEAR_KEY);
+    [
+        STORAGE_KEY, SOUND_KEY, 'syd_sound', GEAR_KEY,
+        NEURAL_KEY_KEY, NEURAL_PROVIDER_KEY,
+        WORLDBOSSES_KEY, INCURSIONS_KEY,
+        TRACE_KEY, LOG_ARCHIVE_KEY,
+        SYNCLINK_ID_KEY, SAVE_FREQ_KEY,
+        SYNC_OPTED_IN_KEY, SYNC_LAST_PUSH_KEY, SYNC_ADVISORY_KEY,
+        INSTALL_DISMISSED_KEY, AUDIO_MINUTES_KEY,
+        'syd_defeated_bosses', 'syd_pending_ref'
+    ].forEach(k => localStorage.removeItem(k));
     window.location.reload();
 }
 
@@ -2858,6 +2866,7 @@ function renderSuggestedStrikes(bosses, incursions) {
                 </div>`).join('')}
         </div>
         <button class="ss-view-btn" onclick="navTo('screen-quests')">VIEW ALL DIRECTIVES →</button>
+        ${getNeuralKey() ? `<button class="ss-neural-prompt" onclick="navTo('screen-neural');setTimeout(()=>switchNeuralTab('incursions'),120)">[ NEURAL LINK AVAILABLE — GENERATE INCURSION TO STRIKE ${(boss.enemy || bossStat).toUpperCase()} DIRECTLY ]</button>` : ''}
     `;
 
     // Insert between world-boss-section and view-directives-btn
