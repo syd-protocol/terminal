@@ -1339,6 +1339,53 @@ body {
     color: #3a4a5a;
 }
 
+/* ── Field note additions ────────────────────────────────────── */
+
+.fn-toggle {
+    background: none;
+    border: 1px solid rgba(79, 195, 247, 0.2);
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    padding: 4px 10px;
+    margin: 8px 0 4px;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.fn-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.fn-wrap--hidden {
+    display: none;
+}
+
+.fn-char-count {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.55rem;
+    color: #3a4a5a;
+    letter-spacing: 1px;
+    text-align: right;
+    margin-top: 3px;
+}
+
+.fn-saved {
+    margin: 10px 0 6px;
+    border-left: 2px solid rgba(79, 195, 247, 0.2);
+    padding-left: 12px;
+}
+
+.fn-saved-text {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    letter-spacing: 0.3px;
+    white-space: pre-wrap;
+}
+
 /* ══════════════════════════════════════════════════════════════
    STAGE 2 — GOLD + SHOP
 ══════════════════════════════════════════════════════════════ */

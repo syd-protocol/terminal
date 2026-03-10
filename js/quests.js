@@ -237,22 +237,51 @@ function renderQuests(quests, completedIds, momentum) {
                </div>`
             : '';
 
-        // Reflection prompt — only on Gear 3 slot 3 directives, only when not yet complete.
-        // The complete button stays locked until at least 10 characters are written.
-        // The writing is the practice. Nothing is stored or transmitted.
-        const reflectionSection = (quest._requiresReflection && !isComplete)
-            ? `<div class="reflection-wrap">
+        // Field Note — unified note input for all directive cards.
+        // On _requiresReflection cards (Gear 3 slot 3): shown by default, required,
+        // complete button locked until 10+ characters. Note is saved on complete.
+        // On all other cards: hidden behind a toggle, optional, never gates completion.
+        // Notes are stored in syd_field_notes keyed by questId_YYYY-MM-DD and sync
+        // with the cloud sidecar.
+        const savedNote     = (typeof loadFieldNote === 'function') ? loadFieldNote(quest.id) : '';
+        const isRequired    = quest._requiresReflection && !isComplete;
+        const isOptional    = !quest._requiresReflection && !isComplete;
+        const showSaved     = isComplete && savedNote;
+
+        const fieldNoteSection = isRequired
+            ? `<div class="fn-wrap fn-wrap--required" id="fn-wrap-${quest.id}">
                    <div class="reflection-label">[ FIELD REPORT ]</div>
                    <div class="reflection-hint">
-                       Log what you observed. It does not need to be saved —
-                       bringing the thought into form is the practice itself.
+                       Log what you observed. Keep it short — one or two sentences.
+                       Stored locally and synced with your terminal.
                    </div>
                    <textarea
-                       class="reflection-input"
-                       id="reflection-${quest.id}"
+                       class="reflection-input fn-input"
+                       id="fn-input-${quest.id}"
                        placeholder="What did you notice, feel, or learn?"
                        rows="3"
-                   ></textarea>
+                       maxlength="280"
+                   >${savedNote}</textarea>
+                   <div class="fn-char-count" id="fn-count-${quest.id}">0 / 280</div>
+               </div>`
+            : isOptional
+            ? `<div class="fn-optional" id="fn-optional-${quest.id}">
+                   <button class="fn-toggle" id="fn-toggle-${quest.id}" data-open="false">+ ADD NOTE</button>
+                   <div class="fn-wrap fn-wrap--hidden" id="fn-wrap-${quest.id}">
+                       <textarea
+                           class="reflection-input fn-input"
+                           id="fn-input-${quest.id}"
+                           placeholder="Brief note — max 280 characters."
+                           rows="2"
+                           maxlength="280"
+                       >${savedNote}</textarea>
+                       <div class="fn-char-count" id="fn-count-${quest.id}">0 / 280</div>
+                   </div>
+               </div>`
+            : showSaved
+            ? `<div class="fn-saved" id="fn-saved-${quest.id}">
+                   <div class="reflection-label">[ FIELD NOTE ]</div>
+                   <div class="fn-saved-text">${savedNote}</div>
                </div>`
             : '';
 
@@ -289,7 +318,7 @@ function renderQuests(quests, completedIds, momentum) {
             <div class="qc-desc" style="white-space:pre-line">${quest.desc}</div>
             ${modelSection}
             ${tacticalSection}
-            ${reflectionSection}
+            ${fieldNoteSection}
             ${tutorialNavSection}
             <div class="qc-footer">
                 <button
@@ -327,15 +356,64 @@ function renderQuests(quests, completedIds, momentum) {
             }
         }
 
-        // Wire reflection textarea — complete button locked until 10+ characters written.
+        // ── Field note wiring ─────────────────────────────────────
+        // Required (Gear 3 slot 3): complete button locked until 10+ chars
+        // Optional (all others): toggle shows/hides the textarea
         if (quest._requiresReflection && !isComplete) {
-            const textarea    = document.getElementById('reflection-' + quest.id);
+            const textarea    = document.getElementById('fn-input-' + quest.id);
             const completeBtn = document.getElementById('complete-btn-' + quest.id);
+            const countEl     = document.getElementById('fn-count-' + quest.id);
             completeBtn.disabled = true;
 
-            textarea.addEventListener('input', () => {
-                completeBtn.disabled = textarea.value.trim().length < 10;
-            });
+            if (textarea) {
+                // Restore saved note into textarea and update count
+                const existing = (typeof loadFieldNote === 'function') ? loadFieldNote(quest.id) : '';
+                if (existing) textarea.value = existing;
+                if (countEl) countEl.textContent = textarea.value.length + ' / 280';
+
+                textarea.addEventListener('input', () => {
+                    const len = textarea.value.trim().length;
+                    completeBtn.disabled = len < 10;
+                    if (countEl) countEl.textContent = textarea.value.length + ' / 280';
+                });
+            }
+        } else if (!isComplete) {
+            // Optional note toggle
+            const toggleBtn = document.getElementById('fn-toggle-' + quest.id);
+            const wrap      = document.getElementById('fn-wrap-' + quest.id);
+            const textarea  = document.getElementById('fn-input-' + quest.id);
+            const countEl   = document.getElementById('fn-count-' + quest.id);
+
+            if (toggleBtn && wrap) {
+                // If there's already a saved note, open the wrap by default
+                const existing = (typeof loadFieldNote === 'function') ? loadFieldNote(quest.id) : '';
+                if (existing && textarea) {
+                    wrap.classList.remove('fn-wrap--hidden');
+                    toggleBtn.textContent = '− NOTE';
+                    toggleBtn.dataset.open = 'true';
+                    if (countEl) countEl.textContent = textarea.value.length + ' / 280';
+                }
+
+                toggleBtn.addEventListener('click', () => {
+                    const isOpen = toggleBtn.dataset.open === 'true';
+                    if (isOpen) {
+                        wrap.classList.add('fn-wrap--hidden');
+                        toggleBtn.textContent = '+ ADD NOTE';
+                        toggleBtn.dataset.open = 'false';
+                    } else {
+                        wrap.classList.remove('fn-wrap--hidden');
+                        toggleBtn.textContent = '− NOTE';
+                        toggleBtn.dataset.open = 'true';
+                        if (textarea) textarea.focus();
+                    }
+                });
+
+                if (textarea && countEl) {
+                    textarea.addEventListener('input', () => {
+                        countEl.textContent = textarea.value.length + ' / 280';
+                    });
+                }
+            }
         }
     });
 

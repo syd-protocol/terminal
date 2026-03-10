@@ -407,6 +407,12 @@
                 <button class="nav-btn" id="settings-sound-btn" onclick="cycleSoundState()">TOGGLE SOUND</button>
             </div>
 
+            <div class="settings-section">
+                <div class="settings-section-title">INSTALL</div>
+                <div class="gear-desc">Anchor the terminal to your device for offline access and faster load times.</div>
+                <button class="nav-btn" id="settings-install-btn" onclick="triggerInstallFromSettings()">INSTALL APP</button>
+            </div>
+
         </div>
 
         <!-- ══ TAB: NEURAL LINK ═════════════════════════════════ -->
@@ -651,6 +657,9 @@
                           rows="3" autocomplete="off" autocorrect="off" spellcheck="false"
                           class="settings-name-input" style="resize:none;margin-bottom:0.4em;"></textarea>
                 <div class="onboarding-step-note">This input seeds a World Boss — a persistent enemy entity representing a long-term goal. It will appear on your status screen with an HP bar that depletes as you execute relevant directives.</div>
+                <div style="text-align:right;margin-top:0.6em;">
+                    <button id="onboarding-goal-skip" style="background:none;border:none;color:rgba(200,214,229,0.35);font-family:'Share Tech Mono',monospace;font-size:0.65rem;letter-spacing:1.5px;cursor:pointer;padding:0;">SKIP FOR NOW →</button>
+                </div>
             </div>
 
             <!-- STEP: OPERATOR PROFILE -->
@@ -660,6 +669,9 @@
                           rows="4" autocomplete="off" autocorrect="off" spellcheck="false"
                           class="settings-name-input" style="resize:none;margin-bottom:0.4em;"></textarea>
                 <div class="onboarding-step-note">This context is injected into all AI directive generation when Neural Link is active. Stored locally and synced. Editable later via Settings &gt; System.</div>
+                <div style="text-align:right;margin-top:0.6em;">
+                    <button id="onboarding-profile-skip" style="background:none;border:none;color:rgba(200,214,229,0.35);font-family:'Share Tech Mono',monospace;font-size:0.65rem;letter-spacing:1.5px;cursor:pointer;padding:0;">SKIP FOR NOW →</button>
+                </div>
             </div>
 
             <button class="nav-btn hidden" id="start-btn">INITIALISE</button>

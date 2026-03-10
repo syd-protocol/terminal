@@ -21,6 +21,7 @@ const NEURAL_KEY_KEY      = 'syd_neural_key';      // BYO API key
 const NEURAL_PROVIDER_KEY = 'syd_neural_provider'; // 'gemini' | 'openai' | 'anthropic'
 const INCURSIONS_KEY      = 'syd_incursions';      // active incursions (JSON array)
 const WORLDBOSSES_KEY     = 'syd_world_bosses';    // active world bosses (JSON array)
+const FIELD_NOTES_KEY     = 'syd_field_notes';     // directive field notes (JSON object keyed by questId_YYYY-MM-DD)
 
 // ─── FIREBASE ────────────────────────────────────────────────
 // Compat SDK loaded via <script> tags in index.html.
@@ -1221,6 +1222,14 @@ function runOnboardingSteps(name) {
                 }
             }
         );
+
+        // Wire skip — advances without saving a boss
+        const skipGoal = document.getElementById('onboarding-goal-skip');
+        if (skipGoal) {
+            const fresh = skipGoal.cloneNode(true);
+            skipGoal.parentNode.replaceChild(fresh, skipGoal);
+            document.getElementById('onboarding-goal-skip').addEventListener('click', () => stepProfile());
+        }
     }
 
     function stepProfile() {
@@ -1238,9 +1247,27 @@ function runOnboardingSteps(name) {
                 createPlayer(name, prof);
             }
         );
+
+        // Wire skip — advances without saving a profile
+        const skipProfile = document.getElementById('onboarding-profile-skip');
+        if (skipProfile) {
+            const fresh = skipProfile.cloneNode(true);
+            skipProfile.parentNode.replaceChild(fresh, skipProfile);
+            document.getElementById('onboarding-profile-skip').addEventListener('click', () => createPlayer(name, ''));
+        }
     }
 
-    stepNeural();
+    // Type a brief local-storage notice before the first step
+    function typeDataNotice(onDone) {
+        loreEl.innerHTML = '';
+        const notice = '> Everything you enter here is stored on your device only. Nothing leaves until you set up cloud sync in Settings.';
+        const el = document.createElement('div');
+        el.className = 'lore-line lore-signal';
+        loreEl.appendChild(el);
+        typeText(el, notice, 28, () => setTimeout(onDone, 600));
+    }
+
+    typeDataNotice(() => stepNeural());
 }
 
 // Updates the note text under the provider selector during onboarding.
@@ -1739,6 +1766,7 @@ async function pushToCloud() {
         trace:           localStorage.getItem(TRACE_KEY)           || '[]',
         defeatedBosses:  localStorage.getItem('syd_defeated_bosses') || '[]',
         audioMinutes:    localStorage.getItem(AUDIO_MINUTES_KEY)   || '0',
+        fieldNotes:      localStorage.getItem(FIELD_NOTES_KEY)     || '{}',
     };
     try {
         await firestore.collection('save_states').doc(freq).set({
@@ -1824,13 +1852,15 @@ async function reconstituteSaveState() {
                 if (sc.trace)          localStorage.setItem(TRACE_KEY,                sc.trace);
                 if (sc.defeatedBosses) localStorage.setItem('syd_defeated_bosses',    sc.defeatedBosses);
                 if (sc.audioMinutes)   localStorage.setItem(AUDIO_MINUTES_KEY,        sc.audioMinutes);
+                if (sc.fieldNotes)     localStorage.setItem(FIELD_NOTES_KEY,          sc.fieldNotes);
             } catch(e) { console.warn('Sidecar restore failed:', e); }
         }
 
         setSyncStatus('[ FREQUENCY LOCKED — RECONSTITUTING TERMINAL... ]', 'accent');
-        // Show key advisory before reload
+        // Neural key is stored locally only — it is never erased by reconstitute.
+        // If this is a fresh device, the operator will need to re-enter it in Settings.
         setTimeout(() => {
-            setSyncStatus('[ NOTE: NEURAL PROCESSOR KEY NOT SYNCED — RE-ENTER IN SETTINGS ]', 'warn');
+            setSyncStatus('[ RECONSTITUTION COMPLETE — NEURAL PROCESSOR KEY IS DEVICE-LOCAL ]', '');
         }, 400);
         setTimeout(() => window.location.reload(), 2400);
     } catch(e) {
@@ -2425,6 +2455,11 @@ function completeQuest(id, stat, baseXP) {
     const xpBefore=earnedXP(player.stats);
     player.stats[stat]=parseFloat(((player.stats[stat]||STAT_FLOOR)+amt).toFixed(1));
     player.completedToday.push(id); player.gold=(player.gold||0)+baseXP; savePlayer();
+
+    // Save field note if one was entered (works for both required and optional notes)
+    const fnInput = document.getElementById('fn-input-' + id);
+    if (fnInput && fnInput.value.trim()) saveFieldNote(id, fnInput.value.trim());
+
     const card=document.getElementById('quest-card-'+id);
     if(card){card.classList.add('completing');setTimeout(()=>card.classList.remove('completing'),400);}
     showFloatingXP(id,amt,isCrit); if(!isCrit) playQuestComplete();
@@ -2747,7 +2782,7 @@ function showScreen(id, isBack) {
     // ── Per-screen setup ─────────────────────────────────────
     if (id === 'screen-status')   { setupTooltips(); renderElasticUI(); updateNeuralBadge(); runFirstTransmission(); }
     if (id === 'screen-shop')       renderShop();
-    if (id === 'screen-settings')   renderNeuralSettings();
+    if (id === 'screen-settings')   { renderNeuralSettings(); renderInstallSettingsBtn(); }
     if (id === 'screen-neural')     renderNeuralScreen();
     if (id === 'screen-quests') {
         // If the tutorial is still pending, show only the tutorial card — no filter,
@@ -2847,6 +2882,42 @@ function dismissInstall() {
     deferredInstallPrompt = null;
 }
 
+// Called from Settings — allows operators to install the app manually
+// if they missed the automatic prompt or dismissed it earlier.
+function triggerInstallFromSettings() {
+    if (deferredInstallPrompt) {
+        // Browser install prompt is available — use it
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then(choice => {
+            if (choice.outcome === 'accepted') {
+                localStorage.setItem(INSTALL_DISMISSED_KEY, 'installed');
+                showLog('[ TERMINAL INSTALLATION CONFIRMED ]', 'accent');
+            }
+            deferredInstallPrompt = null;
+            renderInstallSettingsBtn();
+        });
+    } else {
+        // No prompt available — already installed or iOS (manual install required)
+        showLog('[ ADD TO HOME SCREEN VIA YOUR BROWSER SHARE MENU ]', '');
+    }
+}
+
+function renderInstallSettingsBtn() {
+    const btn = document.getElementById('settings-install-btn');
+    if (!btn) return;
+    const isInstalled = localStorage.getItem(INSTALL_DISMISSED_KEY) === 'installed';
+    if (isInstalled) {
+        btn.textContent = '[ TERMINAL ALREADY ANCHORED ]';
+        btn.disabled = true;
+    } else if (deferredInstallPrompt) {
+        btn.textContent = 'INSTALL APP';
+        btn.disabled = false;
+    } else {
+        btn.textContent = 'ADD TO HOME SCREEN VIA BROWSER';
+        btn.disabled = false;
+    }
+}
+
 // ════════════════════════════════════════════════════════════════
 // STAGE 5a — THE NEURAL LINK EXPANSION
 //
@@ -2862,6 +2933,29 @@ function getNeuralProvider() { return localStorage.getItem(NEURAL_PROVIDER_KEY) 
 function setNeuralKey(k, p) {
     if (k) { localStorage.setItem(NEURAL_KEY_KEY, k); localStorage.setItem(NEURAL_PROVIDER_KEY, p || 'gemini'); }
     else   { localStorage.removeItem(NEURAL_KEY_KEY); localStorage.removeItem(NEURAL_PROVIDER_KEY); }
+}
+
+// ─── FIELD NOTE STORAGE ───────────────────────────────────────
+// Notes are keyed by questId_YYYY-MM-DD so they're date-stamped
+// and don't bleed across days. Synced in the cloud sidecar.
+function loadFieldNotes() {
+    try { return JSON.parse(localStorage.getItem(FIELD_NOTES_KEY) || '{}'); } catch { return {}; }
+}
+function saveFieldNote(questId, text) {
+    const today = new Date().toISOString().slice(0, 10);
+    const notes = loadFieldNotes();
+    const key   = questId + '_' + today;
+    if (text && text.trim()) {
+        notes[key] = text.trim();
+    } else {
+        delete notes[key];
+    }
+    localStorage.setItem(FIELD_NOTES_KEY, JSON.stringify(notes));
+    autoPushIfLinked(false);
+}
+function loadFieldNote(questId) {
+    const today = new Date().toISOString().slice(0, 10);
+    return loadFieldNotes()[questId + '_' + today] || '';
 }
 function loadIncursions() {
     try { return JSON.parse(localStorage.getItem(INCURSIONS_KEY) || '[]'); } catch { return []; }
