@@ -4704,7 +4704,7 @@ body {
    Append these to the existing style.css (do not replace it).
 
    INSTRUCTION: Paste the full contents of this file at the end
-   of /terminal/css/style.css.
+   of css/style.css.
 
    Naming: GES uses the same CSS custom properties already defined
    in style.css (--accent, --bg, --surface, --stat-str, etc.).

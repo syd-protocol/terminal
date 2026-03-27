@@ -26,7 +26,7 @@
 //   • Firestore push/pull sync
 //   • Field notes (loadFieldNote, saveFieldNote)
 //   • checkDailyReset(), today()
-//   • loadQuests() — fetches /terminal/data/quests.json
+//   • loadQuests() — fetches data/quests.json
 // ═══════════════════════════════════════════════════════════════
 
 // ─── STORAGE KEYS ────────────────────────────────────────────
@@ -745,7 +745,7 @@ function generateUID() {
 // ─── QUEST LOADING ───────────────────────────────────────────
 async function loadQuests() {
     try {
-        const res  = await fetch('/terminal/data/quests.json');
+        const res  = await fetch('data/quests.json');
         const data = await res.json();
         return data.quests;
     } catch(e) {
@@ -870,7 +870,7 @@ function dismissInstall() {
 // ─── SERVICE WORKER ──────────────────────────────────────────
 function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('/terminal/service-worker.js')
+    navigator.serviceWorker.register('service-worker.js')
         .then(reg => {
             navigator.serviceWorker.addEventListener('message', e => {
                 if (e.data && e.data.type === 'SW_UPDATED') {
