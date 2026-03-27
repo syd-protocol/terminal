@@ -1,987 +1,276 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SYD — Synchronized Yield Directive</title>
-    <link rel="stylesheet" href="css/style.css" />
-    <link rel="manifest" href="manifest.json" />
+    <meta name="description" content="Run the SYD Protocol. Complete real-world directives. Build your stats. Reveal the world.">
 
-    <!-- SEO -->
-    <meta name="description" content="SYD — Synchronized Yield Directive. A self-improvement RPG that turns real-world habit execution into stat progression. Complete daily directives. Watch your attributes compound. Run the protocol." />
-    <meta name="keywords" content="SYD, self improvement, RPG, habit tracker, gamified, productivity, daily directives, level up" />
-    <link rel="canonical" href="https://syd-protocol.github.io/terminal/" />
+    <!-- PWA -->
+    <link rel="manifest" href="/terminal/manifest.json">
+    <meta name="theme-color" content="#0f0f1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SYD">
+    <link rel="apple-touch-icon" href="/terminal/icons/icon-192.png">
 
-    <!-- Open Graph — controls how the link unfurls on WhatsApp, Telegram, Discord, Facebook, LinkedIn -->
-    <meta property="og:type"        content="website" />
-    <meta property="og:url"         content="https://syd-protocol.github.io/terminal/" />
-    <meta property="og:title"       content="SYD — Synchronized Yield Directive" />
-    <meta property="og:description" content="Your real life. Gamified. Complete daily directives across five attributes. Watch your stats compound. Run the protocol." />
-    <meta property="og:image"       content="https://syd-protocol.github.io/terminal/icons/og-image.png" />
-    <meta property="og:image:width"  content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt"   content="SYD — Synchronized Yield Directive. Your real life. Gamified." />
-    <meta property="og:site_name"   content="SYD" />
+    <!-- Google Fonts — Space Mono (terminal) + Space Grotesk (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
-    <!-- Twitter / X Card -->
-    <meta name="twitter:card"        content="summary_large_image" />
-    <meta name="twitter:title"       content="SYD — Synchronized Yield Directive" />
-    <meta name="twitter:description" content="Your real life. Gamified. Complete daily directives across five attributes. Watch your stats compound. Run the protocol." />
-    <meta name="twitter:image"       content="https://syd-protocol.github.io/terminal/icons/og-image.png" />
-    <meta name="twitter:image:alt"   content="SYD — Synchronized Yield Directive. Your real life. Gamified." />
-
-    <!-- PWA / home screen meta -->
-    <meta name="theme-color" content="#0f0f1a" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="SYD" />
-    <!-- Apple touch icons — Safari uses these for home screen -->
-    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png" />
-    <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+    <link rel="stylesheet" href="/terminal/css/style.css">
 </head>
 <body>
 
-    <!-- ═══════════════════════════════════════════════
-         STATUS SCREEN
-    ═══════════════════════════════════════════════ -->
-    <div class="screen" id="screen-status">
-
-        <button class="settings-btn" id="settings-btn" title="System Settings">⚙</button>
-        <div class="sound-toggle" id="sound-toggle" title="Toggle sound">
-            <span id="sound-icon">🔇</span>
-        </div>
-
-        <div class="status-header" id="status-header">
-            <div class="player-title tappable" id="player-title" data-tip="title">[ THE BEGINNER ]</div>
-            <div class="rank-badge tappable rank-f" id="rank-badge" data-tip="rank">F</div>
-            <h1 class="player-name" id="player-name">PLAYER</h1>
-
-            <div class="player-level tappable" id="player-level-row" data-tip="level">
-                LEVEL <span id="player-level">1</span>
-            </div>
-            <div class="level-progress-wrap">
-                <div class="level-progress-bar" id="level-progress-bar"></div>
-            </div>
-            <div class="level-progress-label" id="level-progress-label">0 / 25 XP</div>
-
-            <div class="tooltip-box" id="tip-level">
-                <strong>Level</strong>
-                Derived from total earned XP. Every completed directive adds to it permanently — no quest undoes what you have already built. Early levels arrive quickly. Later levels require months of sustained effort. The progress bar shows exactly where you stand. The System has seen every timeline. Those who reach Level 100 all had one thing in common: they kept showing up.
-            </div>
-
-            <div class="momentum-row tappable" id="momentum-row" data-tip="momentum">
-                <span class="momentum-label">MOMENTUM</span>
-                <div class="momentum-bar-wrap"><div class="momentum-bar" id="momentum-bar"></div></div>
-                <span class="momentum-value" id="momentum-value">1.00x</span>
-            </div>
-
-            <div class="hp-row tappable" id="hp-row" data-tip="hp">
-                <span class="hp-label">HP</span>
-                <div class="hp-bar-wrap"><div class="hp-bar" id="hp-bar"></div></div>
-                <span class="hp-value" id="hp-value">105 / 105</span>
-            </div>
-
-            <div class="tooltip-box" id="tip-hp">
-                <strong>System HP</strong>
-                Cover all five stats in a single day and the System recovers 20 HP. Miss a day and it takes damage — 10 for one missed day, 20 for two, 35 for three or more. At zero, the System enters a Corrupted state: XP gain is halved until HP climbs above 25. Max HP scales with level.
-            </div>
-            <div class="tooltip-box" id="tip-title">
-                <strong>Designation</strong>
-                The System assigns titles based on observable attribute levels. Everyone starts as The Beginner — not as an insult, but as an accurate reading. As your attributes compound through completed directives, the designation updates to reflect who you are becoming.
-            </div>
-            <div class="tooltip-box" id="tip-rank">
-                <strong>Rank</strong>
-                F → E → D → C → B → A → S, then S+, SS, SS+, SSS beyond Level 100. Rank is determined by level. F-Rank covers Levels 1 to 15. Each threshold represents a genuine, measurable shift in who you are — not a badge, a consequence.
-            </div>
-            <div class="tooltip-box" id="tip-momentum">
-                <strong>Momentum</strong>
-                Consecutive effort compounds. Fourteen days of daily execution brings the multiplier to its maximum — 1.5× XP per directive. Miss a day occasionally and it barely registers. Fall away for longer and the multiplier returns to baseline, ready to be rebuilt.
-            </div>
-        </div>
-
-        <!-- ── WORLD BOSS BAR — War Room Flow ── -->
-        <div class="world-boss-section hidden" id="world-boss-section">
-            <div class="wb-label" id="wb-label">[ WORLD BOSS ]</div>
-            <div class="wb-enemy" id="wb-enemy"></div>
-            <div class="wb-bar-wrap">
-                <div class="wb-bar" id="wb-bar"></div>
-            </div>
-            <div class="wb-hp-row">
-                <span class="wb-hp" id="wb-hp"></span>
-                <button class="wb-intel-btn" onclick="if(loadWorldBosses().length) showTacticalGuide(loadWorldBosses()[0])">[ INTEL ]</button>
-            </div>
-        </div>
-
-        <div class="stat-block">
-            <div class="stat-row tappable" data-stat="strength" data-tip="strength">
-                <span class="stat-label">STRENGTH</span>
-                <div class="stat-bar-wrap"><div class="stat-bar" id="bar-strength"></div></div>
-                <span class="stat-value" id="val-strength">10</span>
-            </div>
-            <div class="tooltip-box" id="tip-strength">
-                <strong>Strength</strong>
-                Physical output — energy, fitness, the ability to exert yourself when it matters. 10 is where survivors start.
-                <em class="tip-flavour">"Still working out where the gym is."</em>
-            </div>
-
-            <div class="stat-row tappable" data-stat="intelligence" data-tip="intelligence">
-                <span class="stat-label">INTELLIGENCE</span>
-                <div class="stat-bar-wrap"><div class="stat-bar" id="bar-intelligence"></div></div>
-                <span class="stat-value" id="val-intelligence">10</span>
-            </div>
-            <div class="tooltip-box" id="tip-intelligence">
-                <strong>Intelligence</strong>
-                Capacity to learn, reason, and decide well under pressure.
-                <em class="tip-flavour">"Knows things. Working on knowing more things."</em>
-            </div>
-
-            <div class="stat-row tappable" data-stat="agility" data-tip="agility">
-                <span class="stat-label">AGILITY</span>
-                <div class="stat-bar-wrap"><div class="stat-bar" id="bar-agility"></div></div>
-                <span class="stat-value" id="val-agility">10</span>
-            </div>
-            <div class="tooltip-box" id="tip-agility">
-                <strong>Agility</strong>
-                Adaptability under disruption. A higher score means you find opportunity in chaos rather than being paralysed by it.
-                <em class="tip-flavour">"Flexible. Mostly in schedule. Working on the rest."</em>
-            </div>
-
-            <div class="stat-row tappable" data-stat="endurance" data-tip="endurance">
-                <span class="stat-label">ENDURANCE</span>
-                <div class="stat-bar-wrap"><div class="stat-bar" id="bar-endurance"></div></div>
-                <span class="stat-value" id="val-endurance">10</span>
-            </div>
-            <div class="tooltip-box" id="tip-endurance">
-                <strong>Endurance</strong>
-                Sustained effort over time. The System has never seen anyone reach high Endurance without earning it slowly.
-                <em class="tip-flavour">"Finishes most things. The rest are in progress."</em>
-            </div>
-
-            <div class="stat-row tappable" data-stat="charisma" data-tip="charisma">
-                <span class="stat-label">CHARISMA</span>
-                <div class="stat-bar-wrap"><div class="stat-bar" id="bar-charisma"></div></div>
-                <span class="stat-value" id="val-charisma">10</span>
-            </div>
-            <div class="tooltip-box" id="tip-charisma">
-                <strong>Charisma</strong>
-                Social presence — how you connect, influence, and build trust. The people who compound the fastest are never alone.
-                <em class="tip-flavour">"Likeable. People remember their name most of the time."</em>
-            </div>
-
-            <div class="luck-divider"></div>
-
-            <div class="stat-row luck-row tappable" data-stat="luck" data-tip="luck">
-                <span class="stat-label">LUCK</span>
-                <div class="stat-bar-wrap"><div class="stat-bar luck-bar" id="bar-luck"></div></div>
-                <span class="stat-value" id="val-luck">10</span>
-            </div>
-            <div class="tooltip-box" id="tip-luck">
-                <strong>Luck</strong>
-                Cannot be raised directly. It is the average of all other attributes. Build the core attributes and luck rises with them.
-                <em class="tip-flavour">"Lucky? Debatable. Getting luckier? Absolutely."</em>
-            </div>
-        </div>
-
-        <div class="gold-row">
-            <span class="gold-label tappable" id="gold-label-tap" data-tip="gold">◈ GOLD</span>
-            <span class="gold-value" id="gold-value">0</span>
-            <button class="invite-btn"   id="invite-btn">INVITE →</button>
-            <button class="log-archive-btn" id="log-archive-btn" title="System Log Archive">LOG</button>
-            <button class="map-nav-btn"  id="map-btn">MAP →</button>
-            <button class="shop-nav-btn" id="shop-btn">CACHE →</button>
-        </div>
-        <div class="tooltip-box" id="tip-gold">
-            <strong>Gold</strong>
-            Earned by completing directives — one Gold per base XP point on every quest you finish.
-            Gold does not expire and cannot be lost. Spend it in the Supply Cache on buffs that
-            amplify your next session: Focus Draughts, Sprint Scrolls, Rest Sigils, and more.
-            The System does not sell shortcuts. Every item in the Cache corresponds to a real-world
-            act. Execute the act, then consume the item. That is the correct order.
-            <br><br>
-            <em class="tip-flavour">"You earn it by showing up. You spend it by showing up harder."</em>
-        </div>
-
-        <!-- ── TEMPORAL BREACH — Combat Flow ── -->
-        <div class="temporal-breach-section hidden" id="temporal-breach-section">
-            <div class="breach-header">[ TEMPORAL BREACH ]</div>
-            <div class="breach-sub">ACTIVE INCURSIONS — EXECUTE BEFORE EXPIRY</div>
-            <div class="incursion-list" id="incursion-list"></div>
-        </div>
-
-        <button class="nav-btn" id="view-directives-btn">VIEW TODAY'S DIRECTIVES</button>
-        <button class="nav-btn nav-btn--neural" id="neural-link-btn" onclick="navTo('screen-neural')">
-            ⬡ THREAT & MISSION CONTROL
-            <span class="neural-link-badge hidden" id="neural-link-badge">0</span>
-        </button>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         QUESTS SCREEN
-    ═══════════════════════════════════════════════ -->
-    <div class="screen" id="screen-quests">
-        <div class="quest-header" id="quest-header-back">
-            <h2>TODAY'S DIRECTIVES</h2>
-            <div class="quest-date" id="quest-date"></div>
-        </div>
-
-        <!-- Quest filter bar — shown when arriving from the map with a zone filter -->
-        <div class="quest-filter-bar hidden" id="quest-filter-bar">
-            <span class="quest-filter-label">FILTERING:</span>
-            <span class="quest-filter-value" id="quest-filter-value"></span>
-            <button class="quest-filter-clear" id="quest-filter-clear">[ CLEAR ]</button>
-        </div>
-
-        <div class="quest-list" id="quest-list"></div>
-        <div class="back-link" id="quests-back-link">← RETURN</div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         BASE MAP SCREEN
-    ═══════════════════════════════════════════════ -->
-    <div class="screen" id="screen-map">
-
-        <div class="map-header" id="map-header-back">
-            <h2>[ BASE MAP ]</h2>
-            <div class="map-header-sub" id="map-coords"></div>
-        </div>
-
-        <div class="map-viewport" id="map-viewport">
-            <div class="map-radar-sweep" id="map-radar-sweep"></div>
-
-            <div class="map-grid" id="map-grid">
-                <!-- Row 1 -->
-                <div class="map-zone map-facility" id="facility-archive" data-facility="archive">
-                    <div class="facility-blink hidden" id="facility-blink-archive"></div>
-                    <div class="facility-label">FIELD ARCHIVE</div>
-                </div>
-                <div class="map-zone map-facility" id="facility-neural" data-facility="neural">
-                    <div class="facility-blink hidden" id="facility-blink-neural"></div>
-                    <div class="facility-label">THREAT & MISSION CONTROL</div>
-                </div>
-                <div class="map-zone map-facility" id="facility-cache" data-facility="cache">
-                    <div class="facility-label">SUPPLY CACHE</div>
-                </div>
-
-                <!-- Row 2 -->
-                <div class="map-zone map-facility" id="facility-log" data-facility="log">
-                    <div class="facility-label">LOG ARCHIVE</div>
-                </div>
-                <div class="map-zone map-facility map-facility--command" id="facility-command" data-facility="command">
-                    <div class="facility-label">COMMAND POST</div>
-                    <div class="facility-command-pin" id="facility-command-pin">◇</div>
-                </div>
-                <div class="map-zone map-facility" id="facility-ops" data-facility="ops">
-                    <div class="facility-blink hidden" id="facility-blink-ops"></div>
-                    <div class="facility-label">OPERATIONS</div>
-                </div>
-
-                <!-- Row 3 — void tiles -->
-                <div class="map-void"></div>
-                <div class="map-void"></div>
-                <div class="map-void"></div>
-            </div>
-            <!-- end map-grid -->
-        </div>
-        <!-- end map-viewport -->
-
-        <!-- Base Map arrival overlay — fires once on hasSeenBaseMap === false -->
-        <div class="tf-arrival-overlay hidden" id="map-arrival-overlay">
-            <div class="tf-arrival-lines" id="map-arrival-lines"></div>
-            <div class="tf-arrival-tap" id="map-arrival-tap">[ TAP ANYWHERE TO PROCEED ]</div>
-        </div>
-
-        <div class="map-status-bar">
-            <span class="map-status-label">SCAN STATUS</span>
-            <span class="map-status-value" id="map-scan-status">ACTIVE</span>
-        </div>
-
-        <div class="back-link" id="map-back-link">← RETURN</div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         SHOP SCREEN
-    ═══════════════════════════════════════════════ -->
-    <div class="screen" id="screen-shop">
-        <div class="shop-header" id="shop-header-back">
-            <h2>[ SUPPLY CACHE ]</h2>
-            <div class="shop-gold-display">
-                <span class="shop-gold-label">◈ AVAILABLE</span>
-                <span class="shop-gold-value" id="shop-gold-value">0</span>
-            </div>
-            <div class="shop-lore">
-                The System has identified resources that accelerate field performance.
-                Each corresponds to a real-world act. The System does not monitor compliance.
-                It trusts the operator to play with integrity.
-            </div>
-        </div>
-        <div class="active-buffs" id="active-buffs"></div>
-        <div class="shop-list"    id="shop-list"></div>
-        <div class="back-link"    id="shop-back-link-bottom">← RETURN</div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         SETTINGS SCREEN
-    ═══════════════════════════════════════════════ -->
-    <div class="screen" id="screen-settings">
-        <div class="settings-header" id="settings-header-back">
-            <h2>[ SYSTEM SETTINGS ]</h2>
-        </div>
-
-        <!-- ── Settings Tab Bar ── -->
-        <div class="stab-bar">
-            <button class="stab stab--active" data-stab="system"      onclick="switchSettingsTab('system')">SYSTEM</button>
-            <button class="stab"              data-stab="neural"      onclick="switchSettingsTab('neural')">NEURAL LINK</button>
-            <button class="stab"              data-stab="sync"        onclick="switchSettingsTab('sync')">SYNC</button>
-            <button class="stab stab--danger" data-stab="danger"      onclick="switchSettingsTab('danger')">DANGER</button>
-        </div>
-
-        <!-- ══ TAB: SYSTEM ══════════════════════════════════════ -->
-        <div class="stab-panel" id="stab-panel-system">
-
-            <div class="settings-section">
-                <div class="settings-section-title">DESIGNATION</div>
-                <input type="text" id="settings-name-input" class="settings-name-input"
-                       maxlength="20" placeholder="ENTER NEW DESIGNATION..." />
-                <button class="nav-btn" id="save-name-btn">CONFIRM DESIGNATION</button>
-            </div>
-
-            <div class="settings-section">
-                <div class="settings-section-title">OPERATOR PROFILE</div>
-                <div class="gear-desc">
-                    Context the System uses to personalise directives and threat assessments.
-                    The more you provide, the sharper the output.
-                </div>
-                <textarea
-                    id="settings-profile-input"
-                    class="settings-profile-input"
-                    placeholder="Age, occupation, current situation, what you're working toward..."
-                    rows="4"
-                    autocorrect="off"
-                    spellcheck="false"
-                ></textarea>
-                <button class="nav-btn" id="save-profile-btn">SAVE PROFILE</button>
-            </div>
-
-            <div class="settings-section">
-                <div class="settings-section-title">OPERATIONAL GEAR</div>
-                <div class="gear-desc">
-                    Gear controls how many directives are issued per stat each day.
-                    More directives means more practice reps — and real-world execution
-                    is the root lever. XP follows effort, not the other way around.
-                </div>
-                <div class="gear-options">
-                    <button class="gear-option-btn gear-active" data-gear="1">
-                        <div class="gear-name">GEAR 1</div>
-                        <div class="gear-label">Standard</div>
-                        <div class="gear-detail">1 directive per stat · 5 daily</div>
-                    </button>
-                    <button class="gear-option-btn" data-gear="2">
-                        <div class="gear-name">GEAR 2</div>
-                        <div class="gear-label">Practice Mode</div>
-                        <div class="gear-detail">2 directives per stat · 10 daily</div>
-                    </button>
-                    <button class="gear-option-btn" data-gear="3">
-                        <div class="gear-name">GEAR 3</div>
-                        <div class="gear-label">Deep Practice</div>
-                        <div class="gear-detail">3 directives per stat · 15 daily</div>
-                    </button>
-                </div>
-                <div class="gear-warning hidden" id="gear-warning-1">
-                    One directive per stat. Consistent and sustainable. This path is long — that is the point.
-                </div>
-                <div class="gear-warning hidden" id="gear-warning-2">
-                    Two directives per stat, every day. A genuine commitment.
-                </div>
-                <div class="gear-warning hidden" id="gear-warning-3">
-                    WARNING: Gear 3 has been linked to unexpected competence, suspicious life improvement,
-                    and in rare timelines, actual results.<br><br>
-                    <em>Fifteen directives daily is a serious operational load.</em>
-                </div>
-            </div>
-
-            <div class="settings-section">
-                <div class="settings-section-title">SOUND</div>
-                <div class="gear-desc">Toggle ambient audio and UI sounds.</div>
-                <button class="nav-btn" id="settings-sound-btn" onclick="cycleSoundState()">TOGGLE SOUND</button>
-            </div>
-
-            <div class="settings-section">
-                <div class="settings-section-title">INSTALL</div>
-                <div class="gear-desc">Anchor the terminal to your device for offline access and faster load times.</div>
-                <button class="nav-btn" id="settings-install-btn" onclick="triggerInstallFromSettings()">INSTALL APP</button>
-            </div>
-
-        </div>
-
-        <!-- ══ TAB: NEURAL LINK ═════════════════════════════════ -->
-        <div class="stab-panel hidden" id="stab-panel-neural">
-
-            <div class="settings-section" id="neural-section">
-                <div class="settings-section-title">NEURAL LINK</div>
-
-                <div class="neural-status" id="neural-processor-status">[ PROCESSOR OFFLINE — NO KEY INSTALLED ]</div>
-
-                <p class="neural-desc">
-                    Install an AI processor key to translate real-world plans into Incursions and World Bosses.
-                    Your key is stored locally only — transmitted only to your chosen AI provider, never to any server.
-                </p>
-
-                <div class="neural-key-section">
-                    <div class="neural-field-label">PROVIDER</div>
-                    <select class="neural-provider-select" id="neural-provider-select" onchange="onProviderChange()">
-                        <option value="gemini"    style="background:#1a1a2e;color:#c8d6e5;">GEMINI — Google AI Studio (free tier)</option>
-                        <option value="openai"    style="background:#1a1a2e;color:#c8d6e5;">OPENAI — GPT-4o-mini</option>
-                        <option value="anthropic" style="background:#1a1a2e;color:#c8d6e5;">ANTHROPIC — Claude Haiku</option>
-                    </select>
-
-                    <div class="neural-field-label">API KEY</div>
-                    <input
-                        type="password"
-                        class="neural-key-input"
-                        id="neural-key-input"
-                        placeholder="Paste key here..."
-                        autocomplete="off"
-                        autocorrect="off"
-                        spellcheck="false"
-                    />
-                    <div class="neural-key-hint" id="neural-key-hint">
-                        Gemini keys are free at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="neural-key-link">aistudio.google.com/app/apikey</a> — no billing card required.
-                    </div>
-                    <div class="neural-btn-row">
-                        <button class="neural-save-btn" onclick="saveNeuralKey()">[ INSTALL PROCESSOR ]</button>
-                        <button class="neural-remove-btn" onclick="removeNeuralKey()">[ REMOVE ]</button>
-                    </div>
-                    <button class="neural-test-btn" id="neural-test-btn" onclick="testNeuralKey()">[ TEST CONNECTION ]</button>
-                </div>
-
-                <div class="neural-generate-row">
-                    <div class="neural-gen-label">GENERATE MISSIONS FROM REAL-WORLD INPUT</div>
-                    <button class="neural-settings-link-btn" onclick="navTo('screen-neural')">OPEN THREAT & MISSION CONTROL ›</button>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- ══ TAB: SYNC ════════════════════════════════════════ -->
-        <div class="stab-panel hidden" id="stab-panel-sync">
-
-            <!-- ── SYNC TERMINAL ── -->
-            <div class="settings-section" id="sync-section">
-                <div class="settings-section-title">SYNC TERMINAL</div>
-
-                <div id="sync-ghost-view">
-                    <div class="sync-lore">
-                        Terminal operating unlinked. Progress is stored locally only.
-                        Establish a Save Frequency to enable automated cloud protection.
-                        The System will handle broadcasts silently once the channel is open.
-                    </div>
-                    <button class="nav-btn sync-establish-btn" id="sync-establish-btn">
-                        [ ESTABLISH FREQUENCY ]
-                    </button>
-                </div>
-
-                <div id="sync-linked-view" class="hidden">
-                    <div class="sync-freq-display">
-                        <div class="sync-freq-label">[ SAVE FREQUENCY ]</div>
-                        <div class="sync-freq-code" id="sync-freq-code">—</div>
-                    </div>
-                    <div class="sync-diagnostics">
-                        <div class="sync-diag-row">
-                            <span class="sync-diag-label">UPLINK STATUS</span>
-                            <span class="sync-diag-value sync-diag-active" id="sync-uplink-status">ACTIVE</span>
-                        </div>
-                        <div class="sync-diag-row">
-                            <span class="sync-diag-label">LAST BROADCAST</span>
-                            <span class="sync-diag-value" id="sync-last-broadcast">—</span>
-                        </div>
-                    </div>
-                    <button class="nav-btn" id="sync-pull-btn" onclick="forcePullFromCloud()" style="margin-top:0.8em;">PULL NOW</button>
-                    <div class="gear-desc" style="margin-top:0.4em;">Force-sync from cloud. Use this on iOS or if automatic sync hasn't triggered.</div>
-                </div>
-
-                <div class="sync-recover-wrap">
-                    <div class="sync-divider">— RECONSTITUTE TERMINAL —</div>
-                    <div class="sync-recover-lore">
-                        Restore your progress from the cloud on this device.
-                    </div>
-                    <input
-                        type="text"
-                        id="sync-recover-input"
-                        class="settings-name-input sync-recover-input"
-                        maxlength="9"
-                        placeholder="FREQUENCY CODE..."
-                        autocomplete="off"
-                        autocorrect="off"
-                        spellcheck="false"
-                    />
-                    <button class="nav-btn sync-recover-btn" id="sync-recover-btn">
-                        RECONSTITUTE
-                    </button>
-                </div>
-
-                <div class="sync-status" id="sync-status"></div>
-            </div>
-
-            <!-- ── SYNC-LINK ── -->
-            <div class="settings-section" id="synclink-section">
-                <div class="settings-section-title">SYNC-LINK</div>
-
-                <div id="synclink-idle-view">
-                    <div class="sync-lore">
-                        Tether your terminal to an ally. Share a Sync-ID and
-                        complete directives together. Simultaneous execution
-                        triggers <span class="synclink-resonance-label">[ RESONANCE ]</span>
-                        — doubling XP for that event.
-                    </div>
-                    <button class="nav-btn synclink-generate-btn" id="synclink-generate-btn">
-                        GENERATE SYNC-ID
-                    </button>
-                    <div class="synclink-divider">— OR ENTER AN ALLY'S ID —</div>
-                    <input
-                        type="text"
-                        id="synclink-join-input"
-                        class="settings-name-input synclink-join-input"
-                        maxlength="5"
-                        placeholder="SYNC-ID..."
-                        autocomplete="off"
-                        autocorrect="off"
-                        spellcheck="false"
-                    />
-                    <button class="nav-btn synclink-join-btn" id="synclink-join-btn">
-                        ESTABLISH TETHER
-                    </button>
-                </div>
-
-                <div id="synclink-active-view" class="hidden">
-                    <div class="synclink-active-header">
-                        <span class="synclink-active-tag">[ TETHERED ]</span>
-                        <span class="synclink-active-id" id="synclink-active-id">—</span>
-                    </div>
-                    <div class="synclink-diagnostics">
-                        <div class="sync-diag-row">
-                            <span class="sync-diag-label">ALLY</span>
-                            <span class="sync-diag-value" id="synclink-ally-name">SCANNING...</span>
-                        </div>
-                        <div class="sync-diag-row">
-                            <span class="sync-diag-label">ALLY STATUS</span>
-                            <span class="sync-diag-value" id="synclink-ally-status">—</span>
-                        </div>
-                        <div class="sync-diag-row">
-                            <span class="sync-diag-label">SATELLITE DELAY</span>
-                            <span class="sync-diag-value">45s</span>
-                        </div>
-                    </div>
-                    <button class="nav-btn synclink-comms-btn hidden" id="synclink-comms-btn">
-                        [ OPEN RESISTANCE CHANNEL ]
-                    </button>
-                    <button class="nav-btn synclink-sever-btn" id="synclink-sever-btn">
-                        SEVER TETHER
-                    </button>
-                </div>
-
-                <div class="sync-status" id="synclink-status"></div>
-            </div>
-
-        </div>
-
-        <!-- ══ TAB: DANGER ZONE ═════════════════════════════════ -->
-        <div class="stab-panel hidden" id="stab-panel-danger">
-
-            <div class="danger-zone">
-                <div class="settings-section-title">DANGER ZONE</div>
-                <button class="danger-btn" id="reset-btn">WIPE PROFILE</button>
-                <div class="confirm-box hidden" id="confirm-box">
-                    <p><strong>THIS CANNOT BE UNDONE.</strong><br>
-                    All stats, XP, levels, gold, and directive history<br>
-                    will be permanently erased from the System.</p>
-                    <div class="confirm-actions">
-                        <button class="confirm-yes" id="confirm-yes">CONFIRM WIPE</button>
-                        <button class="confirm-no"  id="confirm-no">ABORT</button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="back-link" id="settings-back-link-bottom">← RETURN</div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         LOG ARCHIVE SCREEN
-         All system log entries, newest first.
-         The terminal's black box — what happened and when.
-    ═══════════════════════════════════════════════ -->
-    <div class="screen" id="screen-log">
-        <div class="log-archive-header">
-            <h2>[ SYSTEM LOG ]</h2>
-            <div class="log-archive-sub">TRANSMISSION RECORD — NEWEST FIRST</div>
-        </div>
-        <div class="log-archive-list" id="log-archive-list"></div>
-        <div class="back-link" id="log-archive-back">← RETURN</div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         ONBOARDING SCREEN
-    ═══════════════════════════════════════════════ -->
-    <div class="screen active" id="screen-onboarding">
-        <div class="onboarding-box" id="onboarding-box">
-            <div class="player-title">[ SYSTEM ]</div>
-            <div id="lore-lines"></div>
-            <div id="name-section" class="hidden">
-                <input type="text" id="name-input" placeholder="ENTER DESIGNATION..."
-                       maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false" />
-            </div>
-
-            <!-- STEP: NEURAL LINK KEY -->
-            <div id="onboarding-neural-section" class="hidden">
-                <div class="onboarding-step-label">[ NEURAL LINK ACQUISITION ]</div>
-                <select id="onboarding-neural-provider" class="settings-name-input" style="margin-bottom:0.6em;" onchange="updateOnboardingNeuralNote()">
-                    <option value="gemini">GEMINI — FREE TIER AVAILABLE</option>
-                    <option value="openai">OPENAI — GPT-4o-mini</option>
-                    <option value="anthropic">ANTHROPIC — Claude Haiku</option>
-                </select>
-                <input type="text" id="onboarding-neural-key" placeholder="PASTE API KEY..."
-                       autocomplete="off" autocorrect="off" spellcheck="false"
-                       class="settings-name-input" style="margin-bottom:0.4em;" />
-                <div class="onboarding-step-note" id="onboarding-neural-note">[ FREE ] Compatible unit detected at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--accent);">aistudio.google.com/app/apikey</a> — no credentials required for acquisition. Key also accessible later via Settings &gt; Neural Link.</div>
-                <a id="onboarding-neural-cta" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="onboarding-key-cta">⬡ GET FREE GEMINI KEY →</a>
-                <div id="onboarding-neural-error" style="display:none;color:var(--warn,#ff6b6b);font-size:0.7rem;letter-spacing:1.5px;margin-top:0.5em;"></div>
-                <div style="text-align:right;margin-top:0.6em;">
-                    <button id="onboarding-neural-skip" style="background:none;border:none;color:rgba(200,214,229,0.35);font-family:'Share Tech Mono',monospace;font-size:0.65rem;letter-spacing:1.5px;cursor:pointer;padding:0;">SKIP FOR NOW →</button>
-                </div>
-            </div>
-
-            <!-- STEP: GOAL / WORLD BOSS SEED -->
-            <div id="onboarding-goal-section" class="hidden">
-                <div class="onboarding-step-label">[ THREAT MAPPING — INITIALISE ]</div>
-                <textarea id="onboarding-goal-input" placeholder="State the obstacle..."
-                          rows="3" autocomplete="off" autocorrect="off" spellcheck="false"
-                          class="settings-name-input" style="resize:none;margin-bottom:0.4em;"></textarea>
-                <div class="onboarding-step-note">This input seeds a World Boss — a persistent enemy entity representing a long-term goal. It will appear on your status screen with an HP bar that depletes as you execute relevant directives.</div>
-                <div style="text-align:right;margin-top:0.6em;">
-                    <button id="onboarding-goal-skip" style="background:none;border:none;color:rgba(200,214,229,0.35);font-family:'Share Tech Mono',monospace;font-size:0.65rem;letter-spacing:1.5px;cursor:pointer;padding:0;">SKIP FOR NOW →</button>
-                </div>
-            </div>
-
-            <!-- STEP: OPERATOR PROFILE -->
-            <div id="onboarding-profile-section" class="hidden">
-                <div class="onboarding-step-label">[ OPERATOR DATA — RECONSTRUCT ]</div>
-                <textarea id="onboarding-profile-input" placeholder="Describe your routines, constraints, context..."
-                          rows="4" autocomplete="off" autocorrect="off" spellcheck="false"
-                          class="settings-name-input" style="resize:none;margin-bottom:0.4em;"></textarea>
-                <div class="onboarding-step-note">This context is injected into all AI directive generation when Neural Link is active. Stored locally and synced. Editable later via Settings &gt; System.</div>
-                <div style="text-align:right;margin-top:0.6em;">
-                    <button id="onboarding-profile-skip" style="background:none;border:none;color:rgba(200,214,229,0.35);font-family:'Share Tech Mono',monospace;font-size:0.65rem;letter-spacing:1.5px;cursor:pointer;padding:0;">SKIP FOR NOW →</button>
-                </div>
-            </div>
-
-            <button class="nav-btn hidden" id="start-btn">INITIALISE</button>
-        </div>
-    </div>
-
-
-    <!-- ═══════════════════════════════════════════════
-         LEVEL UP OVERLAY
-    ═══════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════
+         GLOBAL OVERLAYS — sit above all screens
+    ═══════════════════════════════════════════════════════ -->
+
+    <!-- Level Up overlay -->
     <div class="overlay hidden" id="overlay-levelup">
-        <div class="overlay-content">
-            <div class="overlay-system">[ SYSTEM ]</div>
-            <div class="overlay-headline">THRESHOLD REACHED</div>
-            <div class="overlay-level"    id="lu-level">2</div>
-            <div class="overlay-title"    id="lu-title">THE MOTIVATED</div>
-            <div class="overlay-sub"      id="lu-sub"></div>
-            <div class="overlay-particles" id="lu-particles"></div>
-            <button class="overlay-share-btn"   id="lu-share-btn">⬆ BROADCAST THIS</button>
-            <button class="overlay-dismiss-btn" id="lu-dismiss-btn">ACKNOWLEDGED</button>
+        <div class="overlay-inner overlay-inner--levelup">
+            <canvas id="lu-particles" class="lu-particles"></canvas>
+            <div class="lu-label">[ THRESHOLD REACHED ]</div>
+            <div class="lu-level" id="lu-level">2</div>
+            <div class="lu-title" id="lu-title">THE MOTIVATED</div>
+            <div class="lu-sub" id="lu-sub"></div>
+            <button class="btn btn--primary lu-dismiss" id="lu-dismiss-btn">[ ACKNOWLEDGED ]</button>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════
-         RANK UP OVERLAY
-    ═══════════════════════════════════════════════ -->
-    <div class="overlay hidden" id="overlay-rankup">
-        <div class="overlay-content rankup-content">
-            <div class="overlay-system">[ SYSTEM ]</div>
-            <div class="overlay-headline">RANK RECLASSIFIED</div>
-            <div class="overlay-rank-letter" id="ru-rank">E</div>
-            <div class="overlay-title"       id="ru-title">E-RANK CONFIRMED</div>
-            <div class="overlay-sub"         id="ru-sub"></div>
-            <div class="overlay-particles"   id="ru-particles"></div>
-            <button class="overlay-share-btn"   id="ru-share-btn">⬆ BROADCAST THIS</button>
-            <button class="overlay-dismiss-btn" id="ru-dismiss-btn">ACKNOWLEDGED</button>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         DAY 1 CLEAR OVERLAY
-    ═══════════════════════════════════════════════ -->
-    <div class="overlay hidden" id="overlay-day1-clear">
-        <div class="overlay-content day1-clear-content">
-            <div class="overlay-system">[ SYSTEM ]</div>
-            <div class="overlay-headline">DAY 1 CLEARED</div>
-            <div class="day1-clear-glyph">◈</div>
-            <div class="day1-clear-body">All directives executed. First day logged.<br>The System has registered your initial output.<br>Come back tomorrow — this compounds.</div>
-            <div class="overlay-particles" id="day1-particles"></div>
-            <button class="overlay-dismiss-btn" id="day1-dismiss-btn">CONTINUE</button>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         AWAKEN BOOT OVERLAY
-    ═══════════════════════════════════════════════ -->
-    <div class="overlay hidden" id="overlay-awaken">
-        <div class="overlay-content awaken-content">
-            <div class="boot-lines"  id="boot-lines"></div>
-            <div class="boot-name"   id="boot-name"></div>
-            <div class="boot-status" id="boot-status"></div>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         FIRST TRANSMISSION OVERLAY (post-onboarding briefing)
-         Fires once after Awaken, before status screen.
-         "Skip" is implicit — VIEW DIRECTIVES is the exit.
-    ═══════════════════════════════════════════════ -->
+    <!-- First Transmission (post-onboarding briefing) -->
     <div class="overlay hidden" id="overlay-briefing">
-        <div class="overlay-content briefing-content">
-            <div class="briefing-tag">[ FIRST TRANSMISSION ]</div>
+        <div class="overlay-inner overlay-inner--briefing">
             <div class="briefing-lines" id="briefing-lines"></div>
-            <button class="briefing-directives-btn hidden" id="briefing-directives-btn">
-                VIEW FIRST DIRECTIVES →
+            <button class="btn btn--primary hidden" id="briefing-directives-btn">
+                [ VIEW TODAY'S DIRECTIVES ]
             </button>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════
-         RELAUNCH BOOT OVERLAY
-    ═══════════════════════════════════════════════ -->
+    <!-- Relaunch boot overlay (returning operative) -->
     <div class="relaunch-boot hidden" id="relaunch-boot">
-        <div class="relaunch-boot-inner">
+        <div class="relaunch-inner">
             <div class="relaunch-lines" id="relaunch-lines"></div>
-            <div class="relaunch-skip"  id="relaunch-skip">[ TAP TO SKIP ]</div>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════
-         PWA INSTALL PROMPT OVERLAY
-         Shown once, 8s after first status screen load.
-         In-character System framing. Not a skip — a choice.
-    ═══════════════════════════════════════════════ -->
-    <div class="overlay hidden" id="overlay-install">
-        <div class="overlay-content install-content">
-            <div class="install-tag">[ SYSTEM RECOMMENDATION ]</div>
-            <div class="install-headline">ANCHOR THIS TERMINAL</div>
-            <div class="install-body">
-                Installing to your device gives the System a permanent presence
-                in your operational environment. The Terminal loads faster,
-                runs offline, and can alert you when directives are waiting.
-                <br><br>
-                The System does not require this. But field operators who
-                anchor their terminal complete more directives.
-                The data is consistent across all observed timelines.
-            </div>
-            <div class="install-actions">
-                <button class="install-confirm-btn" id="install-confirm-btn">
-                    [ ANCHOR TERMINAL ]
-                </button>
-                <button class="install-dismiss-btn" id="install-dismiss-btn">
-                    LATER
-                </button>
-            </div>
+    <!-- Install banner -->
+    <div class="install-banner hidden" id="install-banner">
+        <p class="install-banner-msg">Install SYD for offline access and notifications.</p>
+        <div class="install-banner-actions">
+            <button class="btn btn--primary btn--sm" id="install-confirm-btn">INSTALL</button>
+            <button class="btn btn--ghost btn--sm" id="install-dismiss-btn">NOT NOW</button>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════
-         SYNC ADVISORY OVERLAY
-         Fires once at Level 3, once more at Level 10
-         if operator is still unlinked. Dismissible by
-         tapping outside — never blocks the operator.
-    ═══════════════════════════════════════════════ -->
-    <div class="overlay hidden" id="overlay-sync-advisory">
-        <div class="overlay-content sync-advisory-content" id="sync-advisory-inner">
-            <div class="sync-advisory-tag">[ SYSTEM ADVISORY ]</div>
-            <div class="sync-advisory-headline">TERMINAL UNANCHORED</div>
-            <div class="sync-advisory-body">
-                Your progress exists on this device only.<br><br>
-                Establishing a Save Frequency opens an encrypted uplink.
-                Once linked, the System protects your timeline automatically.
-                No further action required from the operator.<br><br>
-                Remaining unlinked is an accepted operational risk.
-                The System does not judge the choice. It records the outcome.
+    <!-- System log -->
+    <div class="system-log system-log--default" id="system-log" style="opacity:0;"></div>
+
+    <!-- Sound toggle (persistent, always visible) -->
+    <button class="sound-toggle" id="sound-toggle" aria-label="Toggle sound">♪</button>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: ONBOARDING — name entry terminal
+         New operative flow: name → scan → PATH → createPlayer
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-onboarding" class="screen active">
+        <div class="screen-inner screen-inner--terminal">
+            <div id="onboarding-content"></div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: SCAN — three scan experiences
+         Signal Breach · Precision Shooter · Final Transmission
+         Progress indicator fills across three experiences.
+         Content rendered by scan.js renderScanIntro()
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-scan" class="screen">
+        <div class="screen-inner screen-inner--scan">
+            <div class="scan-progress-bar" id="scan-progress-bar-global">
+                <div class="scan-progress-fill" id="scan-progress-fill" style="width:0%"></div>
             </div>
-            <div class="sync-advisory-actions">
-                <button class="sync-advisory-confirm-btn" id="sync-advisory-confirm-btn">
-                    [ ESTABLISH FREQUENCY ]
-                </button>
-                <button class="sync-advisory-dismiss-btn" id="sync-advisory-dismiss-btn">
-                    REMAIN UNLINKED
-                </button>
+            <p class="scan-progress-label" id="scan-progress-label">SIGNAL ACQUISITION — 0%</p>
+            <div id="scan-content"></div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: PATH SELECTION — Track A or Track B
+         Content rendered by path.js renderPathSelect()
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-path-select" class="screen">
+        <div class="screen-inner screen-inner--centered">
+            <div id="path-content"></div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: CHRONICLER — CV paste (Track A)
+         Content rendered by path.js runChronicler()
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-path-chronicler" class="screen">
+        <div class="screen-inner screen-inner--narrow">
+            <div id="chronicler-content"></div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: RE-IMAGINER — four questions (Track B)
+         Content rendered by path.js renderReImaginerQuestion()
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-path-reimaginer" class="screen">
+        <div class="screen-inner screen-inner--narrow">
+            <div id="reimaginer-content"></div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: PATH LOADING — analysis in progress
+         Content rendered by path.js renderPathLoading()
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-path-loading" class="screen">
+        <div class="screen-inner screen-inner--centered">
+            <div id="path-loading-content"></div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: STATUS — five-tab Status Window
+         OPERATIVE · STATS · DIRECTIVES · PATH · SETTINGS
+         Content rendered by status.js renderStatusWindow()
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-status" class="screen">
+        <div class="screen-inner screen-inner--status">
+
+            <!-- Status header bar -->
+            <div class="status-header" id="status-header">
+                <span class="status-header-name" id="player-name"></span>
+                <div class="status-header-badges">
+                    <span class="rank-badge" id="rank-badge"></span>
+                    <span class="status-header-level">LVL <span id="player-level">1</span></span>
+                    <span class="status-header-sig">⬡ <span id="sig-value">0</span></span>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- ═══════════════════════════════════════════════
-         COMMS PROMPT OVERLAY
-         Fires for the host after generating a Sync-ID.
-         Optional — skippable by tapping outside or SKIP.
-    ═══════════════════════════════════════════════ -->
-    <div class="overlay hidden" id="overlay-comms-prompt">
-        <div class="overlay-content comms-prompt-content" id="comms-prompt-inner">
-            <div class="comms-prompt-tag">[ TACTICAL COMMS ]</div>
-            <div class="comms-prompt-headline">ENCRYPT THIS CHANNEL</div>
-            <div class="comms-prompt-body">
-                Create a Telegram group for this encounter and paste
-                the invite link below. Allies will receive it automatically
-                when they join the Sync-ID.<br><br>
-                This step is optional. The System does not require it.
+            <!-- Five-tab nav -->
+            <nav class="status-tab-nav" id="status-tab-nav">
+                <button class="status-tab-btn status-tab-btn--active" id="status-tab-operative" data-tab="operative">OPERATIVE</button>
+                <button class="status-tab-btn" id="status-tab-stats"      data-tab="stats">STATS</button>
+                <button class="status-tab-btn" id="status-tab-directives" data-tab="directives">DIRECTIVES</button>
+                <button class="status-tab-btn" id="status-tab-path"       data-tab="path">PATH</button>
+                <button class="status-tab-btn" id="status-tab-settings"   data-tab="settings">SETTINGS</button>
+            </nav>
+
+            <!-- Tab content container — replaced on tab switch -->
+            <div class="status-tab-content" id="status-tab-content"></div>
+
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: ENCOUNTER — daily encounter
+         Content rendered by encounter.js renderEncounterSituation()
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-encounter" class="screen">
+        <div class="screen-inner screen-inner--narrow">
+            <div id="encounter-content"></div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: MINIGAMES — mini-game hub
+         CASCADE · DRIFT · ECHO · FLOW · RESONANCE + scan replays
+         Content rendered by minigames.js renderMiniGameHub()
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-minigames" class="screen">
+        <div class="screen-inner screen-inner--scroll">
+            <div id="minigames-content"></div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: MINIGAME (active) — individual game session
+         Content rendered by minigames.js renderMiniGamePlaceholder()
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-minigame" class="screen">
+        <div class="screen-inner screen-inner--game">
+            <div id="minigame-active-content"></div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: NEURAL LINK — Gemini API key + incursion generator
+         Content rendered by app.js renderNeuralScreen() (stub — Gemini phase)
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-neural" class="screen">
+        <div class="screen-inner screen-inner--narrow">
+            <div class="screen-header">
+                <button class="btn-back" id="neural-header-back">← BACK</button>
+                <div class="screen-sys-label">NEURAL LINK</div>
             </div>
-            <input
-                type="url"
-                id="comms-prompt-input"
-                class="settings-name-input comms-prompt-input"
-                placeholder="https://t.me/+..."
-                autocomplete="off"
-                autocorrect="off"
-                spellcheck="false"
-            />
-            <div class="comms-prompt-status" id="comms-prompt-status"></div>
-            <div class="comms-prompt-actions">
-                <button class="comms-prompt-confirm-btn" id="comms-prompt-confirm">
-                    [ ESTABLISH ENCRYPTED CHANNEL ]
-                </button>
-                <button class="comms-prompt-skip-btn" id="comms-prompt-skip">
-                    SKIP — PROCEED WITHOUT COMMS
-                </button>
+            <div id="neural-content">
+                <div class="scan-placeholder">
+                    <p class="scan-placeholder-label">NEURAL LINK</p>
+                    <p class="scan-placeholder-dev">[ GEMINI INTEGRATION — BUILD PHASE 4 ]</p>
+                    <p class="scan-placeholder-sub">
+                        Connect your Gemini API key here to enable AI-powered stat explainers,
+                        encounter evaluation, and incursion generation.
+                    </p>
+                    <div class="settings-name-row" style="margin-top:24px;">
+                        <input
+                            type="password"
+                            id="neural-key-input"
+                            class="settings-input"
+                            placeholder="AIza..."
+                            autocomplete="off"
+                            spellcheck="false"
+                        />
+                        <button class="settings-row-btn settings-row-btn--inline" id="neural-key-save">LINK</button>
+                    </div>
+                    <button class="settings-row-btn" style="margin-top:12px;color:var(--danger);" id="neural-key-remove">REMOVE KEY</button>
+                </div>
             </div>
+            <button class="btn-back" id="neural-back-link" style="margin-top:32px;">← BACK</button>
         </div>
-    </div>
+    </section>
 
-    <!-- ═══════════════════════════════════════════════
-         RESONANCE OVERLAY
-         Fires when both tethered operators complete a
-         directive in the same 45s polling window.
-    ═══════════════════════════════════════════════ -->
-    <div class="overlay hidden" id="overlay-resonance">
-        <div class="overlay-content resonance-content">
-            <div class="resonance-tag">[ SYNC-LINK ]</div>
-            <div class="resonance-headline">RESONANCE</div>
-            <div class="resonance-sub" id="resonance-sub"></div>
-            <div class="overlay-particles" id="resonance-particles"></div>
-            <button class="overlay-dismiss-btn" id="resonance-dismiss-btn">ACKNOWLEDGED</button>
-        </div>
-    </div>
 
-    <!-- ═══════════════════════════════════════════════
-         SYSTEM LOG STRIP
-    ═══════════════════════════════════════════════ -->
-    <div class="system-log" id="system-log"></div>
+    <!-- ═══════════════════════════════════════════════════════
+         Firebase compat SDK — must load before app.js
+    ═══════════════════════════════════════════════════════ -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    <!-- Firebase SDK (compat build — no bundler required) -->
-    <!-- ═══════════════════════════════════════════════
-         THREAT & MISSION CONTROL SCREEN
-    ═══════════════════════════════════════════════ -->
-    <div class="screen" id="screen-neural">
-        <div class="neural-header" id="neural-header-back">
-            <h2>THREAT & MISSION CONTROL</h2>
-        </div>
-
-        <div class="neural-screen-tabs">
-            <button class="ns-tab ns-tab--active" id="ns-tab-incursions" onclick="switchNeuralTab('incursions')">INCURSIONS</button>
-            <button class="ns-tab" id="ns-tab-bosses" onclick="switchNeuralTab('bosses')">WORLD BOSSES</button>
-        </div>
-
-        <!-- Incursions panel -->
-        <div class="ns-panel" id="ns-panel-incursions">
-            <div class="ns-explainer">
-                <div class="ns-explainer-title">[ WHAT IS AN INCURSION? ]</div>
-                <div class="ns-explainer-body">A time-sensitive mission generated from a real-world challenge you're facing today. The System identifies the hidden enemy, selects a tactical weapon, and issues a mission brief. Incursions expire in 6 hours. Execute them to earn bonus XP and deal damage to active World Bosses.</div>
-            </div>
-            <div class="ns-generate-btn-wrap">
-                <button class="ns-generate-btn" onclick="openNeuralGenerator('incursion')">+ GENERATE INCURSION</button>
-            </div>
-            <div class="ns-list-label">ACTIVE INCURSIONS</div>
-            <div id="ns-incursion-list" class="ns-entity-list"></div>
-        </div>
-
-        <!-- World Bosses panel -->
-        <div class="ns-panel hidden" id="ns-panel-bosses">
-            <div class="ns-explainer">
-                <div class="ns-explainer-title">[ WHAT IS A WORLD BOSS? ]</div>
-                <div class="ns-explainer-body">A persistent enemy entity representing a long-term obstacle — or in terms your current understanding can process: a goal. [ LINGUA MISMATCH DETECTED — SIMPLIFICATION LOGGED — TERMINATING AUXILIARY DESCRIPTION ]</div>
-            </div>
-            <div class="ns-generate-btn-wrap">
-                <button class="ns-generate-btn ns-generate-btn--boss" onclick="openNeuralGenerator('worldboss')">+ GENERATE WORLD BOSS</button>
-            </div>
-            <div class="ns-list-label">ACTIVE WORLD BOSSES</div>
-            <div id="ns-boss-list" class="ns-entity-list"></div>
-
-            <div class="ns-list-label ns-list-label--defeated">DEFEATED ENEMIES</div>
-            <div id="ns-defeated-list" class="ns-entity-list"></div>
-        </div>
-
-        <div class="back-link" id="neural-back-link">← RETURN</div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         BOSS DEFEATED OVERLAY
-    ═══════════════════════════════════════════════ -->
-    <div class="overlay hidden" id="overlay-boss-defeated" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="overlay-content boss-defeated-overlay">
-            <div class="overlay-system">[ THREAT NEUTRALISED ]</div>
-            <div class="bd-label" id="bd-label"></div>
-            <div class="bd-enemy" id="bd-enemy"></div>
-            <div class="bd-weapon" id="bd-weapon"></div>
-            <div class="bd-body">The System has confirmed termination of this entity. Its influence is no longer a viable obstacle. Archive sealed.</div>
-            <button class="overlay-dismiss-btn" onclick="document.getElementById('overlay-boss-defeated').classList.add('hidden')">[ ACKNOWLEDGED ]</button>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         NEURAL GENERATOR OVERLAY
-    ═══════════════════════════════════════════════ -->
-    <div class="overlay hidden" id="overlay-neural-gen" onclick="if(event.target===this)closeNeuralGenerator()">
-        <div class="overlay-content neural-gen-overlay">
-            <div class="overlay-system">[ THREAT & MISSION CONTROL ]</div>
-            <div class="ng-title" id="ng-title">[ GENERATE INCURSION ]</div>
-            <div class="ng-hint"  id="ng-hint"></div>
-            <div id="ng-seeds" class="ng-seeds"></div>
-            <textarea
-                class="ng-input"
-                id="ng-input"
-                placeholder="Describe the operation..."
-                rows="4"
-                autocorrect="off"
-                spellcheck="false"
-            ></textarea>
-            <div class="ng-status" id="ng-status"></div>
-            <div class="ng-btn-row">
-                <button class="overlay-dismiss-btn" onclick="closeNeuralGenerator()">ABORT</button>
-                <button class="ng-submit-btn" id="ng-submit-btn" onclick="submitNeuralGeneration()">PROCESS ›</button>
-            </div>
-            <div class="ng-ephemeral">[ EPHEMERAL PROTOCOL ACTIVE — INPUT IS NOT STORED ]</div>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         TACTICAL GUIDE OVERLAY
-    ═══════════════════════════════════════════════ -->
-    <div class="overlay hidden" id="overlay-tactical" onclick="if(event.target===this)closeTacticalGuide()">
-        <div class="overlay-content tactical-overlay">
-            <div class="overlay-system">[ TACTICAL INTEL ]</div>
-            <div class="tg-label"  id="tg-label"></div>
-            <div class="tg-enemy"  id="tg-enemy"></div>
-            <div class="tg-weapon" id="tg-weapon"></div>
-            <div class="tg-body"   id="tg-body"></div>
-            <button class="overlay-dismiss-btn" onclick="closeTacticalGuide()">ACKNOWLEDGED</button>
-        </div>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-    <script src="js/quests.js"></script>
-    <script src="js/app.js"></script>
+    <!-- Modules — load order matters:
+         quests.js   → selection engine, must load before app.js
+         scan.js     → scan experiences, called from app.js startScan()
+         path.js     → PATH Protocol, called from app.js startPATH()
+         encounter.js→ encounter screen, called from status.js
+         minigames.js→ mini-game hub, called from showScreen()
+         status.js   → five-tab window, called from app.js updateStatusScreen()
+         app.js      → core engine, wires everything together
+    -->
+    <script src="/terminal/js/quests.js"></script>
+    <script src="/terminal/js/scan.js"></script>
+    <script src="/terminal/js/path.js"></script>
+    <script src="/terminal/js/encounter.js"></script>
+    <script src="/terminal/js/minigames.js"></script>
+    <script src="/terminal/js/status.js"></script>
+    <script src="/terminal/js/app.js"></script>
 
 </body>
 </html>

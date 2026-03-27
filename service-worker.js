@@ -1,4 +1,4 @@
-const CACHE_NAME = 'syd-v35';
+const CACHE_NAME = 'syd-v36';
 
 // These are the app shell files we want to pre-cache during install.
 // On every new deploy, bump CACHE_NAME so the install event fires again,
@@ -9,6 +9,11 @@ const PRECACHE_ASSETS = [
     '/terminal/css/style.css',
     '/terminal/js/app.js',
     '/terminal/js/quests.js',
+    '/terminal/js/scan.js',
+    '/terminal/js/path.js',
+    '/terminal/js/encounter.js',
+    '/terminal/js/minigames.js',
+    '/terminal/js/status.js',
     '/terminal/data/quests.json',
     '/terminal/manifest.json'
 ];
@@ -41,7 +46,7 @@ self.addEventListener('activate', e => {
             .then(() => {
                 // Notify all open clients that new code is available.
                 // app.js listens for SW_UPDATED and reloads the page so
-                // operators never run stale JS after a deploy.
+                // operatives never run stale JS after a deploy.
                 return self.clients.matchAll({ type: 'window' })
                     .then(clients => {
                         clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
@@ -107,7 +112,7 @@ self.addEventListener('fetch', e => {
 
 // ─── NOTIFICATION CHECK ──────────────────────────────────────
 // Fires when the app sends a CHECK_NOTIFICATION message.
-// If the player has been inactive for 3 or more days, a push notification
+// If the operative has been inactive for 3 or more days, a push notification
 // is shown to encourage them to return.
 self.addEventListener('message', e => {
     if (!e.data || e.data.type !== 'CHECK_NOTIFICATION') return;
@@ -120,7 +125,7 @@ self.addEventListener('message', e => {
 
     if (diffDays >= 3) {
         self.registration.showNotification('SYD', {
-            body:     `${playerName || 'Operator'}, your momentum is decaying. The System is standing by.`,
+            body:     `${playerName || 'Operative'}, your momentum is decaying. The System is standing by.`,
             icon:     '/terminal/icons/icon-192.png',
             tag:      'syd-reminder',
             renotify: false,
@@ -130,7 +135,7 @@ self.addEventListener('message', e => {
 });
 
 // ─── NOTIFICATION CLICK ──────────────────────────────────────
-// When the user taps the notification, focus an existing SYD tab
+// When the operative taps the notification, focus an existing SYD tab
 // or open a new one if none is available.
 self.addEventListener('notificationclick', e => {
     e.notification.close();
