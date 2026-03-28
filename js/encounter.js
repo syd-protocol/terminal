@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// SYD GES — encounter.js
+// SYD GES — encounter.js  (Batch 6 — Gemini integration)
 // One encounter per day. Two types — no labels shown.
 // Both feel like SYD presenting a situation.
 //
@@ -8,25 +8,28 @@
 //
 // Response mechanic: pick option → pick reasoning → two taps, one flow.
 // Optional free text supplements or replaces option choice.
-// When free text contradicts option: most important signal.
 //
-// STUB — AI evaluation is placeholder. Screen layout, response mechanic,
-// option/reasoning flow, and feedback display are fully wired.
-// Real Gemini evaluation is built at the Gemini integration phase.
+// CRITICAL (from master design doc):
+//   When free text is present, Gemini is explicitly told the operative
+//   may have supplemented or OVERRIDDEN their option choice.
+//   Free text that contradicts the chosen option is the MOST IMPORTANT signal.
+//   This is built into EVERY call — not noted and ignored.
+//
+// Gemini integration (Batch 6):
+//   evaluateJudgmentEncounter() — Type A evaluation + SYD feedback voice
+//   Teaching encounters do not call Gemini — teaching text is pre-written.
+//
+// Local fallback: rule-based feedback from option + reasoning alignment.
 // ═══════════════════════════════════════════════════════════════
 
 // ─── ENCOUNTER POOL ──────────────────────────────────────────
-// Pool is loaded from the dummy encounter array during build/test phase.
-// Real pool of 160 encounters drops in at the content phase.
-// Graceful fallback: if current tier pool is empty, serve best available lower tier.
-
 const ENCOUNTER_KEY      = 'syd_encounter_today';
 const ENCOUNTER_DONE_KEY = 'syd_encounter_done';
 
 // [TUNING TARGET] Encounter tier unlock levels — same as directives
 const ENCOUNTER_TIER_UNLOCK = { 1: 1, 2: 10, 3: 25 };
 
-// Dummy encounter pool — replaced at content phase
+// Dummy encounter pool — replaced at content phase (Batch 7)
 const DUMMY_ENCOUNTERS = [
     {
         id:         'enc_dummy_t1_a',
@@ -67,29 +70,23 @@ const DUMMY_ENCOUNTERS = [
 
 // ─── ENCOUNTER STATE ─────────────────────────────────────────
 let encounterState = {
-    encounter:        null,
-    selectedOption:   null,
+    encounter:         null,
+    selectedOption:    null,
     selectedReasoning: null,
-    freeText:         ''
+    freeText:          ''
 };
 
 // ─── TODAY'S ENCOUNTER SELECTION ─────────────────────────────
-// Selects one encounter per day, seeded by date.
-// Scales with operative level and rank.
-// Graceful fallback to lower tier if current tier pool is empty.
-
 function getTodaysEncounter(level) {
     const done = localStorage.getItem(ENCOUNTER_DONE_KEY);
-    if (done === new Date().toISOString().slice(0, 10)) return null; // already done today
+    if (done === new Date().toISOString().slice(0, 10)) return null;
 
-    const tier      = getCurrentEncounterTier(level);
-    const dateNum   = parseInt(new Date().toISOString().slice(0, 10).replace(/-/g, ''), 10);
-    const pool      = getEncounterPoolWithFallback(DUMMY_ENCOUNTERS, tier);
+    const tier    = getCurrentEncounterTier(level);
+    const dateNum = parseInt(new Date().toISOString().slice(0, 10).replace(/-/g, ''), 10);
+    const pool    = getEncounterPoolWithFallback(DUMMY_ENCOUNTERS, tier);
 
     if (!pool.length) return null;
-
-    const picked = pool[dateNum % pool.length];
-    return picked;
+    return pool[dateNum % pool.length];
 }
 
 function getCurrentEncounterTier(level) {
@@ -115,15 +112,12 @@ function getEncounterPoolWithFallback(pool, targetTier) {
 }
 
 // ─── ENCOUNTER ENTRY POINT ───────────────────────────────────
-// Called from the directives screen when the operative taps the encounter card.
-// If no encounter is available today (already done, or skipped), shows the skipped state.
-
 function openEncounter(level) {
     const encounter = getTodaysEncounter(level);
-    encounterState.encounter = encounter;
-    encounterState.selectedOption    = null;
+    encounterState.encounter        = encounter;
+    encounterState.selectedOption   = null;
     encounterState.selectedReasoning = null;
-    encounterState.freeText          = '';
+    encounterState.freeText         = '';
 
     showScreen('screen-encounter');
 
@@ -176,17 +170,13 @@ function renderEncounterSituation() {
     `;
 
     document.getElementById('enc-back').addEventListener('click', () => {
-        playUIClick();
-        goBack();
+        playUIClick(); goBack();
     });
 
     document.getElementById('enc-skip').addEventListener('click', () => {
-        playUIClick();
-        markEncounterSkipped();
-        renderEncounterDone();
+        playUIClick(); markEncounterSkipped(); renderEncounterDone();
     });
 
-    // Option selection — highlights picked option
     document.querySelectorAll('.enc-option-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             playUIClick();
@@ -200,7 +190,6 @@ function renderEncounterSituation() {
         playUIClick();
         encounterState.freeText = document.getElementById('enc-free-text').value.trim();
         if (!encounterState.selectedOption && !encounterState.freeText) {
-            // Must pick option OR write free text before advancing
             document.getElementById('enc-free-text').focus();
             if (typeof showLog === 'function') {
                 showLog('[ PICK A RESPONSE OR TYPE YOUR READ BEFORE ADVANCING ]', 'system');
@@ -254,11 +243,8 @@ function renderEncounterReasoning() {
 }
 
 // ─── ENCOUNTER RESPONSE SUBMISSION ───────────────────────────
-// Sends to Gemini at integration phase.
-// CRITICAL: when free text is present, it supplements or overrides the option choice.
-// Free text that contradicts the chosen option is the most important signal.
-// This instruction MUST be explicitly built into every Gemini encounter prompt.
-// [See Gemini prompt design — encounter evaluation prompt]
+// Routes to Gemini (Type A) or pre-written teaching text (Type B).
+// Shows a loading state while Gemini evaluates.
 
 function submitEncounterResponse() {
     const enc = encounterState.encounter;
@@ -276,26 +262,141 @@ function submitEncounterResponse() {
         </div>
     `;
 
-    // [STUB] Simulate Gemini evaluation — replaced at Gemini integration phase.
-    // At that point: if enc.type === 'judgment', call Gemini with operative's
-    // option + reasoning + free text. If enc.type === 'teaching', render teaching content.
-    setTimeout(() => {
-        markEncounterComplete();
-        if (enc.type === 'teaching' && enc.teaching) {
-            renderTeachingFeedback(enc);
-        } else {
-            renderJudgmentFeedback(enc);
+    markEncounterComplete();
+
+    if (enc.type === 'teaching' && enc.teaching) {
+        // Teaching encounters: no Gemini call needed — reveal the pre-written expert thinking
+        setTimeout(() => renderTeachingFeedback(enc), 900);
+        return;
+    }
+
+    // Judgment encounters: call Gemini for personalised evaluation
+    evaluateJudgmentEncounter(enc).then(feedback => {
+        renderJudgmentFeedback(enc, feedback);
+    });
+}
+
+// ─── GEMINI CALL: JUDGMENT EVALUATION ────────────────────────
+// Sends the operative's full response to Gemini for evaluation.
+//
+// CRITICAL — FREE TEXT OVERRIDE RULE (from master design doc):
+//   Gemini is explicitly told the operative may have supplemented
+//   or OVERRIDDEN their option choice with free text.
+//   Free text that contradicts the chosen option is the MOST IMPORTANT signal.
+//   Gemini must weight it accordingly.
+//   This instruction is in the prompt every single time — not assumed.
+//
+// Returns { text, geminiEnhanced: bool }
+
+async function evaluateJudgmentEncounter(enc) {
+    if (!hasNeuralLink()) {
+        return buildLocalJudgmentFeedback(enc);
+    }
+
+    const selectedOpt = (enc.options || []).find(o => o.id === encounterState.selectedOption);
+    const selectedRsn = (enc.reasonings || []).find(r => r.id === encounterState.selectedReasoning);
+    const freeText    = encounterState.freeText;
+
+    // Determine signal weight — if free text contradicts the option, flag it explicitly
+    const hasFreeText   = freeText && freeText.length > 0;
+    const freeTextBlock = hasFreeText
+        ? `FREE TEXT RESPONSE (operative may have supplemented OR overridden their option pick with this):
+"${freeText}"
+
+CRITICAL INSTRUCTION: If this free text contradicts the chosen option, the free text is the more important signal. Weight it above the option choice. Acknowledge the instinct in the free text response when relevant.`
+        : 'FREE TEXT: none provided.';
+
+    // [RESEARCH] Source: SYD master design doc — encounter evaluation prompt spec.
+    // Finding: feedback must acknowledge semantic equivalence — right instinct, vocabulary is packaging.
+    // Applied: explicit instruction to recognise instinct over label.
+    const prompt = `
+You are SYD — a direct, honest career intelligence system. Evaluate an operative's response to a real-world judgment scenario.
+
+SITUATION:
+"${enc.situation}"
+
+OPERATIVE'S CHOSEN OPTION: ${selectedOpt ? '"' + selectedOpt.text + '"' : 'none selected'}
+OPERATIVE'S REASONING: ${selectedRsn ? '"' + selectedRsn.text + '"' : 'none selected'}
+${freeTextBlock}
+
+Write SYD's evaluation. Rules:
+- 3 to 4 sentences maximum
+- Acknowledge the RIGHT INSTINCT first — even if the phrasing or option label was imprecise
+- Semantic equivalence matters: if the operative got the right idea but called it something different, recognise the instinct and frame the vocabulary as just packaging
+- If the free text contradicts the chosen option AND shows better instinct, lead with the free text insight
+- If there is a gap in their thinking, name it specifically — not vaguely
+- Tell the operative what the NEXT LEVEL of this response looks like
+- SYD voice: direct, short sentences, no flattery, no filler, no "great job"
+- Do not use the word "journey" or "passion" — too soft
+- Output ONLY the feedback text. No labels. No JSON. No preamble.
+`.trim();
+
+    const result = await geminiGenerate(prompt);
+
+    if (!result.ok || !result.text || result.text.trim().length < 20) {
+        console.warn('[SYD] Judgment evaluation fell back to local:', result.error);
+        return buildLocalJudgmentFeedback(enc);
+    }
+
+    return { text: result.text.trim(), geminiEnhanced: true };
+}
+
+// Local fallback: rule-based feedback from option + reasoning alignment.
+// Designed to be genuinely useful — not a placeholder.
+//
+// Logic:
+//   - Option B (transparency/accuracy) + reason about accuracy → strong alignment
+//   - Option A (confident bluff) → name the risk
+//   - Option C (seek info first) → acknowledge the instinct, add the missing piece
+//   - Free text present → acknowledge it specifically
+
+function buildLocalJudgmentFeedback(enc) {
+    const optId  = encounterState.selectedOption;
+    const rsnId  = encounterState.selectedReasoning;
+    const freeText = encounterState.freeText;
+
+    // Generic but honest fallback reads per option — designed per encounter stat domain
+    // This will be replaced per-encounter at content phase when encounters are written
+    // with their own teaching logic. For now, stat-based guidance.
+    const statFallbacks = {
+        intelligence: {
+            a: 'Confidence without information is a form of guessing. The instinct to not look unprepared is understandable — but accuracy builds more trust over time than the appearance of preparation.',
+            b: 'That is the right call. Accuracy over appearance is the intelligence move. The next level is knowing how to ask for more time without losing credibility — framing matters as much as the request.',
+            c: 'Solid instinct. Gathering context before reporting is the right move. The next level is being explicit about why — your manager will trust someone who knows their information limits over someone who fills gaps with guesswork.',
+            default: 'The right instinct in this kind of situation is information over performance. What looks like weakness in the short term — admitting you do not know something — is actually the highest-trust move available.'
+        },
+        charisma: {
+            a: 'Context before acknowledgement almost never works. Frustrated people do not hear information until they feel heard first. The sequence matters as much as the content.',
+            b: 'Right call. Acknowledgement before information is the social intelligence move. You can give the same information five minutes later — after the person feels understood — and it lands completely differently.',
+            c: 'That is the highest-order move. Asking what they want reframes the conversation from complaint to goal. Most people never get there because they are too focused on the content of the complaint rather than the purpose of the conversation.',
+            default: 'Social intelligence in this situation means emotional sequencing — frustration first, information second. The content of what you say matters less than when you say it.'
+        },
+        default: {
+            default: 'The instinct behind your pick matters more than the label on the option. What you were reaching for — accuracy, relationship, or better information — is the real signal. The next level is executing that instinct more precisely under pressure.'
         }
-    }, 1600);
+    };
+
+    const stat   = enc.stat || 'default';
+    const pool   = statFallbacks[stat] || statFallbacks.default;
+    let   text   = pool[optId] || pool.default || statFallbacks.default.default;
+
+    // If free text is present, prepend an acknowledgement
+    if (freeText && freeText.length > 10) {
+        text = `Your written read — "${freeText.slice(0, 80)}${freeText.length > 80 ? '...' : ''}" — shows the right instinct. ${text}`;
+    }
+
+    return { text, geminiEnhanced: false };
 }
 
 // ─── FEEDBACK: JUDGMENT TYPE ──────────────────────────────────
-function renderJudgmentFeedback(enc) {
+function renderJudgmentFeedback(enc, feedback) {
     const container = document.getElementById('encounter-content');
     if (!container) return;
 
     const selectedOpt = (enc.options || []).find(o => o.id === encounterState.selectedOption);
     const freeText    = encounterState.freeText;
+    const feedbackText = feedback ? feedback.text : '';
+    const isGemini     = feedback && feedback.geminiEnhanced;
 
     container.innerHTML = `
         <div class="encounter-wrap">
@@ -316,12 +417,12 @@ function renderJudgmentFeedback(enc) {
                     </div>
                 ` : ''}
                 <div class="enc-feedback-body">
-                    <p class="enc-feedback-text">
-                        [ DUMMY FEEDBACK — Gemini evaluation drops in at integration phase. ]
-                    </p>
-                    <p class="enc-feedback-sub">
-                        The instinct behind your pick is the hard part. Here is how you package it at the next level.
-                    </p>
+                    <p class="enc-feedback-text">${feedbackText}</p>
+                    ${!isGemini ? `
+                        <p class="enc-feedback-neural-note">
+                            [ Connect Neural Link for personalised SYD evaluation ]
+                        </p>
+                    ` : ''}
                 </div>
             </div>
             <div class="enc-footer-actions">
@@ -331,12 +432,13 @@ function renderJudgmentFeedback(enc) {
     `;
 
     document.getElementById('enc-done').addEventListener('click', () => {
-        playUIClick();
-        goBack();
+        playUIClick(); goBack();
     });
 }
 
 // ─── FEEDBACK: TEACHING TYPE ──────────────────────────────────
+// Teaching encounters do not call Gemini — the expert thinking is pre-written.
+// SYD reveals it as a transmission, not a correction.
 function renderTeachingFeedback(enc) {
     const container = document.getElementById('encounter-content');
     if (!container) return;
@@ -356,8 +458,7 @@ function renderTeachingFeedback(enc) {
     `;
 
     document.getElementById('enc-done').addEventListener('click', () => {
-        playUIClick();
-        goBack();
+        playUIClick(); goBack();
     });
 }
 
@@ -381,8 +482,7 @@ function renderEncounterDone() {
     `;
 
     document.getElementById('enc-done-back').addEventListener('click', () => {
-        playUIClick();
-        goBack();
+        playUIClick(); goBack();
     });
 }
 

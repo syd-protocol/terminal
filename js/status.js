@@ -389,22 +389,48 @@ function renderStatsTab(container, animate) {
         </div>
     `;
 
-    // Wire all stat rows: tap opens explainer, closes others
+    // Wire all stat rows: tap opens explainer, closes others.
+    // If Neural Link is connected and path.js provides getPersonalisedStatExplainer(),
+    // the first tap triggers a Gemini call and upgrades the explainer text in place.
+    // Subsequent taps use the cached result — no repeat calls.
     const allStatIds = [...STAT_NAMES, 'luck'];
     allStatIds.forEach(stat => {
         const row = document.getElementById('stats-row-' + stat);
         if (!row) return;
         row.addEventListener('click', () => {
             playUIClick();
-            const exp      = document.getElementById('explainer-' + stat);
+            const exp       = document.getElementById('explainer-' + stat);
             const wasHidden = exp && exp.classList.contains('hidden');
+
             // Close all open explainers
             allStatIds.forEach(s => {
                 const e = document.getElementById('explainer-' + s);
                 if (e) e.classList.add('hidden');
             });
+
             // Open this one if it was closed
-            if (wasHidden && exp) exp.classList.remove('hidden');
+            if (wasHidden && exp) {
+                exp.classList.remove('hidden');
+
+                // Attempt personalised Gemini explainer upgrade on first open
+                // Luck stat uses a fixed explainer — do not call Gemini for it
+                if (stat !== 'luck' && typeof getPersonalisedStatExplainer === 'function') {
+                    const textEl   = exp.querySelector('.stats-explainer-text');
+                    const pathData = (typeof loadPathData === 'function') ? loadPathData() : null;
+                    const traits   = player && player.scanTraits ? player.scanTraits : {};
+                    const statVal  = player && player.stats ? (player.stats[stat] || STAT_FLOOR) : STAT_FLOOR;
+
+                    // Only call if not already Gemini-enhanced (check for the upgrade marker)
+                    if (textEl && !textEl.dataset.geminiDone) {
+                        getPersonalisedStatExplainer(stat, statVal, pathData, traits).then(result => {
+                            if (result && result.geminiEnhanced && result.text) {
+                                textEl.textContent     = result.text;
+                                textEl.dataset.geminiDone = '1';
+                            }
+                        }).catch(() => { /* fallback already shown */ });
+                    }
+                }
+            }
         });
     });
 }
@@ -595,17 +621,31 @@ function renderPathTab(container) {
                             ${skills.map(s => '<span class="path-skill-tag">' + s + '</span>').join('')}
                         </div>
                     ` : ''}
-                    <p class="path-gap-gemini-note">
-                        [ Personalised gap analysis activates when Neural Link is connected ]
-                    </p>
+                    ${!(pathData.gapAnalysis && pathData.gapAnalysis.geminiEnhanced) ? `
+                        <p class="path-gap-gemini-note">
+                            [ Personalised gap analysis activates when Neural Link is connected ]
+                        </p>
+                    ` : ''}
                 </div>
 
                 ${level >= 20 ? `
                     <div class="path-tab-block path-affinity-block">
                         <div class="path-tab-label">[ HIDDEN AFFINITY &mdash; UNLOCKED ]</div>
-                        <p class="path-tab-value path-tab-value--text">
-                            Connect Neural Link in Settings to surface your hidden affinity read.
-                        </p>
+                        ${(pathData.hiddenAffinity && pathData.hiddenAffinity.read) ? `
+                            <p class="path-tab-value path-tab-value--text path-affinity-stat">
+                                ${pathData.hiddenAffinity.stat ? pathData.hiddenAffinity.stat.toUpperCase() : ''}
+                            </p>
+                            <p class="path-tab-value path-tab-value--text">${pathData.hiddenAffinity.read}</p>
+                            ${!pathData.hiddenAffinity.geminiEnhanced ? `
+                                <p class="path-gap-gemini-note">
+                                    [ Connect Neural Link for a deeper affinity read ]
+                                </p>
+                            ` : ''}
+                        ` : `
+                            <p class="path-tab-value path-tab-value--text">
+                                Connect Neural Link in Settings to surface your hidden affinity read.
+                            </p>
+                        `}
                     </div>
                 ` : `
                     <div class="path-tab-block path-affinity-locked-block">

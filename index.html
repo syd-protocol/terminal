@@ -287,6 +287,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <!-- Modules — load order matters:
+         gemini.js   → shared Gemini API utility, must load before path.js and encounter.js
          quests.js   → selection engine, must load before app.js
          scan.js     → scan experiences, called from app.js startScan()
          path.js     → PATH Protocol, called from app.js startPATH()
@@ -295,6 +296,7 @@
          status.js   → five-tab window, called from app.js updateStatusScreen()
          app.js      → core engine, wires everything together
     -->
+    <script src="js/gemini.js"></script>
     <script src="js/quests.js"></script>
     <script src="js/dailyloop.js"></script>
     <script src="js/scan.js"></script>
