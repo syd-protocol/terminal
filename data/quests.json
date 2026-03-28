@@ -1,56 +1,2799 @@
 {
     "quests": [
-        { "id": "t0_str_d1", "tier": 0, "day": 1, "stat": "strength",     "xp": 10, "title": "[ DUMMY ] STRENGTH — DAY 1",     "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_int_d1", "tier": 0, "day": 1, "stat": "intelligence", "xp": 10, "title": "[ DUMMY ] INTELLIGENCE — DAY 1", "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_agi_d1", "tier": 0, "day": 1, "stat": "agility",      "xp": 10, "title": "[ DUMMY ] AGILITY — DAY 1",      "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_end_d1", "tier": 0, "day": 1, "stat": "endurance",    "xp": 10, "title": "[ DUMMY ] ENDURANCE — DAY 1",    "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_cha_d1", "tier": 0, "day": 1, "stat": "charisma",     "xp": 10, "title": "[ DUMMY ] CHARISMA — DAY 1",     "desc": "Placeholder directive. Real content drops at content phase." },
-
-        { "id": "t0_str_d2", "tier": 0, "day": 2, "stat": "strength",     "xp": 10, "title": "[ DUMMY ] STRENGTH — DAY 2",     "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_int_d2", "tier": 0, "day": 2, "stat": "intelligence", "xp": 10, "title": "[ DUMMY ] INTELLIGENCE — DAY 2", "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_agi_d2", "tier": 0, "day": 2, "stat": "agility",      "xp": 10, "title": "[ DUMMY ] AGILITY — DAY 2",      "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_end_d2", "tier": 0, "day": 2, "stat": "endurance",    "xp": 10, "title": "[ DUMMY ] ENDURANCE — DAY 2",    "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_cha_d2", "tier": 0, "day": 2, "stat": "charisma",     "xp": 10, "title": "[ DUMMY ] CHARISMA — DAY 2",     "desc": "Placeholder directive. Real content drops at content phase." },
-
-        { "id": "t0_str_d3", "tier": 0, "day": 3, "stat": "strength",     "xp": 10, "title": "[ DUMMY ] STRENGTH — DAY 3",     "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_int_d3", "tier": 0, "day": 3, "stat": "intelligence", "xp": 10, "title": "[ DUMMY ] INTELLIGENCE — DAY 3", "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_agi_d3", "tier": 0, "day": 3, "stat": "agility",      "xp": 10, "title": "[ DUMMY ] AGILITY — DAY 3",      "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_end_d3", "tier": 0, "day": 3, "stat": "endurance",    "xp": 10, "title": "[ DUMMY ] ENDURANCE — DAY 3",    "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_cha_d3", "tier": 0, "day": 3, "stat": "charisma",     "xp": 10, "title": "[ DUMMY ] CHARISMA — DAY 3",     "desc": "Placeholder directive. Real content drops at content phase." },
-
-        { "id": "t0_str_d4", "tier": 0, "day": 4, "stat": "strength",     "xp": 10, "title": "[ DUMMY ] STRENGTH — DAY 4",     "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_int_d4", "tier": 0, "day": 4, "stat": "intelligence", "xp": 10, "title": "[ DUMMY ] INTELLIGENCE — DAY 4", "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_agi_d4", "tier": 0, "day": 4, "stat": "agility",      "xp": 10, "title": "[ DUMMY ] AGILITY — DAY 4",      "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_end_d4", "tier": 0, "day": 4, "stat": "endurance",    "xp": 10, "title": "[ DUMMY ] ENDURANCE — DAY 4",    "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_cha_d4", "tier": 0, "day": 4, "stat": "charisma",     "xp": 10, "title": "[ DUMMY ] CHARISMA — DAY 4",     "desc": "Placeholder directive. Real content drops at content phase." },
-
-        { "id": "t0_str_d5", "tier": 0, "day": 5, "stat": "strength",     "xp": 10, "title": "[ DUMMY ] STRENGTH — DAY 5",     "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_int_d5", "tier": 0, "day": 5, "stat": "intelligence", "xp": 10, "title": "[ DUMMY ] INTELLIGENCE — DAY 5", "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_agi_d5", "tier": 0, "day": 5, "stat": "agility",      "xp": 10, "title": "[ DUMMY ] AGILITY — DAY 5",      "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_end_d5", "tier": 0, "day": 5, "stat": "endurance",    "xp": 10, "title": "[ DUMMY ] ENDURANCE — DAY 5",    "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_cha_d5", "tier": 0, "day": 5, "stat": "charisma",     "xp": 10, "title": "[ DUMMY ] CHARISMA — DAY 5",     "desc": "Placeholder directive. Real content drops at content phase." },
-
-        { "id": "t0_str_d6", "tier": 0, "day": 6, "stat": "strength",     "xp": 10, "title": "[ DUMMY ] STRENGTH — DAY 6",     "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_int_d6", "tier": 0, "day": 6, "stat": "intelligence", "xp": 10, "title": "[ DUMMY ] INTELLIGENCE — DAY 6", "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_agi_d6", "tier": 0, "day": 6, "stat": "agility",      "xp": 10, "title": "[ DUMMY ] AGILITY — DAY 6",      "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_end_d6", "tier": 0, "day": 6, "stat": "endurance",    "xp": 10, "title": "[ DUMMY ] ENDURANCE — DAY 6",    "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_cha_d6", "tier": 0, "day": 6, "stat": "charisma",     "xp": 10, "title": "[ DUMMY ] CHARISMA — DAY 6",     "desc": "Placeholder directive. Real content drops at content phase." },
-
-        { "id": "t0_str_d7", "tier": 0, "day": 7, "stat": "strength",     "xp": 10, "title": "[ DUMMY ] STRENGTH — DAY 7",     "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_int_d7", "tier": 0, "day": 7, "stat": "intelligence", "xp": 10, "title": "[ DUMMY ] INTELLIGENCE — DAY 7", "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_agi_d7", "tier": 0, "day": 7, "stat": "agility",      "xp": 10, "title": "[ DUMMY ] AGILITY — DAY 7",      "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_end_d7", "tier": 0, "day": 7, "stat": "endurance",    "xp": 10, "title": "[ DUMMY ] ENDURANCE — DAY 7",    "desc": "Placeholder directive. Real content drops at content phase." },
-        { "id": "t0_cha_d7", "tier": 0, "day": 7, "stat": "charisma",     "xp": 10, "title": "[ DUMMY ] CHARISMA — DAY 7",     "desc": "Placeholder directive. Real content drops at content phase." },
-
-        { "id": "t1_str_001", "tier": 1, "stat": "strength",     "xp": 15, "title": "[ DUMMY ] STRENGTH T1 A",     "desc": "Placeholder T1 directive. Real content drops at content phase." },
-        { "id": "t1_str_002", "tier": 1, "stat": "strength",     "xp": 15, "title": "[ DUMMY ] STRENGTH T1 B",     "desc": "Placeholder T1 directive. Real content drops at content phase." },
-        { "id": "t1_int_001", "tier": 1, "stat": "intelligence", "xp": 15, "title": "[ DUMMY ] INTELLIGENCE T1 A", "desc": "Placeholder T1 directive. Real content drops at content phase." },
-        { "id": "t1_int_002", "tier": 1, "stat": "intelligence", "xp": 15, "title": "[ DUMMY ] INTELLIGENCE T1 B", "desc": "Placeholder T1 directive. Real content drops at content phase." },
-        { "id": "t1_agi_001", "tier": 1, "stat": "agility",      "xp": 15, "title": "[ DUMMY ] AGILITY T1 A",      "desc": "Placeholder T1 directive. Real content drops at content phase." },
-        { "id": "t1_agi_002", "tier": 1, "stat": "agility",      "xp": 15, "title": "[ DUMMY ] AGILITY T1 B",      "desc": "Placeholder T1 directive. Real content drops at content phase." },
-        { "id": "t1_end_001", "tier": 1, "stat": "endurance",    "xp": 15, "title": "[ DUMMY ] ENDURANCE T1 A",    "desc": "Placeholder T1 directive. Real content drops at content phase." },
-        { "id": "t1_end_002", "tier": 1, "stat": "endurance",    "xp": 15, "title": "[ DUMMY ] ENDURANCE T1 B",    "desc": "Placeholder T1 directive. Real content drops at content phase." },
-        { "id": "t1_cha_001", "tier": 1, "stat": "charisma",     "xp": 15, "title": "[ DUMMY ] CHARISMA T1 A",     "desc": "Placeholder T1 directive. Real content drops at content phase." },
-        { "id": "t1_cha_002", "tier": 1, "stat": "charisma",     "xp": 15, "title": "[ DUMMY ] CHARISMA T1 B",     "desc": "Placeholder T1 directive. Real content drops at content phase." }
+        {
+            "id": "t0_str_d1",
+            "tier": 0,
+            "day": 1,
+            "stat": "strength",
+            "xp": 10,
+            "title": "THE FIRST MOVE",
+            "desc": "Pick one physical thing you have been putting off — making the bed, tidying your desk, taking out the bin — and do it right now before this screen goes dark. No planning. Just move."
+        },
+        {
+            "id": "t0_int_d1",
+            "tier": 0,
+            "day": 1,
+            "stat": "intelligence",
+            "xp": 10,
+            "title": "THE SPY BRIEF",
+            "desc": "You are an intelligence analyst. Your mission: find one thing you walk past every single day that you have never actually looked at closely. Spend 60 seconds studying it like it holds a secret. Report back to yourself what you found."
+        },
+        {
+            "id": "t0_agi_d1",
+            "tier": 0,
+            "day": 1,
+            "stat": "agility",
+            "xp": 10,
+            "title": "THE DETOUR",
+            "desc": "On your next trip somewhere — anywhere, even to another room — take a different route than you normally would. Notice what is different. That is it. Tiny pivot, real signal."
+        },
+        {
+            "id": "t0_end_d1",
+            "tier": 0,
+            "day": 1,
+            "stat": "endurance",
+            "xp": 10,
+            "title": "THE CLOCK",
+            "desc": "Set a timer for 20 minutes. Do one thing and only that one thing until it rings. No switching. No checking. When the timer goes, you are done. Mark complete."
+        },
+        {
+            "id": "t0_cha_d1",
+            "tier": 0,
+            "day": 1,
+            "stat": "charisma",
+            "xp": 10,
+            "title": "THE FIRST CONTACT",
+            "desc": "Say something genuine — not scripted, not just polite — to one person today. A real observation, a specific compliment, anything that shows you actually noticed them. One person. One real thing."
+        },
+        {
+            "id": "t0_str_d2",
+            "tier": 0,
+            "day": 2,
+            "stat": "strength",
+            "xp": 10,
+            "title": "THE BODY AUDIT",
+            "desc": "You are a mechanic checking an engine. Do a full scan of your body right now — head to toe, 2 minutes. Where is the tension? Where does it feel stuck? You do not need to fix anything. Just find it and name it."
+        },
+        {
+            "id": "t0_int_d2",
+            "tier": 0,
+            "day": 2,
+            "stat": "intelligence",
+            "xp": 10,
+            "title": "THE QUESTION RACE",
+            "desc": "Pick any topic — anything you encountered today. Set a timer for 3 minutes and write down as many questions about it as you can. Not answers. Questions. The operative who asks better questions wins the race."
+        },
+        {
+            "id": "t0_agi_d2",
+            "tier": 0,
+            "day": 2,
+            "stat": "agility",
+            "xp": 10,
+            "title": "THE SWAP",
+            "desc": "Pick one habit from your morning routine and do it in a different order today. Shower before coffee. Eat before dressing. Anything. Notice what feels weird. That feeling is your routine defending itself."
+        },
+        {
+            "id": "t0_end_d2",
+            "tier": 0,
+            "day": 2,
+            "stat": "endurance",
+            "xp": 10,
+            "title": "THE LONG GAME LOG",
+            "desc": "Write down one thing you want to still be doing one year from today. Not a goal. Not a milestone. An activity, a habit, a practice. One sentence. Put it somewhere you will see it tomorrow."
+        },
+        {
+            "id": "t0_cha_d2",
+            "tier": 0,
+            "day": 2,
+            "stat": "charisma",
+            "xp": 10,
+            "title": "THE LISTENER",
+            "desc": "In your next real conversation, play a game: do not speak until the other person has fully finished — no finishing their sentences, no nodding them along to hurry up. Just let the silence sit after they stop. Notice what they add when you do not fill the gap."
+        },
+        {
+            "id": "t0_str_d3",
+            "tier": 0,
+            "day": 3,
+            "stat": "strength",
+            "xp": 10,
+            "title": "THE ENERGY MAP",
+            "desc": "You are charting terrain. Think back over the last 48 hours. When did you feel most alive and switched on? When did you feel flat and slow? Map two high points and two low points. No need to fix anything yet — just draw the map."
+        },
+        {
+            "id": "t0_int_d3",
+            "tier": 0,
+            "day": 3,
+            "stat": "intelligence",
+            "xp": 10,
+            "title": "THE SECOND EXPLANATION",
+            "desc": "Find something you already know well — a skill, a concept, a process. Now explain it as if the person listening has never heard of it before. Out loud or written down. Where do you stumble? That gap is exactly where the real understanding is still forming."
+        },
+        {
+            "id": "t0_agi_d3",
+            "tier": 0,
+            "day": 3,
+            "stat": "agility",
+            "xp": 10,
+            "title": "THE YES ROUND",
+            "desc": "For the next two hours, say yes to the first minor request or small ask that comes your way — the kind you would normally sidestep or defer. Not a big commitment. Something small. Notice how it actually goes versus how you assumed it would."
+        },
+        {
+            "id": "t0_end_d3",
+            "tier": 0,
+            "day": 3,
+            "stat": "endurance",
+            "xp": 10,
+            "title": "THE FINISH LINE",
+            "desc": "Look at your task list — mental or written. Find one thing that has been sitting there unfinished for more than three days. Close it today. Not perfectly. Just closed. Done is the directive."
+        },
+        {
+            "id": "t0_cha_d3",
+            "tier": 0,
+            "day": 3,
+            "stat": "charisma",
+            "xp": 10,
+            "title": "THE MOOD READ",
+            "desc": "Pick one person you will interact with today — before the conversation, guess their mood. Not randomly. Read whatever signals you already have: their last message, how they usually are at this time of day, what they have going on. After the interaction, check how accurate you were."
+        },
+        {
+            "id": "t0_str_d4",
+            "tier": 0,
+            "day": 4,
+            "stat": "strength",
+            "xp": 10,
+            "title": "THE UPGRADE",
+            "desc": "Pick one physical thing in your environment that is slightly broken, slightly wrong, slightly annoying — and fix it. A leaning chair, a cable in the way, something you step around every day. Five minutes. Done."
+        },
+        {
+            "id": "t0_int_d4",
+            "tier": 0,
+            "day": 4,
+            "stat": "intelligence",
+            "xp": 10,
+            "title": "THE ASSUMPTION HUNT",
+            "desc": "Think of one decision you made this week — anything. Now list the assumptions underneath it. What did you take for granted? What would have to be false for the decision to be wrong? Hunt for at least three. You do not have to change anything. Just see the scaffolding."
+        },
+        {
+            "id": "t0_agi_d4",
+            "tier": 0,
+            "day": 4,
+            "stat": "agility",
+            "xp": 10,
+            "title": "THE PLAN B DRILL",
+            "desc": "Pick something you have planned for today — any plan. Now spend 3 minutes designing Plan B: what would you do if the original plan fell apart at the last minute? No catastrophising. Just build the backup. You probably will not need it. That is not the point."
+        },
+        {
+            "id": "t0_end_d4",
+            "tier": 0,
+            "day": 4,
+            "stat": "endurance",
+            "xp": 10,
+            "title": "THE HOLD",
+            "desc": "Today, when the urge to check your phone or switch tasks hits — hold for 60 seconds before acting on it. Just once counts. Notice what the urge actually feels like when you do not immediately feed it."
+        },
+        {
+            "id": "t0_cha_d4",
+            "tier": 0,
+            "day": 4,
+            "stat": "charisma",
+            "xp": 10,
+            "title": "THE NAME PLAY",
+            "desc": "Use someone's name naturally in conversation today — not at the start of a sentence as a greeting, but mid-conversation where it lands as genuine acknowledgement. Notice the shift in the interaction when you do."
+        },
+        {
+            "id": "t0_str_d5",
+            "tier": 0,
+            "day": 5,
+            "stat": "strength",
+            "xp": 10,
+            "title": "THE RESISTANCE LOG",
+            "desc": "Write down one thing you have been meaning to do physically — exercise, a walk, stretching, anything — that keeps getting pushed. Not to do it today necessarily. Just write: what is the actual reason it keeps slipping? Be honest. One sentence."
+        },
+        {
+            "id": "t0_int_d5",
+            "tier": 0,
+            "day": 5,
+            "stat": "intelligence",
+            "xp": 10,
+            "title": "THE OPPOSITE CASE",
+            "desc": "Pick something you believe confidently. Now spend 5 minutes playing devil's advocate — argue the opposite position as well as you can. Not to change your mind. To test the edges of what you actually know versus what you just assumed."
+        },
+        {
+            "id": "t0_agi_d5",
+            "tier": 0,
+            "day": 5,
+            "stat": "agility",
+            "xp": 10,
+            "title": "THE SPEED ROUND",
+            "desc": "Pick a task you would normally spend 30+ minutes on. Give yourself half the time. Not to do it sloppily — to find out which parts actually needed the full time and which parts were just comfortable padding."
+        },
+        {
+            "id": "t0_end_d5",
+            "tier": 0,
+            "day": 5,
+            "stat": "endurance",
+            "xp": 10,
+            "title": "THE STREAK CHECK",
+            "desc": "Think of something you do every day without thinking — a morning habit, a routine, a ritual. Track it consciously today. Notice when you almost skipped it, and what almost made you skip it. Awareness is the first layer of control."
+        },
+        {
+            "id": "t0_cha_d5",
+            "tier": 0,
+            "day": 5,
+            "stat": "charisma",
+            "xp": 10,
+            "title": "THE QUESTION GIFT",
+            "desc": "Ask someone one genuinely curious question today — something you actually want to know about them, not small talk filler. Then just listen. Do not pivot to your own story. Do not offer advice. Just be interested. That is the whole directive."
+        },
+        {
+            "id": "t0_str_d6",
+            "tier": 0,
+            "day": 6,
+            "stat": "strength",
+            "xp": 10,
+            "title": "THE ENVIRONMENT AUDIT",
+            "desc": "Walk through your main working or living space slowly — like a health inspector on a first visit. What would you flag? What slows you down, drains your energy, or gets in your way? List three things. You do not have to fix them today. Just see them."
+        },
+        {
+            "id": "t0_int_d6",
+            "tier": 0,
+            "day": 6,
+            "stat": "intelligence",
+            "xp": 10,
+            "title": "THE PATTERN SPOTTER",
+            "desc": "Think about a recurring problem in your life — something that keeps showing up in different forms. Name the pattern underneath it. Not the surface events. The underlying pattern. One sentence: 'The real pattern is...' Write it down."
+        },
+        {
+            "id": "t0_agi_d6",
+            "tier": 0,
+            "day": 6,
+            "stat": "agility",
+            "xp": 10,
+            "title": "THE FIELD AGENT",
+            "desc": "You are a field agent going somewhere familiar today. Your mission: notice three things you have never consciously registered before. They have always been there. You just stopped seeing them. Log them."
+        },
+        {
+            "id": "t0_end_d6",
+            "tier": 0,
+            "day": 6,
+            "stat": "endurance",
+            "xp": 10,
+            "title": "THE RECOVERY SCOUT",
+            "desc": "What is one thing that genuinely restores you — not just distracts you, but actually leaves you feeling more capable after doing it? Name it. Then schedule it somewhere in the next three days. Recovery is a directive, not a reward."
+        },
+        {
+            "id": "t0_cha_d6",
+            "tier": 0,
+            "day": 6,
+            "stat": "charisma",
+            "xp": 10,
+            "title": "THE TENSION SCAN",
+            "desc": "Think about one relationship in your life that has a small unresolved tension — nothing dramatic, just something slightly off. Do not fix it today. Just name what the tension actually is, underneath the surface event. Write it in one sentence."
+        },
+        {
+            "id": "t0_str_d7",
+            "tier": 0,
+            "day": 7,
+            "stat": "strength",
+            "xp": 10,
+            "title": "THE WEEK ONE DEBRIEF",
+            "desc": "You have been in the field for seven days. Write three sentences: one thing your body or environment told you this week that you had not been listening to. One thing you actually did. One thing you are going to stop making excuses about."
+        },
+        {
+            "id": "t0_int_d7",
+            "tier": 0,
+            "day": 7,
+            "stat": "intelligence",
+            "xp": 10,
+            "title": "THE KNOWLEDGE GAP",
+            "desc": "Name one area where you know you are operating on outdated or incomplete information — work, life, anything. Not to fix it right now. Just to stop pretending the gap is not there. Write the gap in one sentence. That is the first real step."
+        },
+        {
+            "id": "t0_agi_d7",
+            "tier": 0,
+            "day": 7,
+            "stat": "agility",
+            "xp": 10,
+            "title": "THE COMFORT ZONE RECEIPT",
+            "desc": "Write down three things you did this week purely out of habit or comfort — not because they were the best option, just because they were familiar. No judgment. Just see the receipt. The system sees what you see."
+        },
+        {
+            "id": "t0_end_d7",
+            "tier": 0,
+            "day": 7,
+            "stat": "endurance",
+            "xp": 10,
+            "title": "THE MAINTENANCE CHECK",
+            "desc": "Sleep, food, movement, rest — rate each one honestly out of 10 for the past week. Do not average them or round up. Where is the lowest score? That is the one limiting everything else. Name it."
+        },
+        {
+            "id": "t0_cha_d7",
+            "tier": 0,
+            "day": 7,
+            "stat": "charisma",
+            "xp": 10,
+            "title": "THE SIGNAL REVIEW",
+            "desc": "Think about the five most meaningful interactions you had this week. In each one — what signal were you actually sending? Not what you intended. What the other person actually received. Name one thing you would send differently."
+        },
+        {
+            "id": "t1_str_001",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE MORNING DISPATCH",
+            "desc": "Before you open any app, any message, or any feed — do one physical thing. Make something, move something, clean something. You dispatch yourself. The phone waits."
+        },
+        {
+            "id": "t1_str_002",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE LOAD BEARER",
+            "desc": "Carry something for someone today — literally or figuratively. An errand, a task, a bag. No announcement. No receipt. Just carry it and let it be done."
+        },
+        {
+            "id": "t1_str_003",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE POSTURE MISSION",
+            "desc": "Every time you sit down today, you are a soldier taking a position. Set your posture deliberately. Not stiffly — consciously. Notice how your thinking shifts when your body is set properly."
+        },
+        {
+            "id": "t1_str_004",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE UNPLEASANT FIRST",
+            "desc": "Pick the task on your list you least want to do. Do it first today, before anything comfortable. Brian Tracy called it eating the frog. SYD calls it not lying to yourself about your priorities."
+        },
+        {
+            "id": "t1_str_005",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE REPAIR CREW",
+            "desc": "Find one thing in your physical environment that is broken, off, or not working properly. Fix it today. Not 'put it on the list.' Fix it. Small things left unrepaired are a slow drain on your operational capacity."
+        },
+        {
+            "id": "t1_str_006",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE ENERGY AUDIT",
+            "desc": "At the end of today, rate your physical energy across the day: morning, midday, afternoon, evening. Where was the dip? What happened before the dip? Most people know but have never written it down."
+        },
+        {
+            "id": "t1_str_007",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE OUTDOOR ORDER",
+            "desc": "Spend at least 20 minutes outside today — not in transit, actually outside. Walk, sit, observe. No headphones optional bonus. Your nervous system runs differently under open sky."
+        },
+        {
+            "id": "t1_str_008",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE SLEEP CONTRACT",
+            "desc": "Set a bedtime tonight and keep it. Not an intention — a contract. Everything else works better or worse depending on this one variable. You already know your number. Honor it tonight."
+        },
+        {
+            "id": "t1_str_009",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE CLUTTER STRIKE",
+            "desc": "Set a 10-minute timer and clear one area — desk, bag, room corner, inbox. You are not organising your life. You are running a targeted strike on one patch of chaos. Timer rings, you stop. Done."
+        },
+        {
+            "id": "t1_str_010",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE WATER MISSION",
+            "desc": "Drink your full daily water intake today — track it consciously. This is not a wellness tip. Hydration is a performance variable. You would not run an engine on low coolant and expect full output."
+        },
+        {
+            "id": "t1_str_011",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE NO SCREEN HOUR",
+            "desc": "Pick one hour today with no screens. Not right before bed as a loophole — during your active day. What does your body or your space actually need in that hour when your attention is free?"
+        },
+        {
+            "id": "t1_str_012",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE COMMITMENT KEEPER",
+            "desc": "Think of one commitment you made to yourself in the last two weeks that you have not kept. Today: either keep it, renegotiate it honestly, or formally cancel it. Vague commitments left open are a slow leak in your execution system."
+        },
+        {
+            "id": "t1_str_013",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE PHYSICAL CHALLENGE",
+            "desc": "Do something today that asks something of your body — a longer walk, more stairs, a stretch you have been avoiding. Not a workout plan. Just one decision today that says your body is a tool you invest in."
+        },
+        {
+            "id": "t1_str_014",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE SYSTEM SCAN",
+            "desc": "Look at one recurring system in your day — how you wake up, how you eat, how you wind down. What would an engineer flag as inefficient or wasteful? Name one thing. You do not have to fix it today. Just see it with engineer's eyes."
+        },
+        {
+            "id": "t1_str_015",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE MANUAL OVERRIDE",
+            "desc": "Do one thing today manually that you usually automate or delegate to a device. Cook something instead of ordering. Write something by hand instead of typing. Walk instead of riding. Feel the difference in effort and presence."
+        },
+        {
+            "id": "t1_str_016",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE WEIGHT ROOM",
+            "desc": "Pick a conversation or task you have been avoiding because it feels heavy. Schedule it for this week — put it in your calendar or on your list with a date. You do not have to do it today. But it has to have a date now."
+        },
+        {
+            "id": "t1_str_017",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE HANDOFF",
+            "desc": "Identify one task you are doing repeatedly that should either be delegated, systematised, or dropped entirely. Write down why you have not done that yet. The answer will tell you something true about how you manage capacity."
+        },
+        {
+            "id": "t1_str_018",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE FUEL LOG",
+            "desc": "Track what you eat today — not to judge it, not to count anything. Just to see it clearly. Most people have never looked at a full day of their fuel choices laid out in sequence. See the data."
+        },
+        {
+            "id": "t1_str_019",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE MORNING WINDOW",
+            "desc": "For the first 30 minutes after you wake up tomorrow, do not open any app or check any message. Use that window for something physical — movement, food prep, a walk, even just sitting outside. Protect the first window."
+        },
+        {
+            "id": "t1_str_020",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE DEADLINE MAKER",
+            "desc": "Pick one open-ended task that has no deadline — something you are doing 'when I get around to it.' Give it a deadline today. Not a goal. A deadline. A specific date. Write it down somewhere it will come back to you."
+        },
+        {
+            "id": "t1_str_021",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE ENVIRONMENT UPGRADE",
+            "desc": "Make one change to your working or sleeping environment today that will make it function better. A better light, a cleared surface, a moved object. Your environment shapes your output more than your motivation does."
+        },
+        {
+            "id": "t1_str_022",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE STRETCH PROTOCOL",
+            "desc": "Every time you stand up from a chair today, stretch for 30 seconds before doing anything else. This is a field exercise in interrupting the freeze that comes from sitting too long. Notice the cumulative effect by end of day."
+        },
+        {
+            "id": "t1_str_023",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE VOICE MEMO",
+            "desc": "Record a 2-minute voice memo to yourself about one physical or operational area of your life you have been neglecting. Saying it out loud instead of writing it does something different. Play it back. What do you sound like when you are being honest?"
+        },
+        {
+            "id": "t1_str_024",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE SINGLE ACTION",
+            "desc": "Name one thing that, if you did it consistently for 30 days, would change your physical baseline significantly. Write it down. Then do it today — just today. One rep. The 30 days starts from the first rep."
+        },
+        {
+            "id": "t1_str_025",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE PACE CHECK",
+            "desc": "Notice the pace you moved through today — rushed, slow, deliberate, scattered? Pace is a choice, not a given. What pace would have served today better? Name it and set it as the default for tomorrow."
+        },
+        {
+            "id": "t1_str_026",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE CONTINGENCY PLAN",
+            "desc": "Think about one area of your physical life that has no backup — your sleep setup, your food supply, your transport. What would happen if the usual option disappeared tomorrow? Name the backup. Have it ready."
+        },
+        {
+            "id": "t1_str_027",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE PHYSICAL FINISH",
+            "desc": "End your workday with one physical act of closure — closing a laptop deliberately, tidying your workspace, a short walk away from where you worked. The body needs a signal that the operational window is closed. Give it one."
+        },
+        {
+            "id": "t1_str_028",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE DISCOMFORT BUDGET",
+            "desc": "Pick one small physical discomfort you have been managing around — a cold shower, an early alarm, skipping one unnecessary snack. Do not transform your life. Just spend one unit of discomfort today deliberately. Notice it does not break you."
+        },
+        {
+            "id": "t1_str_029",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE COMPLETION RITUAL",
+            "desc": "Create a small personal ritual for when you finish a task — a specific word, a physical gesture, a mark on paper. It sounds trivial. It is not. Completion rituals train your brain to register done and move on cleanly."
+        },
+        {
+            "id": "t1_str_030",
+            "tier": 1,
+            "stat": "strength",
+            "xp": 15,
+            "title": "THE ACCOUNTABILITY MIRROR",
+            "desc": "Write down three things you said you would do this week. Which did you do? Which did you not do? Do not explain or justify the ones you missed. Just note: did I or did I not? The mirror does not argue with you."
+        },
+        {
+            "id": "t1_int_001",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE FIRST PRINCIPLES DRILL",
+            "desc": "Take something you do regularly at work or in life. Strip away all the 'because that's how it's done' layers and ask: what is this actually for? What is the bare minimum that needs to happen for the core purpose to be met? Write down what is left when the tradition is removed."
+        },
+        {
+            "id": "t1_int_002",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE MENTAL MODEL HUNT",
+            "desc": "Think about a decision you made in the last week. What was the mental model underneath it — what framework were you actually using, even if unconsciously? Name it. Then ask: is that the right tool for this kind of decision?"
+        },
+        {
+            "id": "t1_int_003",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE INVERSION",
+            "desc": "Pick a goal you are working toward. Now ask: what would guarantee failure? List everything you could do to ensure the goal never happens. Then do the opposite of that list. Inversion often finds the blockers that forward planning misses."
+        },
+        {
+            "id": "t1_int_004",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE RABBIT HOLE",
+            "desc": "Pick one thing you are genuinely curious about — something that has been sitting in the back of your mind. Spend 25 minutes going deep into it. Not for work. Not for productivity. For the pure pleasure of understanding something more fully."
+        },
+        {
+            "id": "t1_int_005",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE SECOND ORDER QUESTION",
+            "desc": "Think about one thing you want — a purchase, a decision, a change. Ask: and then what? Write out the second-order effects. Not to talk yourself out of it. To understand what you are actually choosing, not just the immediate thing."
+        },
+        {
+            "id": "t1_int_006",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE BOOK SCOUT",
+            "desc": "Find one idea from something you have read, watched, or heard in the last month that you have not properly processed yet. Sit with it for 10 minutes — no new input. Just think about what it means and where it connects to something you already know."
+        },
+        {
+            "id": "t1_int_007",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE STEELMAN",
+            "desc": "Pick a position you disagree with — a decision made at work, a viewpoint someone holds, a policy you dislike. Build the strongest possible version of the argument FOR it. Not to agree with it. To understand it well enough that your disagreement becomes more precise."
+        },
+        {
+            "id": "t1_int_008",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE SUMMARY TEST",
+            "desc": "At the end of today, summarise the most important thing you learned — from a conversation, a meeting, something you read, anything. One paragraph. If you cannot summarise it clearly, you probably have not processed it yet."
+        },
+        {
+            "id": "t1_int_009",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE ANALOGY BUILDER",
+            "desc": "Pick a complex concept you work with regularly. Build an analogy that would explain it to a smart 12-year-old. Not a simplified version — a genuinely good analogy that captures the structure. The ability to do this test whether you understand the thing or just recognise it."
+        },
+        {
+            "id": "t1_int_010",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE BIAS SPOTTER",
+            "desc": "Think about a strong opinion you have held for a long time. Ask: what evidence would change my mind? If you cannot name any, that is a flag — not that you are wrong, but that you might be holding a belief rather than a conclusion."
+        },
+        {
+            "id": "t1_int_011",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE MAP MAKER",
+            "desc": "Draw a map — literally, on paper — of how something works: a system at work, a decision process, a relationship dynamic. Diagramming forces you to locate the gaps in your understanding, because you cannot draw what you do not actually know."
+        },
+        {
+            "id": "t1_int_012",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE EXPERT IMPERSONATION",
+            "desc": "Pick a domain where you have some knowledge. For 10 minutes, think and reason as the best practitioner in that domain would — not as yourself, but as them. What would they notice first? What would they dismiss? What questions would they ask?"
+        },
+        {
+            "id": "t1_int_013",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE SLOW READ",
+            "desc": "Read something today — an article, a chapter, anything — at half speed. Not scanning. Actually reading every sentence with attention. Notice how much more you pick up from the same content when you give it the time it was written in."
+        },
+        {
+            "id": "t1_int_014",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE PROBLEM REFRAME",
+            "desc": "Take a problem you are currently stuck on. Write it down as you normally see it. Then rewrite it three different ways — change the framing, the level, the angle. The problem you solve is always the problem you can see. Changing the frame changes what is possible."
+        },
+        {
+            "id": "t1_int_015",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE UNKNOWN UNKNOWN",
+            "desc": "In one area of your work or life, ask: what do I not know that I do not know I do not know? You cannot answer it directly — that is the point. But asking it points your attention toward the edge of your map rather than the centre."
+        },
+        {
+            "id": "t1_int_016",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE CROSS POLLINATION",
+            "desc": "Think of a principle or technique from one domain you know well — cooking, sport, a hobby, a skill. Apply it to a problem in a completely different domain. The transfer of a principle across contexts is one of the markers of high-level thinking."
+        },
+        {
+            "id": "t1_int_017",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE DECISION JOURNAL",
+            "desc": "Write down one important decision you are currently facing. Record your reasoning, the options you see, and what you are leaning toward. Seal it. Review it in 30 days. Your future self will learn more from this than from almost anything else you could do today."
+        },
+        {
+            "id": "t1_int_018",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE PERSPECTIVE SHIFT",
+            "desc": "Pick a situation where you are the central character — a conflict, a challenge, a goal. Now describe it entirely from the perspective of the other people involved. Not sympathetically. Accurately. What do they see? What is their version of this situation?"
+        },
+        {
+            "id": "t1_int_019",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE 10-10-10",
+            "desc": "For a decision you are wrestling with: how will you feel about this in 10 minutes? In 10 months? In 10 years? This is Suzy Welch's framework. It does not make the decision for you. It reveals which time horizon you are actually optimising for."
+        },
+        {
+            "id": "t1_int_020",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE TEACHING MOMENT",
+            "desc": "Teach something today — explain something you know to someone who does not, or write it out as if you were teaching it. The gaps in your explanation are the gaps in your understanding. The Feynman technique works because you cannot fake understanding when you have to produce it."
+        },
+        {
+            "id": "t1_int_021",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE CATALOGUE",
+            "desc": "List the five mental models or frameworks you use most often — not the ones you know, the ones you actually reach for when you need to think clearly. Then ask: are there better tools for the problems I am currently facing that I am not using?"
+        },
+        {
+            "id": "t1_int_022",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE PREDICTION",
+            "desc": "Make a specific prediction today about something that will happen in the next two weeks — at work, in your industry, with a person, anywhere. Write it down with a date. Tracking your predictions is the fastest way to calibrate your judgment."
+        },
+        {
+            "id": "t1_int_023",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE SYNTHESIS",
+            "desc": "Take three things you have learned recently — from different sources or contexts. Write one paragraph connecting them. What do they have in common? What does that connection tell you that none of them told you alone?"
+        },
+        {
+            "id": "t1_int_024",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE CONSTRAINT DESIGN",
+            "desc": "Pick one project or area and add an artificial constraint — less time, less budget, no use of your usual tool. Constraints do not limit creative thinking. They focus it. Work within the constraint for 20 minutes and see what different approaches emerge."
+        },
+        {
+            "id": "t1_int_025",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE INFORMATION DIET",
+            "desc": "Look at what you consumed intellectually today — news, social media, podcasts, conversations. What percentage of it was genuinely useful or enriching versus just noise? You have a finite processing budget. What are you spending it on?"
+        },
+        {
+            "id": "t1_int_026",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE GAP FINDER",
+            "desc": "In one domain you work in, write down what you know well, what you know partially, and what you know you do not know. The map of your knowledge gaps is more useful than a map of what you already have."
+        },
+        {
+            "id": "t1_int_027",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE SCENARIO PLANNER",
+            "desc": "For one thing you are working on, write three scenarios: best case, worst case, and most likely case. Then ask: am I prepared for the most likely case, or just the best case? Most plans are optimised for a world that rarely arrives."
+        },
+        {
+            "id": "t1_int_028",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE SILENT MEETING",
+            "desc": "Have a 10-minute conversation with yourself — out loud or on paper — about the biggest unsolved problem in your life right now. Not to solve it. To understand the shape of it more clearly. Most problems are poorly defined, which is why they persist."
+        },
+        {
+            "id": "t1_int_029",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE OUTSIDE VIEW",
+            "desc": "Describe one of your current projects or challenges as if you were a consultant seeing it for the first time — no history, no emotional investment, just the facts as presented. What would the outside view say that your inside view is missing?"
+        },
+        {
+            "id": "t1_int_030",
+            "tier": 1,
+            "stat": "intelligence",
+            "xp": 15,
+            "title": "THE WEEKLY INTELLIGENCE BRIEF",
+            "desc": "Write a one-page brief on the most important things you learned, observed, or understood this week. Not tasks. Intelligence — things you now know that you did not know before. This is the operative's most important debrief ritual."
+        },
+        {
+            "id": "t1_agi_001",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE NEW ENTRY",
+            "desc": "Go somewhere today using a route or method you have never used before. Somewhere you have been a hundred times — different way in. The familiarity loop keeps your perception on standby. Break it once."
+        },
+        {
+            "id": "t1_agi_002",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE PIVOT DRILL",
+            "desc": "When your first plan for something today fails or gets disrupted — and something will — do not fight to restore the original plan. Build Plan B on the spot and run it cleanly. Pivot speed is a trainable skill."
+        },
+        {
+            "id": "t1_agi_003",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE UNFAMILIAR HAND",
+            "desc": "Do one ordinary task today with your non-dominant hand — brushing teeth, eating, writing. This is not a trick. It rewires attention. When your automatic system cannot run, your conscious system wakes up."
+        },
+        {
+            "id": "t1_agi_004",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE BEGINNER'S MIND",
+            "desc": "Pick something you are good at. Spend 15 minutes approaching it as if you were a complete beginner — no shortcuts, no assumptions, starting from the simplest level. Expert blindness is real. The beginner sees what the expert has stopped seeing."
+        },
+        {
+            "id": "t1_agi_005",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE RULE BREAK",
+            "desc": "Identify one rule or convention you follow automatically — in work or in life — that you have never actually questioned. Ask: why does this rule exist? Is the original reason still valid? You do not have to break it. Just see that it is a choice."
+        },
+        {
+            "id": "t1_agi_006",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE CHAOS ABSORBER",
+            "desc": "When something unexpected disrupts your day today, notice your first internal reaction — resistance, frustration, anxiety. Name it. Then ask: what is the best response given the new reality? The gap between reaction and response is the agility muscle."
+        },
+        {
+            "id": "t1_agi_007",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE GENRE JUMP",
+            "desc": "Consume something today from a completely different domain than you normally touch — a genre of music you ignore, a sport you know nothing about, a type of book you have never picked up. Notice what transfers across domains when you are not looking."
+        },
+        {
+            "id": "t1_agi_008",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE SPEED SKETCH",
+            "desc": "Pick a problem or idea you are working on. Set a timer for 5 minutes and generate as many approaches, variations, or angles as you can — do not evaluate any of them. Speed and volume first. Quality comes in the edit. Most people never get to the good ideas because they stop before they run out of obvious ones."
+        },
+        {
+            "id": "t1_agi_009",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE CONTEXT SWITCH",
+            "desc": "Work somewhere different today — a different room, a café, outside, anywhere that is not your usual spot. The environment sends signals. When the environment changes, your thinking changes with it."
+        },
+        {
+            "id": "t1_agi_010",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE ASSUMPTION FLIP",
+            "desc": "Take one major assumption in your work or daily life and flip it entirely — assume the opposite is true. What would you do differently? Sometimes the best solutions live on the other side of the assumption everyone is too polite to challenge."
+        },
+        {
+            "id": "t1_agi_011",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE TALK TO A STRANGER",
+            "desc": "Have a real conversation with someone you have never spoken to before — a neighbour, someone at a shop, anyone. Not a transaction. An actual brief exchange of more than pleasantries. This is not a social skills drill. It is a pattern interruption."
+        },
+        {
+            "id": "t1_agi_012",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE SCHEDULE SCRAMBLE",
+            "desc": "Move three things around in your day deliberately — shift when you eat, when you check messages, when you work. Not to optimise. To notice how much of your energy and attention is running on autopilot rather than conscious allocation."
+        },
+        {
+            "id": "t1_agi_013",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE IMPROV RULE",
+            "desc": "In your next collaborative moment — a meeting, a conversation, a planning session — run the improv rule: yes, and. Accept whatever direction comes and build on it rather than redirecting or correcting. Notice what emerges when you do not control the frame."
+        },
+        {
+            "id": "t1_agi_014",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE DISCOMFORT SCOUT",
+            "desc": "Notice what you avoided today because it felt uncomfortable or unfamiliar. Write it down. You are not going to do it today. Just build the inventory. Avoidance patterns are the clearest map of where your agility ceiling currently sits."
+        },
+        {
+            "id": "t1_agi_015",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE TOOL SWAP",
+            "desc": "Do one regular task today with a different tool — a different app, a different method, analog instead of digital or vice versa. The tool shapes the thinking. Changing it sometimes surfaces better approaches you could not see with the original."
+        },
+        {
+            "id": "t1_agi_016",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE OPINION SUSPENSION",
+            "desc": "For the first 15 minutes of your next meeting or group conversation, hold all of your opinions internally — do not share any of them. Just observe and absorb. What do you learn when you stop contributing and just listen to how the room moves?"
+        },
+        {
+            "id": "t1_agi_017",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE NEW SKILL FIRST STEP",
+            "desc": "Identify one skill you have been meaning to start building — and take the single smallest possible first step today. Not a plan. Not a course. One action. The first step removes the psychological overhead of 'starting.' Everything after is just continuing."
+        },
+        {
+            "id": "t1_agi_018",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE BOREDOM SIT",
+            "desc": "Sit for 10 minutes with no input — no phone, no music, no book. Just sit. When boredom arrives, do not feed it. Your mind will start generating. What it generates when it has nothing else to do is often more interesting than what it produces on demand."
+        },
+        {
+            "id": "t1_agi_019",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE FAST PROTOTYPE",
+            "desc": "Pick one idea you have been sitting on. Build the smallest possible version of it today — a rough outline, a sketch, a first draft, a basic version. Not a real version. A prototype. The purpose is to see what you could not see while the idea was still only in your head."
+        },
+        {
+            "id": "t1_agi_020",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE FEEDBACK SPRINT",
+            "desc": "Share something you are working on with one person today and ask specifically: what is wrong with this? Not general feedback. Specifically: what is the weakest part? People who can receive targeted criticism without defending are agile. Everyone else is fragile."
+        },
+        {
+            "id": "t1_agi_021",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE COMFORT INVENTORY",
+            "desc": "List your five most automatic comfort moves — the things you reach for when stressed, bored, or uncomfortable. Name them without judgment. You are not stopping them today. But seeing them clearly means they are no longer fully automatic."
+        },
+        {
+            "id": "t1_agi_022",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE LATERAL MOVE",
+            "desc": "Think of a goal you are working toward. Now list three completely different paths to the same destination — paths you have not seriously considered because your default approach has been taking up all the space. Choose one to explore even briefly."
+        },
+        {
+            "id": "t1_agi_023",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE DAILY SURPRISE",
+            "desc": "Do one thing today that you did not plan and that has no practical outcome. A detour, an impulse, a spontaneous decision. Not everything that builds you is on the directive list. Sometimes agility is just choosing the unplanned thing."
+        },
+        {
+            "id": "t1_agi_024",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE EXPERTISE EDGE",
+            "desc": "Find someone today who knows something you do not — a skill, an experience, a perspective — and ask them one specific question about how they do it or think about it. Expert insight is transferable. Most people never ask."
+        },
+        {
+            "id": "t1_agi_025",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE SIGNAL IN THE NOISE",
+            "desc": "Review today's news, feeds, or conversations. Find one thing that most people are framing incorrectly or incompletely. Name what the better frame is. Agility is partly the ability to see signal when everyone around you is reacting to noise."
+        },
+        {
+            "id": "t1_agi_026",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE UNFINISHED SENTENCE",
+            "desc": "Complete this sentence: 'The one change I am most resistant to making right now is...' Write the full answer without editing. The resistance itself is the intelligence. Where resistance lives is where the agility work is."
+        },
+        {
+            "id": "t1_agi_027",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE MOMENTUM REDIRECT",
+            "desc": "When you feel stuck today — on a task, a decision, anything — do not push harder at the same point. Move to a different part of the problem and build momentum there. Come back to the stuck point with that energy. Stuck is often just 'approaching from the wrong angle.'"
+        },
+        {
+            "id": "t1_agi_028",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE SMALL BET",
+            "desc": "Make one small, low-stakes attempt at something you have been curious about but have not started because the commitment felt too large. The point is not success. The point is real data from a real attempt, not imagined data from indefinite consideration."
+        },
+        {
+            "id": "t1_agi_029",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE IDENTITY AUDIT",
+            "desc": "Write down three ways you describe yourself to others — your identity labels. Then ask: are these accurate descriptions of who I am, or comfortable scripts I use to manage expectations? Sometimes the label becomes the cage."
+        },
+        {
+            "id": "t1_agi_030",
+            "tier": 1,
+            "stat": "agility",
+            "xp": 15,
+            "title": "THE WEEKLY SHAKE",
+            "desc": "Look at your coming week and find one thing you do every week that you could do differently this time — a different approach, a different order, a different collaborator. Not to be different for its own sake. To test whether your default is still the best option."
+        },
+        {
+            "id": "t1_end_001",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE DEEP WORK BLOCK",
+            "desc": "Protect a 90-minute block today for your most important work. No meetings, no messages, no interruptions scheduled inside it. Book it like a meeting with yourself — because it is. Show up on time. Finish the block."
+        },
+        {
+            "id": "t1_end_002",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE DISTRACTION LOG",
+            "desc": "Track every time you voluntarily interrupt yourself today — switching tasks, opening a new tab, reaching for your phone mid-work. Just count. Do not fight it. At the end of the day, the number is the data. Most people have never seen their real interruption rate."
+        },
+        {
+            "id": "t1_end_003",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE BORING IMPORTANT THING",
+            "desc": "Do one important but boring task today — something meaningful but not exciting. The ability to sustain effort on things that matter but do not feel good is one of the most underrated capacities a person can build."
+        },
+        {
+            "id": "t1_end_004",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE STREAK STARTER",
+            "desc": "Pick one thing you want to do every day for the next 30 days — small enough that there is no excuse to skip. Do it today. The first day creates the streak. The streak creates the identity. The identity makes it non-negotiable."
+        },
+        {
+            "id": "t1_end_005",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE RESISTANCE MAP",
+            "desc": "Write down everything that pulled you away from your most important work today. Not just the big distractions — the small ones too. You are mapping resistance. Resistance has patterns. The patterns are solvable once you can see them."
+        },
+        {
+            "id": "t1_end_006",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE SLOW FINISH",
+            "desc": "Pick one project that is 80% done and finish it today. Not to perfection — to completion. The gap between 80% and done is where most people live permanently. Closing that gap is an endurance skill, not a quality standard."
+        },
+        {
+            "id": "t1_end_007",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE PATIENCE EXERCISE",
+            "desc": "Today, when you feel the urge to rush something — a decision, a reply, a piece of work — deliberately slow down instead. Let it take the time it actually needs. Speed and urgency are not the same thing, and confusing them is expensive."
+        },
+        {
+            "id": "t1_end_008",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE FOLLOW THROUGH",
+            "desc": "Think of one thing you said you would follow up on — to a person, on a task, in a project. Follow up today. Not as a favour to the other person. As a signal to yourself that you are someone who closes the loop."
+        },
+        {
+            "id": "t1_end_009",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE BORING HOUR",
+            "desc": "Pick one hour today with no entertainment input — no music, no podcast, no video. Work or rest, but with no background stimulation. Notice what your mind does with genuine quiet. Notice how long before it starts to feel uncomfortable."
+        },
+        {
+            "id": "t1_end_010",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE LONG HORIZON CHECK",
+            "desc": "Write down where you want to be in three years — not a goal list, just a picture. Then look at what you did today. Does today point toward that picture or away from it? You do not have to change anything. Just see the angle."
+        },
+        {
+            "id": "t1_end_011",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE PROCESS FOCUS",
+            "desc": "Pick one thing you are working on where you have been too focused on the outcome. Shift your attention today entirely to the process — the specific actions, the quality of execution, the craft. Outcomes are downstream of process. Invest upstream."
+        },
+        {
+            "id": "t1_end_012",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE HARD CONVERSATION",
+            "desc": "Is there a conversation you have been putting off because it is difficult — a piece of feedback, a renegotiation, a correction? Have it today, or schedule it for within 48 hours. Avoidance compounds. Every day it waits, the conversation gets heavier."
+        },
+        {
+            "id": "t1_end_013",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE INVESTMENT ACCOUNT",
+            "desc": "Identify one area where you are consuming more than you are creating — taking in information without producing, taking support without giving it, using resources without building them. Make one deposit today."
+        },
+        {
+            "id": "t1_end_014",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE CONSISTENT HOUR",
+            "desc": "Pick one hour of your day that you will protect for the same activity every single day this week — reading, writing, exercise, deep work, anything. Consistency in one slot trains the discipline that transfers everywhere else."
+        },
+        {
+            "id": "t1_end_015",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE RECOVERY PROTOCOL",
+            "desc": "Think about how you currently recover when you are depleted — at the end of a long week, after a hard project, when you are running low. Is your recovery actual recovery, or just a less intense version of the same drains? Design a recovery that actually restores."
+        },
+        {
+            "id": "t1_end_016",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE SUNK COST EXIT",
+            "desc": "Is there something you are continuing because you have already invested time, money, or energy in it — not because it is still the right thing? Name it. The sunk cost fallacy is how good people stay in the wrong rooms."
+        },
+        {
+            "id": "t1_end_017",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE MORNING ANCHOR",
+            "desc": "Design a 10-minute morning anchor — a fixed sequence of 2 or 3 things you do every morning before you engage with the outside world. Not a productivity ritual. An anchor that sets the tone before the day tries to set it for you."
+        },
+        {
+            "id": "t1_end_018",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE MINIMUM VIABLE EFFORT",
+            "desc": "For one important habit you are trying to build — what is the minimum version you could do on your worst day? Not the full version. The floor. Design the floor today. A floor that stays consistent beats a ceiling that gets skipped."
+        },
+        {
+            "id": "t1_end_019",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE LONG GAME LETTER",
+            "desc": "Write a short letter to yourself to be read in one year. Not aspirational — honest. What do you hope you will have kept doing? What do you hope you will have stopped? What do you think future you will wish present you had started?"
+        },
+        {
+            "id": "t1_end_020",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE INVISIBLE WORK",
+            "desc": "Think about the most important work you are doing right now that has no immediate payoff and that nobody sees. Name it. Acknowledge it. The work you do when there is no applause is the work that actually builds the foundation."
+        },
+        {
+            "id": "t1_end_021",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE MIDDAY CHECK",
+            "desc": "At midday today, pause for 5 minutes and ask: is today going in the direction I intended? Not whether it is going perfectly. Just: is the direction still right? A midday check costs 5 minutes. A day that ran in the wrong direction costs more."
+        },
+        {
+            "id": "t1_end_022",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE QUITTING TIME",
+            "desc": "Set a clear time to stop working today and keep it. Not 'around' that time. That exact time. Sustainable output requires defined edges. Without a quitting time, the day expands to fill whatever space you give it and calls that productivity."
+        },
+        {
+            "id": "t1_end_023",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE PRIORITY FILTER",
+            "desc": "Look at your to-do list. If you could only complete three things today, which three would matter most in three weeks? Do those first. The rest is negotiable. Most people optimise for easy and urgent. Endurance is doing the important thing when it is neither."
+        },
+        {
+            "id": "t1_end_024",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE COMPOUND HABIT",
+            "desc": "Identify one small habit that, if maintained for a year, would compound significantly — one page of writing, 10 minutes of reading, one meaningful conversation per day. Compounding only requires showing up. Name the habit. Show up today."
+        },
+        {
+            "id": "t1_end_025",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE ENERGY SPEND REVIEW",
+            "desc": "At the end of today, classify your activities into three buckets: gave me energy, was neutral, drained me. Look at the ratio. You cannot run indefinitely on a draining budget. Where can you shift the ratio by even 10%?"
+        },
+        {
+            "id": "t1_end_026",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE GRIT TASK",
+            "desc": "Do one thing today that you find genuinely tedious but that matters — a admin task, a repetitive process, a slow careful piece of work. Do it with full attention. Tedium handled with care is a form of respect for the work. That is what grit looks like up close."
+        },
+        {
+            "id": "t1_end_027",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE DEPENDENCY AUDIT",
+            "desc": "List three things your daily function depends on that are outside your control — tools, other people, platforms, environments. For each one: what is your contingency if it disappears? Self-sufficient systems endure longer than dependent ones."
+        },
+        {
+            "id": "t1_end_028",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE RENEWAL SOURCE",
+            "desc": "Name the single thing that most reliably renews your motivation when it fades — not your why, not your goals, but the specific thing that plugs you back in. Write it down. Deploy it intentionally when you feel yourself running dry rather than waiting until you have stopped completely."
+        },
+        {
+            "id": "t1_end_029",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE WEEKLY AUDIT",
+            "desc": "Review this past week. Three questions: What did I actually accomplish — done, not in progress? What dragged and why? What single change to next week's structure would make it more productive? One question. One answer. One change."
+        },
+        {
+            "id": "t1_end_030",
+            "tier": 1,
+            "stat": "endurance",
+            "xp": 15,
+            "title": "THE YEAR FROM NOW",
+            "desc": "Think about one thing you are doing today that your future self will thank you for. Not a grand gesture. A quiet, unglamorous, consistently repeated thing. That thing — done without praise, done without urgency — is the endurance work."
+        },
+        {
+            "id": "t1_cha_001",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE FULL PRESENCE",
+            "desc": "In your next conversation, give it your complete attention — phone face down, no mental composing of your reply while they are still speaking. Full presence is rarer than people think, and people feel it when it is genuinely there."
+        },
+        {
+            "id": "t1_cha_002",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE MEMORY PLAY",
+            "desc": "Bring up something specific from a previous conversation with someone today — a detail they mentioned, something they were working on, something they said. Most people do not remember details about others. The ones who do become unforgettable."
+        },
+        {
+            "id": "t1_cha_003",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE ENERGY MIRROR",
+            "desc": "Observe how your energy — your pace, tone, and presence — affects the people around you today. Not how they affect you. How you affect them. You are always broadcasting. This directive is about becoming conscious of the signal."
+        },
+        {
+            "id": "t1_cha_004",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE ACKNOWLEDGEMENT",
+            "desc": "Tell someone today that something they did mattered — specifically. Not a general thank you. A specific: 'When you did X, it meant Y.' Most people never receive specific acknowledgement. The ones who give it become trusted quickly."
+        },
+        {
+            "id": "t1_cha_005",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE ROOM READ",
+            "desc": "Before your next group interaction — a meeting, a gathering, a group chat that gets active — take 60 seconds to read the room before contributing. What is the emotional temperature? Who is leading? What does the room actually need right now?"
+        },
+        {
+            "id": "t1_cha_006",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE BRIDGE BUILDER",
+            "desc": "Introduce two people from different parts of your network who would genuinely benefit from knowing each other. No ulterior motive. Just a clean, well-framed introduction. Good connectors become central nodes. Central nodes become influential."
+        },
+        {
+            "id": "t1_cha_007",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE TONE AUDIT",
+            "desc": "Re-read your last 10 written messages — texts, emails, anything. What tone do they collectively project? Rushed? Warm? Transactional? Engaged? You manage your tone in person instinctively. Writing is where most people forget to."
+        },
+        {
+            "id": "t1_cha_008",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE DIFFICULT PERSON",
+            "desc": "Think about someone you find difficult to engage with. Spend 5 minutes trying to understand their perspective — not to agree with them, but to find the logic or fear or need underneath their behaviour. Understanding difficult people is a high-value skill."
+        },
+        {
+            "id": "t1_cha_009",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE SOFT ASK",
+            "desc": "Ask for something small today that you would normally not ask for — a favour, a piece of information, a small accommodation. The ability to ask cleanly and confidently, without over-explaining or pre-apologising, is a charisma fundamental."
+        },
+        {
+            "id": "t1_cha_010",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE CONFLICT DEBRIEF",
+            "desc": "Think about a recent disagreement or tension with someone. Write down: what did I actually want from that interaction? What did they want? Where were those things actually incompatible, and where were they just differently expressed versions of the same thing?"
+        },
+        {
+            "id": "t1_cha_011",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE GENUINE COMPLIMENT",
+            "desc": "Give three genuine, specific compliments today — not general praise, not flattery. Specific observations about what someone did well or who they are. The specificity is what makes it land. Generic praise costs nothing and is worth nothing."
+        },
+        {
+            "id": "t1_cha_012",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE DISAGREEMENT SCRIPT",
+            "desc": "Practice a clean disagreement today — say 'I see it differently' or 'I think there is another way to read this' and then state your view without hedging it down to nothing. Disagreeing clearly and without aggression is a charisma skill most people never develop."
+        },
+        {
+            "id": "t1_cha_013",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE STORYTELLING TEST",
+            "desc": "Tell a story today — something that happened to you, an observation, an idea — and tell it well. Not longer than 90 seconds. One scene, one conflict, one resolution. The ability to make people lean in is built on structure as much as content."
+        },
+        {
+            "id": "t1_cha_014",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE SILENCE HOLDER",
+            "desc": "In a conversation today, let silence sit for at least 3 seconds after the other person finishes speaking before you respond. Silence is not awkward — it is pressure. Most people rush to fill it. The ones who hold it tend to get more from the conversation."
+        },
+        {
+            "id": "t1_cha_015",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE REPUTATION AUDIT",
+            "desc": "Write down how you think people who know you would describe you to someone who has never met you. Then ask: is that accurate? Is that the description you would choose? The gap between intended and actual reputation is where charisma work lives."
+        },
+        {
+            "id": "t1_cha_016",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE INFLUENCE MAP",
+            "desc": "Draw a rough map of your network — not an org chart, a real influence map. Who do you go to when you need something moved? Who do people come to when they need you? Where are the gaps? Influence is a network property, not a solo skill."
+        },
+        {
+            "id": "t1_cha_017",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE OPENING MOVE",
+            "desc": "The first 30 seconds of your next new interaction will set the frame for everything after. Plan it — not scripted, but intentional. What do you want the other person to feel from the first exchange? Set that intention before you start."
+        },
+        {
+            "id": "t1_cha_018",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE COLD RECONNECT",
+            "desc": "Reach out to one person you have not spoken to in more than six months — not because you need something, but because you thought of them. A brief, genuine message. Relationships do not maintain themselves. The ones who invest without a reason become the most trusted in the network."
+        },
+        {
+            "id": "t1_cha_019",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE LISTENING POST",
+            "desc": "In your next meeting or group conversation, make it your mission to understand every person's position clearly enough that you could explain it back to them. Not to agree. To understand. When someone feels fully understood, they become open to almost anything."
+        },
+        {
+            "id": "t1_cha_020",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE PUBLIC MOMENT",
+            "desc": "Speak up in a group setting today — a meeting, a class, a gathering. Not to dominate it. Just to make one contribution that is clearly yours. People who consistently say nothing in groups are consistently overlooked. One clear contribution changes the pattern."
+        },
+        {
+            "id": "t1_cha_021",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE INTENTION SETTER",
+            "desc": "Before your most important interaction today, set a clear intention: what do I want this person to feel or think by the end of our exchange? Not what you want to say — what you want them to experience. Then design your contribution around that."
+        },
+        {
+            "id": "t1_cha_022",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE FEEDBACK RECEIVER",
+            "desc": "Ask one person today for honest feedback on something you did recently. Then listen without defending, explaining, or minimising. Say thank you and nothing else. The ability to receive feedback cleanly — not perfectly, cleanly — is a trust signal."
+        },
+        {
+            "id": "t1_cha_023",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE COALITION BUILDER",
+            "desc": "Think about something you want to move forward — a project, a change, an idea. Who are the two or three people whose support would make the biggest difference? What does each of them actually care about? Design your ask around what matters to them, not just what you need."
+        },
+        {
+            "id": "t1_cha_024",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE EMPATHY STRETCH",
+            "desc": "Think of one person in your life whose behaviour recently frustrated or confused you. Spend 5 minutes writing out their full context — what they might be dealing with, what they might be afraid of, what pressures they are under. Not to excuse the behaviour. To understand the person."
+        },
+        {
+            "id": "t1_cha_025",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE PRESENCE PRACTICE",
+            "desc": "Pick one ordinary interaction today — a shop, a meal, a passing conversation — and bring your full, unhurried presence to it. Not performance. Actually be there. The gap between someone who is physically present and someone who is actually present is one of the most felt differences in human interaction."
+        },
+        {
+            "id": "t1_cha_026",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE INTEREST LEVER",
+            "desc": "Find something genuinely interesting about the next person you have a real conversation with today. Not a polite observation — something that actually makes you curious about them. Genuine interest is the most reliable social currency there is, and it cannot be faked for long."
+        },
+        {
+            "id": "t1_cha_027",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE DELIVERY CHECK",
+            "desc": "Record yourself speaking for 2 minutes — on any topic, even to yourself. Play it back. Listen for pace, clarity, and energy. Most people have never heard themselves the way others hear them. The recording is always a useful surprise."
+        },
+        {
+            "id": "t1_cha_028",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE REPAIR MOVE",
+            "desc": "Is there a relationship where there is a small unresolved friction — nothing major, just slightly off? Make one small repair move today. An acknowledgement, a check-in, a direct mention of the thing. Small friction left unaddressed becomes large friction over time."
+        },
+        {
+            "id": "t1_cha_029",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE SOCIAL STAMINA",
+            "desc": "After a day with significant social interaction, check in with yourself: do you feel energised, neutral, or drained? This is not about introversion or extroversion. It is about identifying which types of interactions fuel you and which ones cost you — so you can design your social portfolio deliberately."
+        },
+        {
+            "id": "t1_cha_030",
+            "tier": 1,
+            "stat": "charisma",
+            "xp": 15,
+            "title": "THE NETWORK DEBRIEF",
+            "desc": "Think about the five most important relationships in your professional life. For each one: when did you last invest in it without needing anything? Who is overdue? Make one investment this week — a message, a resource shared, a genuine check-in. Networks decay without maintenance."
+        },
+        {
+            "id": "t2_str_001",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE PROTOCOL RUN",
+            "desc": "Design a personal protocol for something you do repeatedly — a morning routine, a work handover, a decision process. Write it down in under 10 steps. Then run it once today exactly as written. The gap between the protocol and what you actually do is the data."
+        },
+        {
+            "id": "t2_str_002",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE KEYSTONE SEARCH",
+            "desc": "Identify one habit or action in your life that, when you do it, makes other good things follow automatically. Your keystone habit. Today: do it deliberately, notice what it unlocks. If you cannot name one yet, that is your directive — find it."
+        },
+        {
+            "id": "t2_str_003",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE ENERGY AUDIT",
+            "desc": "At the end of today, write down three things that gave you energy and three things that drained it. No judgement — just data. The pattern across a week is where the real optimisation is. Today you collect one data point."
+        },
+        {
+            "id": "t2_str_004",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE CONSTRAINT GAME",
+            "desc": "Pick one task you need to do today and give yourself half the time you think it should take. Set a timer. Work only until it goes off. You will either finish — which tells you something about your buffer habits — or you will learn what actually takes the time."
+        },
+        {
+            "id": "t2_str_005",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE ENVIRONMENT DESIGN",
+            "desc": "Change one thing in your physical environment today to make a desired behaviour easier or an undesired one harder. Move the fruit to the front. Put your running shoes by the door. Remove one app from your home screen. Environment design outperforms willpower."
+        },
+        {
+            "id": "t2_str_006",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE IMPLEMENTATION INTENTION",
+            "desc": "Pick one thing you keep meaning to do but keep not doing. Write this sentence: 'When X happens, I will do Y.' Fill it in specifically — not 'when I have time' but 'when I sit down at my desk at 9am.' Research shows this single sentence doubles follow-through rates."
+        },
+        {
+            "id": "t2_str_007",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE COMPLETION LIST",
+            "desc": "Today, only add something to your to-do list if you are prepared to complete it today. Not 'would be nice to.' Not 'could maybe.' Complete or do not list. A shorter list you actually finish beats a long list you navigate around."
+        },
+        {
+            "id": "t2_str_008",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE DEAD TIME ACTIVATION",
+            "desc": "Identify one recurring dead-time slot in your day — the commute, waiting for a meeting, the first ten minutes of lunch. Assign it a specific micro-action before it arrives. When the slot comes, do the action. Dead time is the most underused resource most people have."
+        },
+        {
+            "id": "t2_str_009",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE MINIMUM VIABLE EFFORT",
+            "desc": "Pick something you have been avoiding because it feels like too much. Define the absolute minimum version you could do in under five minutes. Then do only that. The minimum version exists to lower the activation barrier — finishing is optional, starting is not."
+        },
+        {
+            "id": "t2_str_010",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE CAPACITY CHECK",
+            "desc": "Before saying yes to anything new today, ask: what would I have to stop doing or do less of to make room for this? You do not need to say no. You need to know the cost before you commit. Most people skip this step entirely."
+        },
+        {
+            "id": "t2_str_011",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE RECOVERY DIRECTIVE",
+            "desc": "Schedule one deliberate recovery activity today — not passive scrolling, but something that genuinely restores you. A walk. A meal without a screen. Ten minutes outside. Rest is not the absence of work. It is the training that makes the next session possible."
+        },
+        {
+            "id": "t2_str_012",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE FRICTION REMOVAL",
+            "desc": "Identify one thing in your workflow that creates unnecessary friction — a step you always skip, a process that always breaks. Fix it today or build a workaround. Removing one piece of friction compounds over every future iteration."
+        },
+        {
+            "id": "t2_str_013",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE STREAK RESET",
+            "desc": "If you have missed something you were trying to build — a habit, a practice, a commitment — today is day one again. No recovery period. No extended processing. The only move after a break is the next rep. Do it today."
+        },
+        {
+            "id": "t2_str_014",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE OUTPUT FLOOR",
+            "desc": "Define the minimum acceptable output for today — the thing that, if you did only this and nothing else, today would still count as a day of execution. Then do it first. Everything else is bonus. The floor exists for the hard days."
+        },
+        {
+            "id": "t2_str_015",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE PHYSICAL SIGNAL",
+            "desc": "Pick a physical signal that marks the start of focused work — putting on headphones, closing a door, making a specific drink. Use it consistently today every time you shift into execution mode. Signals train the brain. The behaviour follows the ritual."
+        },
+        {
+            "id": "t2_str_016",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE COMPLETION AUDIT",
+            "desc": "Look at the last seven days. How many things did you start versus finish? Not to feel bad — to find the pattern. Most people start about twice as much as they complete. The ratio is the lever. Today: complete one thing you started earlier this week."
+        },
+        {
+            "id": "t2_str_017",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE BODY CLOCK MAP",
+            "desc": "Pay attention today to when your energy naturally peaks and dips — not when you think it should, but when it actually does. Take rough notes. Your hardest work belongs in your peak window. Most people reverse this entirely."
+        },
+        {
+            "id": "t2_str_018",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE COMMITTED BLOCK",
+            "desc": "Block one hour in your calendar today committed to a specific deliverable, not a category. Not 'deep work.' Not 'email.' One named output. Treat it as an external meeting. Do not move it."
+        },
+        {
+            "id": "t2_str_019",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE MANUAL OVERRIDE",
+            "desc": "Find one moment today where your automatic behaviour would kick in — reaching for your phone, avoiding a conversation, defaulting to the safe option. Pause before the automatic move. Choose deliberately. Once is a practice run. The reps compound."
+        },
+        {
+            "id": "t2_str_020",
+            "tier": 2,
+            "stat": "strength",
+            "xp": 20,
+            "title": "THE SYSTEM TEST",
+            "desc": "Pick one system in your life — your task management, your morning routine, your filing — and stress-test it: would it hold up if you were sick, away, or had three times the load? Identify the first point of failure and shore it up today."
+        },
+        {
+            "id": "t2_int_001",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE STEEL MAN",
+            "desc": "Pick a position you disagree with — a political view, a business decision, an opinion. Write the strongest possible argument FOR it. Not the straw man — the steel man. The version where you can see why a smart, good-faith person holds it. This is how you stop being surprised by people who think differently."
+        },
+        {
+            "id": "t2_int_002",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE SECOND ORDER",
+            "desc": "Think of one decision you are facing. What happens after the obvious consequence? What does THAT cause? What does THAT cause? Most decisions feel clear until you go two moves out. Push to at least the second order today and write it down."
+        },
+        {
+            "id": "t2_int_003",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE INVERSION PLAY",
+            "desc": "Take something you want to achieve and invert it: what would guarantee failure? List everything that would make the worst outcome more likely. Now do the opposite of that list. Inversion is often clearer than forward planning because failure modes are easier to see than success paths."
+        },
+        {
+            "id": "t2_int_004",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE BASE RATE CHECK",
+            "desc": "Before making a prediction or decision today, ask: what actually happens in situations like this, typically? Not what happened to you, or what you read once — what is the base rate? Most people ignore base rates and operate on vivid anecdotes. Find one real number today."
+        },
+        {
+            "id": "t2_int_005",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE KNOWLEDGE BOUNDARY",
+            "desc": "Pick one topic you confidently talk about. Write down where your real knowledge ends and where you are actually just repeating things you read. The boundary is not a failure — it is the map. Once you know the edge, you can stop talking past it or go learn what is beyond it."
+        },
+        {
+            "id": "t2_int_006",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE FEEDBACK LOOP",
+            "desc": "Identify one decision you made in the last month. What did you predict? What actually happened? What did you get right, what did you miss? Most people never close the loop on predictions. Today close one. The compounding is in the calibration."
+        },
+        {
+            "id": "t2_int_007",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE CONCEPT TRANSFER",
+            "desc": "Take one idea from a domain you know well — a mental model, a principle, a pattern — and apply it to a completely different domain today. Write the transfer explicitly: 'This works in X because Y. In Z, the equivalent would be...' Forced transfers generate novel thinking."
+        },
+        {
+            "id": "t2_int_008",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE SILENT READING",
+            "desc": "Read something substantive today — an article, a paper, a chapter — with no distractions and no parallel input. No podcast underneath. No tab switching. Full text attention for twenty minutes minimum. Notice the comprehension difference vs your usual reading mode."
+        },
+        {
+            "id": "t2_int_009",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE MAP-TERRITORY CHECK",
+            "desc": "Identify one area where you are operating on a mental model that is simplified or outdated. Today: find one thing that does not fit the model. The anomaly is the upgrade path. Models that cannot be contradicted are not models — they are beliefs."
+        },
+        {
+            "id": "t2_int_010",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE DECISION JOURNAL",
+            "desc": "Write down one significant decision you are facing or have made. Include: what you know, what you do not know, what assumptions you are making, and what would change your mind. Future you reviews this. Most important decisions go completely undocumented."
+        },
+        {
+            "id": "t2_int_011",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE ROOT CAUSE DIG",
+            "desc": "Something is not working. Ask why. Then ask why THAT is happening. Then ask why THAT. Five levels down, you hit the actual cause. The first answer is almost never the real one. Today: five whys on one real problem."
+        },
+        {
+            "id": "t2_int_012",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE EXPERT GAP",
+            "desc": "Find something today that experts in a field believe that is counterintuitive to non-experts — something that looks wrong from the outside. Read about it. The gap between expert and lay understanding is where most useful knowledge lives."
+        },
+        {
+            "id": "t2_int_013",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE QUESTION UPGRADE",
+            "desc": "Today, every time you are about to answer a question, pause and ask if it is the right question first. Most questions accept their framing uncritically. The best thinking starts one step back: 'Is this actually the question we should be asking?'"
+        },
+        {
+            "id": "t2_int_014",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE ABSTRACTION LAYER",
+            "desc": "Take one specific problem you are dealing with. Abstract it up: what general class of problem is this? What would you advise a friend to do if they described this general class? Now apply that advice to your specific situation. Distance produces clarity."
+        },
+        {
+            "id": "t2_int_015",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE CONTRAST STUDY",
+            "desc": "Find two people, organisations, or approaches that produce very different outcomes in the same domain. Study the differences — not the narratives, but the actual structural differences in how they operate. What varies between the best and second-best is usually small and specific."
+        },
+        {
+            "id": "t2_int_016",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE ACTIVE RECALL",
+            "desc": "Pick something you learned recently. Without looking at it, write down everything you remember. Then check. The gaps are the learning targets. Active recall without notes is three times more effective for retention than re-reading. Do it today."
+        },
+        {
+            "id": "t2_int_017",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE CONSTRAINT REFRAME",
+            "desc": "Take one constraint you are working under — time, money, access. Reframe it as a creative parameter: what does this constraint make possible that would not exist without it? Constraints produce focus. Focus produces better outcomes than resources."
+        },
+        {
+            "id": "t2_int_018",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE ANALOGY CHECK",
+            "desc": "Find one analogy you regularly use to explain or think about something. Test where it breaks down. Every analogy fails somewhere. The failure point is usually where bad reasoning enters. Map the break today."
+        },
+        {
+            "id": "t2_int_019",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE UNCERTAINTY BRACKET",
+            "desc": "For one belief you hold with high confidence, ask: what would have to be true for me to be wrong? What evidence would change my mind? Not rhetorically — as a genuine search. High confidence without an update condition is not knowledge. It is a feeling."
+        },
+        {
+            "id": "t2_int_020",
+            "tier": 2,
+            "stat": "intelligence",
+            "xp": 20,
+            "title": "THE SLOW BURN READ",
+            "desc": "Find one long-form piece of writing today that requires sustained attention, not skimming. Read it completely, from start to finish. Take one note. The discipline of finishing something long when everything else is short is itself a form of mental training."
+        },
+        {
+            "id": "t2_agi_001",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE PLAN B",
+            "desc": "For one important thing happening today, build a Plan B before you need it. Not 'I will figure it out' — a specific contingency: if X goes wrong, I will do Y. The value is not in using it. The value is in not panicking when Plan A breaks, because you already know where you are going."
+        },
+        {
+            "id": "t2_agi_002",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE SIGNAL READ",
+            "desc": "Something around you is changing — in your work, your industry, your relationships. Today: name one thing that is shifting that you have been watching but not acting on. You do not need to act today. You need to be honest with yourself that the signal is real."
+        },
+        {
+            "id": "t2_agi_003",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE OPTION CREATION",
+            "desc": "You are probably operating with fewer options than actually exist in one area of your life. Pick that area and force yourself to generate five genuinely different options — not variations on the same path. At least one should feel slightly uncomfortable to consider."
+        },
+        {
+            "id": "t2_agi_004",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE REVERSIBLE DECISION",
+            "desc": "Identify one decision you have been putting off because it feels permanent. Ask: is this actually reversible? Most decisions are. If it is reversible, the right move is to make it faster — the cost of delay exceeds the cost of a recoverable mistake. Make the call today."
+        },
+        {
+            "id": "t2_agi_005",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE PATTERN INTERRUPT",
+            "desc": "Pick one thing you do automatically — a routine response, a habitual reaction, a default path — and today, do it differently. Not to improve it. To prove you can. Automatic behaviour is only invisible until you choose to see it."
+        },
+        {
+            "id": "t2_agi_006",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE PIVOT DEBRIEF",
+            "desc": "Think of the last time something forced you to change direction — a plan that fell apart, a shift in context. Write three sentences: what did you do? Did it work? What would you do differently now? Pivots that are not debriefed do not compound."
+        },
+        {
+            "id": "t2_agi_007",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE ADJACENT POSSIBLE",
+            "desc": "Pick one skill or capability you have. What is directly adjacent to it — something natural to develop given what you already know? Spend twenty minutes exploring that adjacent space. New capabilities almost always grow from existing edges."
+        },
+        {
+            "id": "t2_agi_008",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE DISCOMFORT LOG",
+            "desc": "Pay attention today to moments when you feel the pull to avoid something — a conversation, a task, a situation. Write them down as they happen. At the end of the day, look at the list. The pattern is your map of where the growth is."
+        },
+        {
+            "id": "t2_agi_009",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE ROLE REVERSAL",
+            "desc": "Pick one ongoing tension with someone. For five minutes today, genuinely try to see the situation from their position: their constraints, their pressures, their information. Not to agree. To understand what is driving them."
+        },
+        {
+            "id": "t2_agi_010",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE SPEED TEST",
+            "desc": "Something in your work or life is slower than it needs to be — a process, a decision, a communication loop. Today: identify it and cut at least one unnecessary step. Most slowness is accumulated sediment. Today remove one layer."
+        },
+        {
+            "id": "t2_agi_011",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE SMALL BET",
+            "desc": "Make one small, fast, low-cost experiment today on something you are uncertain about — a new approach, an untested assumption, a different format. The point is not to succeed. The point is to gather data faster than deliberation would produce it."
+        },
+        {
+            "id": "t2_agi_012",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE OUTSIDE LENS",
+            "desc": "Describe one current challenge as if you were seeing it for the first time. No context, no history, no attachment to how it has always been framed. What would a smart outsider who knew nothing about the backstory immediately ask or notice?"
+        },
+        {
+            "id": "t2_agi_013",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE THRESHOLD FINDER",
+            "desc": "Pick one area where you are waiting for something before you move — more certainty, more information, more resources. Ask: what is the actual threshold? Name it specifically. Most people wait without defining what would be enough to act. Name your threshold today."
+        },
+        {
+            "id": "t2_agi_014",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE TRANSFER DRILL",
+            "desc": "What is one skill you have built in one domain that you have never deliberately applied in another? Today: apply it. A framework from one context almost always has a parallel in another. The transfer is not automatic — you have to force it."
+        },
+        {
+            "id": "t2_agi_015",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE SUNK COST AUDIT",
+            "desc": "Identify one thing you are continuing because you have already invested in it — not because it is still the right path. The cost you already paid is gone either way. Given where you are now, is this still the best next move? Answer honestly today."
+        },
+        {
+            "id": "t2_agi_016",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE COMFORT ZONE CARTOGRAPHY",
+            "desc": "Map it honestly: what is inside your comfort zone, what is at the edge, and what is outside it entirely? Today, do one thing at the edge. Not outside it — the edge. Edge work is where the zone expands. Outside work is just stress without the learning."
+        },
+        {
+            "id": "t2_agi_017",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE FAST FAIL",
+            "desc": "Find one thing you have been doing that is not working — a method, an approach, a pitch. Stop it today. Not after more evidence. Not after one more try. Today. The ability to recognise and stop a failing approach is rarer than it sounds."
+        },
+        {
+            "id": "t2_agi_018",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE RECOMBINATION",
+            "desc": "Take two things you are working on that seem unrelated. Spend ten minutes looking for a way they could reinforce each other — a shared structure, a shared audience, a shared problem. Novel combinations produce outputs that sequential thinking does not."
+        },
+        {
+            "id": "t2_agi_019",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE CONTEXT SWITCH",
+            "desc": "Change your working environment once today — a different location, a different time, a different physical setup. Even a small shift in context changes what feels possible. The same problem looks different from a different chair. Use that."
+        },
+        {
+            "id": "t2_agi_020",
+            "tier": 2,
+            "stat": "agility",
+            "xp": 20,
+            "title": "THE ASSUMPTION FLIP",
+            "desc": "Take the most central assumption behind one decision you are making. Flip it: assume the opposite is true. What would you do differently? You do not need to believe the flip. You need to see what it reveals about your original reasoning."
+        },
+        {
+            "id": "t2_end_001",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE LONG GAME AUDIT",
+            "desc": "What are you doing consistently, over a long time horizon, that is not producing visible results yet? Write it down. Then write when you would expect to see results, based on honest projection. Most people abandon things three-quarters of the way to compounding. Know where you are on the curve."
+        },
+        {
+            "id": "t2_end_002",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE MOTIVATION BYPASS",
+            "desc": "Do one thing today that you need to do but do not feel like doing — without waiting to feel motivated first. The system does not care how you feel about showing up. Consistent action without consistent motivation is the exact skill this stat is training."
+        },
+        {
+            "id": "t2_end_003",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE THROUGH LINE",
+            "desc": "Identify the one commitment that, if you honoured it consistently for a year, would change more things than any other. Name it specifically. Most people know what it is. The problem is not identification — it is sustained execution. Write it down and do one rep today."
+        },
+        {
+            "id": "t2_end_004",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE PROCESS ATTACHMENT",
+            "desc": "Pick one outcome you want and detach from it today. Focus only on the process — the specific actions — and whether you performed them. Outcome attachment causes inconsistency because results are unreliable feedback. Process performance is the thing you can actually control."
+        },
+        {
+            "id": "t2_end_005",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE BORING REP",
+            "desc": "Do one thing today that is important but completely unglamorous — the administrative task, the maintenance check, the repeated practice that nobody sees. Boring work done consistently beats exciting work done sporadically. Do the boring rep."
+        },
+        {
+            "id": "t2_end_006",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE RESILIENCE LOG",
+            "desc": "Write down one thing that was harder than expected in the last week — not a failure, just something that cost more than anticipated. What got you through it? What did you rely on? Understanding your personal resilience patterns is how you maintain them."
+        },
+        {
+            "id": "t2_end_007",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE NO QUIT CONDITION",
+            "desc": "For one commitment you are struggling to keep, define the conditions under which it would be reasonable to stop — specifically. Most people quit without conditions because they have not defined what stopping would actually mean. Once you have the condition, you will know whether today qualifies. It probably does not."
+        },
+        {
+            "id": "t2_end_008",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE PACE CALIBRATION",
+            "desc": "Something in your life is running at a pace you cannot sustain. Not because you are weak — because the pace is wrong. Today: identify it and adjust the pace to something you can hold for three months, not three weeks. Sustainable slow beats unsustainable fast every time."
+        },
+        {
+            "id": "t2_end_009",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE COMPOUNDING VISUALISER",
+            "desc": "Pick one daily practice you do and project it forward twelve months: what does consistent execution produce? Write the actual number or outcome. Make the compounding visible. People abandon habits they cannot see paying off. Today, see one paying off on paper."
+        },
+        {
+            "id": "t2_end_010",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE RESISTANCE STUDY",
+            "desc": "Pay attention today to the internal resistance that appears when you try to do something you know you should do. Where in the sequence does it show up? What form does it take — avoidance, distraction, sudden urgency? Understanding the pattern is the first step to not being run by it."
+        },
+        {
+            "id": "t2_end_011",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE DELAYED GRATIFICATION HOLD",
+            "desc": "Identify one thing you want to do immediately — check a result, buy something, respond to a message — and deliberately wait. Set a specific time to do it later. The ability to delay gratification is not a personality trait. It is a trainable skill. Today train it once."
+        },
+        {
+            "id": "t2_end_012",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE CONSISTENCY OVER INTENSITY",
+            "desc": "Find one area where you have been trying to make up for inconsistency with periodic bursts of intensity. Replace the next burst with a smaller, consistent action instead. One hour every day beats eight hours on a weekend for almost everything that compounds."
+        },
+        {
+            "id": "t2_end_013",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE COST OF STOPPING",
+            "desc": "For one ongoing commitment, calculate the real cost of stopping — not emotionally, but practically. What would you lose? What would you have to rebuild? Make the cost of stopping concrete and specific. Vague costs get ignored. Specific costs get respected."
+        },
+        {
+            "id": "t2_end_014",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE QUIET WIN",
+            "desc": "Today, complete something significant that no one will notice. Do not mention it. Do not post it. Just do it and sit with the completion privately. The ability to execute without external validation is one of the most operationally useful capacities you can build."
+        },
+        {
+            "id": "t2_end_015",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE IDENTITY LOCK",
+            "desc": "Choose one thing you want to be consistent about and frame it as identity rather than behaviour. Not 'I am trying to exercise' but 'I am someone who exercises.' Write the identity statement. Identity-based habits have higher persistence rates than goal-based ones. Write yours today."
+        },
+        {
+            "id": "t2_end_016",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE HARD MIDDLE",
+            "desc": "Every significant project has a hard middle — the point where the initial excitement is gone and the end is not yet visible. Identify which of your current projects is in the hard middle. That is the one that needs your attention today, not your most interesting one."
+        },
+        {
+            "id": "t2_end_017",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE ATTENTION HOLD",
+            "desc": "Do one task today with complete attention for a fixed block — 25 to 45 minutes, no exceptions. When distractions pull, return without judgment. The skill is the return, not the perfect focus. Every return is a rep. Count your returns, not your interruptions."
+        },
+        {
+            "id": "t2_end_018",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE RENEWAL CYCLE",
+            "desc": "High sustained output requires scheduled renewal. Identify one renewal activity that you have been skipping — sleep, a particular kind of rest, a relationship, a creative outlet. Schedule it this week as a non-negotiable. Renewal is operational, not indulgent."
+        },
+        {
+            "id": "t2_end_019",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE COMMITMENT AUDIT",
+            "desc": "List everything you are currently committed to — formally or informally. Look at the list honestly. Which commitments are you keeping? Which are you letting slide? Which have you made without intent to follow through? Today: cancel one commitment you are not keeping, or start keeping it."
+        },
+        {
+            "id": "t2_end_020",
+            "tier": 2,
+            "stat": "endurance",
+            "xp": 20,
+            "title": "THE FINISH LINE",
+            "desc": "Pick one thing that is 80% done and finish it today. Not start something new. Not plan the next thing. Finish the thing that is almost done. Incompletion drains attention and energy in ways that are invisible until you experience the relief of finishing something that has been open."
+        },
+        {
+            "id": "t2_cha_001",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE LISTENING GEAR",
+            "desc": "In your next conversation today, shift into a different listening mode: listen not for what to say next, but for what the person is actually trying to tell you underneath what they are saying. Most people listen at one layer. Today listen at two."
+        },
+        {
+            "id": "t2_cha_002",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE TRUST AUDIT",
+            "desc": "Think of three people in your professional life. For each one, answer: do they trust me? How do I know? What specifically have I done or not done that shaped that? Trust is not a feeling — it is a track record. Today map yours with three specific people."
+        },
+        {
+            "id": "t2_cha_003",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE CONFLICT REFRAME",
+            "desc": "Think of one ongoing tension with someone. Instead of framing it as 'they are wrong' or 'I am right,' reframe it as: we have different information, different pressures, or different definitions of success. What information do THEY have that you do not? Find one thing today."
+        },
+        {
+            "id": "t2_cha_004",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE STATUS READ",
+            "desc": "In your next group interaction today, pay attention to status dynamics — who defers to whom, who gets interrupted, who gets listened to, who does not. Do not judge the dynamics. Just see them clearly. The ability to read a room starts with seeing what is actually happening in it."
+        },
+        {
+            "id": "t2_cha_005",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE INFLUENCE MAP",
+            "desc": "Draw an informal map of influence in one context you operate in — work, community, social circle. Who actually shapes decisions? Who is the formal authority and who is the informal one? These are often different people. Knowing the difference is the first step to working the map."
+        },
+        {
+            "id": "t2_cha_006",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE FRAME CONTROL",
+            "desc": "Pay attention today to who is setting the frame in conversations — defining the problem, naming what is at stake, deciding what is being discussed. Then practice setting the frame once: ask a question or make a statement that redirects the conversation to the more useful framing."
+        },
+        {
+            "id": "t2_cha_007",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE REPAIR MOVE",
+            "desc": "Is there a relationship with some unresolved friction — something said, something not said, something that landed wrong? Today: make a small repair. Not a full debrief. A specific acknowledgement. 'I have been meaning to say — what I said in that meeting was not how I wanted it to land.' Small repairs compound."
+        },
+        {
+            "id": "t2_cha_008",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE ALLIANCE BUILD",
+            "desc": "Identify one person in your world who shares at least one significant goal or interest with you — someone you have not explicitly collaborated with yet. Today: make one move that acknowledges the shared interest. An email, a message, a conversation. Alliances require initiation."
+        },
+        {
+            "id": "t2_cha_009",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE TRANSLATION",
+            "desc": "Today, explain something you understand well to someone who does not — and calibrate your explanation to their context, not yours. Good translation requires knowing both the source material and the audience. The gap between them is where communication either works or does not."
+        },
+        {
+            "id": "t2_cha_010",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE CREDIT TRANSFER",
+            "desc": "Identify something that went well recently that involved other people. Give one of those people specific, named credit for their contribution — to them directly, or in front of others. Not vague praise. Named, specific acknowledgement of what they actually did. That is a different currency entirely."
+        },
+        {
+            "id": "t2_cha_011",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE NARRATIVE STUDY",
+            "desc": "Pay attention today to how someone explains a decision they made — especially a difficult one. What story are they telling about it? Every explanation is a narrative choice. What does this person's narrative reveal about what they value and what they are protecting?"
+        },
+        {
+            "id": "t2_cha_012",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE QUESTION DESIGN",
+            "desc": "Before an important conversation today, prepare three questions — not information-gathering questions, but questions that shift thinking. Questions that make the other person see something they were not seeing before. The quality of your questions determines the quality of the conversation."
+        },
+        {
+            "id": "t2_cha_013",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE SILENT READ",
+            "desc": "In a conversation today, spend one minute saying nothing and observing everything — posture, eye contact, tone, pacing, what the person does with their hands. Most social information is not in the words. Practice reading the channel that carries more data."
+        },
+        {
+            "id": "t2_cha_014",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE DISAGREEMENT PROTOCOL",
+            "desc": "Disagree with someone today — but do it in a way that strengthens the relationship rather than straining it. The protocol: acknowledge what is right in their position first, then introduce your divergence specifically. Disagreement without this sequence reads as attack. With it, it reads as engagement."
+        },
+        {
+            "id": "t2_cha_015",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE TONE CALIBRATION",
+            "desc": "Pay attention today to when your tone and your message are misaligned — when you say something neutral but sound frustrated, or when you say something positive but sound unconvinced. The tone is the real message. Find one moment of misalignment and adjust it in real time."
+        },
+        {
+            "id": "t2_cha_016",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE RECIPROCITY STUDY",
+            "desc": "Observe reciprocity dynamics today — how favours, information, and help flow between people around you. Who gives freely and who keeps a mental tab? Which mode do you default to? The most effective operators tend to give slightly more than they take and track less than everyone else."
+        },
+        {
+            "id": "t2_cha_017",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE PRESENCE RESET",
+            "desc": "In your next face-to-face interaction, arrive fully — not still processing the last meeting, not planning the next one. This moment, this person, this conversation. Full presence for ten minutes is rarer and more valuable than distracted presence for an hour."
+        },
+        {
+            "id": "t2_cha_018",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE POWER QUESTION",
+            "desc": "Ask one person today: 'What is the thing you are most trying to figure out right now?' Not 'how are you' — that question. Then listen without offering a solution. The quality of the question determines what people share. Most people have never been asked this."
+        },
+        {
+            "id": "t2_cha_019",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE ROOM CALIBRATION",
+            "desc": "Before your next group situation today — a meeting, a gathering, any group — spend two minutes observing before engaging. Who is in what state? What is the energy? What does the room need? Entering a room is also reading a system. Today read before you contribute."
+        },
+        {
+            "id": "t2_cha_020",
+            "tier": 2,
+            "stat": "charisma",
+            "xp": 20,
+            "title": "THE LONG RELATIONSHIP",
+            "desc": "Think of the most valuable professional relationship you have — not the most prominent one, but the most genuinely useful. What have you invested in it recently? Today: invest something specific. A message, a referral, a resource, a question. Long relationships require maintenance or they become history."
+        },
+        {
+            "id": "t3_str_001",
+            "tier": 3,
+            "stat": "strength",
+            "xp": 30,
+            "title": "THE OPERATING PRINCIPLES",
+            "desc": "Write your personal operating principles — the non-negotiable rules you live and work by. Not aspirations. Not values statements. Rules: things you actually do and do not do, consistently, regardless of the situation. Five principles maximum. Each one should be testable: you should be able to point to a time when it cost you something to follow it."
+        },
+        {
+            "id": "t3_str_002",
+            "tier": 3,
+            "stat": "strength",
+            "xp": 30,
+            "title": "THE LEGACY WORK",
+            "desc": "Identify one project or commitment that would matter beyond this week, this quarter, or this year — something that would still be meaningful in five years. Spend time on it today. Not planning. Doing. The distinction between legacy work and urgent work is the distinction between building something and maintaining something."
+        },
+        {
+            "id": "t3_str_003",
+            "tier": 3,
+            "stat": "strength",
+            "xp": 30,
+            "title": "THE MENTOR MOVE",
+            "desc": "Teach something to someone today — not explaining, but actually transferring a capability. Find one person who is where you were two years ago. Share one specific thing that would have shortened their path. Mastery is not complete until it can be transferred."
+        },
+        {
+            "id": "t3_str_004",
+            "tier": 3,
+            "stat": "strength",
+            "xp": 30,
+            "title": "THE EXTREME OWNERSHIP",
+            "desc": "Identify one thing in your professional or personal life that is not where it should be. Own it completely — no qualifications, no context, no blame of circumstance. Write: 'I am responsible for this because...' The ownership is not self-punishment. It is the thing that puts you in control of the fix."
+        },
+        {
+            "id": "t3_str_005",
+            "tier": 3,
+            "stat": "strength",
+            "xp": 30,
+            "title": "THE SYSTEM ARCHITECT",
+            "desc": "Take one recurring problem in your life and design a system that prevents it — not a reminder or a good intention, but a structural solution that makes the problem impossible or automatic. Good systems make right behaviour the path of least resistance. Design one today."
+        },
+        {
+            "id": "t3_str_006",
+            "tier": 3,
+            "stat": "strength",
+            "xp": 30,
+            "title": "THE CAPACITY EXPANSION",
+            "desc": "Push slightly beyond your current limit in one area today — physical, cognitive, or emotional. Not to injury, not to breaking, but to the edge of your current comfortable range. Capacity expands at the edge. Today find where the edge is and stand at it."
+        },
+        {
+            "id": "t3_str_007",
+            "tier": 3,
+            "stat": "strength",
+            "xp": 30,
+            "title": "THE PERFORMANCE DEBRIEF",
+            "desc": "Review your performance over the last month in one specific domain. Be a rigorous analyst, not a judge. What went well? What was the mechanism? What went poorly? What was the mechanism? Separate the performance from the explanation. What do the patterns suggest you should do next?"
+        },
+        {
+            "id": "t3_str_008",
+            "tier": 3,
+            "stat": "strength",
+            "xp": 30,
+            "title": "THE HARD CONVERSATION",
+            "desc": "There is a conversation you have been avoiding. You know exactly what it is. Today you have it. Not an email — a conversation. Real-time, direct, specific. Hard conversations held well build more trust than comfortable conversations held consistently."
+        },
+        {
+            "id": "t3_str_009",
+            "tier": 3,
+            "stat": "strength",
+            "xp": 30,
+            "title": "THE STANDARDS RAISE",
+            "desc": "Identify the standard you are currently holding in one important area of your work or life. Now define what the next standard looks like — not incremental, but genuinely higher. What would you have to change to operate at that standard? Today: change one thing."
+        },
+        {
+            "id": "t3_str_010",
+            "tier": 3,
+            "stat": "strength",
+            "xp": 30,
+            "title": "THE UNCOMMITTED HOURS",
+            "desc": "Block two hours today with no agenda and no deliverable. Not rest — uncommitted thinking time. No meetings, no tasks, no inputs. Just your thoughts and whatever they produce. Most high-performers have no unstructured time and wonder why they feel stuck on the big questions."
+        },
+        {
+            "id": "t3_str_011",
+            "tier": 3,
+            "stat": "strength",
+            "xp": 30,
+            "title": "THE ACCOUNTABILITY STRUCTURE",
+            "desc": "You are probably operating without external accountability for your most important commitments. Today: create one external accountability structure — tell someone specifically what you will do by a specific date, and ask them to check. The visibility changes the follow-through rate."
+        },
+        {
+            "id": "t3_str_012",
+            "tier": 3,
+            "stat": "strength",
+            "xp": 30,
+            "title": "THE INTEGRITY AUDIT",
+            "desc": "Are there any gaps between what you say you value and what your actions actually demonstrate? Find one gap. Not to feel bad about it — to close it. Integrity is alignment between stated values and actual behaviour. The audit is not punishment. It is maintenance."
+        },
+        {
+            "id": "t3_int_001",
+            "tier": 3,
+            "stat": "intelligence",
+            "xp": 30,
+            "title": "THE ORIGINAL INSIGHT",
+            "desc": "Spend one hour today working on something you do not fully understand yet — not learning from a source, but thinking from first principles. What do you actually believe, independent of what you have read? What conclusions does your own reasoning lead you to? Generate one original insight today."
+        },
+        {
+            "id": "t3_int_002",
+            "tier": 3,
+            "stat": "intelligence",
+            "xp": 30,
+            "title": "THE SYSTEMS MAP",
+            "desc": "Pick one complex system you operate in — an organisation, an industry, a market, a community. Map it: the key players, the incentives, the feedback loops, the pressure points, where decisions actually get made. Most people operate in systems they have never mapped. Map one today."
+        },
+        {
+            "id": "t3_int_003",
+            "tier": 3,
+            "stat": "intelligence",
+            "xp": 30,
+            "title": "THE EDGE CASE HUNT",
+            "desc": "Find three edge cases that break your current best model of something — situations where your framework does not predict the outcome correctly. Do not fix the model. Just collect the edge cases. The model that cannot be broken has not been tested. Find the breaks."
+        },
+        {
+            "id": "t3_int_004",
+            "tier": 3,
+            "stat": "intelligence",
+            "xp": 30,
+            "title": "THE SYNTHESIS ATTEMPT",
+            "desc": "Take three things you understand independently — models, frameworks, bodies of knowledge — and write one page synthesising them into a unified view. The synthesis may be wrong. The attempt is the point. Integration across domains is where the most durable thinking gets built."
+        },
+        {
+            "id": "t3_int_005",
+            "tier": 3,
+            "stat": "intelligence",
+            "xp": 30,
+            "title": "THE EXPERT INTERVIEW",
+            "desc": "Today: talk to someone who is significantly further along than you in a domain you care about. Not to impress them — to get one specific insight you could not have gotten from reading. Ask them: 'What do most people get wrong about this?' Then listen without defending."
+        },
+        {
+            "id": "t3_int_006",
+            "tier": 3,
+            "stat": "intelligence",
+            "xp": 30,
+            "title": "THE CALIBRATION SESSION",
+            "desc": "Review five predictions or beliefs you held a year ago. How many were right? How confident were you then? What does the pattern of your calibration errors tell you? Consistent overconfidence in one domain is a systematic bias. Find yours today."
+        },
+        {
+            "id": "t3_int_007",
+            "tier": 3,
+            "stat": "intelligence",
+            "xp": 30,
+            "title": "THE PROBLEM FORMULATION",
+            "desc": "Identify one problem you are working on and spend time only on its formulation — not the solution. Write multiple versions of the problem statement, each one capturing a different aspect of what is actually broken. The best solution often becomes obvious once the problem is correctly framed."
+        },
+        {
+            "id": "t3_int_008",
+            "tier": 3,
+            "stat": "intelligence",
+            "xp": 30,
+            "title": "THE KNOWLEDGE NETWORK",
+            "desc": "Map your personal knowledge network: what do you know deeply, what do you know enough to use, and what do you know only as a label? Draw it roughly. Where are the connections between domains? Where are the isolated nodes? The architecture of your knowledge determines what kinds of thinking are available to you."
+        },
+        {
+            "id": "t3_int_009",
+            "tier": 3,
+            "stat": "intelligence",
+            "xp": 30,
+            "title": "THE PARADIGM EXAMINATION",
+            "desc": "Identify one dominant paradigm in your field — a way of thinking that almost everyone accepts without question. Write a serious case against it. Not contrarianism — a rigorous examination of its limits. Every paradigm has limits. Find the limit of one today."
+        },
+        {
+            "id": "t3_int_010",
+            "tier": 3,
+            "stat": "intelligence",
+            "xp": 30,
+            "title": "THE CROSS-DOMAIN IMPORT",
+            "desc": "Pick one concept from a completely foreign field — biology, physics, game theory, military strategy, linguistics — that might have useful application in your domain. Work out the mapping in detail: what does concept X become when translated into my domain? Where does the translation hold and where does it break?"
+        },
+        {
+            "id": "t3_int_011",
+            "tier": 3,
+            "stat": "intelligence",
+            "xp": 30,
+            "title": "THE WRITING CLARIFIER",
+            "desc": "Write one page on a topic you think you understand well. The act of writing will reveal the places where your understanding is actually vague or circular. The gaps and the repeated approximations are the learning targets. Writing is thinking. Do it today."
+        },
+        {
+            "id": "t3_int_012",
+            "tier": 3,
+            "stat": "intelligence",
+            "xp": 30,
+            "title": "THE LONG THREAD",
+            "desc": "Pick one question — not a task, a genuine question — that you have been thinking about for more than six months. Spend one hour on it today. Uninterrupted. No research, no input — just your thinking, building on itself. What have you figured out? What do you still not understand?"
+        },
+        {
+            "id": "t3_agi_001",
+            "tier": 3,
+            "stat": "agility",
+            "xp": 30,
+            "title": "THE TRANSFORMATION AUDIT",
+            "desc": "Look at the last three years. What has genuinely changed in how you think, work, or operate — not just improved, but actually different? Where did the change come from? What enabled it? Understanding your own transformation pattern tells you how to design the next one."
+        },
+        {
+            "id": "t3_agi_002",
+            "tier": 3,
+            "stat": "agility",
+            "xp": 30,
+            "title": "THE CREATIVE DESTRUCTION",
+            "desc": "Identify one thing you are doing well that may be limiting your next level — a strength that has become a crutch, an approach that worked then but may not work now, a capability that fills space a better capability should occupy. Name it. The willingness to disrupt your own success is the edge that separates good practitioners from great ones."
+        },
+        {
+            "id": "t3_agi_003",
+            "tier": 3,
+            "stat": "agility",
+            "xp": 30,
+            "title": "THE SCENARIO TREE",
+            "desc": "For one significant uncertainty in your life or work, build a scenario tree: what are the two or three most plausible futures? What would be different about each? What would you do differently in each case? You cannot predict which branch you will land on. You can decide what you will do in each of them."
+        },
+        {
+            "id": "t3_agi_004",
+            "tier": 3,
+            "stat": "agility",
+            "xp": 30,
+            "title": "THE OPTIONALITY BUILDER",
+            "desc": "Most people optimise for one path. Today: make one move that preserves or creates a future option you do not currently have. Not to use it — to have it. Optionality is what makes pivots possible. You cannot pivot to a path you never built access to."
+        },
+        {
+            "id": "t3_agi_005",
+            "tier": 3,
+            "stat": "agility",
+            "xp": 30,
+            "title": "THE IDENTITY EXAMINATION",
+            "desc": "Which parts of your professional identity are load-bearing — so central that changing them would change everything? Which parts are costume — adopted for context but not actually who you are? The distinction matters because load-bearing identity resists adaptation. Know which is which."
+        },
+        {
+            "id": "t3_agi_006",
+            "tier": 3,
+            "stat": "agility",
+            "xp": 30,
+            "title": "THE UPSTREAM INTERVENTION",
+            "desc": "Think of one problem you keep solving repeatedly. Now trace it upstream: what is producing the problem? What would have to change to stop the problem from appearing rather than just solving it each time it appears? Upstream thinking is how you stop fighting fires and start preventing them."
+        },
+        {
+            "id": "t3_agi_007",
+            "tier": 3,
+            "stat": "agility",
+            "xp": 30,
+            "title": "THE DELIBERATE BEGINNER",
+            "desc": "Do something today where you are genuinely a beginner — a skill you have not tried, a domain you know nothing about, a context where you have no reputation. Notice what it feels like to not know. Experienced people often forget the beginner feeling and stop accessing beginner thinking."
+        },
+        {
+            "id": "t3_agi_008",
+            "tier": 3,
+            "stat": "agility",
+            "xp": 30,
+            "title": "THE WEAK SIGNAL SCAN",
+            "desc": "Spend thirty minutes today deliberately looking for early signals of change in your domain — things that are not mainstream yet but might be. Not trend reports. Primary sources. What are the people at the edge of your field paying attention to? What does not fit the current story?"
+        },
+        {
+            "id": "t3_agi_009",
+            "tier": 3,
+            "stat": "agility",
+            "xp": 30,
+            "title": "THE LEVERAGE POINT",
+            "desc": "In any system, some changes produce large effects and others produce small ones. Identify one leverage point in a system you operate in — the place where a small intervention would produce a disproportionately large result. Then consider what it would take to intervene there."
+        },
+        {
+            "id": "t3_agi_010",
+            "tier": 3,
+            "stat": "agility",
+            "xp": 30,
+            "title": "THE REINVENTION HYPOTHESIS",
+            "desc": "If you had to rebuild your professional approach from scratch — same skills, same knowledge, but no existing commitments or sunk costs — what would you do differently? Write it. The gap between that answer and your current approach is a map of where inertia is operating."
+        },
+        {
+            "id": "t3_agi_011",
+            "tier": 3,
+            "stat": "agility",
+            "xp": 30,
+            "title": "THE AMBIGUITY TOLERANCE",
+            "desc": "Identify one situation you are currently in where the outcome is genuinely uncertain — where no amount of analysis will produce certainty before you have to act. Practice sitting in that uncertainty today without resolving it artificially. High tolerance for ambiguity is a rare operational advantage."
+        },
+        {
+            "id": "t3_agi_012",
+            "tier": 3,
+            "stat": "agility",
+            "xp": 30,
+            "title": "THE SECOND ACT DRAFT",
+            "desc": "Write a rough plan for a second act — something you would pursue if your current path ended tomorrow. Not because it will. Because knowing what you would do next gives you the security to commit more fully to what you are doing now. People with good second acts are harder to pressure."
+        },
+        {
+            "id": "t3_end_001",
+            "tier": 3,
+            "stat": "endurance",
+            "xp": 30,
+            "title": "THE DECADE VIEW",
+            "desc": "What do you want to have built in ten years — not achieved in a moment, but built over time? Write the actual picture: what does your work look like, what is your capacity, what have you compounded? Now work backwards: what would you have to do consistently, starting today, to be on that trajectory? Do one of those things today."
+        },
+        {
+            "id": "t3_end_002",
+            "tier": 3,
+            "stat": "endurance",
+            "xp": 30,
+            "title": "THE DEEP PRACTICE SESSION",
+            "desc": "Find one skill that is central to your work and do a deliberate practice session today — not just doing it, but deliberately working on the weakest part of it. Find the edge of your current ability and push against it for at least thirty minutes. This is different from regular work. It is uncomfortable on purpose."
+        },
+        {
+            "id": "t3_end_003",
+            "tier": 3,
+            "stat": "endurance",
+            "xp": 30,
+            "title": "THE COMMITMENT ARCHITECTURE",
+            "desc": "Design a commitment structure for something important — not just the goal, but the specific schedule, the accountability mechanism, the recovery protocol for missed sessions, and the review cadence. Most commitments fail not because of weak willpower but because they have no architecture. Build the architecture today."
+        },
+        {
+            "id": "t3_end_004",
+            "tier": 3,
+            "stat": "endurance",
+            "xp": 30,
+            "title": "THE ADVERSITY INVENTORY",
+            "desc": "Write down the three hardest things you have navigated in the last five years — professionally, personally, whatever qualifies. For each one: what did you draw on? What surprised you about yourself? What capacity did it build? Adversity that is inventoried becomes resource. Adversity that is just survived becomes scar tissue."
+        },
+        {
+            "id": "t3_end_005",
+            "tier": 3,
+            "stat": "endurance",
+            "xp": 30,
+            "title": "THE WELLSPRING MAPPING",
+            "desc": "What genuinely sustains you — not what you think should sustain you, but what actually does? Map your personal wellsprings: the relationships, practices, environments, and experiences that restore rather than deplete you. Then check: are you actually accessing them consistently? Most people know what restores them and do not prioritise it."
+        },
+        {
+            "id": "t3_end_006",
+            "tier": 3,
+            "stat": "endurance",
+            "xp": 30,
+            "title": "THE LOAD DISTRIBUTION",
+            "desc": "You are probably carrying something that should be distributed — responsibility, information, expertise, workload. Identify one thing you carry alone that could be shared or delegated without loss of quality. Carrying everything is not strength. Knowing what to distribute is."
+        },
+        {
+            "id": "t3_end_007",
+            "tier": 3,
+            "stat": "endurance",
+            "xp": 30,
+            "title": "THE THROUGHLINE WORK",
+            "desc": "Across all your current commitments, find the one throughline — the connecting thread that runs through all of them. If you cannot find it, that is important data. If you can find it, double down on it. Energy spent on the throughline compounds. Energy spent outside it fragments."
+        },
+        {
+            "id": "t3_end_008",
+            "tier": 3,
+            "stat": "endurance",
+            "xp": 30,
+            "title": "THE PRESSURE TEST",
+            "desc": "What would break your current approach if the pressure doubled? Increased volume, reduced resources, faster timelines, harder problems? Find the weakest point in your operating system and reinforce it today — before the pressure arrives, not after."
+        },
+        {
+            "id": "t3_end_009",
+            "tier": 3,
+            "stat": "endurance",
+            "xp": 30,
+            "title": "THE INVISIBLE PROGRESS",
+            "desc": "Write down three things that are getting better in your life or work that you have not acknowledged — things that are genuinely improving but moving too slowly to feel like progress day-to-day. Make the invisible progress visible. You are further along than your feelings suggest. Today confirm that with evidence."
+        },
+        {
+            "id": "t3_end_010",
+            "tier": 3,
+            "stat": "endurance",
+            "xp": 30,
+            "title": "THE PHILOSOPHICAL FOUNDATION",
+            "desc": "What do you actually believe about why effort matters? Not a motivational answer — a real one. Your philosophy of work and effort shapes everything else. If you have not examined it deliberately, you are operating on a borrowed philosophy. Write your own today."
+        },
+        {
+            "id": "t3_end_011",
+            "tier": 3,
+            "stat": "endurance",
+            "xp": 30,
+            "title": "THE MASTER PRACTITIONER STUDY",
+            "desc": "Study one master practitioner today — someone at the highest level of a craft you respect. Not their success story. Their practice: what did they do every day? What did they prioritise? What did they sacrifice? The practice is the instruction. Study it."
+        },
+        {
+            "id": "t3_end_012",
+            "tier": 3,
+            "stat": "endurance",
+            "xp": 30,
+            "title": "THE UNBREAKABLE DAY",
+            "desc": "Design the version of today that you could execute no matter what happened — the floor, not the ceiling. The version of this day that holds even if three things go wrong, even if you are tired, even if motivation is zero. Execute it. That is what endurance actually is."
+        },
+        {
+            "id": "t3_cha_001",
+            "tier": 3,
+            "stat": "charisma",
+            "xp": 30,
+            "title": "THE LEADERSHIP PHILOSOPHY",
+            "desc": "Write down your actual leadership philosophy — how you believe people should be treated, what you hold yourself responsible for as a leader, what you will and will not do regardless of pressure. This is not for anyone else. It is the document you compare your behaviour against. Write it today."
+        },
+        {
+            "id": "t3_cha_002",
+            "tier": 3,
+            "stat": "charisma",
+            "xp": 30,
+            "title": "THE CULTURE SIGNAL",
+            "desc": "Every environment you operate in has a culture, and every person in it either reinforces it or shifts it. What culture signal are you consistently sending? Not in formal moments — in informal ones, in how you react to things, in what you reward and what you ignore. Map one signal you are sending today."
+        },
+        {
+            "id": "t3_cha_003",
+            "tier": 3,
+            "stat": "charisma",
+            "xp": 30,
+            "title": "THE STAKEHOLDER MAP",
+            "desc": "Map the full stakeholder landscape of one thing you are working on — everyone with a stake in the outcome, their interests, their concerns, their preferred outcomes, and their influence over the result. Most people map two or three stakeholders. The rest are surprises. Map all of them today."
+        },
+        {
+            "id": "t3_cha_004",
+            "tier": 3,
+            "stat": "charisma",
+            "xp": 30,
+            "title": "THE MULTIPLIER MOVE",
+            "desc": "Identify one person whose output could be significantly multiplied with your help — through a connection, a resource, an insight, a piece of feedback. Make the multiplier move today. The highest-leverage social action is not performing in the room — it is making someone else more capable."
+        },
+        {
+            "id": "t3_cha_005",
+            "tier": 3,
+            "stat": "charisma",
+            "xp": 30,
+            "title": "THE NARRATIVE ARCHITECTURE",
+            "desc": "What is the story you tell about yourself — your origin, your direction, your purpose? Not your elevator pitch. The narrative you actually hold internally. Examine it today. Is it accurate? Is it limiting? Does it create possibility or does it explain constraint? Narratives are not fixed. They are choices."
+        },
+        {
+            "id": "t3_cha_006",
+            "tier": 3,
+            "stat": "charisma",
+            "xp": 30,
+            "title": "THE HARD FEEDBACK REQUEST",
+            "desc": "Ask one person today for their honest assessment of one specific thing you do — a skill, a behaviour, a pattern. Ask specifically: 'What is the one thing I do that, if I stopped or changed it, would make me more effective?' Then listen without defending or explaining."
+        },
+        {
+            "id": "t3_cha_007",
+            "tier": 3,
+            "stat": "charisma",
+            "xp": 30,
+            "title": "THE VISION TRANSMISSION",
+            "desc": "Take something you believe about the future — a direction, an opportunity, a change that is coming — and articulate it today in a way that makes someone else see it. Not data, not argument — vision. The ability to make others see what you see is one of the rarest operational capacities there is."
+        },
+        {
+            "id": "t3_cha_008",
+            "tier": 3,
+            "stat": "charisma",
+            "xp": 30,
+            "title": "THE COALITION BUILD",
+            "desc": "For one thing you are trying to make happen, identify three people whose support would significantly increase the probability of success. For each one: what do they care about? How does what you are trying to do connect to what they care about? Make one outreach today."
+        },
+        {
+            "id": "t3_cha_009",
+            "tier": 3,
+            "stat": "charisma",
+            "xp": 30,
+            "title": "THE ROOM ARCHITECT",
+            "desc": "Design a room — a meeting, an event, a conversation — to produce a specific outcome. Think about who is in it, what the format is, what information is shared when, what decision point you are working toward. Most people show up to rooms and react. Today, architect one."
+        },
+        {
+            "id": "t3_cha_010",
+            "tier": 3,
+            "stat": "charisma",
+            "xp": 30,
+            "title": "THE SILENCE STUDY",
+            "desc": "Pay attention today to what is not being said in your conversations and environments — the concern that does not get raised, the disagreement that does not get voiced, the question nobody asks. Silence carries information. What is the silence in your world communicating today?"
+        },
+        {
+            "id": "t3_cha_011",
+            "tier": 3,
+            "stat": "charisma",
+            "xp": 30,
+            "title": "THE LEGACY RELATIONSHIP",
+            "desc": "Which relationships in your life are ones you want to be in ten years from now? Name three. What are you investing in them today? Long relationships require long investment. Most people invest in relationships when they need something. The rare move is to invest before you need anything."
+        },
+        {
+            "id": "t3_cha_012",
+            "tier": 3,
+            "stat": "charisma",
+            "xp": 30,
+            "title": "THE HONEST MIRROR",
+            "desc": "Find one person today who will tell you an uncomfortable truth about yourself — professionally or personally — and ask them to. Not someone who will soften it. Someone who will actually tell you. The most valuable social resource you can cultivate is access to people who will be honest with you when it costs them something."
+        }
     ]
 }

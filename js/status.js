@@ -417,7 +417,7 @@ function renderStatsTab(container, animate) {
                 if (stat !== 'luck' && typeof getPersonalisedStatExplainer === 'function') {
                     const textEl   = exp.querySelector('.stats-explainer-text');
                     const pathData = (typeof loadPathData === 'function') ? loadPathData() : null;
-                    const traits   = player && player.scanTraits ? player.scanTraits : {};
+                    const traits   = (typeof loadScanTraits === 'function') ? loadScanTraits() : {};
                     const statVal  = player && player.stats ? (player.stats[stat] || STAT_FLOOR) : STAT_FLOOR;
 
                     // Only call if not already Gemini-enhanced (check for the upgrade marker)
