@@ -7,19 +7,19 @@
     <meta name="description" content="Run the SYD Protocol. Complete real-world directives. Build your stats. Reveal the world.">
 
     <!-- PWA -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0f0f1a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SYD">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
 
     <!-- Google Fonts — Space Mono (terminal) + Space Grotesk (body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
@@ -46,6 +46,31 @@
             <button class="btn btn--primary hidden" id="briefing-directives-btn">
                 [ VIEW TODAY'S DIRECTIVES ]
             </button>
+        </div>
+    </div>
+
+    <!-- Morning Transmission (daily briefing, fires once per day) -->
+    <div class="overlay hidden" id="overlay-morning">
+        <div class="overlay-inner overlay-inner--morning">
+            <div class="morning-lines" id="morning-lines"></div>
+            <button class="btn btn--primary hidden" id="morning-directives-btn">
+                [ VIEW TODAY'S DIRECTIVES ]
+            </button>
+        </div>
+    </div>
+
+    <!-- Close-of-Day sequence -->
+    <div class="overlay hidden" id="overlay-close-day">
+        <div class="overlay-inner overlay-inner--close-day">
+            <div class="close-day-lines" id="close-day-lines"></div>
+            <div class="close-day-actions">
+                <button class="btn btn--primary hidden" id="close-day-journal-btn">
+                    [ WRITE THE DAY'S LOG ]
+                </button>
+                <button class="close-day-skip hidden" id="close-day-skip-btn">
+                    SKIP
+                </button>
+            </div>
         </div>
     </div>
 
@@ -104,7 +129,7 @@
          SCREEN: PATH SELECTION — Track A or Track B
          Content rendered by path.js renderPathSelect()
     ═══════════════════════════════════════════════════════ -->
-    <section id="screen-path-select" class="screen">
+    <section id="screen-path" class="screen">
         <div class="screen-inner screen-inner--centered">
             <div id="path-content"></div>
         </div>
@@ -264,13 +289,14 @@
          status.js   → five-tab window, called from app.js updateStatusScreen()
          app.js      → core engine, wires everything together
     -->
-    <script src="js/quests.js"></script>
-    <script src="js/scan.js"></script>
-    <script src="js/path.js"></script>
-    <script src="js/encounter.js"></script>
-    <script src="js/minigames.js"></script>
-    <script src="js/status.js"></script>
-    <script src="js/app.js"></script>
+    <script src="/js/quests.js"></script>
+    <script src="/js/dailyloop.js"></script>
+    <script src="/js/scan.js"></script>
+    <script src="/js/path.js"></script>
+    <script src="/js/encounter.js"></script>
+    <script src="/js/minigames.js"></script>
+    <script src="/js/status.js"></script>
+    <script src="/js/app.js"></script>
 
 </body>
 </html>

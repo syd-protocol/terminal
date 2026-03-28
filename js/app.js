@@ -26,7 +26,7 @@
 //   • Firestore push/pull sync
 //   • Field notes (loadFieldNote, saveFieldNote)
 //   • checkDailyReset(), today()
-//   • loadQuests() — fetches data/quests.json
+//   • loadQuests() — fetches /data/quests.json
 // ═══════════════════════════════════════════════════════════════
 
 // ─── STORAGE KEYS ────────────────────────────────────────────
@@ -540,6 +540,12 @@ function completeQuest(id, stat, baseXP) {
         if (container) renderDirectivesTab(container);
     }
 
+    // If all directives are now complete, offer close-of-day after a short pause
+    const allNowDone = (player.completedToday || []).length >= (dailyQuests || []).length && (dailyQuests || []).length > 0;
+    if (allNowDone && typeof shouldShowCloseOfDay === 'function' && shouldShowCloseOfDay()) {
+        setTimeout(() => { if (typeof triggerCloseOfDay === 'function') triggerCloseOfDay(); }, 1800);
+    }
+
     // Attempt background cloud sync
     maybeSyncToCloud();
 }
@@ -745,7 +751,7 @@ function generateUID() {
 // ─── QUEST LOADING ───────────────────────────────────────────
 async function loadQuests() {
     try {
-        const res  = await fetch('data/quests.json');
+        const res  = await fetch('/data/quests.json');
         const data = await res.json();
         return data.quests;
     } catch(e) {
@@ -756,7 +762,7 @@ async function loadQuests() {
 
 // ─── NAV + HISTORY ───────────────────────────────────────────
 const NAV_HISTORY = [];
-const NAV_EXCLUDE = ['screen-scan', 'screen-path-select', 'screen-path-loading'];
+const NAV_EXCLUDE = ['screen-scan', 'screen-path', 'screen-path-chronicler', 'screen-path-reimaginer', 'screen-path-loading'];
 
 function navTo(screenId) { playUIClick(); showScreen(screenId); }
 
@@ -870,7 +876,7 @@ function dismissInstall() {
 // ─── SERVICE WORKER ──────────────────────────────────────────
 function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('service-worker.js')
+    navigator.serviceWorker.register('/service-worker.js')
         .then(reg => {
             navigator.serviceWorker.addEventListener('message', e => {
                 if (e.data && e.data.type === 'SW_UPDATED') {
@@ -878,12 +884,18 @@ function registerServiceWorker() {
                     if (player) window.location.reload();
                 }
             });
-            // Send notification check
+            // Send re-engagement check
             if (reg.active && player) {
                 reg.active.postMessage({
                     type:           'CHECK_NOTIFICATION',
                     lastActiveDate: player.lastActiveDate || player.lastQuestDate,
                     playerName:     player.name
+                });
+                // Schedule tomorrow's morning notification
+                reg.active.postMessage({
+                    type:       'SCHEDULE_MORNING',
+                    playerName: player.name,
+                    momentum:   player.momentum || 1.0
                 });
             }
         })
@@ -940,6 +952,8 @@ async function init() {
     await runRelaunchBoot();
     showScreen('screen-status');
     registerServiceWorker();
+    // Initialise daily loop — morning transmission, mid-day nudge, midnight close check
+    if (typeof initDailyLoop === 'function') initDailyLoop();
 }
 
 // ─── NEW OPERATIVE FLOW ──────────────────────────────────────

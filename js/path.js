@@ -1,45 +1,53 @@
 // ═══════════════════════════════════════════════════════════════
-// SYD GES — path.js
+// SYD GES — path.js  (Batch 2)
 // PATH Protocol — both tracks feed into the same shared flow.
 //
-// Track A — The Chronicler: CV paste → classification → role mapping
-// Track B — The Re-imaginer: 4 conversational exchanges → same shared flow
+// Track A — The Chronicler:
+//   CV paste → local/Gemini classification → skill calibration →
+//   role mapping (3 rounds) → specialisation → rank confirmation →
+//   aspiration probe → synthesis
 //
-// Shared flow: Skill Calibration → Role Mapping (3 rounds) →
-//   Specialisation → Aspiration Probe → Synthesis and Gap Analysis
+// Track B — The Re-imaginer:
+//   4 conversational exchanges, one at a time, progress fills →
+//   same shared flow from skill calibration onward
 //
-// STUB — all AI calls are placeholder. Screen transitions, SYD voice,
-// progress indicators, and local fallback classification are fully wired.
-// Real Gemini integration is built in the Gemini phase.
+// Shared flow:
+//   Skill Calibration → Role Mapping (3 rounds) → Specialisation →
+//   Starting Rank Confirmation → Aspiration Probe → Synthesis
+//
+// All Gemini calls are stubbed with a local fallback.
+// Real Gemini integration is wired at the Gemini phase.
 // ═══════════════════════════════════════════════════════════════
 
 // ─── PATH STATE ──────────────────────────────────────────────
 let pathState = {
-    track:              null,    // 'chronicler' | 'reimaginer'
+    track:              null,     // 'chronicler' | 'reimaginer'
     cvText:             null,
     reimagineResponses: [],
-    skillVerifyResults: null,
-    inference:          null,    // { paths: [...] } from Gemini or local fallback
+    inference:          null,     // { paths: [...], offlineMode: bool }
     confirmedPath:      null,
     confirmedRole:      null,
     confirmedSpec:      null,
-    aspirationGoal:     null,    // { domain, targetRole, timeline, careerGoal, lifeGoal }
+    confirmedRank:      null,     // operative's self-confirmed starting rank
+    aspirationGoal:     null,     // { careerGoal, lifeGoal, domain, targetRole }
     gapAnalysis:        null,
-    statSeeds:          null,    // stat bonuses from PATH data, stacked on top of scan seeds
-    onComplete:         null     // callback(pathData) — fires when full PATH flow completes
+    statSeeds:          null,
+    onComplete:         null
 };
 
-// [TUNING TARGET] Maximum stat bonus PATH data can seed per stat above scan baseline.
+// [TUNING TARGET] Maximum stat bonus PATH data can seed above scan baseline
 const PATH_SEED_MAX_PER_STAT = 8;
 
 // ─── PATH ENTRY POINT ────────────────────────────────────────
-// Called after scan completes.
-// scanTraits: the trait object from scan.js
-// onComplete: callback(pathData) — pathData contains all PATH outputs
-
+// Called from app.js startPATH() after scan completes.
 function runPATH(scanTraits, onComplete) {
-    pathState.onComplete = onComplete;
-    showScreen('screen-path-select');
+    pathState = {
+        track: null, cvText: null, reimagineResponses: [],
+        inference: null, confirmedPath: null, confirmedRole: null,
+        confirmedSpec: null, confirmedRank: null, aspirationGoal: null,
+        gapAnalysis: null, statSeeds: null, onComplete
+    };
+    showScreen('screen-path');
     renderPathSelect();
 }
 
@@ -51,9 +59,7 @@ function renderPathSelect() {
     container.innerHTML = `
         <div class="path-select">
             <div class="path-syd-voice">
-                <p class="path-voice-line path-voice-line--visible">
-                    Good. Now I need your history.
-                </p>
+                <p class="path-voice-line path-voice-line--visible">Good. Now I need your history.</p>
                 <p class="path-voice-line path-voice-line--visible">
                     Has your career already started, or are you still finding the signal?
                 </p>
@@ -78,22 +84,15 @@ function renderPathSelect() {
     `;
 
     document.getElementById('btn-chronicler').addEventListener('click', () => {
-        playUIClick();
-        pathState.track = 'chronicler';
-        runChronicler();
+        playUIClick(); pathState.track = 'chronicler'; runChronicler();
     });
-
     document.getElementById('btn-reimaginer').addEventListener('click', () => {
-        playUIClick();
-        pathState.track = 'reimaginer';
-        runReImaginer();
+        playUIClick(); pathState.track = 'reimaginer'; runReImaginer();
     });
 }
 
 // ─── TRACK A: THE CHRONICLER ──────────────────────────────────
-// CV paste → AI analysis → skill calibration → shared flow
-// Local fallback: keyword classification using classifyGoal() logic
-
+// CV paste → analysis → shared flow
 function runChronicler() {
     showScreen('screen-path-chronicler');
     const container = document.getElementById('chronicler-content');
@@ -121,38 +120,46 @@ function runChronicler() {
             </div>
             <button class="btn btn--primary" id="cv-submit-btn">[ TRANSMIT RECORD ]</button>
             <p class="path-privacy-note">
-                [ Your record is processed on-device. Nothing leaves until you opt in to cloud sync. ]
+                [ Processed on-device. Nothing leaves until you opt in to cloud sync. ]
             </p>
         </div>
     `;
 
     document.getElementById('chronicler-back').addEventListener('click', () => {
-        playUIClick();
-        renderPathSelect();
-        showScreen('screen-path-select');
+        playUIClick(); renderPathSelect(); showScreen('screen-path');
     });
 
     document.getElementById('cv-submit-btn').addEventListener('click', () => {
         playUIClick();
         const cvText = document.getElementById('cv-input').value.trim();
-        if (!cvText) {
-            document.getElementById('cv-input').focus();
-            return;
-        }
+        if (!cvText) { document.getElementById('cv-input').focus(); return; }
         pathState.cvText = cvText;
         runSkillCalibration();
     });
 }
 
 // ─── TRACK B: THE RE-IMAGINER ─────────────────────────────────
-// Four conversational exchanges, one at a time, progress indicator fills.
+// Four conversational exchanges, one at a time. Progress bar fills.
 // Questions reveal natural competence without career framing.
+// The fourth question sets up the aspiration probe beautifully.
 
 const REIMAGINER_QUESTIONS = [
-    'What have you figured out on your own that most people around you have not?',
-    'When people come to you for help — not officially, just because they trust you — what is it usually for?',
-    'What do you do when you have completely free time and no obligation?',
-    'What could you teach someone right now, with no preparation needed?'
+    {
+        q:    'What have you figured out on your own that most people around you have not?',
+        hint: 'A skill, a way of thinking, a system you built. Anything you know that did not come from a classroom.'
+    },
+    {
+        q:    'When people come to you for help — not officially, just because they trust you — what is it usually for?',
+        hint: 'Could be anyone. The subject does not matter — what matters is why they come to you specifically.'
+    },
+    {
+        q:    'What do you do when you have completely free time and no obligation?',
+        hint: 'Not what you think you should do. What you actually do.'
+    },
+    {
+        q:    'What could you teach someone right now, with no preparation needed?',
+        hint: 'Not what you are trained in. What you genuinely know.'
+    }
 ];
 
 function runReImaginer() {
@@ -165,21 +172,21 @@ function renderReImaginerQuestion(idx) {
     const container = document.getElementById('reimaginer-content');
     if (!container) return;
 
-    const total   = REIMAGINER_QUESTIONS.length;
-    const pct     = Math.round((idx / total) * 100);
-    const isLast  = idx === total - 1;
+    const total  = REIMAGINER_QUESTIONS.length;
+    const pct    = Math.round((idx / total) * 100);
+    const isLast = idx === total - 1;
+    const qData  = REIMAGINER_QUESTIONS[idx];
 
     container.innerHTML = `
         <div class="reimaginer-wrap">
-            ${idx === 0 ? `<button class="path-back-btn" id="reimaginer-back">← BACK</button>` : ''}
+            ${idx === 0 ? '<button class="path-back-btn" id="reimaginer-back">← BACK</button>' : ''}
             <div class="path-progress-bar">
                 <div class="path-progress-fill" style="width:${pct}%"></div>
             </div>
             <p class="path-progress-label">QUESTION ${idx + 1} OF ${total}</p>
             <div class="path-syd-voice">
-                <p class="path-voice-line path-voice-line--visible">
-                    ${REIMAGINER_QUESTIONS[idx]}
-                </p>
+                <p class="path-voice-line path-voice-line--visible reimaginer-q">${qData.q}</p>
+                <p class="path-voice-line path-voice-line--visible reimaginer-hint">${qData.hint}</p>
             </div>
             <div class="path-input-group">
                 <textarea
@@ -200,11 +207,13 @@ function renderReImaginerQuestion(idx) {
 
     if (idx === 0) {
         document.getElementById('reimaginer-back').addEventListener('click', () => {
-            playUIClick();
-            renderPathSelect();
-            showScreen('screen-path-select');
+            playUIClick(); renderPathSelect(); showScreen('screen-path');
         });
     }
+
+    // Auto-focus the textarea
+    const textarea = document.getElementById('reimaginer-input');
+    if (textarea) setTimeout(() => textarea.focus(), 200);
 
     document.getElementById('reimaginer-skip').addEventListener('click', () => {
         playUIClick();
@@ -214,8 +223,8 @@ function renderReImaginerQuestion(idx) {
 
     document.getElementById('reimaginer-next').addEventListener('click', () => {
         playUIClick();
-        const response = document.getElementById('reimaginer-input').value.trim();
-        pathState.reimagineResponses.push(response);
+        const val = document.getElementById('reimaginer-input').value.trim();
+        pathState.reimagineResponses.push(val);
         advanceReImaginer(idx, total);
     });
 }
@@ -229,87 +238,131 @@ function advanceReImaginer(currentIdx, total) {
 }
 
 // ─── SHARED FLOW: SKILL CALIBRATION ──────────────────────────
-// Entry point into the shared flow for both tracks.
-// Gemini analyses the operative's input and returns structured inference.
-// Local fallback: keyword-based classification using classifyGoal() patterns.
-
+// Entry point for both tracks into the shared flow.
+// Gemini call stub — replaced at Gemini integration phase.
+// Local fallback: keyword classification via classifyGoal().
 function runSkillCalibration() {
     showScreen('screen-path-loading');
     renderPathLoading('SKILL CALIBRATION — ANALYSING YOUR SIGNAL');
 
-    // [STUB] Simulate Gemini call with a timeout.
-    // At Gemini integration phase, this becomes a real API call.
-    // The local fallback runs immediately if Gemini is unavailable.
     setTimeout(() => {
-        const inference = getLocalFallbackInference();
-        pathState.inference = inference;
+        pathState.inference = getLocalFallbackInference();
         runRoleMapping(0);
     }, 1800);
 }
 
-// Local fallback: keyword classification from CV text or Re-imaginer responses.
-// Same logic as classifyGoal() in app.js, extended to produce a paths array.
+// Local fallback: produces three path objects from keyword classification.
+// The real Gemini call returns the same shape with richer content.
 function getLocalFallbackInference() {
-    const inputText = pathState.cvText
-        || pathState.reimagineResponses.join(' ');
-
-    const result = (typeof classifyGoal === 'function')
+    const inputText = pathState.cvText || pathState.reimagineResponses.join(' ');
+    const result    = (typeof classifyGoal === 'function')
         ? classifyGoal(inputText)
         : { primaryStat: 'intelligence', linkedStats: ['agility', 'endurance'] };
 
-    // Build three plausible path objects from keyword classification
     const statToPath = {
-        strength:     { path_name: 'Execution & Delivery',    narrative: 'Your pattern shows strong delivery focus and physical or operational drive.',    target_roles: ['Operations Manager', 'Project Lead', 'Programme Director'], mapped_skills: ['Delivery', 'Coordination', 'Physical Execution'] },
-        intelligence: { path_name: 'Strategy & Knowledge',    narrative: 'Your pattern shows strong analytical and learning focus across domains.',        target_roles: ['Strategy Lead', 'Product Manager', 'Research Lead'],       mapped_skills: ['Analysis', 'Learning Systems', 'Strategic Thinking'] },
-        agility:      { path_name: 'Adaptation & Innovation', narrative: 'Your pattern shows strong pivot capacity and pattern-breaking under pressure.',    target_roles: ['Innovation Lead', 'Consultant', 'Product Designer'],        mapped_skills: ['Adaptability', 'Problem Framing', 'Creative Pivots'] },
-        endurance:    { path_name: 'Consistency & Systems',   narrative: 'Your pattern shows sustained effort and systems-building over long horizons.',     target_roles: ['Systems Architect', 'Programme Manager', 'Operations Lead'], mapped_skills: ['Sustained Effort', 'Process Building', 'Discipline'] },
-        charisma:     { path_name: 'Influence & Community',   narrative: 'Your pattern shows strong social reading and people-movement capacity.',          target_roles: ['Community Lead', 'Business Development', 'Head of Growth'],  mapped_skills: ['Relationship Building', 'Influence', 'Communication'] }
+        strength:     {
+            path_name:    'Execution and Delivery',
+            narrative:    'Your pattern shows strong delivery focus and a consistent bias toward getting things done rather than theorising about them.',
+            target_roles: ['Operations Manager', 'Project Lead', 'Programme Director'],
+            mapped_skills: ['Delivery', 'Operational Coordination', 'Physical Execution']
+        },
+        intelligence: {
+            path_name:    'Strategy and Knowledge',
+            narrative:    'Your pattern shows strong analytical focus and a drive to understand the underlying system before acting on it.',
+            target_roles: ['Strategy Lead', 'Product Manager', 'Research Lead'],
+            mapped_skills: ['Analysis', 'Systems Thinking', 'Knowledge Architecture']
+        },
+        agility:      {
+            path_name:    'Adaptation and Innovation',
+            narrative:    'Your pattern shows strong pivot capacity and a comfort with ambiguity that most people avoid.',
+            target_roles: ['Innovation Lead', 'Consultant', 'Product Designer'],
+            mapped_skills: ['Adaptability', 'Problem Framing', 'Creative Pivots']
+        },
+        endurance:    {
+            path_name:    'Consistency and Systems',
+            narrative:    'Your pattern shows sustained effort and a systems-building orientation over long time horizons.',
+            target_roles: ['Systems Architect', 'Programme Manager', 'Operations Lead'],
+            mapped_skills: ['Sustained Effort', 'Process Design', 'Long-term Discipline']
+        },
+        charisma:     {
+            path_name:    'Influence and Community',
+            narrative:    'Your pattern shows strong social reading and a demonstrated capacity to move people and build trust.',
+            target_roles: ['Community Lead', 'Business Development', 'Head of Growth'],
+            mapped_skills: ['Relationship Building', 'Influence', 'Communication']
+        }
     };
 
-    const primary = statToPath[result.primaryStat]   || statToPath.intelligence;
+    const primary = statToPath[result.primaryStat]    || statToPath.intelligence;
     const linked1 = statToPath[result.linkedStats[0]] || statToPath.agility;
     const linked2 = statToPath[result.linkedStats[1]] || statToPath.endurance;
 
-    return {
-        paths:        [primary, linked1, linked2],
-        offlineMode:  true
-    };
+    return { paths: [primary, linked1, linked2], offlineMode: true };
 }
 
 // ─── SHARED FLOW: ROLE MAPPING (3 ROUNDS) ────────────────────
-// Operative picks from three inferred career paths, one round at a time.
-// Each round refines the picture. Round 3 locks in the confirmed path.
-
+// Three rounds of selection, each narrowing the operative's path.
+// Round 0: pick one of the three inferred career directions.
+// Round 1: pick the specific role you see yourself in.
+// Round 2: pick the specialisation that fits best.
 function runRoleMapping(round) {
-    showScreen('screen-path-select');
-    const pathContainer = document.getElementById('path-content');
-    if (!pathContainer) return;
+    showScreen('screen-path');
+    const container = document.getElementById('path-content');
+    if (!container) return;
 
     const paths  = (pathState.inference && pathState.inference.paths) || [];
     const isLast = round === 2;
     const pct    = Math.round(((round + 1) / 3) * 100);
 
-    pathContainer.innerHTML = `
+    const voiceLines = [
+        'Three paths emerged from your signal. Which feels closest to your real direction?',
+        'Confirmed. Which of these roles do you actually see yourself in?',
+        'One more. Pick the specialisation that fits.'
+    ];
+
+    // Round 1: show roles as options, not full path cards
+    // Round 2: show specialisations derived from the confirmed path
+    let cardData = paths;
+    if (round === 1 && pathState.confirmedPath) {
+        const roles = pathState.confirmedPath.target_roles || [];
+        cardData = roles.map(r => ({
+            path_name:    r,
+            narrative:    '',
+            target_roles: [],
+            mapped_skills: []
+        }));
+        // Add two alternatives from other paths
+        if (paths[1]) cardData.push({ path_name: (paths[1].target_roles || [])[0] || paths[1].path_name, narrative: '', target_roles: [], mapped_skills: [] });
+        if (paths[2]) cardData.push({ path_name: (paths[2].target_roles || [])[0] || paths[2].path_name, narrative: '', target_roles: [], mapped_skills: [] });
+    }
+    if (round === 2 && pathState.confirmedPath) {
+        const skills = pathState.confirmedPath.mapped_skills || [];
+        cardData = skills.map(s => ({
+            path_name:    s,
+            narrative:    '',
+            target_roles: [],
+            mapped_skills: []
+        }));
+    }
+
+    container.innerHTML = `
         <div class="role-mapping-wrap">
             <div class="path-progress-bar">
                 <div class="path-progress-fill" style="width:${pct}%"></div>
             </div>
             <p class="path-progress-label">ROLE MAPPING — ROUND ${round + 1} OF 3</p>
             <div class="path-syd-voice">
-                <p class="path-voice-line path-voice-line--visible">
-                    ${round === 0 ? 'Three paths emerged from your signal. Which feels closest to your real direction?' : ''}
-                    ${round === 1 ? 'Confirmed. Now — which of these roles do you see yourself in?' : ''}
-                    ${round === 2 ? 'One more. Pick the specialisation that fits.' : ''}
-                </p>
+                <p class="path-voice-line path-voice-line--visible">${voiceLines[round]}</p>
             </div>
-            <div class="role-card-stack" id="role-card-stack">
-                ${paths.map((p, i) => `
+            <div class="role-card-stack">
+                ${cardData.map((p, i) => `
                     <button class="role-card" data-path-index="${i}">
-                        <span class="role-card-name">${p.path_name || `PATH ${i + 1}`}</span>
-                        <p class="role-card-narrative">${p.narrative || ''}</p>
-                        <div class="role-card-roles">
-                            ${(p.target_roles || []).map(r => `<span class="role-tag">${r}</span>`).join('')}
-                        </div>
+                        <span class="role-card-name">${p.path_name || 'PATH ' + (i + 1)}</span>
+                        ${p.narrative ? '<p class="role-card-narrative">' + p.narrative + '</p>' : ''}
+                        ${(p.target_roles || []).length > 0 ? `
+                            <div class="role-card-roles">
+                                ${p.target_roles.map(r => '<span class="role-tag">' + r + '</span>').join('')}
+                            </div>
+                        ` : ''}
                     </button>
                 `).join('')}
             </div>
@@ -319,14 +372,14 @@ function runRoleMapping(round) {
     document.querySelectorAll('.role-card').forEach(btn => {
         btn.addEventListener('click', () => {
             playUIClick();
-            const picked = paths[parseInt(btn.dataset.pathIndex, 10)];
+            const picked = cardData[parseInt(btn.dataset.pathIndex, 10)];
 
-            if (round === 0) pathState.confirmedPath = picked;
-            if (round === 1) pathState.confirmedRole = (picked.target_roles || [])[0] || picked.path_name;
+            if (round === 0) pathState.confirmedPath = paths[parseInt(btn.dataset.pathIndex, 10)];
+            if (round === 1) pathState.confirmedRole = picked.path_name;
             if (round === 2) pathState.confirmedSpec  = picked.path_name;
 
             if (isLast) {
-                runAspirationProbe();
+                runRankConfirmation();
             } else {
                 runRoleMapping(round + 1);
             }
@@ -334,12 +387,113 @@ function runRoleMapping(round) {
     });
 }
 
-// ─── SHARED FLOW: ASPIRATION PROBE ───────────────────────────
-// One question that outputs structured goal object.
-// Career goal and Life goal defined separately.
+// ─── SHARED FLOW: STARTING RANK CONFIRMATION ─────────────────
+// From the master design doc:
+//   Starting rank is inferred from PATH data, presented with plain
+//   language real-world context, confirmed by operative.
+//   Collaboration between SYD's read and operative's self-knowledge.
+//   High level + low rank = engaging but not translating to real world.
+//   High rank + low level = came in already capable.
+//
+// SYD infers a rank from the confirmed path and any CV/response content.
+// The operative can accept it or adjust it up or down.
+// This is not a test — it is a calibration handshake.
+function runRankConfirmation() {
+    showScreen('screen-path');
+    const container = document.getElementById('path-content');
+    if (!container) return;
 
+    // Infer a starting rank from the operative's track and content
+    const inferredRank = inferStartingRank();
+    const rankContext  = getRankContext(inferredRank);
+
+    container.innerHTML = `
+        <div class="rank-confirm-wrap">
+            <div class="path-syd-voice">
+                <p class="path-voice-line path-voice-line--visible">
+                    Based on what I have read, I am placing you at rank ${inferredRank}.
+                </p>
+                <p class="path-voice-line path-voice-line--visible">
+                    ${rankContext}
+                </p>
+                <p class="path-voice-line path-voice-line--visible">
+                    You know yourself better than I do. Is this accurate?
+                </p>
+            </div>
+
+            <div class="rank-confirm-options">
+                <button class="rank-confirm-btn rank-confirm-btn--accept" id="rc-accept">
+                    <span class="rank-confirm-label">[ ${inferredRank}-RANK ]</span>
+                    <span class="rank-confirm-sub">This is accurate</span>
+                </button>
+                <button class="rank-confirm-btn" id="rc-lower">
+                    <span class="rank-confirm-label">[ LOWER RANK ]</span>
+                    <span class="rank-confirm-sub">I am earlier than this suggests</span>
+                </button>
+                <button class="rank-confirm-btn" id="rc-higher">
+                    <span class="rank-confirm-label">[ HIGHER RANK ]</span>
+                    <span class="rank-confirm-sub">I have more experience than this suggests</span>
+                </button>
+            </div>
+            <p class="rank-confirm-note">
+                This affects where your daily encounters start and how quickly they scale.
+                It does not gate any content permanently.
+            </p>
+        </div>
+    `;
+
+    document.getElementById('rc-accept').addEventListener('click', () => {
+        playUIClick(); pathState.confirmedRank = inferredRank; runAspirationProbe();
+    });
+    document.getElementById('rc-lower').addEventListener('click', () => {
+        playUIClick(); pathState.confirmedRank = adjustRank(inferredRank, -1); runAspirationProbe();
+    });
+    document.getElementById('rc-higher').addEventListener('click', () => {
+        playUIClick(); pathState.confirmedRank = adjustRank(inferredRank, +1); runAspirationProbe();
+    });
+}
+
+// Infer a starting rank from track and content depth.
+// Local fallback — Gemini produces a richer inference at integration phase.
+function inferStartingRank() {
+    if (pathState.track === 'reimaginer') return 'F';   // no career record — start at floor
+
+    // Chronicler: estimate from CV text length and keyword density as a proxy for experience
+    const text    = pathState.cvText || '';
+    const words   = text.split(/\s+/).length;
+    const hasYears = /\d{4}/.test(text);    // any year mentioned = some experience
+    const hasMgmt  = /manag|lead|head|director|vp|chief|founder/i.test(text);
+
+    if (!hasYears || words < 100) return 'F';
+    if (hasMgmt && words > 400)   return 'C';
+    if (words > 250)              return 'E';
+    return 'F';
+}
+
+function getRankContext(rank) {
+    const contexts = {
+        'F': 'You are early in your career. Your directives and encounters will build from fundamentals.',
+        'E': 'You have some real-world experience. You will encounter frameworks quickly.',
+        'D': 'You are developing. Your path shows consistent progression across more than one context.',
+        'C': 'You are established. The gap between where you are and expert practice is visible and closeable.',
+        'B': 'You are capable and have demonstrated it in senior contexts.',
+        'A': 'You are recognised in your field. The work now is precision, not breadth.'
+    };
+    return contexts[rank] || contexts['F'];
+}
+
+const RANK_ORDER = ['F', 'E', 'D', 'C', 'B', 'A', 'S'];
+function adjustRank(rank, delta) {
+    const idx    = RANK_ORDER.indexOf(rank);
+    const newIdx = Math.max(0, Math.min(RANK_ORDER.length - 1, idx + delta));
+    return RANK_ORDER[newIdx];
+}
+
+// ─── SHARED FLOW: ASPIRATION PROBE ───────────────────────────
+// Career goal and life goal defined separately.
+// The probe question is the one from the master design doc verbatim.
 function runAspirationProbe() {
-    showScreen('screen-path-select');
+    showScreen('screen-path');
     const container = document.getElementById('path-content');
     if (!container) return;
 
@@ -368,45 +522,48 @@ function runAspirationProbe() {
                     maxlength="280"
                 ></textarea>
             </div>
-            <button class="btn btn--primary" id="aspiration-submit">[ CONFIRM SIGNAL ]</button>
+            <div class="path-action-row">
+                <button class="path-skip-btn" id="aspiration-skip">SKIP</button>
+                <button class="btn btn--primary" id="aspiration-submit">[ CONFIRM SIGNAL ]</button>
+            </div>
         </div>
     `;
 
+    // Auto-focus career goal
+    setTimeout(() => { const t = document.getElementById('aspiration-career'); if (t) t.focus(); }, 150);
+
+    document.getElementById('aspiration-skip').addEventListener('click', () => {
+        playUIClick(); pathState.aspirationGoal = null; runPathSynthesis();
+    });
     document.getElementById('aspiration-submit').addEventListener('click', () => {
         playUIClick();
         const careerGoal = document.getElementById('aspiration-career').value.trim();
         const lifeGoal   = document.getElementById('aspiration-life').value.trim();
-
         pathState.aspirationGoal = {
             careerGoal,
             lifeGoal,
             domain:     pathState.confirmedPath ? pathState.confirmedPath.path_name : '',
-            targetRole: pathState.confirmedRole || '',
-            timeline:   null  // surfaced in PATH tab later, not captured here
+            targetRole: pathState.confirmedRole || ''
         };
-
         runPathSynthesis();
     });
 }
 
-// ─── SHARED FLOW: SYNTHESIS AND GAP ANALYSIS ─────────────────
-// Combines all PATH data into a structured output.
-// Seeds stat bonuses on top of scan seeds.
-// Fires onComplete with full pathData object.
-
+// ─── SHARED FLOW: SYNTHESIS ───────────────────────────────────
+// Combines all PATH data. Seeds stat bonuses on top of scan seeds.
+// Fires onComplete with the full pathData object.
 function runPathSynthesis() {
     showScreen('screen-path-loading');
     renderPathLoading('SYNTHESIS — BUILDING YOUR OPERATIVE PROFILE');
 
     setTimeout(() => {
-        // Derive stat seeds from PATH inference
-        // [TUNING TARGET] PATH stat seeding weights per confirmed path
+        // [TUNING TARGET] PATH stat seeding per confirmed path name
         const statSeedMap = {
-            'Strategy & Knowledge':    { intelligence: 6, agility: 4 },
-            'Execution & Delivery':    { strength: 6, endurance: 4 },
-            'Adaptation & Innovation': { agility: 6, intelligence: 4 },
-            'Consistency & Systems':   { endurance: 6, strength: 4 },
-            'Influence & Community':   { charisma: 8 }
+            'Execution and Delivery':    { strength: 6, endurance: 4 },
+            'Strategy and Knowledge':    { intelligence: 6, agility: 4 },
+            'Adaptation and Innovation': { agility: 6, intelligence: 4 },
+            'Consistency and Systems':   { endurance: 6, strength: 4 },
+            'Influence and Community':   { charisma: 8 }
         };
 
         const pathName = pathState.confirmedPath ? pathState.confirmedPath.path_name : '';
@@ -414,28 +571,29 @@ function runPathSynthesis() {
             || { intelligence: 3, agility: 3, strength: 2, endurance: 2, charisma: 2 };
 
         pathState.gapAnalysis = {
-            primaryGap: 'Gap analysis — Gemini phase',
+            primaryGap: 'Gap analysis — Gemini integration phase.',
             skills:     pathState.confirmedPath ? (pathState.confirmedPath.mapped_skills || []) : []
         };
 
         const pathData = {
-            track:              pathState.track,
-            confirmedPath:      pathState.confirmedPath,
-            confirmedRole:      pathState.confirmedRole,
-            confirmedSpec:      pathState.confirmedSpec,
-            aspirationGoal:     pathState.aspirationGoal,
-            gapAnalysis:        pathState.gapAnalysis,
-            statSeeds:          pathState.statSeeds,
-            inference:          pathState.inference
+            track:          pathState.track,
+            confirmedPath:  pathState.confirmedPath,
+            confirmedRole:  pathState.confirmedRole,
+            confirmedSpec:  pathState.confirmedSpec,
+            confirmedRank:  pathState.confirmedRank,
+            aspirationGoal: pathState.aspirationGoal,
+            gapAnalysis:    pathState.gapAnalysis,
+            statSeeds:      pathState.statSeeds,
+            inference:      pathState.inference
         };
 
         if (typeof pathState.onComplete === 'function') {
             pathState.onComplete(pathData);
         }
-    }, 2000);
+    }, 2200);
 }
 
-// ─── LOADING SCREEN RENDERER ──────────────────────────────────
+// ─── LOADING SCREEN ───────────────────────────────────────────
 function renderPathLoading(label) {
     const container = document.getElementById('path-loading-content');
     if (!container) return;
@@ -451,32 +609,23 @@ function renderPathLoading(label) {
         </div>
     `;
 
-    // Animate the loading bar
     let pct = 0;
     const fill = document.getElementById('path-loading-fill');
     const iv = setInterval(() => {
-        pct = Math.min(92, pct + Math.random() * 8);
-        if (fill) fill.style.width = `${pct}%`;
+        pct = Math.min(92, pct + Math.random() * 9);
+        if (fill) fill.style.width = pct + '%';
         if (pct >= 92) clearInterval(iv);
     }, 180);
 }
 
-// ─── PATH DATA SAVE/LOAD ──────────────────────────────────────
+// ─── PATH DATA SAVE / LOAD ────────────────────────────────────
 const PATH_DATA_KEY = 'syd_path_data';
 
 function savePathData(pathData) {
-    try {
-        localStorage.setItem(PATH_DATA_KEY, JSON.stringify(pathData));
-    } catch(e) {
-        console.warn('[SYD] Could not save PATH data:', e);
-    }
+    try { localStorage.setItem(PATH_DATA_KEY, JSON.stringify(pathData)); }
+    catch(e) { console.warn('[SYD] Could not save PATH data:', e); }
 }
-
 function loadPathData() {
-    try {
-        const raw = localStorage.getItem(PATH_DATA_KEY);
-        return raw ? JSON.parse(raw) : null;
-    } catch(e) {
-        return null;
-    }
+    try { const r = localStorage.getItem(PATH_DATA_KEY); return r ? JSON.parse(r) : null; }
+    catch(e) { return null; }
 }

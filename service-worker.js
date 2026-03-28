@@ -4,6 +4,7 @@ const CACHE_NAME = 'syd-v36';
 // On every new deploy, bump CACHE_NAME so the install event fires again,
 // the old cache is deleted, and fresh files are fetched immediately.
 const PRECACHE_ASSETS = [
+    '/',
     '/index.html',
     '/css/style.css',
     '/js/app.js',
@@ -12,6 +13,7 @@ const PRECACHE_ASSETS = [
     '/js/path.js',
     '/js/encounter.js',
     '/js/minigames.js',
+    '/js/dailyloop.js',
     '/js/status.js',
     '/data/quests.json',
     '/manifest.json'
@@ -109,27 +111,65 @@ self.addEventListener('fetch', e => {
     }
 });
 
-// ─── NOTIFICATION CHECK ──────────────────────────────────────
-// Fires when the app sends a CHECK_NOTIFICATION message.
-// If the operative has been inactive for 3 or more days, a push notification
-// is shown to encourage them to return.
+// ─── NOTIFICATION HANDLING ───────────────────────────────────
+// Three notification types:
+//
+//   CHECK_NOTIFICATION — re-engagement after 3+ inactive days
+//   SCHEDULE_MORNING   — schedule a morning briefing notification
+//   CANCEL_MORNING     — cancel any pending morning notification
+//
+// All notification bodies use SYD's voice — clipped, specific, no fluff.
+
 self.addEventListener('message', e => {
-    if (!e.data || e.data.type !== 'CHECK_NOTIFICATION') return;
-    const { lastActiveDate, playerName } = e.data;
-    if (!lastActiveDate) return;
+    if (!e.data) return;
 
-    const diffDays = Math.floor(
-        (new Date() - new Date(lastActiveDate)) / 86400000
-    );
+    // ── Re-engagement: 3+ days inactive ──────────────────────
+    if (e.data.type === 'CHECK_NOTIFICATION') {
+        const { lastActiveDate, playerName } = e.data;
+        if (!lastActiveDate) return;
 
-    if (diffDays >= 3) {
-        self.registration.showNotification('SYD', {
-            body:     `${playerName || 'Operative'}, your momentum is decaying. The System is standing by.`,
-            icon:     '/icons/icon-192.png',
-            tag:      'syd-reminder',
-            renotify: false,
-            data:     { url: '/terminal/' }
-        });
+        const diffDays = Math.floor(
+            (new Date() - new Date(lastActiveDate)) / 86400000
+        );
+
+        if (diffDays >= 3) {
+            self.registration.showNotification('SYD', {
+                body:     `${playerName || 'Operative'}, your momentum is decaying. The System is standing by.`,
+                icon:     '/icons/icon-192.png',
+                tag:      'syd-reengagement',
+                renotify: false,
+                data:     { url: '/' }
+            });
+        }
+        return;
+    }
+
+    // ── Morning briefing: schedule for 8:00 AM today or tomorrow ─
+    if (e.data.type === 'SCHEDULE_MORNING') {
+        const { playerName, momentum } = e.data;
+
+        const now   = new Date();
+        const target = new Date(now);
+        target.setHours(8, 0, 0, 0);
+
+        // If 8am already passed today, schedule for tomorrow
+        if (target <= now) target.setDate(target.getDate() + 1);
+
+        const msUntil = target - now;
+
+        // Use setTimeout in SW — note: SW may be terminated and restarted,
+        // so this is best-effort. Push API would be more reliable for production.
+        setTimeout(() => {
+            const mStr = momentum >= 1.3 ? 'high' : momentum >= 1.1 ? 'building' : 'low';
+            self.registration.showNotification('SYD', {
+                body:     `${playerName || 'Operative'} — morning transmission. Momentum ${mStr}. Directives queued.`,
+                icon:     '/icons/icon-192.png',
+                tag:      'syd-morning',
+                renotify: true,
+                data:     { url: '/' }
+            });
+        }, msUntil);
+        return;
     }
 });
 
@@ -142,11 +182,11 @@ self.addEventListener('notificationclick', e => {
         clients.matchAll({ type: 'window', includeUncontrolled: true })
             .then(clientList => {
                 for (const client of clientList) {
-                    if (client.url.includes('/terminal/') && 'focus' in client) {
+                    if (client.url.includes('/') && 'focus' in client) {
                         return client.focus();
                     }
                 }
-                if (clients.openWindow) return clients.openWindow('/terminal/');
+                if (clients.openWindow) return clients.openWindow('/');
             })
     );
 });

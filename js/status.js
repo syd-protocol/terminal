@@ -333,15 +333,17 @@ function renderJournalPrompt() {
 
     const savedJournal = loadTodaysJournal();
 
+    // Use day-aware prompt from dailyloop.js, fall back to default if not loaded
+    const journalPrompt = (typeof getTodaysJournalPrompt === 'function')
+        ? getTodaysJournalPrompt()
+        : 'What actually happened today? Not the ideal version — the real one.';
+
     wrap.innerHTML = `
         <div class="journal-wrap">
             <div class="journal-header">
                 <span class="journal-label">[ END OF DAY — SYD JOURNAL ]</span>
             </div>
-            <p class="journal-syd-prompt">
-                What actually happened today? Not the ideal version — the real one.
-                One thing that went exactly as planned. One thing that did not.
-            </p>
+            <p class="journal-syd-prompt">${journalPrompt}</p>
             <textarea
                 id="journal-input"
                 class="fn-textarea"
@@ -351,6 +353,11 @@ function renderJournalPrompt() {
             <div class="journal-footer">
                 <span class="fn-count" id="journal-count">${savedJournal.length} / 600</span>
                 <button class="dc-complete-btn" id="journal-save-btn">[ SAVE LOG ]</button>
+            </div>
+            <div class="journal-close-day-row">
+                <button class="journal-close-day-btn" id="journal-close-day-btn">
+                    [ CLOSE TODAY'S SESSION ]
+                </button>
             </div>
         </div>
     `;
@@ -374,16 +381,31 @@ function renderJournalPrompt() {
             }
         });
     }
+
+    // Close Day button — saves journal entry then triggers close-of-day sequence
+    const closeDayBtn = document.getElementById('journal-close-day-btn');
+    if (closeDayBtn) {
+        closeDayBtn.addEventListener('click', () => {
+            playUIClick();
+            if (textarea && textarea.value.trim()) {
+                saveTodaysJournal(textarea.value);
+            }
+            if (typeof triggerCloseOfDay === 'function') {
+                triggerCloseOfDay();
+            }
+        });
+    }
 }
 
-const JOURNAL_KEY_PREFIX = 'syd_journal_';
+// Journal save/load delegated to dailyloop.js.
+// Fallback inline functions if dailyloop.js is not yet loaded.
 function loadTodaysJournal() {
-    const key = JOURNAL_KEY_PREFIX + new Date().toISOString().slice(0, 10);
-    return localStorage.getItem(key) || '';
+    if (typeof window.loadTodaysJournal_dl === 'function') return window.loadTodaysJournal_dl();
+    return localStorage.getItem('syd_journal_' + new Date().toISOString().slice(0, 10)) || '';
 }
 function saveTodaysJournal(text) {
-    const key = JOURNAL_KEY_PREFIX + new Date().toISOString().slice(0, 10);
-    localStorage.setItem(key, text);
+    if (typeof window.saveTodaysJournal_dl === 'function') { window.saveTodaysJournal_dl(text); return; }
+    localStorage.setItem('syd_journal_' + new Date().toISOString().slice(0, 10), text);
 }
 
 // ─── TAB: PATH ────────────────────────────────────────────────
