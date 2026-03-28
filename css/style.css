@@ -6851,3 +6851,236 @@ body {
 .resonance-opt:hover:not(:disabled) { border-color: var(--accent); background: rgba(79,195,247,0.05); }
 .resonance-opt--selected { border-color: var(--accent); color: var(--accent); background: rgba(79,195,247,0.1); }
 .resonance-opt:disabled  { cursor: default; opacity: 0.7; }
+
+/* ─── BATCH 5: STATS TAB ─────────────────────────────────────── */
+.stats-section-label {
+    font-family:   var(--font-mono);
+    font-size:     0.7rem;
+    color:         var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+}
+/* Explainer now slides open/closed cleanly */
+.stats-explainer {
+    overflow:   hidden;
+    margin-top: 10px;
+    padding:    10px 12px;
+    background: rgba(79, 195, 247, 0.05);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 3px 3px 0;
+}
+.stats-explainer-text {
+    font-family: var(--font-mono);
+    font-size:   0.8rem;
+    color:       var(--text-secondary);
+    line-height: 1.7;
+}
+
+/* ─── TRAIT SIGNALS SECTION ──────────────────────────────────── */
+.stats-traits-block {
+    margin-top:    24px;
+    display:       flex;
+    flex-direction: column;
+    gap:           16px;
+}
+.stats-traits-intro {
+    font-family:  var(--font-mono);
+    font-size:    0.78rem;
+    color:        var(--text-secondary);
+    line-height:  1.6;
+    opacity:      0.8;
+}
+.stats-traits-no-data {
+    font-family:   var(--font-mono);
+    font-size:     0.75rem;
+    color:         var(--text-secondary);
+    opacity:       0.5;
+    letter-spacing: 0.06em;
+}
+
+.trait-row {
+    padding:       12px 14px;
+    background:    var(--surface);
+    border:        1px solid var(--border);
+    border-radius: 4px;
+}
+.trait-row-header {
+    display:         flex;
+    justify-content: space-between;
+    align-items:     center;
+    margin-bottom:   8px;
+}
+.trait-label {
+    font-family:   var(--font-mono);
+    font-size:     0.72rem;
+    font-weight:   700;
+    color:         var(--accent);
+    letter-spacing: 0.08em;
+}
+.trait-score {
+    font-family: var(--font-mono);
+    font-size:   0.78rem;
+    color:       var(--text-primary);
+    font-weight: 700;
+}
+.sot-bar--trait { height: 3px; margin-bottom: 10px; }
+.sot-bar-fill--trait { background: var(--accent); opacity: 0.7; }
+.trait-desc {
+    font-family:  var(--font-mono);
+    font-size:    0.78rem;
+    color:        var(--text-secondary);
+    line-height:  1.65;
+}
+
+/* ─── TRAIT SIGNALS LOCKED ───────────────────────────────────── */
+.stats-traits-locked-block {
+    margin-top:      24px;
+    padding:         20px;
+    background:      var(--surface);
+    border:          1px solid var(--border);
+    border-radius:   4px;
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    text-align:      center;
+    gap:             10px;
+}
+.stats-traits-locked-icon {
+    font-size:  2rem;
+    color:      var(--accent);
+    opacity:    0.3;
+}
+.stats-traits-locked-label {
+    font-family:   var(--font-mono);
+    font-size:     0.78rem;
+    color:         var(--accent);
+    letter-spacing: 0.1em;
+    opacity:       0.7;
+}
+.stats-traits-locked-sub {
+    font-family:  var(--font-mono);
+    font-size:    0.78rem;
+    color:        var(--text-secondary);
+    line-height:  1.6;
+    max-width:    280px;
+}
+.stats-traits-locked-level {
+    font-family:   var(--font-mono);
+    font-size:     0.72rem;
+    color:         var(--text-secondary);
+    letter-spacing: 0.06em;
+}
+.stats-traits-locked-bar-wrap {
+    width:         200px;
+    height:        3px;
+    background:    rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow:      hidden;
+}
+.stats-traits-locked-bar {
+    height:     100%;
+    background: var(--accent);
+    opacity:    0.5;
+    transition: width 0.6s ease;
+}
+
+/* ─── BATCH 5: PATH TAB ──────────────────────────────────────── */
+.path-tab-rank {
+    font-family:   var(--font-mono);
+    font-size:     0.72rem;
+    color:         var(--text-secondary);
+    margin-top:    4px;
+    letter-spacing: 0.06em;
+}
+.path-gap-skills-label {
+    font-family:   var(--font-mono);
+    font-size:     0.68rem;
+    color:         var(--text-secondary);
+    letter-spacing: 0.1em;
+    margin-top:    12px;
+    margin-bottom: 6px;
+    opacity:       0.7;
+}
+.path-gap-gemini-note {
+    font-family:  var(--font-mono);
+    font-size:    0.7rem;
+    color:        var(--text-secondary);
+    opacity:      0.5;
+    margin-top:   10px;
+    line-height:  1.5;
+}
+.path-affinity-locked-block {
+    background:    var(--surface);
+    border:        1px solid var(--border);
+    border-radius: 4px;
+    padding:       16px;
+}
+.path-affinity-teaser {
+    font-family:  var(--font-mono);
+    font-size:    0.8rem;
+    color:        var(--text-secondary);
+    line-height:  1.7;
+    margin-bottom: 14px;
+}
+.path-affinity-level-row {
+    display:     flex;
+    align-items: center;
+    gap:         12px;
+}
+.path-affinity-level-label {
+    font-family:  var(--font-mono);
+    font-size:    0.7rem;
+    color:        var(--accent);
+    white-space:  nowrap;
+    opacity:      0.7;
+}
+.path-affinity-bar-wrap {
+    flex:          1;
+    height:        3px;
+    background:    rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow:      hidden;
+}
+.path-affinity-bar {
+    height:     100%;
+    background: var(--accent);
+    opacity:    0.5;
+    transition: width 0.6s ease;
+}
+
+/* ─── BATCH 5: SETTINGS TAB ──────────────────────────────────── */
+.settings-neural-status {
+    font-family:   var(--font-mono);
+    font-size:     0.78rem;
+    color:         var(--text-secondary);
+    padding:       8px 12px;
+    border:        1px solid var(--border);
+    border-radius: 3px;
+    background:    var(--surface);
+}
+.settings-neural-status--active {
+    color:        #80cbc4;
+    border-color: #80cbc4;
+    background:   rgba(128, 203, 196, 0.06);
+}
+
+/* ─── NEURAL LINK SCREEN ─────────────────────────────────────── */
+.neural-link-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            12px;
+    padding:        4px 0;
+}
+.neural-link-label {
+    font-family:   var(--font-mono);
+    font-size:     0.78rem;
+    font-weight:   700;
+    color:         var(--accent);
+    letter-spacing: 0.1em;
+}
+.neural-link-desc {
+    font-family:  var(--font-mono);
+    font-size:    0.8rem;
+    color:        var(--text-secondary);
+    line-height:  1.6;
+}

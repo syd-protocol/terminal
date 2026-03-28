@@ -7,19 +7,19 @@
     <meta name="description" content="Run the SYD Protocol. Complete real-world directives. Build your stats. Reveal the world.">
 
     <!-- PWA -->
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f0f1a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SYD">
-    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
 
     <!-- Google Fonts — Space Mono (terminal) + Space Grotesk (body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
@@ -248,14 +248,20 @@
                 <div class="screen-sys-label">NEURAL LINK</div>
             </div>
             <div id="neural-content">
-                <div class="scan-placeholder">
-                    <p class="scan-placeholder-label">NEURAL LINK</p>
-                    <p class="scan-placeholder-dev">[ GEMINI INTEGRATION — BUILD PHASE 4 ]</p>
-                    <p class="scan-placeholder-sub">
-                        Connect your Gemini API key here to enable AI-powered stat explainers,
-                        encounter evaluation, and incursion generation.
+                <div class="neural-link-wrap">
+                    <p class="neural-link-label">[ NEURAL LINK ]</p>
+                    <p class="neural-link-desc">
+                        Connect a Gemini API key to enable AI-powered features:
+                        personalised stat reads, encounter evaluation, and gap analysis.
                     </p>
-                    <div class="settings-name-row" style="margin-top:24px;">
+                    <p class="neural-link-desc">
+                        Your key is stored on this device only.
+                        It is never transmitted to SYD servers.
+                        Get a free key at
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener"
+                           style="color:var(--accent);">aistudio.google.com</a>.
+                    </p>
+                    <div class="settings-name-row" style="margin-top:20px;">
                         <input
                             type="password"
                             id="neural-key-input"
@@ -266,7 +272,7 @@
                         />
                         <button class="settings-row-btn settings-row-btn--inline" id="neural-key-save">LINK</button>
                     </div>
-                    <button class="settings-row-btn" style="margin-top:12px;color:var(--danger);" id="neural-key-remove">REMOVE KEY</button>
+                    <button class="settings-row-btn" style="margin-top:10px;color:var(--danger);" id="neural-key-remove">REMOVE KEY</button>
                 </div>
             </div>
             <button class="btn-back" id="neural-back-link" style="margin-top:32px;">← BACK</button>
@@ -289,14 +295,14 @@
          status.js   → five-tab window, called from app.js updateStatusScreen()
          app.js      → core engine, wires everything together
     -->
-    <script src="/js/quests.js"></script>
-    <script src="/js/dailyloop.js"></script>
-    <script src="/js/scan.js"></script>
-    <script src="/js/path.js"></script>
-    <script src="/js/encounter.js"></script>
-    <script src="/js/minigames.js"></script>
-    <script src="/js/status.js"></script>
-    <script src="/js/app.js"></script>
+    <script src="js/quests.js"></script>
+    <script src="js/dailyloop.js"></script>
+    <script src="js/scan.js"></script>
+    <script src="js/path.js"></script>
+    <script src="js/encounter.js"></script>
+    <script src="js/minigames.js"></script>
+    <script src="js/status.js"></script>
+    <script src="js/app.js"></script>
 
 </body>
 </html>

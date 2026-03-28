@@ -751,7 +751,7 @@ function generateUID() {
 // ─── QUEST LOADING ───────────────────────────────────────────
 async function loadQuests() {
     try {
-        const res  = await fetch('/data/quests.json');
+        const res  = await fetch('data/quests.json');
         const data = await res.json();
         return data.quests;
     } catch(e) {
@@ -844,6 +844,77 @@ function showScreen(id, isBack) {
     if (id === 'screen-minigames' && typeof renderMiniGameHub === 'function') {
         renderMiniGameHub(player ? player.sig : 0);
     }
+
+    if (id === 'screen-neural') {
+        wireNeuralScreen();
+    }
+}
+
+// ─── NEURAL LINK SCREEN WIRING ───────────────────────────────
+// Wires LINK and REMOVE KEY buttons on screen-neural.
+// Called whenever screen-neural becomes active.
+// Key is stored locally only — never synced to Firestore or Git.
+function wireNeuralScreen() {
+    const backBtns = [
+        document.getElementById('neural-header-back'),
+        document.getElementById('neural-back-link')
+    ];
+    backBtns.forEach(btn => {
+        if (btn && !btn.dataset.wired) {
+            btn.dataset.wired = 'true';
+            btn.addEventListener('click', () => { playUIClick(); goBack(); });
+        }
+    });
+
+    const saveBtn   = document.getElementById('neural-key-save');
+    const removeBtn = document.getElementById('neural-key-remove');
+    const input     = document.getElementById('neural-key-input');
+    const statusEl  = document.getElementById('neural-key-status');
+
+    // Populate input if key already saved
+    if (input) {
+        const existing = getNeuralKey();
+        if (existing) {
+            // Show masked placeholder so operative knows key exists
+            input.placeholder = 'Key saved — paste a new one to replace';
+            input.value = '';
+        }
+    }
+
+    if (saveBtn && !saveBtn.dataset.wired) {
+        saveBtn.dataset.wired = 'true';
+        saveBtn.addEventListener('click', () => {
+            playUIClick();
+            const key = input ? input.value.trim() : '';
+
+            if (!key) {
+                showLog('[ PASTE YOUR GEMINI KEY TO LINK ]', 'system');
+                return;
+            }
+            if (key.length < 8) {
+                showLog('[ KEY TOO SHORT — CHECK YOU COPIED THE FULL KEY ]', 'system');
+                return;
+            }
+
+            setNeuralKey(key, 'gemini');
+            if (input) { input.value = ''; input.placeholder = 'Key saved — paste a new one to replace'; }
+            showLog('[ NEURAL LINK CONNECTED — AI FEATURES ACTIVE ]', 'accent');
+
+            // Refresh settings tab label if status window is visible
+            if (typeof updateStatusScreen === 'function') updateStatusScreen();
+        });
+    }
+
+    if (removeBtn && !removeBtn.dataset.wired) {
+        removeBtn.dataset.wired = 'true';
+        removeBtn.addEventListener('click', () => {
+            playUIClick();
+            setNeuralKey(null);
+            if (input) { input.value = ''; input.placeholder = 'AIza...'; }
+            showLog('[ NEURAL LINK REMOVED — LOCAL MODE ONLY ]', 'system');
+            if (typeof updateStatusScreen === 'function') updateStatusScreen();
+        });
+    }
 }
 
 // ─── PWA INSTALL ─────────────────────────────────────────────
@@ -876,7 +947,7 @@ function dismissInstall() {
 // ─── SERVICE WORKER ──────────────────────────────────────────
 function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('/service-worker.js')
+    navigator.serviceWorker.register('service-worker.js')
         .then(reg => {
             navigator.serviceWorker.addEventListener('message', e => {
                 if (e.data && e.data.type === 'SW_UPDATED') {
