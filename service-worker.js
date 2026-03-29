@@ -1,4 +1,4 @@
-const CACHE_NAME = 'syd-v37';
+const CACHE_NAME = 'syd-v38';
 
 // These are the app shell files we want to pre-cache during install.
 // On every new deploy, bump CACHE_NAME so the install event fires again,
@@ -17,6 +17,7 @@ const PRECACHE_ASSETS = [
     '/js/dailyloop.js',
     '/js/status.js',
     '/data/quests.json',
+    '/data/encounters.json',
     '/manifest.json'
 ];
 

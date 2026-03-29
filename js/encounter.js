@@ -29,44 +29,30 @@ const ENCOUNTER_DONE_KEY = 'syd_encounter_done';
 // [TUNING TARGET] Encounter tier unlock levels — same as directives
 const ENCOUNTER_TIER_UNLOCK = { 1: 1, 2: 10, 3: 25 };
 
-// Dummy encounter pool — replaced at content phase (Batch 7)
-const DUMMY_ENCOUNTERS = [
-    {
-        id:         'enc_dummy_t1_a',
-        tier:       1,
-        type:       'judgment',
-        stat:       'intelligence',
-        situation:  'You are three days into a new role. Your manager asks for a status update on a project you have barely had time to understand. What do you do?',
-        options: [
-            { id: 'a', text: 'Give a confident-sounding update based on what you have gathered so far.' },
-            { id: 'b', text: 'Tell your manager you need more time to understand the project before reporting.' },
-            { id: 'c', text: 'Ask a colleague for a quick brief before the meeting.' }
-        ],
-        reasonings: [
-            { id: 'r1', text: 'To avoid looking unprepared in front of my manager.' },
-            { id: 'r2', text: 'Because accuracy matters more than the appearance of competence.' },
-            { id: 'r3', text: 'Because early relationships with colleagues are as important as early impressions with managers.' }
-        ]
-    },
-    {
-        id:         'enc_dummy_t1_b',
-        tier:       1,
-        type:       'teaching',
-        stat:       'charisma',
-        situation:  'A colleague sends you a long message complaining about a decision made by the team. They are clearly frustrated. What does the best response look like?',
-        options: [
-            { id: 'a', text: 'Explain the reasoning behind the decision so they understand it better.' },
-            { id: 'b', text: 'Acknowledge their frustration first, then provide context if they want it.' },
-            { id: 'c', text: 'Ask what outcome they are hoping for from this conversation.' }
-        ],
-        reasonings: [
-            { id: 'r1', text: 'Because people want to feel understood before they want to be corrected.' },
-            { id: 'r2', text: 'Because information without emotional acknowledgement lands as dismissal.' },
-            { id: 'r3', text: 'Because the goal of the conversation matters more than the content of the complaint.' }
-        ],
-        teaching: 'The best practitioners know: frustrated people are not asking for information. They are asking to feel heard. The answer that works is always acknowledgement first, information second — and only if asked for. Option C goes even further: it reframes the conversation entirely by asking what they actually want. That is not a deflection. That is the highest-order social move in this situation.'
+// Live encounter pool — loaded from data/encounters.json at boot.
+// Graceful fallback: empty pool serves no encounter rather than breaking.
+let ENCOUNTER_POOL = [];
+let encounterPoolLoaded = false;
+
+// ─── POOL LOADER ─────────────────────────────────────────────
+// Called once at app boot (from app.js initDailyLoop or openEncounter).
+// Subsequent calls are no-ops. All screen-rendering functions check
+// encounterPoolLoaded before accessing ENCOUNTER_POOL.
+
+async function loadEncounterPool() {
+    if (encounterPoolLoaded) return;
+    try {
+        const res  = await fetch('/data/encounters.json');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        ENCOUNTER_POOL    = data.encounters || [];
+        encounterPoolLoaded = true;
+    } catch (e) {
+        console.warn('[SYD] Could not load encounters.json — encounters unavailable today.', e);
+        ENCOUNTER_POOL    = [];
+        encounterPoolLoaded = true;   // mark loaded so we do not retry on every open
     }
-];
+}
 
 // ─── ENCOUNTER STATE ─────────────────────────────────────────
 let encounterState = {
@@ -83,7 +69,7 @@ function getTodaysEncounter(level) {
 
     const tier    = getCurrentEncounterTier(level);
     const dateNum = parseInt(new Date().toISOString().slice(0, 10).replace(/-/g, ''), 10);
-    const pool    = getEncounterPoolWithFallback(DUMMY_ENCOUNTERS, tier);
+    const pool    = getEncounterPoolWithFallback(ENCOUNTER_POOL, tier);
 
     if (!pool.length) return null;
     return pool[dateNum % pool.length];
@@ -103,7 +89,7 @@ function getEncounterPoolWithFallback(pool, targetTier) {
         filtered = pool.filter(e => e.tier === t);
         if (filtered.length > 0) {
             if (typeof showLog === 'function') {
-                showLog(`[ TIER ${targetTier} ENCOUNTERS LOADING — OPERATING ON CURRENT BEST ]`, 'system');
+                showLog('[ TIER ' + targetTier + ' ENCOUNTERS LOADING — OPERATING ON CURRENT BEST ]', 'system');
             }
             return filtered;
         }
@@ -112,21 +98,30 @@ function getEncounterPoolWithFallback(pool, targetTier) {
 }
 
 // ─── ENCOUNTER ENTRY POINT ───────────────────────────────────
+// Loads the encounter pool if not already loaded, then renders.
+// Async load is fast (cached JSON) and only happens once per session.
 function openEncounter(level) {
-    const encounter = getTodaysEncounter(level);
-    encounterState.encounter        = encounter;
-    encounterState.selectedOption   = null;
-    encounterState.selectedReasoning = null;
-    encounterState.freeText         = '';
-
     showScreen('screen-encounter');
 
-    if (!encounter) {
-        renderEncounterDone();
-        return;
+    // Show a brief loading state while the pool fetches
+    const container = document.getElementById('encounter-content');
+    if (container && !encounterPoolLoaded) {
+        container.innerHTML = '<div class="encounter-wrap"><div class="encounter-loading"><div class="enc-loading-icon">&#x2B21;</div><p class="enc-loading-label">[ LOADING TRANSMISSION... ]</p></div></div>';
     }
 
-    renderEncounterSituation();
+    loadEncounterPool().then(() => {
+        const encounter = getTodaysEncounter(level);
+        encounterState.encounter        = encounter;
+        encounterState.selectedOption   = null;
+        encounterState.selectedReasoning = null;
+        encounterState.freeText         = '';
+
+        if (!encounter) {
+            renderEncounterDone();
+            return;
+        }
+        renderEncounterSituation();
+    });
 }
 
 // ─── SITUATION SCREEN ────────────────────────────────────────
