@@ -739,111 +739,25 @@ function renderEncounterEvaluatingInTab(container, enc) {
 
 // ═══════════════════════════════════════════════════════════════
 // SEGMENT: GAMES
-// RESPEC Block A: Placeholder cards for the five games.
-// Block E will replace this with full implementation including
-// first-play SYD prompts, instructions expand, and scan replay link.
+// RESPEC Block E: Full implementation. Delegates to minigames.js
+// renderGamesHub() which renders full game cards with instructions,
+// first-play SYD prompts (localStorage tracked), and scan replay link.
+// Block A had placeholder cards here — this replaces them entirely.
 // ═══════════════════════════════════════════════════════════════
-
-// [TUNING TARGET] SIG costs per game — matches MINIGAME_COSTS in minigames.js
-const GAMES_SEGMENT_COSTS = {
-    cascade:       5,
-    codebreaker:   5,
-    shadowpulse:   5,
-    echomatch:     5,
-    pressurewave:  5
-};
 
 function renderGamesSegment(container) {
     const sig = (typeof player !== 'undefined' && player) ? (player.sig || 0) : 0;
 
-    const games = [
-        { id: 'cascade',      name: 'CASCADE',      stat: 'INT · AGI',  desc: 'Match nodes to colour targets. Speed and accuracy both count.' },
-        { id: 'codebreaker',  name: 'CODEBREAKER',  stat: 'INT',        desc: 'Crack the sequence before the window closes.' },
-        { id: 'shadowpulse',  name: 'SHADOW PULSE', stat: 'AGI · END',  desc: 'Track multiple signals simultaneously under time pressure.' },
-        { id: 'echomatch',    name: 'ECHO MATCH',   stat: 'INT · CHA',  desc: 'Read the pattern. Anticipate the next state.' },
-        { id: 'pressurewave', name: 'PRESSURE WAVE',stat: 'END · STR',  desc: 'Sustain performance through escalating difficulty waves.' }
-    ];
-
-    container.innerHTML = `
-        <div class="games-segment-wrap">
-
-            <div class="games-segment-header">
-                <p class="games-syd-line">These games train your stats. They cost SIG to enter. SIG comes from executing directives.</p>
+    // Delegate to minigames.js — full implementation lives there.
+    if (typeof renderGamesHub === 'function') {
+        renderGamesHub(container, sig);
+    } else {
+        // Fallback if minigames.js not yet loaded
+        container.innerHTML = `
+            <div class="games-segment-wrap">
+                <p class="games-syd-line">[ TRAINING FLOOR LOADING... ]</p>
             </div>
-
-            <div class="games-sig-balance">
-                <span class="games-sig-icon">&#x2B21;</span>
-                <span class="games-sig-value">${sig}</span>
-                <span class="games-sig-label">SIG AVAILABLE</span>
-            </div>
-
-            <div class="games-list">
-                ${games.map(g => {
-                    const cost       = GAMES_SEGMENT_COSTS[g.id] || 5;
-                    const canEnter   = sig >= cost;
-                    return `
-                        <div class="game-card" id="game-card-${g.id}">
-                            <div class="game-card-header">
-                                <span class="game-card-name">[ ${g.name} ]</span>
-                                <div class="game-card-meta">
-                                    <span class="game-card-stat">${g.stat}</span>
-                                    <span class="game-card-cost">${cost} SIG</span>
-                                </div>
-                            </div>
-                            <p class="game-card-desc">${g.desc}</p>
-                            <div class="game-card-footer">
-                                <button
-                                    class="game-card-enter-btn ${!canEnter ? 'game-card-enter-btn--locked' : ''}"
-                                    data-game-id="${g.id}"
-                                    ${!canEnter ? 'disabled' : ''}
-                                >
-                                    ${canEnter ? '[ ENTER ]' : '[ INSUFFICIENT SIG ]'}
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-
-            <div class="games-scan-replay">
-                <p class="games-scan-replay-label">
-                    &#x25BA;
-                    <button class="games-scan-replay-link" id="games-scan-replay-btn">
-                        REPLAY SCAN GAMES — SIGNAL BREACH · PRECISION SHOOTER · FINAL TRANSMISSION
-                    </button>
-                </p>
-                <p class="games-scan-replay-note">Free to play. Calibrate traits. No SIG required.</p>
-            </div>
-
-        </div>
-    `;
-
-    // Wire ENTER buttons
-    document.querySelectorAll('.game-card-enter-btn:not([disabled])').forEach(btn => {
-        btn.addEventListener('click', () => {
-            playUIClick();
-            const gameId = btn.dataset.gameId;
-            if (typeof openMiniGame === 'function') {
-                openMiniGame(gameId);
-            } else {
-                // Fallback: route to screen-minigame
-                if (typeof navTo === 'function') navTo('screen-minigames');
-            }
-        });
-    });
-
-    // Wire scan replay link
-    const replayBtn = document.getElementById('games-scan-replay-btn');
-    if (replayBtn) {
-        replayBtn.addEventListener('click', () => {
-            playUIClick();
-            // Route to scan replay — scan.js handles the replay flow
-            if (typeof startScanReplay === 'function') {
-                startScanReplay();
-            } else if (typeof navTo === 'function') {
-                navTo('screen-scan');
-            }
-        });
+        `;
     }
 }
 

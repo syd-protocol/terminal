@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// SYD GES — minigames.js  (Batch 4)
+// SYD GES — minigames.js
 // Five mini-games. All train stats. All cost Sig to enter.
 // Visual standard: visually yummy, pow, ka-blaam — effects that
 // enhance not overwhelm.
@@ -12,6 +12,24 @@
 //
 // Scan game replays (Signal Breach, Precision Shooter, Final Transmission)
 // route back to scan.js and also award stat gains + calibration refinement.
+//
+// BLOCK E changes:
+//   - MG_FIRST_PLAY_KEY constant added — localStorage key prefix for
+//     first-play prompt tracking per game.
+//   - openMiniGame(gameId) added — entry point called by status.js
+//     GAMES segment. Handles SIG check, first-play prompt, and
+//     routes to the correct game. Replaces the stub in status.js.
+//   - renderGamesHub() — new function rendering the GAMES segment
+//     inside the OPS tab. Full cards: name, one-line desc, expandable
+//     instructions (3–4 lines), stat tags, SIG cost, ENTER button.
+//     Section header in SYD voice. SIG balance prominent at top.
+//     Scan replay link at bottom (text link, not prominent cards).
+//   - First-play SYD prompt system: first time an operative enters a
+//     game, a one-line SYD prompt shows before the game starts.
+//     Tracked in localStorage per game ID. Never shown again after
+//     first play of that game.
+//   - renderMiniGameHub() updated to match new card style.
+//     (screen-minigames still used for individual active sessions.)
 // ═══════════════════════════════════════════════════════════════
 
 // ─── CONSTANTS ───────────────────────────────────────────────
@@ -19,6 +37,10 @@
 const MINIGAME_COSTS = {
     cascade: 5, drift: 5, echo: 5, flow: 5, resonance: 5
 };
+
+// [TUNING TARGET] First-play localStorage key prefix
+// Appended with gameId: syd_game_firstplay_cascade, etc.
+const MG_FIRST_PLAY_KEY = 'syd_game_firstplay_';
 // [TUNING TARGET] Base XP awarded per completed session
 const MINIGAME_XP = {
     cascade: 8, drift: 8, echo: 8, flow: 8, resonance: 8
@@ -37,55 +59,341 @@ const STAT_LABELS = {
     strength: 'STR', endurance: 'END', charisma: 'CHA'
 };
 
-// ─── HUB ─────────────────────────────────────────────────────
+// ─── GAME METADATA ───────────────────────────────────────────
+// Single source of truth for all game display data.
+// Block E: expanded with instructions (one-liner + detail lines)
+// and first-play SYD prompts.
+
+const GAME_DATA = {
+    cascade: {
+        name:        'CASCADE',
+        icon:        '⬡',
+        stats:       ['intelligence', 'agility'],
+        desc:        'Catch matching nodes before they fall. Pattern and speed.',
+        instructions: [
+            'Nodes fall in four columns. Each has a symbol.',
+            'Tap a node to hold it. Then tap its matching symbol to clear the pair.',
+            'Wrong tap wastes the node. Three waves — each faster than the last.',
+            'Score = pairs cleared out of pairs available.'
+        ],
+        firstPlayPrompt: 'First time in CASCADE. Catch the nodes that share a symbol — hold one, tap its match. Speed and accuracy both count.'
+    },
+    drift: {
+        name:        'DRIFT',
+        icon:        '◈',
+        stats:       ['agility', 'endurance'],
+        desc:        'Hit the zone as it moves. Sustained precision under pressure.',
+        instructions: [
+            'A target zone moves across a bar. Tap when the marker is inside it.',
+            'The zone shrinks across three rounds. Timing is everything.',
+            'Sustained precision counts more than peak accuracy.',
+            'Score = successful hits weighted by zone size at time of tap.'
+        ],
+        firstPlayPrompt: 'First time in DRIFT. The zone moves. Hit it while it is open. It gets smaller each round.'
+    },
+    echo: {
+        name:        'ECHO',
+        icon:        '◎',
+        stats:       ['intelligence', 'strength'],
+        desc:        'Repeat the sequence SYD transmits. Memory under increasing load.',
+        instructions: [
+            'SYD shows a sequence of symbols. Then hides them.',
+            'Repeat the sequence in the correct order by tapping.',
+            'Each round adds one more symbol. Sequence length increases until you fail.',
+            'Score = longest sequence completed without error.'
+        ],
+        firstPlayPrompt: 'First time in ECHO. SYD shows a sequence then hides it. Tap the symbols back in order. One more added each round.'
+    },
+    flow: {
+        name:        'FLOW',
+        icon:        '▣',
+        stats:       ['strength', 'endurance'],
+        desc:        'Keep the bar in the zone. Rhythmic strength over time.',
+        instructions: [
+            'A bar drifts continuously. Tap to push it up. Release to let it fall.',
+            'Keep it inside the target zone for as long as possible.',
+            'The zone narrows and shifts over three rounds.',
+            'Score = time spent inside the zone / total time.'
+        ],
+        firstPlayPrompt: 'First time in FLOW. Tap to raise the bar, release to lower it. Keep it in the zone. Three rounds — the zone gets narrower.'
+    },
+    resonance: {
+        name:        'RESONANCE',
+        icon:        '◆',
+        stats:       ['charisma', 'intelligence'],
+        desc:        'Read what was actually meant. Social signal decoding.',
+        instructions: [
+            'SYD presents a short social situation and three possible readings.',
+            'Pick the reading that captures what was actually communicated.',
+            'Not the literal words — the meaning behind them.',
+            'Five situations per session. Score = correct reads / total situations.'
+        ],
+        firstPlayPrompt: 'First time in RESONANCE. Read the situation. Pick what was actually meant — not what was said. There is no timer.'
+    }
+};
+
+// ─── FIRST-PLAY PROMPT SYSTEM ────────────────────────────────
+// Tracks whether the operative has seen the first-play prompt
+// for each game. Checked before entering any game.
+
+function hasSeenFirstPlay(gameId) {
+    return localStorage.getItem(MG_FIRST_PLAY_KEY + gameId) === '1';
+}
+
+function markFirstPlaySeen(gameId) {
+    localStorage.setItem(MG_FIRST_PLAY_KEY + gameId, '1');
+}
+
+// ─── OPEN MINI GAME (OPS SEGMENT ENTRY POINT) ────────────────
+// Called by status.js GAMES segment when operative taps ENTER.
+// Handles SIG check, first-play prompt, then routes to game.
+// This replaces the stub openMiniGame() call in status.js Block A.
+function openMiniGame(gameId) {
+    const sig  = (typeof player !== 'undefined' && player) ? (player.sig || 0) : 0;
+    const cost = MINIGAME_COSTS[gameId] || 5;
+
+    if (sig < cost) {
+        if (typeof showLog === 'function') {
+            showLog('[ INSUFFICIENT SIG — COMPLETE DIRECTIVES TO EARN MORE ]', 'system');
+        }
+        return;
+    }
+
+    const gd = GAME_DATA[gameId];
+    if (!gd) return;
+
+    if (!hasSeenFirstPlay(gameId)) {
+        // Show first-play prompt before launching — renders inline in screen-minigame
+        markFirstPlaySeen(gameId);
+        if (typeof showScreen === 'function') showScreen('screen-minigame');
+        renderFirstPlayPrompt(gameId, gd.firstPlayPrompt || '', () => {
+            enterMiniGame(gameId, sig);
+        });
+    } else {
+        enterMiniGame(gameId, sig);
+    }
+}
+
+// Renders a one-line SYD first-play prompt inside screen-minigame.
+// Auto-advances after 3.5s or on tap.
+function renderFirstPlayPrompt(gameId, promptText, onContinue) {
+    const container = document.getElementById('minigame-active-content');
+    if (!container) { onContinue(); return; }
+
+    container.innerHTML = `
+        <div class="mg-firstplay-wrap">
+            <div class="mg-firstplay-icon">⬡</div>
+            <p class="mg-firstplay-label">[ SYD ]</p>
+            <p class="mg-firstplay-text">${promptText}</p>
+            <button class="btn btn--primary mg-firstplay-btn" id="mg-firstplay-btn">
+                [ UNDERSTOOD ]
+            </button>
+        </div>
+    `;
+
+    const btn = document.getElementById('mg-firstplay-btn');
+    if (btn) btn.addEventListener('click', () => { playUIClick(); onContinue(); });
+
+    // Auto-advance after 3.5 seconds
+    const autoTimer = setTimeout(() => onContinue(), 3500);
+    if (btn) btn.addEventListener('click', () => clearTimeout(autoTimer), { once: true });
+}
+
+// ─── GAMES HUB (OPS/GAMES SEGMENT) ───────────────────────────
+// Called by status.js renderGamesSegment() to render the full GAMES
+// section inside the OPS tab. Full card implementation with
+// expandable instructions, SIG balance, scan replay link.
+// Block A rendered placeholder cards — this is the full version.
+function renderGamesHub(container, sig) {
+    if (!container) return;
+
+    const sigVal = typeof sig === 'number' ? sig :
+        ((typeof player !== 'undefined' && player) ? (player.sig || 0) : 0);
+
+    const gameIds  = ['cascade', 'drift', 'echo', 'flow', 'resonance'];
+
+    container.innerHTML = `
+        <div class="games-segment-wrap">
+
+            <div class="games-segment-header">
+                <p class="games-syd-line">These games train your stats. They cost SIG to enter. SIG comes from executing directives.</p>
+            </div>
+
+            <div class="games-sig-balance">
+                <span class="games-sig-icon">&#x2B21;</span>
+                <span class="games-sig-value">${sigVal}</span>
+                <span class="games-sig-label">SIG AVAILABLE</span>
+            </div>
+
+            <div class="games-list">
+                ${gameIds.map(id => buildGameCard(id, sigVal)).join('')}
+            </div>
+
+            <div class="games-scan-replay">
+                <p class="games-scan-replay-label">
+                    &#x25BA;
+                    <button class="games-scan-replay-link" id="games-scan-replay-btn">
+                        REPLAY SCAN GAMES &mdash; SIGNAL BREACH &middot; PRECISION SHOOTER &middot; FINAL TRANSMISSION
+                    </button>
+                </p>
+                <p class="games-scan-replay-note">Free to play. Calibrate traits. No SIG required.</p>
+            </div>
+
+        </div>
+    `;
+
+    // Wire ENTER buttons
+    gameIds.forEach(id => {
+        const btn = document.getElementById('games-enter-' + id);
+        if (btn && !btn.disabled) {
+            btn.addEventListener('click', () => {
+                playUIClick();
+                openMiniGame(id);
+            });
+        }
+    });
+
+    // Wire instruction expand toggles
+    gameIds.forEach(id => {
+        const toggle = document.getElementById('games-instr-toggle-' + id);
+        const panel  = document.getElementById('games-instr-panel-' + id);
+        if (toggle && panel) {
+            toggle.addEventListener('click', () => {
+                playUIClick();
+                const isOpen = !panel.classList.contains('hidden');
+                panel.classList.toggle('hidden');
+                toggle.textContent = isOpen ? '+ HOW TO PLAY' : '− LESS';
+            });
+        }
+    });
+
+    // Wire scan replay link
+    const replayBtn = document.getElementById('games-scan-replay-btn');
+    if (replayBtn) {
+        replayBtn.addEventListener('click', () => {
+            playUIClick();
+            renderScanReplayPicker();
+        });
+    }
+}
+
+function buildGameCard(id, sigVal) {
+    const gd       = GAME_DATA[id];
+    if (!gd) return '';
+    const cost      = MINIGAME_COSTS[id] || 5;
+    const canEnter  = sigVal >= cost;
+    const stats     = (MINIGAME_STATS[id] || []).map(s => `<span class="game-card-stat-tag">${STAT_LABELS[s] || s}</span>`).join('');
+    const instrHTML = (gd.instructions || []).map(l => `<p class="game-instr-line">${l}</p>`).join('');
+
+    return `
+        <div class="game-card" id="game-card-${id}">
+            <div class="game-card-header">
+                <span class="game-card-icon">${gd.icon}</span>
+                <span class="game-card-name">[ ${gd.name} ]</span>
+                <div class="game-card-stat-tags">${stats}</div>
+            </div>
+            <p class="game-card-desc">${gd.desc}</p>
+            <button class="game-card-instr-toggle" id="games-instr-toggle-${id}">+ HOW TO PLAY</button>
+            <div class="game-card-instr-panel hidden" id="games-instr-panel-${id}">
+                ${instrHTML}
+            </div>
+            <div class="game-card-footer">
+                <span class="game-card-cost">${cost} SIG</span>
+                <button
+                    class="game-card-enter-btn${canEnter ? '' : ' game-card-enter-btn--locked'}"
+                    id="games-enter-${id}"
+                    ${canEnter ? '' : 'disabled'}
+                >${canEnter ? '[ ENTER ]' : '[ INSUFFICIENT SIG ]'}</button>
+            </div>
+        </div>
+    `;
+}
+
+// Scan replay picker — small inline selector shown in screen-minigame
+function renderScanReplayPicker() {
+    if (typeof showScreen === 'function') showScreen('screen-minigame');
+    const container = document.getElementById('minigame-active-content');
+    if (!container) return;
+
+    const scanGames = [
+        { id: 'scan_signal_breach',      name: 'SIGNAL BREACH',      desc: 'Pattern recognition · Cognitive flexibility · Persistence' },
+        { id: 'scan_precision_shooter',  name: 'PRECISION SHOOTER',  desc: 'Execution speed · Accuracy · Pressure stability' },
+        { id: 'scan_final_transmission', name: 'FINAL TRANSMISSION', desc: 'Social reading' }
+    ];
+
+    container.innerHTML = `
+        <div class="mg-replay-picker-wrap">
+            <div class="mg-active-header">
+                <button class="mg-back-btn" id="mg-replay-back">← BACK</button>
+                <span class="mg-label">[ SCAN REPLAY ]</span>
+            </div>
+            <p class="mg-replay-intro">Replay any scan experience. Performance refines your calibration. Free to play.</p>
+            <div class="mg-replay-list">
+                ${scanGames.map(g => `
+                    <div class="mg-replay-card">
+                        <div class="mg-replay-name">[ ${g.name} ]</div>
+                        <p class="mg-replay-desc">${g.desc}</p>
+                        <button class="game-card-enter-btn" id="replay-btn-${g.id}">[ REPLAY ]</button>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    document.getElementById('mg-replay-back').addEventListener('click', () => { playUIClick(); goBack(); });
+
+    scanGames.forEach(g => {
+        const btn = document.getElementById('replay-btn-' + g.id);
+        if (btn) btn.addEventListener('click', () => { playUIClick(); enterScanReplay(g.id); });
+    });
+}
+
+// ─── HUB (SCREEN-MINIGAMES — STANDALONE SCREEN) ──────────────
+// Updated in Block E to use GAME_DATA and match the new card style.
+// screen-minigames is still used for individual active game sessions.
+// The primary hub is now renderGamesHub() inside the OPS segment.
 function renderMiniGameHub(sigBalance) {
     const container = document.getElementById('minigames-content');
     if (!container) return;
 
-    const games = [
-        { id: 'cascade',   name: 'CASCADE',   icon: '⬡', desc: 'Catch matching nodes before they fall. Pattern and speed.' },
-        { id: 'drift',     name: 'DRIFT',     icon: '◈', desc: 'Hit the zone as it moves. Sustained precision under pressure.' },
-        { id: 'echo',      name: 'ECHO',      icon: '◎', desc: 'Repeat the sequence SYD transmits. Memory under increasing load.' },
-        { id: 'flow',      name: 'FLOW',      icon: '▣', desc: 'Keep the bar in the zone. Rhythmic strength over time.' },
-        { id: 'resonance', name: 'RESONANCE', icon: '◆', desc: 'Read what was actually meant. Social signal decoding.' }
-    ];
-    const scanGames = [
-        { id: 'scan_signal_breach',      name: 'SIGNAL BREACH',     icon: '⬡', desc: 'Pattern recognition and cognitive flexibility.' },
-        { id: 'scan_precision_shooter',  name: 'PRECISION SHOOTER', icon: '◎', desc: 'Execution speed, accuracy, pressure stability.' },
-        { id: 'scan_final_transmission', name: 'FINAL TRANSMISSION',icon: '◈', desc: 'Social reading calibration.' }
-    ];
+    const sig     = typeof sigBalance === 'number' ? sigBalance :
+        ((typeof player !== 'undefined' && player) ? (player.sig || 0) : 0);
+    const gameIds = ['cascade', 'drift', 'echo', 'flow', 'resonance'];
 
     container.innerHTML = `
         <div class="minigames-wrap">
             <div class="minigames-header">
                 <button class="mg-back-btn" id="mg-back">← BACK</button>
                 <span class="mg-label">[ SYD TRAINING FLOOR ]</span>
-                <span class="mg-sig-balance">⬡ ${sigBalance || 0} SIG</span>
+                <span class="mg-sig-balance">&#x2B21; ${sig} SIG</span>
             </div>
+            <p class="mg-intro-line">These games train your stats. They cost SIG to enter. SIG comes from executing directives.</p>
             <div class="minigames-grid" id="minigames-grid">
-                ${games.map(g => renderGameCard(g, sigBalance, MINIGAME_COSTS[g.id])).join('')}
+                ${gameIds.map(id => renderGameCard(GAME_DATA[id], sig, MINIGAME_COSTS[id])).join('')}
             </div>
-            <!-- PASS 3: Scan replay section UI removed from hub.
-                 Routing functions (enterScanReplay, renderScanReplayEntry) kept for
-                 internal use. Section hidden per UI spec — hub shows only the five
-                 training games. -->
+            <div class="mg-scan-replay-row">
+                <button class="games-scan-replay-link" id="mg-scan-replay-btn">
+                    &#x25BA; REPLAY SCAN GAMES &mdash; SIGNAL BREACH &middot; PRECISION SHOOTER &middot; FINAL TRANSMISSION
+                </button>
+                <p class="games-scan-replay-note">Free. Calibrates traits.</p>
+            </div>
         </div>
     `;
 
     document.getElementById('mg-back').addEventListener('click', () => { playUIClick(); goBack(); });
 
-    games.forEach(g => {
-        const btn = document.getElementById('mg-btn-' + g.id);
-        if (btn) btn.addEventListener('click', () => { playUIClick(); enterMiniGame(g.id, sigBalance); });
+    gameIds.forEach(id => {
+        const btn = document.getElementById('mg-btn-' + id);
+        if (btn) btn.addEventListener('click', () => { playUIClick(); openMiniGame(id); });
     });
-    scanGames.forEach(g => {
-        const btn = document.getElementById('mg-btn-' + g.id);
-        if (btn) btn.addEventListener('click', () => { playUIClick(); enterScanReplay(g.id); });
-    });
+
+    const replayBtn = document.getElementById('mg-scan-replay-btn');
+    if (replayBtn) replayBtn.addEventListener('click', () => { playUIClick(); renderScanReplayPicker(); });
 }
 
 function renderGameCard(game, sig, cost) {
-    const stats     = MINIGAME_STATS[game.id] || [];
+    if (!game) return '';
+    const stats     = (MINIGAME_STATS[game.id] || []);
     const canAfford = (sig || 0) >= cost;
     return `
         <div class="mg-card ${canAfford ? '' : 'mg-card--locked'}">
@@ -98,20 +406,6 @@ function renderGameCard(game, sig, cost) {
             <div class="mg-card-footer">
                 <span class="mg-cost">${cost} SIG</span>
                 <button class="dc-complete-btn" id="mg-btn-${game.id}" ${canAfford ? '' : 'disabled'}>[ ENTER ]</button>
-            </div>
-        </div>
-    `;
-}
-
-function renderScanReplayCard(game) {
-    return `
-        <div class="mg-card mg-card--scan-replay">
-            <div class="mg-card-icon">${game.icon}</div>
-            <h3 class="mg-card-name">${game.name}</h3>
-            <p class="mg-card-desc">${game.desc}</p>
-            <div class="mg-card-footer">
-                <span class="mg-cost">FREE</span>
-                <button class="dc-complete-btn" id="mg-btn-${game.id}">[ REPLAY ]</button>
             </div>
         </div>
     `;
