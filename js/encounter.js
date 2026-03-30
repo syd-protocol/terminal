@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// SYD GES — encounter.js  (Batch 6 — Gemini integration)
+// SYD GES — encounter.js
 // One encounter per day. Two types — no labels shown.
 // Both feel like SYD presenting a situation.
 //
@@ -13,18 +13,34 @@
 //   When free text is present, Gemini is explicitly told the operative
 //   may have supplemented or OVERRIDDEN their option choice.
 //   Free text that contradicts the chosen option is the MOST IMPORTANT signal.
-//   This is built into EVERY call — not noted and ignored.
+//   This is built into EVERY Call 3 — not noted and ignored.
+//   The free-text override rule is a top-level prompt instruction, not
+//   a conditional block — it appears regardless of whether free text
+//   is present, so Gemini is always primed to weight it correctly.
 //
-// Gemini integration (Batch 6):
+// Gemini integration (Call 3 — judgment evaluation):
 //   evaluateJudgmentEncounter() — Type A evaluation + SYD feedback voice
 //   Teaching encounters do not call Gemini — teaching text is pre-written.
+//
+// BLOCK D changes:
+//   - Career domain tag added below [ TRANSMISSION INCOMING ] header.
+//     Shown when the encounter has a domain field (career encounters from
+//     syd_career_encounters always have one; life-stat encounters may not).
+//   - Call 3 free-text override rule promoted to top-level prompt instruction.
+//     Was buried inside the conditional freeTextBlock variable — now it is
+//     rule #1 in the evaluation rules list, present in every single call.
+//   - getTodaysCareerEncounter() added — surfaces a career encounter from
+//     syd_career_encounters when available. Used by openEncounter() to
+//     supplement or replace the life-stat encounter pool on career days.
+//   - Career encounter pool loader added alongside life-stat pool.
 //
 // Local fallback: rule-based feedback from option + reasoning alignment.
 // ═══════════════════════════════════════════════════════════════
 
 // ─── ENCOUNTER POOL ──────────────────────────────────────────
-const ENCOUNTER_KEY      = 'syd_encounter_today';
-const ENCOUNTER_DONE_KEY = 'syd_encounter_done';
+const ENCOUNTER_KEY           = 'syd_encounter_today';
+const ENCOUNTER_DONE_KEY      = 'syd_encounter_done';
+const CAREER_ENCOUNTERS_KEY   = 'syd_career_encounters';
 
 // [TUNING TARGET] Encounter tier unlock levels — same as directives
 const ENCOUNTER_TIER_UNLOCK = { 1: 1, 2: 10, 3: 25 };
@@ -45,11 +61,11 @@ async function loadEncounterPool() {
         const res  = await fetch('/data/encounters.json');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
-        ENCOUNTER_POOL    = data.encounters || [];
+        ENCOUNTER_POOL      = data.encounters || [];
         encounterPoolLoaded = true;
     } catch (e) {
         console.warn('[SYD] Could not load encounters.json — encounters unavailable today.', e);
-        ENCOUNTER_POOL    = [];
+        ENCOUNTER_POOL      = [];
         encounterPoolLoaded = true;   // mark loaded so we do not retry on every open
     }
 }
@@ -63,16 +79,60 @@ let encounterState = {
 };
 
 // ─── TODAY'S ENCOUNTER SELECTION ─────────────────────────────
+// Life-stat encounters: seeded from encounters.json pool.
+// Career encounters: pulled from syd_career_encounters cache (Block D).
+// Career encounters are surfaced when the cache is populated AND the
+// operative is past Tier 0. Falls back to life-stat pool silently.
+
 function getTodaysEncounter(level) {
     const done = localStorage.getItem(ENCOUNTER_DONE_KEY);
     if (done === new Date().toISOString().slice(0, 10)) return null;
 
+    // Try career encounter first (Block D) — only after Tier 0
+    const careerEncounter = getTodaysCareerEncounter(level);
+    if (careerEncounter) return careerEncounter;
+
+    // Fall back to life-stat pool
     const tier    = getCurrentEncounterTier(level);
     const dateNum = parseInt(new Date().toISOString().slice(0, 10).replace(/-/g, ''), 10);
     const pool    = getEncounterPoolWithFallback(ENCOUNTER_POOL, tier);
 
     if (!pool.length) return null;
     return pool[dateNum % pool.length];
+}
+
+// ─── CAREER ENCOUNTER SELECTOR ───────────────────────────────
+// Reads the syd_career_encounters cache (seeded by Call 2, refreshed by
+// Call 4). Returns a date-seeded career encounter, or null if the cache
+// is absent, malformed, or the operative is in Tier 0.
+//
+// Career encounters are marked with _isCareerEncounter: true so the
+// domain tag renders correctly in the header.
+
+function getTodaysCareerEncounter(level) {
+    // No career encounters during Tier 0 (operatorDays 1–7)
+    const operatorDays = (typeof player !== 'undefined' && player)
+        ? (player.operatorDays || 0)
+        : 0;
+    if (operatorDays <= 7) return null;
+
+    try {
+        const raw = localStorage.getItem(CAREER_ENCOUNTERS_KEY);
+        if (!raw) return null;
+        const pool = JSON.parse(raw);
+        if (!Array.isArray(pool) || pool.length === 0) return null;
+
+        const dateNum = parseInt(new Date().toISOString().slice(0, 10).replace(/-/g, ''), 10);
+        const enc     = pool[dateNum % pool.length];
+        if (!enc) return null;
+
+        // Tag as career encounter so domain tag renders
+        return { ...enc, _isCareerEncounter: true };
+
+    } catch (e) {
+        console.warn('[SYD] Could not load career encounter cache:', e);
+        return null;
+    }
 }
 
 function getCurrentEncounterTier(level) {
@@ -111,10 +171,10 @@ function openEncounter(level) {
 
     loadEncounterPool().then(() => {
         const encounter = getTodaysEncounter(level);
-        encounterState.encounter        = encounter;
-        encounterState.selectedOption   = null;
+        encounterState.encounter         = encounter;
+        encounterState.selectedOption    = null;
         encounterState.selectedReasoning = null;
-        encounterState.freeText         = '';
+        encounterState.freeText          = '';
 
         if (!encounter) {
             renderEncounterDone();
@@ -125,16 +185,29 @@ function openEncounter(level) {
 }
 
 // ─── SITUATION SCREEN ────────────────────────────────────────
+// BLOCK D: Career domain tag added below the header label when
+// the encounter has a domain field. Rendered as a small muted tag —
+// never labelled "CAREER" explicitly; just the domain name.
+// Life-stat encounters without a domain field show nothing there.
+
 function renderEncounterSituation() {
     const enc       = encounterState.encounter;
     const container = document.getElementById('encounter-content');
     if (!container || !enc) return;
 
+    // Domain tag: shown for career encounters and any encounter with a domain field
+    const domainTag = enc.domain
+        ? `<span class="enc-domain-tag">${enc.domain.toUpperCase()}</span>`
+        : '';
+
     container.innerHTML = `
         <div class="encounter-wrap">
             <div class="encounter-header">
                 <button class="enc-back-btn" id="enc-back">← BACK</button>
-                <span class="enc-label">[ TRANSMISSION INCOMING ]</span>
+                <div class="enc-header-labels">
+                    <span class="enc-label">[ TRANSMISSION INCOMING ]</span>
+                    ${domainTag}
+                </div>
             </div>
             <div class="encounter-situation">
                 <p class="enc-situation-text">${enc.situation}</p>
@@ -265,21 +338,34 @@ function submitEncounterResponse() {
         return;
     }
 
-    // Judgment encounters: call Gemini for personalised evaluation
+    // Judgment encounters: call Gemini (Call 3) for personalised evaluation
     evaluateJudgmentEncounter(enc).then(feedback => {
         renderJudgmentFeedback(enc, feedback);
     });
 }
 
-// ─── GEMINI CALL: JUDGMENT EVALUATION ────────────────────────
+// ─── GEMINI CALL 3: JUDGMENT EVALUATION ──────────────────────
 // Sends the operative's full response to Gemini for evaluation.
 //
-// CRITICAL — FREE TEXT OVERRIDE RULE (from master design doc):
-//   Gemini is explicitly told the operative may have supplemented
-//   or OVERRIDDEN their option choice with free text.
-//   Free text that contradicts the chosen option is the MOST IMPORTANT signal.
-//   Gemini must weight it accordingly.
-//   This instruction is in the prompt every single time — not assumed.
+// FREE TEXT OVERRIDE RULE (BLOCK D — promoted to top-level prompt rule):
+//   The rule that free text overrides option choice when they conflict
+//   is now rule #1 in the evaluation rules list — present in every
+//   single Call 3 regardless of whether the operative used free text.
+//   This ensures Gemini is always primed for the override case, not
+//   just conditionally aware of it.
+//
+//   Previous approach: the critical instruction was inside the
+//   freeTextBlock conditional variable. If no free text was provided,
+//   Gemini was never told the rule existed.
+//
+//   New approach: rule #1 states the override policy. The freeTextBlock
+//   then states whether free text was provided and, if so, what it was.
+//   Gemini can apply rule #1 correctly in all cases.
+//
+// [RESEARCH] Source: Anthropic prompting docs — prompt structure.
+// Finding: instructions placed prominently in a rules list are followed
+//          more reliably than instructions embedded in conditional blocks.
+// Applied: free-text override rule extracted to top-level rule position.
 //
 // Returns { text, geminiEnhanced: bool }
 
@@ -292,38 +378,39 @@ async function evaluateJudgmentEncounter(enc) {
     const selectedRsn = (enc.reasonings || []).find(r => r.id === encounterState.selectedReasoning);
     const freeText    = encounterState.freeText;
 
-    // Determine signal weight — if free text contradicts the option, flag it explicitly
+    // Free text block — states whether free text was provided and what it was.
+    // Rule #1 in the prompt handles the override logic; this block only provides the content.
     const hasFreeText   = freeText && freeText.length > 0;
     const freeTextBlock = hasFreeText
-        ? `FREE TEXT RESPONSE (operative may have supplemented OR overridden their option pick with this):
-"${freeText}"
+        ? `FREE TEXT RESPONSE: "${freeText}"`
+        : `FREE TEXT: none provided.`;
 
-CRITICAL INSTRUCTION: If this free text contradicts the chosen option, the free text is the more important signal. Weight it above the option choice. Acknowledge the instinct in the free text response when relevant.`
-        : 'FREE TEXT: none provided.';
+    // Domain context for career encounters — included when available
+    const domainContext = enc.domain
+        ? `\nENCOUNTER DOMAIN: ${enc.domain}`
+        : '';
 
-    // [RESEARCH] Source: SYD master design doc — encounter evaluation prompt spec.
-    // Finding: feedback must acknowledge semantic equivalence — right instinct, vocabulary is packaging.
-    // Applied: explicit instruction to recognise instinct over label.
     const prompt = `
 You are SYD — a direct, honest career intelligence system. Evaluate an operative's response to a real-world judgment scenario.
 
 SITUATION:
 "${enc.situation}"
+${domainContext}
 
 OPERATIVE'S CHOSEN OPTION: ${selectedOpt ? '"' + selectedOpt.text + '"' : 'none selected'}
 OPERATIVE'S REASONING: ${selectedRsn ? '"' + selectedRsn.text + '"' : 'none selected'}
 ${freeTextBlock}
 
-Write SYD's evaluation. Rules:
-- 3 to 4 sentences maximum
-- Acknowledge the RIGHT INSTINCT first — even if the phrasing or option label was imprecise
-- Semantic equivalence matters: if the operative got the right idea but called it something different, recognise the instinct and frame the vocabulary as just packaging
-- If the free text contradicts the chosen option AND shows better instinct, lead with the free text insight
-- If there is a gap in their thinking, name it specifically — not vaguely
-- Tell the operative what the NEXT LEVEL of this response looks like
-- SYD voice: direct, short sentences, no flattery, no filler, no "great job"
-- Do not use the word "journey" or "passion" — too soft
-- Output ONLY the feedback text. No labels. No JSON. No preamble.
+Evaluation rules:
+1. FREE TEXT OVERRIDE RULE — THIS IS THE MOST IMPORTANT RULE: If the operative provided free text AND it contradicts or meaningfully differs from their chosen option, treat the free text as the primary signal. The option choice is secondary. Acknowledge the free text instinct before anything else. Always apply this rule, even when the free text only partially overrides the option.
+2. Acknowledge the RIGHT INSTINCT first — even if the phrasing or option label was imprecise.
+3. Semantic equivalence matters: if the operative got the right idea but called it something different, recognise the instinct and frame the vocabulary as just packaging.
+4. If there is a gap in their thinking, name it specifically — not vaguely.
+5. Tell the operative what the NEXT LEVEL of this response looks like.
+6. 3 to 4 sentences maximum.
+7. SYD voice: direct, short sentences, no flattery, no filler, no "great job".
+8. Do not use the word "journey" or "passion" — too soft.
+9. Output ONLY the feedback text. No labels. No JSON. No preamble.
 `.trim();
 
     const result = await geminiGenerate(prompt);
@@ -346,8 +433,7 @@ Write SYD's evaluation. Rules:
 //   - Free text present → acknowledge it specifically
 
 function buildLocalJudgmentFeedback(enc) {
-    const optId  = encounterState.selectedOption;
-    const rsnId  = encounterState.selectedReasoning;
+    const optId    = encounterState.selectedOption;
     const freeText = encounterState.freeText;
 
     // Generic but honest fallback reads per option — designed per encounter stat domain
@@ -388,8 +474,8 @@ function renderJudgmentFeedback(enc, feedback) {
     const container = document.getElementById('encounter-content');
     if (!container) return;
 
-    const selectedOpt = (enc.options || []).find(o => o.id === encounterState.selectedOption);
-    const freeText    = encounterState.freeText;
+    const selectedOpt  = (enc.options || []).find(o => o.id === encounterState.selectedOption);
+    const freeText     = encounterState.freeText;
     const feedbackText = feedback ? feedback.text : '';
     const isGemini     = feedback && feedback.geminiEnhanced;
 

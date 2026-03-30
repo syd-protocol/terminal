@@ -16,8 +16,15 @@
 //     career pool for day-consistency. Same seed logic as static pool.
 //   - renderDirectives() updated: career directive cards show a
 //     secondary career skill tag beneath the stat badge.
-//     tactical_guide field still supported for backward compat;
-//     intel field (Block E) will replace it when quests.json is updated.
+//
+// BLOCK D changes:
+//   - tactical_guide fully deprecated. intel is now the sole field.
+//   - Button always reads '⬡ INTEL' — no legacy 'TACTICAL INTEL' label.
+//   - showIntelBtn: true only when quest.intel is present. Cards without
+//     intel show no button (previously they showed the button using
+//     tactical_guide as fallback — that path is removed).
+//   - tactical_guide field references stripped from all rendering logic.
+//   - intel field panel text: quest.intel only.
 // ═══════════════════════════════════════════════════════════════
 
 // ─── STORAGE KEYS ────────────────────────────────────────────
@@ -302,8 +309,10 @@ function dateToNumber(dateStr) {
 // career_skill field is simply rendered as an additional badge row
 // when present on the quest object.
 //
-// intel field: quests.json will gain this field in Block E.
-// tactical_guide still supported for backward compatibility until then.
+// BLOCK D: tactical_guide fully removed. intel is the sole field.
+// showIntelBtn: true only when quest.intel is present.
+// Button always reads '⬡ INTEL'.
+// Intel panel text: quest.intel only.
 
 function renderDirectives(quests, completedToday) {
     const list = document.getElementById('quest-list');
@@ -350,12 +359,10 @@ function renderDirectives(quests, completedToday) {
         // XP display — Sig rewards shown on card
         const xpLine = `+${quest.xp} XP · +${Math.floor(quest.xp / 2)} SIG`;
 
-        // intel field (Block E) replaces tactical_guide.
-        // Both are supported during transition — intel takes priority.
-        const hasIntel       = !!(quest.intel);
-        const hasTacGuide    = !!(quest.tactical_guide);
-        const showIntelBtn   = hasIntel || hasTacGuide;
-        const intelBtnLabel  = hasIntel ? '⬡ INTEL' : '⬡ TACTICAL INTEL';
+        // BLOCK D: intel field only. No tactical_guide fallback.
+        // Button shown only when quest.intel exists.
+        const hasIntel     = !!(quest.intel);
+        const showIntelBtn = hasIntel;
 
         const card = document.createElement('div');
         card.className = `directive-card${isComplete ? ' directive-card--complete' : ''}${isCareer ? ' directive-card--career' : ''}`;
@@ -376,11 +383,9 @@ function renderDirectives(quests, completedToday) {
             <p class="dc-desc">${quest.desc}</p>
 
             ${showIntelBtn ? `
-                <button class="dc-intel-btn" data-quest-id="${quest.id}">
-                    ${intelBtnLabel}
-                </button>
+                <button class="dc-intel-btn" data-quest-id="${quest.id}">⬡ INTEL</button>
                 <div class="dc-intel-panel hidden" id="intel-panel-${quest.id}">
-                    <p class="dc-intel-text">${hasIntel ? quest.intel : (quest.tactical_guide ? quest.tactical_guide.logic || '' : '')}</p>
+                    <p class="dc-intel-text">${quest.intel}</p>
                 </div>
             ` : ''}
 
@@ -439,9 +444,8 @@ function renderDirectives(quests, completedToday) {
 
         list.appendChild(card);
 
-        // ── Wire intel / tactical guide button ────────────────
-        // BLOCK B: Intel button toggles inline panel (expand/collapse).
-        // Block E will complete this when all directives gain the intel field.
+        // ── Wire intel button — inline expand/collapse ────────────
+        // BLOCK D: intel only. Panel shows quest.intel text.
         if (showIntelBtn) {
             const intelBtn   = card.querySelector(`.dc-intel-btn[data-quest-id="${quest.id}"]`);
             const intelPanel = document.getElementById(`intel-panel-${quest.id}`);
@@ -450,7 +454,7 @@ function renderDirectives(quests, completedToday) {
                     const isOpen = !intelPanel.classList.contains('hidden');
                     if (isOpen) {
                         intelPanel.classList.add('hidden');
-                        intelBtn.textContent = hasIntel ? '⬡ INTEL' : '⬡ TACTICAL INTEL';
+                        intelBtn.textContent = '⬡ INTEL';
                     } else {
                         intelPanel.classList.remove('hidden');
                         intelBtn.textContent = '− CLOSE';

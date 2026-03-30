@@ -6,16 +6,35 @@
 // SYD narrates every transition. Not UI labels — a voice.
 // Morning: specific, honest, short. Based on yesterday's data.
 // Mid-day: one line if no engagement by noon.
-// Close-of-day: momentum update, capacity summary, journal prompt.
+// Close-of-day: momentum update, capacity summary, directives completed.
 //
 // The loop is goal-paced, not time-paced. SYD pushes.
 // The operative pulls. Always present, never overwhelming.
+//
+// BLOCK D changes:
+//   - writeDailySnapshot() added. Writes a single aggregated document to
+//     Firestore at syd_operatives/{uid}/daily_snapshots/{date} during the
+//     close-of-day sequence (cloud sync enabled only). One write per
+//     operative per day, ~400 bytes. Free tier safe indefinitely.
+//     Career skills included. No per-event writes. No new collections.
+//   - triggerCloseOfDay() updated: after the operative dismisses the
+//     overlay (skip or journal), an idle-window background task fires.
+//     It checks Call 4 conditions and writes the daily snapshot.
+//   - Call 4 background trigger: fires silently if BOTH conditions are met:
+//       1. CALL_4_REFRESH_INTERVAL_DAYS have passed since last refresh
+//          (reads CALL_4_REFRESH_INTERVAL_DAYS from gemini.js constant)
+//       2. syd_career_directives cache count is below
+//          CAREER_DIRECTIVE_CACHE_THRESHOLD
+//     Both constants live in gemini.js as [TUNING TARGET] values.
+//     Call 4 prompt and response parsing is in path.js (fireCall4).
+//   - SNAPSHOT_KEY added for tracking daily snapshot write status.
 // ═══════════════════════════════════════════════════════════════
 
 // ─── DAILY LOOP KEYS ─────────────────────────────────────────
 const MORNING_TX_KEY     = 'syd_morning_tx';    // date of last morning transmission shown
 const DAY_CLOSED_KEY     = 'syd_day_closed';    // date of last close-of-day sequence
 const MIDDAY_NUDGE_KEY   = 'syd_midday_nudge';  // date of last mid-day nudge shown
+const SNAPSHOT_KEY       = 'syd_snapshot_date'; // date of last daily snapshot written
 
 // ─── MORNING TRANSMISSION ────────────────────────────────────
 // Fires once per day on first open. SYD's voice.
@@ -80,7 +99,7 @@ function showMorningTransmission() {
     btn.onclick = () => {
         playUIClick();
         overlay.classList.add('hidden');
-        // PASS 1: morning transmission dismiss lands on STATUS tab (not directives)
+        // Morning transmission dismiss lands on STATUS tab
         if (typeof switchStatusTab === 'function') switchStatusTab('status');
     };
 
@@ -178,6 +197,12 @@ function checkMidDayNudge() {
 // Summarises what happened: momentum, capacity, directives completed.
 // Opens journal prompt after summary.
 // The operative can also trigger this manually from the directives tab.
+//
+// BLOCK D: After the operative dismisses (skip or journal), an idle-window
+// background task fires after a short delay. It:
+//   1. Writes the daily snapshot to Firestore (cloud sync enabled only)
+//   2. Checks Call 4 conditions and fires the background career refresh
+//      if both are met (silent — no operative-visible state ever).
 
 function shouldShowCloseOfDay() {
     return localStorage.getItem(DAY_CLOSED_KEY) !== today();
@@ -223,10 +248,24 @@ function triggerCloseOfDay() {
         setTimeout(nextLine, 900);
     }
 
+    // ── Dismiss handler — shared logic for both journal and skip ──
+    // BLOCK D: After dismissal, fire the idle-window background tasks:
+    //   1. Daily snapshot write (Firestore, cloud sync enabled only)
+    //   2. Call 4 career content refresh check (silent)
+    // Both fire after a short delay so they do not block UI response.
+    function onDismiss() {
+        overlay.classList.add('hidden');
+        // Idle-window: 2 seconds after dismiss so the UI is fully settled
+        setTimeout(() => {
+            writeDailySnapshot();
+            checkAndFireCall4();
+        }, 2000);
+    }
+
     if (btn) {
         btn.onclick = () => {
             playUIClick();
-            overlay.classList.add('hidden');
+            onDismiss();
             if (typeof switchStatusTab === 'function') switchStatusTab('directives');
             // Scroll to journal — brief delay so tab renders first
             setTimeout(() => {
@@ -239,7 +278,7 @@ function triggerCloseOfDay() {
     if (skipBtn) {
         skipBtn.onclick = () => {
             playUIClick();
-            overlay.classList.add('hidden');
+            onDismiss();
         };
     }
 
@@ -290,12 +329,167 @@ function buildCloseOfDayLines() {
     return lines;
 }
 
+// ─── DAILY SNAPSHOT WRITE ─────────────────────────────────────
+// Writes a single aggregated document to Firestore once per day
+// during the close-of-day idle window. Cloud sync must be enabled.
+//
+// Document path: syd_operatives/{uid}/daily_snapshots/{YYYY-MM-DD}
+// Document size: ~400 bytes — well within Firestore free tier limits.
+// One write per operative per day — indefinitely free tier safe.
+//
+// Snapshot includes: stats, level, momentum, capacity, sig, completedToday
+// count, operatorDays, rank, career skills summary. No journal text, no
+// field notes — these stay local only.
+//
+// Guard: if the snapshot has already been written today (SNAPSHOT_KEY),
+// the function exits immediately. This makes the function idempotent —
+// safe to call multiple times without double-writing.
+//
+// [RESEARCH] Source: Firebase pricing docs — Firestore free tier
+// Finding: 20k writes/day free. 1 write/operative/day = effectively
+//          free regardless of scale.
+// Applied: single aggregate write pattern vs per-event writes.
+
+function writeDailySnapshot() {
+    if (!player) return;
+
+    // Guard: only write once per day
+    const todayStr = today();
+    if (localStorage.getItem(SNAPSHOT_KEY) === todayStr) return;
+
+    // Guard: only write when cloud sync is enabled
+    const cloudEnabled = (typeof getCloudSyncEnabled === 'function')
+        ? getCloudSyncEnabled()
+        : false;
+    if (!cloudEnabled) return;
+
+    // Guard: requires Firestore and auth (defined in app.js)
+    if (typeof db === 'undefined' || typeof firebase === 'undefined') return;
+
+    const uid = (typeof getCurrentUID === 'function') ? getCurrentUID() : null;
+    if (!uid) return;
+
+    // Build snapshot — aggregate state only, no free text
+    const careerSkillsRaw = localStorage.getItem('syd_career_skills');
+    let careerSkillsSummary = null;
+    try {
+        careerSkillsSummary = careerSkillsRaw ? JSON.parse(careerSkillsRaw) : null;
+    } catch(_) {
+        careerSkillsSummary = null;
+    }
+
+    const snapshot = {
+        date:            todayStr,
+        operatorDays:    player.operatorDays    || 0,
+        level:           (typeof calculateLevel === 'function') ? calculateLevel() : 1,
+        momentum:        player.momentum        || 1.0,
+        capacity:        player.capacity        ?? (player.maxCapacity ?? 100),
+        maxCapacity:     player.maxCapacity      || 100,
+        sig:             player.sig              || 0,
+        gear:            player.gear             || 1,
+        rank:            player.rank             || 'F',
+        consecutiveDays: player.consecutiveDays  || 0,
+        completedCount:  (player.completedToday  || []).length,
+        totalDirectives: (typeof dailyQuests !== 'undefined') ? dailyQuests.length : 0,
+        stats: {
+            strength:     player.strength     || 0,
+            intelligence: player.intelligence || 0,
+            agility:      player.agility      || 0,
+            endurance:    player.endurance    || 0,
+            charisma:     player.charisma     || 0
+        },
+        careerSkills:    careerSkillsSummary,
+        writtenAt:       new Date().toISOString()
+    };
+
+    // Write to Firestore — silent failure, never surfaces to operative
+    db.collection('syd_operatives')
+        .doc(uid)
+        .collection('daily_snapshots')
+        .doc(todayStr)
+        .set(snapshot)
+        .then(() => {
+            localStorage.setItem(SNAPSHOT_KEY, todayStr);
+            console.log('[SYD] Daily snapshot written for', todayStr);
+        })
+        .catch(err => {
+            // Silent failure — Firestore unavailable or quota hit
+            // Do not set SNAPSHOT_KEY so it can retry on next close-of-day
+            console.warn('[SYD] Daily snapshot write failed (silent):', err.message || err);
+        });
+}
+
+// ─── CALL 4: BACKGROUND CAREER CONTENT REFRESH ───────────────
+// Fires silently in the close-of-day idle window when both conditions
+// are met:
+//   1. syd_career_refresh_date is more than CALL_4_REFRESH_INTERVAL_DAYS ago
+//   2. syd_career_directives cache count is below CAREER_DIRECTIVE_CACHE_THRESHOLD
+//
+// Both constants are defined in gemini.js as [TUNING TARGET] values.
+// Call 4 itself is defined in path.js (fireCall4). This function is
+// only the trigger/gatekeeper.
+//
+// Silent: no operative-visible state at any point.
+// No retry on failure — will check again at next close-of-day.
+
+const CAREER_REFRESH_DATE_KEY = 'syd_career_refresh_date';
+
+function checkAndFireCall4() {
+    // Requires Neural Link and career path to be established
+    if (typeof hasNeuralLink !== 'function' || !hasNeuralLink()) return;
+
+    const pathData = localStorage.getItem('syd_path_data');
+    if (!pathData) return;   // No PATH completed — career directives not applicable
+
+    // Check interval condition
+    const lastRefresh    = localStorage.getItem(CAREER_REFRESH_DATE_KEY);
+    const intervalDays   = (typeof CALL_4_REFRESH_INTERVAL_DAYS !== 'undefined')
+        ? CALL_4_REFRESH_INTERVAL_DAYS
+        : 5;    // local fallback if gemini.js constant not in scope
+
+    let daysSinceRefresh = Infinity;
+    if (lastRefresh) {
+        const msPerDay = 86400000;
+        daysSinceRefresh = Math.floor((new Date() - new Date(lastRefresh)) / msPerDay);
+    }
+
+    if (daysSinceRefresh < intervalDays) return;   // not yet time
+
+    // Check cache threshold condition
+    const threshold = (typeof CAREER_DIRECTIVE_CACHE_THRESHOLD !== 'undefined')
+        ? CAREER_DIRECTIVE_CACHE_THRESHOLD
+        : 2;    // local fallback
+
+    let cacheCount = 0;
+    try {
+        const raw = localStorage.getItem('syd_career_directives');
+        if (raw) {
+            const pool = JSON.parse(raw);
+            cacheCount = Array.isArray(pool) ? pool.length : 0;
+        }
+    } catch(_) {
+        cacheCount = 0;
+    }
+
+    if (cacheCount > threshold) return;   // cache still healthy — no refresh needed
+
+    // Both conditions met — fire Call 4
+    // fireCall4 is defined in path.js. If it is not in scope, exit silently.
+    if (typeof fireCall4 !== 'function') {
+        console.warn('[SYD] fireCall4 not available — Call 4 skipped.');
+        return;
+    }
+
+    console.log('[SYD] Call 4 conditions met — firing background career refresh.');
+    fireCall4().catch(err => {
+        // Silent failure — Call 4 errors never surface to the operative
+        console.warn('[SYD] Call 4 background refresh failed (silent):', err.message || err);
+    });
+}
+
 // ─── DAY-AWARE JOURNAL PROMPTS ────────────────────────────────
 // The journal prompt changes based on what stats were trained today
 // and how many days the operative has been active.
-// At the Gemini phase, SYD generates a personalised prompt from
-// the specific directives completed. For now: 5 rotating prompts
-// weighted toward the most-trained stat of the day.
 
 function getTodaysJournalPrompt() {
     if (!player) return getDefaultJournalPrompt();
