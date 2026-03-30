@@ -2,7 +2,28 @@
 // SYD GES — quests.js
 // Directive selection engine and card renderer.
 // No frameworks. No bundlers. 4-space indentation.
+//
+// BLOCK B changes:
+//   - getDailyQuests() updated to mix career directives from the
+//     career cache (syd_career_directives in localStorage) at the
+//     correct gear ratio (3/5/7 additional career directives).
+//   - Tier 0 guard: career mixing skipped when operatorDays <= 7.
+//   - Career cache empty: falls back silently to 100% static pool.
+//   - Career directives tagged with _isCareerDirective: true so
+//     completeQuest() in app.js can identify them for career skill
+//     increment routing.
+//   - getCareerDirectivesFromCache() — loads and date-seeds the
+//     career pool for day-consistency. Same seed logic as static pool.
+//   - renderDirectives() updated: career directive cards show a
+//     secondary career skill tag beneath the stat badge.
+//     tactical_guide field still supported for backward compat;
+//     intel field (Block E) will replace it when quests.json is updated.
 // ═══════════════════════════════════════════════════════════════
+
+// ─── STORAGE KEYS ────────────────────────────────────────────
+// These mirror the keys defined in app.js — quests.js reads from
+// localStorage directly so it does not depend on app.js load order.
+const CAREER_DIRECTIVES_CACHE_KEY = 'syd_career_directives';
 
 // ─── TIER UNLOCK LEVELS ──────────────────────────────────────
 // Tier 0: Days 1–7  — deterministic onboarding directives (5 per day)
@@ -17,17 +38,17 @@ function getCurrentTier(level) {
 }
 
 // ─── GEAR SYSTEM ─────────────────────────────────────────────
-// Gear controls how many directives per stat are issued each day.
-// More directives = more practice reps = faster real-world growth = faster XP.
-// The XP acceleration is a consequence of genuine extra effort, not a cheat.
+// Gear controls how many life-stat directives per stat are issued each day.
+// Career directives (Block B) are additive on top of these counts.
 //
-//   Gear 1 — Standard:      1 directive per stat  (5 total)
-//   Gear 2 — Practice Mode: 2 directives per stat (10 total)
-//   Gear 3 — Deep Practice: 3 directives per stat (15 total)
-//             → Slot 3 always carries a field note reflection prompt
+//   Gear 1 — Standard:      1 life-stat directive per stat  (5 total)  + 3 career
+//   Gear 2 — Practice Mode: 2 life-stat directives per stat (10 total) + 5 career
+//   Gear 3 — Deep Practice: 3 life-stat directives per stat (15 total) + 7 career
+//             → Slot 3 of life-stat always carries a field note reflection prompt
 //
 // Gear does NOT apply during Tier 0 (days 1–7). All Tier 0 runs at Gear 1.
-// Gear unlocks after the operative completes all 7 Tier 0 days and enters Level 1.
+// Career directives are also skipped during Tier 0 — no mixing until Day 8.
+// Gear unlocks after the operative completes all 7 Tier 0 days.
 
 // ─── TIER 0: OPERATIVE DAYS 1–7 ──────────────────────────────
 // Deterministic day-matched directives for the first 7 operative days.
@@ -54,10 +75,64 @@ function getTier0DayQuests(allQuests, operatorDays) {
     return result;
 }
 
+// ─── CAREER DIRECTIVE CACHE LOADER ───────────────────────────
+// Loads career directives from localStorage (seeded by Gemini Call 2,
+// refreshed by Call 4 in Block D). Returns an empty array if cache
+// is absent or malformed — caller handles gracefully.
+//
+// Career directives are date-seeded to give day-consistency.
+// The same operative sees the same career directives all day.
+// Directives that have been completed today are filtered out first.
+function getCareerDirectivesFromCache(count, completedToday) {
+    try {
+        const raw = localStorage.getItem(CAREER_DIRECTIVES_CACHE_KEY);
+        if (!raw) return [];
+        const pool = JSON.parse(raw);
+        if (!Array.isArray(pool) || pool.length === 0) return [];
+
+        // Filter out directives completed today
+        const completed  = completedToday || [];
+        const available  = pool.filter(d => !completed.includes(d.id));
+        if (!available.length) return [];
+
+        // Date-seed for day-consistency — same day = same selection
+        const dateNum = dateToNumber(new Date().toISOString().slice(0, 10));
+        const result  = [];
+        const used    = new Set();
+
+        for (let i = 0; i < count && i < available.length; i++) {
+            const seed     = (dateNum + i * 37) % available.length; // prime step avoids collision
+            let   idx      = seed;
+            let   attempts = 0;
+
+            // Walk forward until we find an unused directive
+            while (used.has(idx) && attempts < available.length) {
+                idx = (idx + 1) % available.length;
+                attempts++;
+            }
+
+            if (!used.has(idx)) {
+                // Tag as career directive so app.js can route the increment correctly
+                result.push({ ...available[idx], _isCareerDirective: true });
+                used.add(idx);
+            }
+        }
+
+        return result;
+    } catch(e) {
+        console.warn('[SYD] Could not load career directive cache:', e);
+        return [];
+    }
+}
+
 // ─── DAILY DIRECTIVE SELECTION ───────────────────────────────
-// Picks directives per stat per day, seeded by date for day-consistency.
-// The same operative gets the same directives all day — refreshing does not reshuffle.
+// Picks life-stat directives per stat per day, seeded by date.
+// The same operative gets the same directives all day.
 // Pool is filtered to directives at or below the current tier.
+//
+// BLOCK B: After life-stat selection, career directives are mixed in
+// from the career cache at the gear-appropriate count (3/5/7).
+// This only applies after Tier 0 and when the career cache is populated.
 //
 // Graceful tier fallback: if the current tier pool is empty for a stat,
 // SYD falls back to the highest available lower tier and flags it.
@@ -65,13 +140,14 @@ function getTier0DayQuests(allQuests, operatorDays) {
 
 function getDailyQuests(allQuests, level, gear, operatorDays) {
 
-    // ── Tier 0: days 1–7 — deterministic day-matched directives ──
-    // Gear is irrelevant here. Always 5 directives per day.
+    // ── Tier 0: days 1–7 — deterministic, no career mixing ───────
+    // Career directives are never mixed during Tier 0. The Tier 0
+    // experience is deliberately controlled and cannot be disrupted
+    // by an empty or partially-populated career cache.
     if (typeof operatorDays === 'number' && operatorDays >= 1 && operatorDays <= 7) {
         const tier0 = getTier0DayQuests(allQuests, operatorDays);
         if (tier0.length > 0) return tier0;
         // If Tier 0 pool is entirely empty (data gap), fall through to standard selection.
-        // This should never happen in production — all 35 Tier 0 directives will be written.
     }
 
     const todayStr  = new Date().toISOString().slice(0, 10);
@@ -81,10 +157,10 @@ function getDailyQuests(allQuests, level, gear, operatorDays) {
     const gearLevel = gear || 1;
     const daily     = [];
 
+    // ── Life-stat selection (unchanged from original) ─────────────
     stats.forEach((stat, statIndex) => {
 
         if (gearLevel === 1) {
-            // ── Gear 1: single directive from full tier-filtered pool ──
             const pool = getPoolWithFallback(allQuests, stat, tier);
             if (!pool.length) return;
             const seed   = dateNum + statIndex;
@@ -92,18 +168,15 @@ function getDailyQuests(allQuests, level, gear, operatorDays) {
             if (picked) daily.push(picked);
 
         } else if (gearLevel === 2) {
-            // ── Gear 2: two directives from full tier-filtered pool ──
-            // Different seeds (offset by a prime) ensure different directives are picked.
             const pool = getPoolWithFallback(allQuests, stat, tier);
             if (!pool.length) return;
 
             const seed1 = dateNum + statIndex;
-            const seed2 = dateNum + statIndex + 37; // prime offset avoids collision
+            const seed2 = dateNum + statIndex + 37;
 
             const q1   = pool[seed1 % pool.length];
             let   idx2 = seed2 % pool.length;
 
-            // Ensure slot 2 differs from slot 1
             if (pool[idx2] && pool[idx2].id === q1.id && pool.length > 1) {
                 idx2 = (idx2 + 1) % pool.length;
             }
@@ -113,16 +186,7 @@ function getDailyQuests(allQuests, level, gear, operatorDays) {
             if (q2) daily.push(q2);
 
         } else {
-            // ── Gear 3: three directives, varied by tier ──
-            // Slot 1: operative's highest unlocked tier
-            // Slot 2: one tier below highest (min Tier 1)
-            // Slot 3: Tier 1 always — foundational reinforcement + reflection prompt
-            //
-            // Example for a Tier 3 operative:
-            //   Slot 1 → [Tier 3] deep mastery directive
-            //   Slot 2 → [Tier 2] framework directive
-            //   Slot 3 → [Tier 1] foundation directive  ← reflection prompt lives here
-
+            // Gear 3: three directives, varied by tier
             const tier2 = Math.max(1, tier - 1);
 
             const pool1 = allQuests.filter(q => q.stat === stat && q.tier === tier);
@@ -131,15 +195,12 @@ function getDailyQuests(allQuests, level, gear, operatorDays) {
 
             const seed1 = dateNum + statIndex;
             const seed2 = dateNum + statIndex + 37;
-            const seed3 = dateNum + statIndex + 71; // second prime offset
+            const seed3 = dateNum + statIndex + 71;
 
             const q1 = pool1.length ? pool1[seed1 % pool1.length] : null;
             const q2 = pool2.length ? pool2[seed2 % pool2.length] : null;
             const q3 = pool3.length ? pool3[seed3 % pool3.length] : null;
 
-            // Deduplication — prevents showing the same directive twice in a day.
-            // This can happen at Tier 1 where all three pools are identical.
-            // Try the next candidate before giving up.
             const usedIds = [];
             const dedup = (q, pool, seed) => {
                 if (!q) return null;
@@ -154,15 +215,13 @@ function getDailyQuests(allQuests, level, gear, operatorDays) {
                         return candidate;
                     }
                 }
-                return q; // last resort: accept duplicate only if pool is exhausted
+                return q;
             };
 
             const final1 = dedup(q1, pool1, seed1);
             const final2 = dedup(q2, pool2, seed2);
             let   final3 = dedup(q3, pool3, seed3);
 
-            // Tag slot 3 — the card renderer uses this to show the reflection prompt
-            // and lock the complete button until the operative has written a field note.
             if (final3) final3 = { ...final3, _requiresReflection: true };
 
             if (final1) daily.push(final1);
@@ -171,6 +230,36 @@ function getDailyQuests(allQuests, level, gear, operatorDays) {
         }
     });
 
+    // ── BLOCK B: Career directive mixing ─────────────────────────
+    // Career directives are appended after life-stat directives.
+    // Count is determined by gear level: 3 / 5 / 7.
+    // Skipped silently if cache is empty (no Gemini Call 2 yet,
+    // Neural Link not connected, or first week of Tier 0 — already
+    // handled above).
+    //
+    // The current player's completedToday is accessed via the global
+    // `player` variable (set in app.js). If player is not yet defined,
+    // this step is skipped gracefully.
+    const careerCountByGear = { 1: 3, 2: 5, 3: 7 };
+    const careerCount       = careerCountByGear[gearLevel] || 3;
+    const completedIds      = (typeof player !== 'undefined' && player && player.completedToday)
+        ? player.completedToday
+        : [];
+
+    const careerDirectives = getCareerDirectivesFromCache(careerCount, completedIds);
+
+    if (careerDirectives.length > 0) {
+        // Dedup against life-stat directives already selected (IDs should
+        // not collide since career IDs use cd_ prefix, but check defensively)
+        const existingIds = new Set(daily.map(d => d.id));
+        careerDirectives.forEach(cd => {
+            if (!existingIds.has(cd.id)) {
+                daily.push(cd);
+                existingIds.add(cd.id);
+            }
+        });
+    }
+
     return daily;
 }
 
@@ -178,20 +267,14 @@ function getDailyQuests(allQuests, level, gear, operatorDays) {
 // Returns the full directive pool for a stat at or below the target tier.
 // If the current tier has no directives, falls back to the highest available
 // lower tier and notifies SYD's log so the operative is never left with nothing.
-//
-// This is the core of the graceful tier fallback guarantee:
-// the operative always gets directives, always knows why.
 
 function getPoolWithFallback(allQuests, stat, targetTier) {
-    // Try exact tier first
     let pool = allQuests.filter(q => q.stat === stat && q.tier === targetTier);
     if (pool.length > 0) return pool;
 
-    // Tier is unlocked but pool is empty — fall back down the tiers
     for (let t = targetTier - 1; t >= 1; t--) {
         pool = allQuests.filter(q => q.stat === stat && q.tier === t);
         if (pool.length > 0) {
-            // [GRACEFUL FALLBACK] Notify via log — never breaks silently
             if (typeof showLog === 'function') {
                 showLog(`[ TIER ${targetTier} DIRECTIVES LOADING — OPERATING ON CURRENT BEST ]`, 'system');
             }
@@ -199,7 +282,6 @@ function getPoolWithFallback(allQuests, stat, targetTier) {
         }
     }
 
-    // Nothing at all — return empty, caller handles gracefully
     console.warn('[SYD] No directives found for stat:', stat, 'tier:', targetTier);
     return [];
 }
@@ -213,7 +295,15 @@ function dateToNumber(dateStr) {
 
 // ─── DIRECTIVE CARD RENDERER ─────────────────────────────────
 // Renders all daily directive cards into #quest-list.
-// Called by showScreen('screen-directives') via app.js.
+// Called by renderDirectivesSegment() in status.js.
+//
+// BLOCK B: Career directive cards show a secondary career skill tag
+// beneath the stat badge. No structural changes to card HTML — the
+// career_skill field is simply rendered as an additional badge row
+// when present on the quest object.
+//
+// intel field: quests.json will gain this field in Block E.
+// tactical_guide still supported for backward compatibility until then.
 
 function renderDirectives(quests, completedToday) {
     const list = document.getElementById('quest-list');
@@ -250,8 +340,9 @@ function renderDirectives(quests, completedToday) {
         const colour          = statColour[quest.stat] || 'var(--accent)';
         const label           = statLabel[quest.stat]  || quest.stat.toUpperCase();
         const needsReflection = !!quest._requiresReflection;
+        const isCareer        = !!quest._isCareerDirective;
+        const careerSkill     = quest.career_skill || null;
 
-        // Saved field note for this directive today
         const savedNote = (typeof loadFieldNote === 'function')
             ? loadFieldNote(quest.id)
             : '';
@@ -259,8 +350,15 @@ function renderDirectives(quests, completedToday) {
         // XP display — Sig rewards shown on card
         const xpLine = `+${quest.xp} XP · +${Math.floor(quest.xp / 2)} SIG`;
 
+        // intel field (Block E) replaces tactical_guide.
+        // Both are supported during transition — intel takes priority.
+        const hasIntel       = !!(quest.intel);
+        const hasTacGuide    = !!(quest.tactical_guide);
+        const showIntelBtn   = hasIntel || hasTacGuide;
+        const intelBtnLabel  = hasIntel ? '⬡ INTEL' : '⬡ TACTICAL INTEL';
+
         const card = document.createElement('div');
-        card.className = `directive-card${isComplete ? ' directive-card--complete' : ''}`;
+        card.className = `directive-card${isComplete ? ' directive-card--complete' : ''}${isCareer ? ' directive-card--career' : ''}`;
         card.id        = `quest-card-${quest.id}`;
         card.style.setProperty('--card-stat-colour', colour);
 
@@ -269,13 +367,21 @@ function renderDirectives(quests, completedToday) {
                 <span class="dc-stat-tag" style="color:${colour}">[ ${label} ]</span>
                 <span class="dc-tier-tag">T${quest.tier}</span>
             </div>
+            ${isCareer && careerSkill ? `
+                <div class="dc-career-tag">
+                    <span class="dc-career-skill-label">${careerSkill}</span>
+                </div>
+            ` : ''}
             <h3 class="dc-title">${quest.title}</h3>
             <p class="dc-desc">${quest.desc}</p>
 
-            ${quest.tactical_guide ? `
-            <button class="dc-intel-btn" data-quest-id="${quest.id}">
-                ⬡ TACTICAL INTEL
-            </button>
+            ${showIntelBtn ? `
+                <button class="dc-intel-btn" data-quest-id="${quest.id}">
+                    ${intelBtnLabel}
+                </button>
+                <div class="dc-intel-panel hidden" id="intel-panel-${quest.id}">
+                    <p class="dc-intel-text">${hasIntel ? quest.intel : (quest.tactical_guide ? quest.tactical_guide.logic || '' : '')}</p>
+                </div>
             ` : ''}
 
             <div class="dc-footer">
@@ -333,25 +439,27 @@ function renderDirectives(quests, completedToday) {
 
         list.appendChild(card);
 
-        // ── Wire Tactical Intel button ────────────────────────
-        if (quest.tactical_guide) {
-            const intelBtn = card.querySelector(`.dc-intel-btn[data-quest-id="${quest.id}"]`);
-            if (intelBtn) {
+        // ── Wire intel / tactical guide button ────────────────
+        // BLOCK B: Intel button toggles inline panel (expand/collapse).
+        // Block E will complete this when all directives gain the intel field.
+        if (showIntelBtn) {
+            const intelBtn   = card.querySelector(`.dc-intel-btn[data-quest-id="${quest.id}"]`);
+            const intelPanel = document.getElementById(`intel-panel-${quest.id}`);
+            if (intelBtn && intelPanel) {
                 intelBtn.addEventListener('click', () => {
-                    if (typeof showTacticalGuide === 'function') {
-                        showTacticalGuide({
-                            label:         `[ ${quest.tactical_guide.title} ]`,
-                            enemy:         quest.tactical_guide.mechanic,
-                            weapon:        quest.model || '',
-                            tacticalGuide: quest.tactical_guide.logic
-                        });
+                    const isOpen = !intelPanel.classList.contains('hidden');
+                    if (isOpen) {
+                        intelPanel.classList.add('hidden');
+                        intelBtn.textContent = hasIntel ? '⬡ INTEL' : '⬡ TACTICAL INTEL';
+                    } else {
+                        intelPanel.classList.remove('hidden');
+                        intelBtn.textContent = '− CLOSE';
                     }
                 });
             }
         }
 
         // ── Wire field note — reflection-gated (Gear 3 slot 3) ──
-        // Complete button locked until 10+ characters written.
         if (needsReflection && !isComplete) {
             const textarea    = document.getElementById(`fn-input-${quest.id}`);
             const completeBtn = document.getElementById(`complete-btn-${quest.id}`);
@@ -378,11 +486,10 @@ function renderDirectives(quests, completedToday) {
             const textarea  = document.getElementById(`fn-input-${quest.id}`);
             const countEl   = document.getElementById(`fn-count-${quest.id}`);
 
-            // If a note already exists, show the wrap by default
             if (savedNote && wrap) {
                 wrap.classList.remove('fn-wrap--hidden');
                 if (toggleBtn) {
-                    toggleBtn.textContent = '− NOTE';
+                    toggleBtn.textContent  = '− NOTE';
                     toggleBtn.dataset.open = 'true';
                 }
             }
@@ -392,11 +499,11 @@ function renderDirectives(quests, completedToday) {
                     const isOpen = toggleBtn.dataset.open === 'true';
                     if (isOpen) {
                         wrap.classList.add('fn-wrap--hidden');
-                        toggleBtn.textContent = '+ ADD NOTE';
+                        toggleBtn.textContent  = '+ ADD NOTE';
                         toggleBtn.dataset.open = 'false';
                     } else {
                         wrap.classList.remove('fn-wrap--hidden');
-                        toggleBtn.textContent = '− NOTE';
+                        toggleBtn.textContent  = '− NOTE';
                         toggleBtn.dataset.open = 'true';
                         if (textarea) textarea.focus();
                     }
@@ -415,8 +522,6 @@ function renderDirectives(quests, completedToday) {
     });
 
     // ── Wire complete buttons ─────────────────────────────────
-    // Reflection-gated buttons are handled above (disabled until note written).
-    // This catches all standard non-gated complete buttons.
     document.querySelectorAll('.complete-btn:not([disabled])').forEach(btn => {
         btn.addEventListener('click', () => {
             const { id, stat, xp } = btn.dataset;

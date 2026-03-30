@@ -34,6 +34,16 @@
 //   - STATUS tab: renderStatusMainContent() (single scroll with all sections)
 //   - Settings in STATUS: renderSettingsSection() (inline at scroll bottom)
 //   - PATH in STATUS: renderPathSection() (all elements tappable)
+//
+// BLOCK B changes:
+//   - Career Skills section in STATUS tab — live implementation replaces placeholder.
+//   - buildCareerSkillsSection() renders tracks loaded from syd_career_skills.
+//   - Each track shows: name, score, progress bar with soft cap marker,
+//     stat mapping tag. Tappable to expand description inline.
+//   - If no tracks exist: shows contextual empty state based on whether PATH
+//     has been run and whether Neural Link is connected.
+//   - wireCareerSkillsSection() wires tap handlers after render.
+//   - renderStatusMainContent() updated to call live career skills builder.
 // ═══════════════════════════════════════════════════════════════
 
 // ─── ACTIVE STATE ────────────────────────────────────────────
@@ -981,19 +991,8 @@ function renderStatusMainContent(container, animate) {
             </div>
         `;
 
-    // ── Career Skills placeholder ──────────────────────────────
-    // Block B will replace this with live career skill tracks.
-    const careerSkillsSection = `
-        <div class="status-section status-section--career-skills">
-            <p class="status-section-label">[ CAREER SKILLS ]</p>
-            <div class="career-skills-placeholder" id="career-skills-content">
-                <p class="career-skills-placeholder-msg">
-                    Career skill tracks generate when you run PATH Protocol.<br>
-                    They measure the specific professional capabilities your path requires.
-                </p>
-            </div>
-        </div>
-    `;
+    // ── Career Skills — live implementation (Block B) ─────────
+    const careerSkillsSection = buildCareerSkillsSection();
 
     // ── PATH section ──────────────────────────────────────────
     const pathSection = buildPathSection(level);
@@ -1200,6 +1199,9 @@ function renderStatusMainContent(container, animate) {
     // ── Wire Settings section ─────────────────────────────────
     wireSettingsSection();
 
+    // ── Wire Career Skills tappable rows ─────────────────────
+    wireCareerSkillsSection();
+
     // ── Animate stat numbers on initial render ────────────────
     if (animate) {
         setTimeout(() => {
@@ -1335,6 +1337,183 @@ function getTraitBand(score) {
     if (score <= 0.39) return 'low';
     if (score <= 0.69) return 'mid';
     return 'high';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CAREER SKILLS SECTION — inline in STATUS tab
+// BLOCK B: Live implementation. Loaded from syd_career_skills in
+// localStorage. Each track shows name, score, progress bar with
+// soft cap marker, and stat mapping tag. Tappable to expand
+// description inline.
+// ═══════════════════════════════════════════════════════════════
+
+// Maps stat name to its short label for the mapping tag.
+const CAREER_STAT_LABELS = {
+    strength:     'STR',
+    intelligence: 'INT',
+    agility:      'AGI',
+    endurance:    'END',
+    charisma:     'CHA'
+};
+
+// Maps stat name to its CSS colour variable.
+const CAREER_STAT_COLOURS = {
+    strength:     'var(--stat-str)',
+    intelligence: 'var(--stat-int)',
+    agility:      'var(--stat-agi)',
+    endurance:    'var(--stat-end)',
+    charisma:     'var(--stat-cha)'
+};
+
+function buildCareerSkillsSection() {
+    // Load tracks from app.js's loadCareerSkills() if available,
+    // otherwise read directly from localStorage as a safe fallback.
+    let tracks = [];
+    if (typeof loadCareerSkills === 'function') {
+        tracks = loadCareerSkills();
+    } else {
+        try {
+            const raw = localStorage.getItem('syd_career_skills');
+            tracks = raw ? JSON.parse(raw) : [];
+        } catch(e) { tracks = []; }
+    }
+
+    const keyActive  = (typeof getNeuralKey === 'function') && !!getNeuralKey();
+    const pathData   = (typeof loadPathData === 'function') ? loadPathData() : null;
+    const pathRun    = !!(pathData && pathData.confirmedPath);
+
+    // ── Empty state — contextual messaging ───────────────────
+    if (!tracks || tracks.length === 0) {
+        let emptyMsg = '';
+        if (!pathRun) {
+            emptyMsg = `
+                <p class="career-skills-empty-msg">
+                    Career skill tracks generate when you run PATH Protocol.
+                    They measure the specific professional capabilities your path requires.
+                </p>
+            `;
+        } else if (!keyActive) {
+            emptyMsg = `
+                <p class="career-skills-empty-msg">
+                    PATH has been run. Connect Neural Link in Settings to generate
+                    personalised career skill tracks from your confirmed path and record.
+                </p>
+                <p class="career-skills-neural-note">[ Connect Neural Link to generate personalised skill tracks ]</p>
+            `;
+        } else {
+            emptyMsg = `
+                <p class="career-skills-empty-msg">
+                    Career skill tracks are generating. They will appear here once SYD
+                    has analysed your PATH data.
+                </p>
+            `;
+        }
+
+        return `
+            <div class="status-section status-section--career-skills">
+                <p class="status-section-label">[ CAREER SKILLS ]</p>
+                <div class="career-skills-empty" id="career-skills-content">
+                    ${emptyMsg}
+                </div>
+            </div>
+        `;
+    }
+
+    // ── Live tracks ──────────────────────────────────────────
+    const tracksHTML = tracks.map((track, i) => {
+        const score      = track.score || 0;
+        const softCap    = track.softCap || 40;
+        const statLabel  = CAREER_STAT_LABELS[track.stat]  || (track.stat || '').toUpperCase().slice(0, 3);
+        const statColour = CAREER_STAT_COLOURS[track.stat] || 'var(--accent)';
+
+        // Score as percentage of 100 (the absolute max, not the soft cap)
+        const scorePct   = Math.min(100, parseFloat(score.toFixed(1)));
+        // Soft cap marker position as a percentage of the bar width
+        const capPct     = Math.min(100, softCap);
+
+        // Gemini-enhanced badge — shown when Block C has upgraded the track
+        const enhanced   = track.geminiEnhanced ? `<span class="cs-enhanced-badge">&#x2605;</span>` : '';
+
+        return `
+            <div class="career-skill-row tappable" id="cs-row-${i}" data-cs-index="${i}">
+                <div class="cs-row-header">
+                    <div class="cs-name-wrap">
+                        <span class="cs-name">${track.name}</span>
+                        ${enhanced}
+                    </div>
+                    <div class="cs-meta">
+                        <span class="cs-stat-tag" style="color:${statColour};">${statLabel}</span>
+                        <span class="cs-score">${score.toFixed(1)}</span>
+                    </div>
+                </div>
+                <div class="cs-bar-wrap">
+                    <div class="cs-bar-track">
+                        <div class="cs-bar-fill" style="width:${scorePct}%;background:${statColour};"></div>
+                        <div class="cs-softcap-marker" style="left:${capPct}%;" title="Soft cap at ${softCap}"></div>
+                    </div>
+                    <span class="cs-softcap-label">${softCap}</span>
+                </div>
+                <div class="cs-description hidden" id="cs-desc-${i}">
+                    <p class="cs-description-text">${track.description || ''}</p>
+                    ${!track.geminiEnhanced ? `
+                        <p class="cs-description-note">[ Connect Neural Link for a personalised read on this skill ]</p>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    const neuralNote = !keyActive
+        ? `<p class="career-skills-neural-note">[ Connect Neural Link to generate personalised skill tracks ]</p>`
+        : '';
+
+    return `
+        <div class="status-section status-section--career-skills">
+            <p class="status-section-label">[ CAREER SKILLS ]</p>
+            ${neuralNote}
+            <div class="career-skills-list" id="career-skills-content">
+                ${tracksHTML}
+            </div>
+        </div>
+    `;
+}
+
+// ─── WIRE CAREER SKILLS SECTION ──────────────────────────────
+// Called after STATUS tab renders. Wires tap handlers for each
+// career skill row to expand/collapse the description inline.
+// One row open at a time — tapping a second row closes the first.
+function wireCareerSkillsSection() {
+    const tracks = (typeof loadCareerSkills === 'function') ? loadCareerSkills() : [];
+    if (!tracks || tracks.length === 0) return;
+
+    let openIndex = null;
+
+    tracks.forEach((track, i) => {
+        const row  = document.getElementById('cs-row-' + i);
+        const desc = document.getElementById('cs-desc-' + i);
+        if (!row || !desc) return;
+
+        row.addEventListener('click', () => {
+            playUIClick();
+            const isOpen = !desc.classList.contains('hidden');
+
+            // Close all open descriptions first
+            tracks.forEach((_, j) => {
+                const d = document.getElementById('cs-desc-' + j);
+                const r = document.getElementById('cs-row-'  + j);
+                if (d) d.classList.add('hidden');
+                if (r) r.classList.remove('career-skill-row--open');
+            });
+            openIndex = null;
+
+            // Open this one if it was previously closed
+            if (!isOpen) {
+                desc.classList.remove('hidden');
+                row.classList.add('career-skill-row--open');
+                openIndex = i;
+            }
+        });
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════

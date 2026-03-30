@@ -35,6 +35,23 @@
 //   - showScreen routing updated: screen-minigames and encounter
 //     now route into OPS segments rather than standalone screens
 //   - saveGear() updated: triggers renderStatusWindow re-render only
+//
+// BLOCK B changes:
+//   - Career skill constants: CAREER_SKILL_SOFT_CAPS,
+//     CAREER_SKILL_PASSIVE_INCREMENT, CAREER_SKILL_DIRECTIVE_INCREMENT,
+//     CAREER_SKILL_ENCOUNTER_INCREMENT, CAREER_DIRECTIVES_PER_GEAR
+//   - Career skill storage: loadCareerSkills(), saveCareerSkills()
+//   - Career skill init: initCareerSkillsFromPath() — derives locally-
+//     estimated tracks from PATH gap skills when Gemini not available.
+//     Block C replaces with full Gemini-seeded tracks from Call 2.
+//   - getCareerSkillSoftCap(rank) — returns soft cap for rank tier
+//   - incrementCareerSkills(questId, stat, isCareerDirective) — called
+//     from completeQuest() on every directive completion
+//   - incrementCareerSkillsFromEncounter(careerSkillName) — called from
+//     encounter completion (encounter.js calls this on submit)
+//   - completeQuest() updated to call incrementCareerSkills()
+//   - createPlayer() updated to call initCareerSkillsFromPath()
+//   - pushToCloud() updated to include career skills in profile document
 // ═══════════════════════════════════════════════════════════════
 
 // ─── STORAGE KEYS ────────────────────────────────────────────
@@ -52,6 +69,46 @@ const AUDIO_MINUTES_KEY   = 'syd_audio_minutes';
 // [TUNING TARGET] Starting SIG awarded to every new operative on account creation.
 // Covers approximately 4 game sessions before any directive income arrives.
 const STARTING_SIG = 20;
+
+// ─── BLOCK B: CAREER SKILL CONSTANTS ─────────────────────────
+// Soft cap on career skill score per rank tier.
+// Score cannot exceed this value until operative crosses to the next rank.
+// At A-rank and above, the cap is removed entirely.
+// [TUNING TARGET] Soft cap values per rank label
+const CAREER_SKILL_SOFT_CAPS = {
+    'F':   40,
+    'E':   60,
+    'D':   75,
+    'C':   88,
+    'B':   94,
+    'A':   100,
+    'S':   100,
+    'S+':  100,
+    'SS':  100,
+    'SS+': 100,
+    'SSS': 100
+};
+
+// Increment per completion type.
+// Passive: any static directive whose stat maps to the career skill's stat.
+// Directive: a career directive tagged directly to this career skill.
+// Encounter: a career encounter in this skill's domain.
+// [TUNING TARGET] Career skill increment values
+const CAREER_SKILL_PASSIVE_INCREMENT   = 0.2;
+const CAREER_SKILL_DIRECTIVE_INCREMENT = 0.8;
+const CAREER_SKILL_ENCOUNTER_INCREMENT = 1.5;
+
+// Number of career directives mixed in per gear level.
+// These are additive on top of the life-stat directives (5/10/15).
+// Applied only after Tier 0 window (operatorDays > 7) and when career cache exists.
+// [TUNING TARGET] Career directives per gear
+const CAREER_DIRECTIVES_PER_GEAR = { 1: 3, 2: 5, 3: 7 };
+
+// localStorage key for career skill tracks
+const CAREER_SKILLS_KEY = 'syd_career_skills';
+
+// localStorage key for career directive cache (seeded by Gemini Call 2, refreshed by Call 4)
+const CAREER_DIRECTIVES_KEY = 'syd_career_directives';
 
 // ─── FIREBASE ────────────────────────────────────────────────
 const FIREBASE_CONFIG = {
@@ -317,7 +374,7 @@ function savePlayer() {
 
 // ─── CREATE PLAYER ───────────────────────────────────────────
 // RESPEC: sig initialised to STARTING_SIG (was 0).
-// Career skill tracks initialised empty here — Block C seeds them from Call 2.
+// BLOCK B: initCareerSkillsFromPath() called after player created.
 function createPlayer(name, scanTraits, pathData) {
     console.log('[SYD] createPlayer:', name);
     const stats = {};
@@ -360,6 +417,11 @@ function createPlayer(name, scanTraits, pathData) {
         savePathData(pathData);
     }
 
+    // BLOCK B: Initialise career skill tracks from PATH data.
+    // Uses locally-estimated names from gap skills if Gemini not available.
+    // Block C will overwrite these with Gemini-generated tracks from Call 2.
+    initCareerSkillsFromPath(pathData);
+
     savePlayer();
     dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear(), player.operatorDays);
     updateStatusScreen();
@@ -380,6 +442,229 @@ function calculateLuck()  {
     return parseFloat(
         (STAT_NAMES.reduce((s, n) => s + (player.stats[n] || STAT_FLOOR), 0) / STAT_NAMES.length).toFixed(1)
     );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BLOCK B: CAREER SKILLS SYSTEM
+// Storage, initialisation, increment, and soft cap enforcement.
+// ═══════════════════════════════════════════════════════════════
+
+// ─── STORAGE ─────────────────────────────────────────────────
+function loadCareerSkills() {
+    try {
+        const raw = localStorage.getItem(CAREER_SKILLS_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch(e) {
+        return [];
+    }
+}
+
+function saveCareerSkills(tracks) {
+    try {
+        localStorage.setItem(CAREER_SKILLS_KEY, JSON.stringify(tracks));
+    } catch(e) {
+        console.warn('[SYD] Could not save career skills:', e);
+    }
+}
+
+// ─── SOFT CAP LOOKUP ─────────────────────────────────────────
+// Returns the soft cap for the operative's current rank.
+function getCareerSkillSoftCap(rank) {
+    return CAREER_SKILL_SOFT_CAPS[rank] || CAREER_SKILL_SOFT_CAPS['F'];
+}
+
+// ─── INITIALISE FROM PATH ────────────────────────────────────
+// Called from createPlayer() after PATH data is stored.
+// Derives locally-estimated career skill tracks from the gap skills
+// already in the PATH data — no Gemini call needed.
+//
+// Each gap skill becomes a track. The stat for each track is mapped
+// from the gap skill name using keyword matching on the stat keywords.
+// Description is a generic placeholder that Block C replaces with
+// Gemini's personalised description from Call 2.
+//
+// If career skills already exist in localStorage (e.g. Block C already
+// seeded them), this function is a no-op to avoid overwriting richer data.
+function initCareerSkillsFromPath(pathData) {
+    // If tracks already exist and are non-empty, do not overwrite them.
+    const existing = loadCareerSkills();
+    if (existing && existing.length > 0) return;
+
+    if (!pathData) {
+        saveCareerSkills([]);
+        return;
+    }
+
+    // Get gap skills from PATH data — these become the track names.
+    // Priority: gapAnalysis.skills (from local fallback or Gemini Call 2 partial),
+    // then confirmedPath.gap_skills, then confirmedPath.mapped_skills as last resort.
+    const gapSkills = (pathData.gapAnalysis && pathData.gapAnalysis.skills && pathData.gapAnalysis.skills.length > 0)
+        ? pathData.gapAnalysis.skills
+        : ((pathData.confirmedPath && pathData.confirmedPath.gap_skills && pathData.confirmedPath.gap_skills.length > 0)
+            ? pathData.confirmedPath.gap_skills
+            : ((pathData.confirmedPath && pathData.confirmedPath.mapped_skills)
+                ? pathData.confirmedPath.mapped_skills
+                : []));
+
+    if (!gapSkills || gapSkills.length === 0) {
+        saveCareerSkills([]);
+        return;
+    }
+
+    // Cap at 5 tracks — the respec specifies 3–5.
+    const capped = gapSkills.slice(0, 5);
+
+    const rank     = rankFromLevel(calculateLevel ? calculateLevel() : 1);
+    const softCap  = getCareerSkillSoftCap(rank);
+    const pathName = (pathData.confirmedPath && pathData.confirmedPath.path_name) || '';
+
+    const tracks = capped.map((skillName, i) => {
+        // Map skill to a life stat using keyword matching.
+        const stat = guessStatFromSkillName(skillName);
+
+        return {
+            id:          'cs_' + String(i + 1).padStart(3, '0'),
+            name:        skillName,
+            stat,
+            score:       0,
+            softCap,
+            pathName,
+            // Generic description — replaced by Block C with Gemini version.
+            description: `${skillName} is a key professional capability for the ${pathName || 'your confirmed'} path. ${getLocalSkillDescription(rank)}`,
+            geminiEnhanced: false
+        };
+    });
+
+    saveCareerSkills(tracks);
+    console.log('[SYD] Career skill tracks initialised from PATH data:', tracks.map(t => t.name));
+}
+
+// Maps a skill name string to the most relevant life stat via keyword matching.
+// Used as a local fallback when Gemini has not returned explicit stat mappings.
+function guessStatFromSkillName(skillName) {
+    const lower = (skillName || '').toLowerCase();
+    if (/communicat|stakeholder|influence|relationship|network|present|lead|trust|persuad|negotiat|social|people/.test(lower)) return 'charisma';
+    if (/strateg|analys|research|data|system|architect|think|model|knowledge|learn|problem/.test(lower)) return 'intelligence';
+    if (/adapt|pivot|change|flexible|agile|creative|innovate|experiment|risk/.test(lower)) return 'agility';
+    if (/deliver|execut|operati|manage|project|timeline|output|consistent|follow/.test(lower)) return 'endurance';
+    if (/physical|health|energy|strength|resilience|endure|sustain|pressure/.test(lower)) return 'strength';
+    return 'intelligence'; // default — intelligence is the most broadly applicable
+}
+
+// Brief local description per rank for the placeholder text.
+function getLocalSkillDescription(rank) {
+    const reads = {
+        'F': 'Closing this gap early creates compounding returns. The directives here are calibrated to build it from the ground up.',
+        'E': 'Your experience has created the context to develop this deliberately. The gap is ready to close.',
+        'D': 'You understand the concept. The development target is consistent execution under real conditions.',
+        'C': 'At your rank, this gap is the difference between good and respected. It is mostly application now.',
+        'B': 'This operates at the influence layer. Closing it moves you from doing well to making systems work better.',
+        'A': 'The remaining gap here is in edge cases — situations that do not fit the patterns you have already mastered.'
+    };
+    return reads[rank] || reads['F'];
+}
+
+// ─── INCREMENT CAREER SKILLS ─────────────────────────────────
+// Called from completeQuest() on every directive completion.
+// questId: the directive's id (used to look up career_skill tag if it exists)
+// stat: the life stat trained by this directive
+// isCareerDirective: true if this directive came from the career pool (has career_skill field)
+// careerSkillName: the career_skill field value from the directive (Block C adds this)
+function incrementCareerSkills(questId, stat, isCareerDirective, careerSkillName) {
+    const tracks = loadCareerSkills();
+    if (!tracks || tracks.length === 0) return;
+
+    const rank    = rankFromLevel(calculateLevel ? calculateLevel() : 1);
+    const softCap = getCareerSkillSoftCap(rank);
+    let   changed = false;
+
+    tracks.forEach(track => {
+        let increment = 0;
+
+        if (isCareerDirective && careerSkillName && track.name === careerSkillName) {
+            // Direct career directive for this exact skill
+            increment = CAREER_SKILL_DIRECTIVE_INCREMENT;
+        } else if (!isCareerDirective && track.stat === stat) {
+            // Passive accumulation — static directive whose stat maps to this skill's stat
+            increment = CAREER_SKILL_PASSIVE_INCREMENT;
+        }
+
+        if (increment > 0) {
+            // Apply soft cap — score cannot exceed the current rank's ceiling
+            const effectiveCap = Math.min(softCap, track.softCap || softCap);
+            const newScore     = Math.min(effectiveCap, parseFloat((track.score + increment).toFixed(2)));
+            if (newScore !== track.score) {
+                track.score = newScore;
+                changed     = true;
+            }
+        }
+    });
+
+    if (changed) {
+        // Update softCap on all tracks in case rank changed since last save
+        tracks.forEach(t => { t.softCap = softCap; });
+        saveCareerSkills(tracks);
+    }
+}
+
+// ─── INCREMENT FROM ENCOUNTER ─────────────────────────────────
+// Called by encounter.js when a career encounter is submitted.
+// careerSkillName: the career skill domain of the encounter (matches track name).
+// Falls back gracefully if name does not match any track — no error.
+function incrementCareerSkillsFromEncounter(careerSkillName) {
+    if (!careerSkillName) return;
+    const tracks = loadCareerSkills();
+    if (!tracks || tracks.length === 0) return;
+
+    const rank    = rankFromLevel(calculateLevel ? calculateLevel() : 1);
+    const softCap = getCareerSkillSoftCap(rank);
+    let   changed = false;
+
+    tracks.forEach(track => {
+        if (track.name === careerSkillName) {
+            const effectiveCap = Math.min(softCap, track.softCap || softCap);
+            const newScore     = Math.min(effectiveCap, parseFloat((track.score + CAREER_SKILL_ENCOUNTER_INCREMENT).toFixed(2)));
+            if (newScore !== track.score) {
+                track.score = newScore;
+                changed     = true;
+            }
+        }
+    });
+
+    if (changed) {
+        tracks.forEach(t => { t.softCap = softCap; });
+        saveCareerSkills(tracks);
+        // Re-render STATUS if it is the active tab to reflect the update
+        if (typeof activeStatusTab !== 'undefined' && activeStatusTab === 'status'
+            && typeof renderStatusWindow === 'function') {
+            renderStatusWindow(false);
+        }
+    }
+}
+
+// ─── SOFT CAP UPDATE ON RANK-UP ──────────────────────────────
+// Called from the level-up check in completeQuest() when a rank boundary is crossed.
+// Raises the softCap on all career skill tracks and notifies the operative.
+function updateCareerSkillSoftCaps(newRank) {
+    const tracks = loadCareerSkills();
+    if (!tracks || tracks.length === 0) return;
+
+    const newCap    = getCareerSkillSoftCap(newRank);
+    let   raised    = false;
+
+    tracks.forEach(track => {
+        if ((track.softCap || 0) < newCap) {
+            track.softCap = newCap;
+            raised        = true;
+        }
+    });
+
+    if (raised) {
+        saveCareerSkills(tracks);
+        if (typeof showLog === 'function') {
+            showLog('[ CAREER SKILL CEILING RAISED — NEW RANGE UNLOCKED ]', 'accent');
+        }
+    }
 }
 
 // ─── FIRST TRANSMISSION ──────────────────────────────────────
@@ -471,6 +756,7 @@ function today() {
 // ─── DIRECTIVE COMPLETION ────────────────────────────────────
 // RESPEC: Guard updated from activeStatusTab === 'directives' to
 // activeOpsSegment === 'directives' (segment state, not tab state).
+// BLOCK B: incrementCareerSkills() called after stat/sig/capacity updates.
 function completeQuest(id, stat, baseXP) {
     if (!player) return;
     if ((player.completedToday || []).includes(id)) return;
@@ -497,12 +783,28 @@ function completeQuest(id, stat, baseXP) {
     playQuestComplete();
     showFloatingXP(id, finalXP, momentum > 1.3);
 
+    // ── BLOCK B: Career skill increment ──────────────────────
+    // Look up the quest in dailyQuests to check if it is a career directive
+    // and to get the career_skill name (populated by Block C).
+    const questObj        = (dailyQuests || []).find(q => q.id === id);
+    const isCareerDir     = !!(questObj && questObj._isCareerDirective);
+    const careerSkillName = questObj ? (questObj.career_skill || null) : null;
+    incrementCareerSkills(id, stat, isCareerDir, careerSkillName);
+
+    // ── Level up check ───────────────────────────────────────
     const prevLevel = levelFromXP(Math.max(0, earnedXP(player.stats) - statGain));
     const newLevel  = calculateLevel();
     if (newLevel > prevLevel) {
         showLevelUpOverlay(newLevel);
         player.maxCapacity = calcMaxCapacity(newLevel);
         savePlayer();
+
+        // BLOCK B: Check if rank crossed a tier boundary and update career skill caps
+        const prevRank = rankFromLevel(prevLevel);
+        const newRank  = rankFromLevel(newLevel);
+        if (prevRank !== newRank) {
+            updateCareerSkillSoftCaps(newRank);
+        }
     }
 
     updateStatusScreen();
@@ -510,11 +812,8 @@ function completeQuest(id, stat, baseXP) {
     // RESPEC: Re-render directives list only when DIRECTIVES segment is active
     if (typeof activeOpsSegment !== 'undefined' && activeOpsSegment === 'directives'
         && typeof renderDirectivesSegment === 'function') {
-        const container = document.getElementById('status-tab-content');
-        if (container) {
-            // Re-render the OPS tab content which includes the directives segment
-            renderDirectivesSegment(container);
-        }
+        const content = document.getElementById('ops-segment-content');
+        if (content) renderDirectivesSegment(content);
     }
 
     const allNowDone = (player.completedToday || []).length >= (dailyQuests || []).length && (dailyQuests || []).length > 0;
@@ -687,6 +986,7 @@ function setNeuralKey(k, p) {
 }
 
 // ─── CLOUD SYNC ───────────────────────────────────────────────
+// BLOCK B: pushToCloud() now includes career skill tracks in the profile document.
 async function maybeSyncToCloud() {
     if (!player || !player.syncOptedIn) return;
     const lastPush = localStorage.getItem(SYNC_LAST_PUSH_KEY);
@@ -701,10 +1001,17 @@ async function pushToCloud(immediate) {
         const uid = player.uid || generateUID();
         if (!player.uid) { player.uid = uid; savePlayer(); }
         const { sig, stats, momentum, capacity, maxCapacity, operatorDays,
-                consecutiveDays, level, rank, name, pathData } = player;
+                consecutiveDays, name } = player;
+
+        // BLOCK B: Include career skills in profile document.
+        // These are small objects — no impact on Firestore free tier limits.
+        const careerSkills = loadCareerSkills();
+
         await database.collection('syd_operatives').doc(uid).set({
             name, stats, sig, momentum, capacity, maxCapacity,
-            operatorDays, consecutiveDays, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            operatorDays, consecutiveDays,
+            careerSkills,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
         localStorage.setItem(SYNC_LAST_PUSH_KEY, new Date().toISOString());
     } catch(e) {
@@ -789,11 +1096,6 @@ function runRelaunchBoot() {
 }
 
 // ─── SHOW SCREEN ─────────────────────────────────────────────
-// RESPEC: screen-minigames is no longer a standalone destination for
-// the operative — GAMES now lives inside OPS. The screen remains in HTML
-// for individual active game sessions (screen-minigame), but
-// navTo('screen-minigames') from within the app routes to OPS/GAMES.
-// The screen-minigames case is kept so any deep links don't break.
 function showScreen(id, isBack) {
     const prev = document.querySelector('.screen.active');
     const prevId = prev ? prev.id : null;
@@ -814,8 +1116,6 @@ function showScreen(id, isBack) {
         stopStatusAmbient();
     }
 
-    // RESPEC: screen-minigames still renders hub for individual game sessions.
-    // The OPS/GAMES segment handles the hub view inside screen-status.
     if (id === 'screen-minigames' && typeof renderMiniGameHub === 'function') {
         renderMiniGameHub(player ? player.sig : 0);
     }
@@ -983,9 +1283,6 @@ function startPATH(name, scanTraits) {
 }
 
 // ─── PASS 2: POST-SCAN REVEAL SCREEN ─────────────────────────
-// Shows the seven trait scores as animated bars with SYD commentary.
-// Fires after completeScan(), before PATH Protocol.
-// onDone: callback to advance to neural key request.
 function renderScanReveal(scanTraits, onDone) {
     showScreen('screen-scan-reveal');
     const container = document.getElementById('scan-reveal-content');
@@ -993,8 +1290,7 @@ function renderScanReveal(scanTraits, onDone) {
 
     const traits = scanTraits || {};
 
-    // SYD's read — pick lines based on highest and lowest trait
-    const sorted = Object.entries(traits).sort((a, b) => b[1] - a[1]);
+    const sorted  = Object.entries(traits).sort((a, b) => b[1] - a[1]);
     const highest = sorted[0] || null;
     const lowest  = sorted[sorted.length - 1] || null;
 
@@ -1026,7 +1322,6 @@ function renderScanReveal(scanTraits, onDone) {
         'patternRecognition', 'cognitiveFlexibility', 'persistence',
         'executionSpeed', 'executionAccuracy', 'pressureStability', 'socialReading'
     ];
-
     const traitDisplayNames = {
         patternRecognition:    'PATTERN RECOGNITION',
         cognitiveFlexibility:  'COGNITIVE FLEXIBILITY',
@@ -1042,11 +1337,9 @@ function renderScanReveal(scanTraits, onDone) {
             <div class="scan-reveal-header">
                 <p class="scan-reveal-label">[ SIGNAL ACQUISITION — COMPLETE ]</p>
             </div>
-
             <div class="scan-reveal-syd">
                 ${sydLines.map(l => `<p class="scan-reveal-syd-line">${l}</p>`).join('')}
             </div>
-
             <div class="scan-reveal-traits">
                 ${traitOrder.map(key => {
                     const score  = traits[key] !== undefined ? traits[key] : null;
@@ -1065,14 +1358,12 @@ function renderScanReveal(scanTraits, onDone) {
                     `;
                 }).join('')}
             </div>
-
             <button class="btn btn--primary scan-reveal-proceed" id="scan-reveal-proceed">
                 [ PROCEED TO CLASSIFICATION ]
             </button>
         </div>
     `;
 
-    // Animate bars in sequence
     setTimeout(() => {
         traitOrder.forEach((key, i) => {
             const score = traits[key] !== undefined ? traits[key] : 0;
@@ -1091,11 +1382,7 @@ function renderScanReveal(scanTraits, onDone) {
 }
 
 // ─── PASS 2: NEURAL KEY REQUEST SCREEN ──────────────────────
-// One-time screen between scan reveal and PATH.
-// Skipped if key is already set (hasNeuralLink() returns true).
-// onDone: callback to advance.
 function renderNeuralKeyRequest(onDone) {
-    // Skip if key already connected
     if (typeof hasNeuralLink === 'function' && hasNeuralLink()) {
         if (onDone) onDone();
         return;
@@ -1112,32 +1399,18 @@ function renderNeuralKeyRequest(onDone) {
                 <p class="nr-syd-line">SYD can give you a personalised read. Your PATH analysis, stat explainers, and encounter evaluations can be specific to you — not generic.</p>
                 <p class="nr-syd-line">To activate it, connect a free Gemini key. This takes about 60 seconds.</p>
             </div>
-
-            <a
-                href="https://aistudio.google.com/app/apikey"
-                target="_blank"
-                rel="noopener"
-                class="btn btn--primary nr-get-key-btn"
-            >
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener"
+               class="btn btn--primary nr-get-key-btn">
                 [ GET YOUR FREE GEMINI KEY ]
             </a>
-
             <div class="nr-input-group">
-                <input
-                    type="password"
-                    id="nr-key-input"
-                    class="settings-input nr-key-input"
-                    placeholder="Paste your key here — AIza..."
-                    autocomplete="off"
-                    spellcheck="false"
-                />
+                <input type="password" id="nr-key-input" class="settings-input nr-key-input"
+                    placeholder="Paste your key here — AIza..." autocomplete="off" spellcheck="false" />
                 <button class="btn btn--primary" id="nr-link-btn">[ LINK ]</button>
             </div>
-
             <p class="nr-privacy-note">
                 Your key is stored on this device only. Never transmitted to SYD servers.
             </p>
-
             <button class="nr-skip-btn" id="nr-skip-btn">
                 I'll do this later — skip for now
             </button>
@@ -1148,14 +1421,8 @@ function renderNeuralKeyRequest(onDone) {
         playUIClick();
         const input = document.getElementById('nr-key-input');
         const key   = input ? input.value.trim() : '';
-        if (!key) {
-            showLog('[ PASTE YOUR KEY FIRST, OR TAP SKIP ]', 'system');
-            return;
-        }
-        if (key.length < 8) {
-            showLog('[ KEY TOO SHORT — CHECK YOU COPIED THE FULL KEY ]', 'system');
-            return;
-        }
+        if (!key) { showLog('[ PASTE YOUR KEY FIRST, OR TAP SKIP ]', 'system'); return; }
+        if (key.length < 8) { showLog('[ KEY TOO SHORT — CHECK YOU COPIED THE FULL KEY ]', 'system'); return; }
         if (typeof setNeuralKey === 'function') setNeuralKey(key, 'gemini');
         showLog('[ NEURAL LINK CONNECTED ]', 'accent');
         setTimeout(() => { if (onDone) onDone(); }, 600);
@@ -1168,18 +1435,11 @@ function renderNeuralKeyRequest(onDone) {
 }
 
 // ─── PASS 2: POST-PATH SYNTHESIS REVEAL ──────────────────────
-// Shows confirmed path, role, rank, top gap skills, hidden affinity hint.
-// SYD speaks 2–3 lines. CONTINUE button. Fires before createPlayer().
-// onDone: callback to advance to orientation.
 function renderSynthesisReveal(pathData, onDone) {
     showScreen('screen-synthesis-reveal');
     const container = document.getElementById('synthesis-reveal-content');
     if (!container) { if (onDone) onDone(); return; }
-
-    if (!pathData) {
-        if (onDone) onDone();
-        return;
-    }
+    if (!pathData) { if (onDone) onDone(); return; }
 
     const pathName    = (pathData.confirmedPath && pathData.confirmedPath.path_name) || 'UNCLASSIFIED';
     const role        = pathData.confirmedRole || pathName;
@@ -1188,7 +1448,6 @@ function renderSynthesisReveal(pathData, onDone) {
     const top3Skills  = skills.slice(0, 3);
     const affinity    = pathData.hiddenAffinity;
 
-    // Rank plain-language context
     const rankContext = {
         'F': 'Starting position. The system clocked where you are — not where you will be.',
         'E': 'Early traction. You have real experience to build on.',
@@ -1201,9 +1460,7 @@ function renderSynthesisReveal(pathData, onDone) {
 
     const sydLines = [];
     sydLines.push(`Classification complete. You are confirmed on the ${pathName} path.`);
-    if (role && role !== pathName) {
-        sydLines.push(`Primary role: ${role}. That is where your record points.`);
-    }
+    if (role && role !== pathName) sydLines.push(`Primary role: ${role}. That is where your record points.`);
     if (top3Skills.length > 0) {
         sydLines.push(`Three gaps identified: ${top3Skills.join(', ')}. These are what the directives will target first.`);
     } else {
@@ -1215,7 +1472,6 @@ function renderSynthesisReveal(pathData, onDone) {
             <div class="sr-header">
                 <p class="sr-label">[ CLASSIFICATION COMPLETE ]</p>
             </div>
-
             <div class="sr-path-block">
                 <p class="sr-path-name">${pathName}</p>
                 <p class="sr-role">${role !== pathName ? role : ''}</p>
@@ -1224,7 +1480,6 @@ function renderSynthesisReveal(pathData, onDone) {
                     <span class="sr-rank-context">${rankContext[rank] || rankContext['F']}</span>
                 </div>
             </div>
-
             ${top3Skills.length > 0 ? `
                 <div class="sr-gaps-block">
                     <p class="sr-section-label">[ GAP TARGETS ]</p>
@@ -1233,18 +1488,15 @@ function renderSynthesisReveal(pathData, onDone) {
                     </div>
                 </div>
             ` : ''}
-
             ${affinity && affinity.stat ? `
                 <div class="sr-affinity-block">
                     <p class="sr-section-label">[ HIDDEN AFFINITY — STORED ]</p>
                     <p class="sr-affinity-note">Something was flagged in your signal. It unlocks at Level 20. SYD is holding it.</p>
                 </div>
             ` : ''}
-
             <div class="sr-syd-voice">
                 ${sydLines.map(l => `<p class="sr-syd-line">${l}</p>`).join('')}
             </div>
-
             <button class="btn btn--primary" id="sr-continue-btn">[ CONTINUE ]</button>
         </div>
     `;
@@ -1256,10 +1508,6 @@ function renderSynthesisReveal(pathData, onDone) {
 }
 
 // ─── PASS 2: ORIENTATION SCREEN ──────────────────────────────
-// Single screen explaining what the operative can do.
-// Fires between synthesis reveal and first transmission.
-// RESPEC: Copy updated to reference GAMES instead of Training Floor.
-// onDone: callback to advance to createPlayer → first transmission.
 function renderOrientationScreen(onDone) {
     showScreen('screen-orientation');
     const container = document.getElementById('orientation-content');
@@ -1270,7 +1518,6 @@ function renderOrientationScreen(onDone) {
             <div class="or-header">
                 <p class="or-label">[ SYD — ORIENTATION ]</p>
             </div>
-
             <div class="or-syd-voice">
                 <p class="or-syd-line">Here is how this works.</p>
                 <p class="or-syd-line">Every day you get <strong>directives</strong> — real-world tasks that build your stats. Complete them. That is the main thing.</p>
@@ -1278,7 +1525,6 @@ function renderOrientationScreen(onDone) {
                 <p class="or-syd-line">The <strong>GAMES</strong> section has five games that cost SIG to enter and train specific stats. SIG is earned by completing directives. You start with ${STARTING_SIG} SIG.</p>
                 <p class="or-syd-line">Momentum tracks how many days in a row you show up. It multiplies your XP. The compounding starts slow. You will not feel it yet. Show up tomorrow anyway.</p>
             </div>
-
             <button class="btn btn--primary or-continue-btn" id="or-continue-btn">
                 [ UNDERSTOOD — LET'S BEGIN ]
             </button>
