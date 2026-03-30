@@ -21,7 +21,20 @@
 //   - renderSynthesisReveal() — post-PATH synthesis reveal screen
 //   - renderOrientationScreen() — app orientation screen before first tx
 //   - runFirstTransmission() button updated: [ VIEW MY DIRECTIVES ]
-//     routes to DIRECTIVES tab
+//     routes to OPS tab → DIRECTIVES segment
+//
+// RESPEC changes:
+//   - STARTING_SIG constant added (20 SIG on account creation)
+//   - sig: STARTING_SIG in createPlayer() (was sig: 0)
+//   - switchStatusTab now handles 'ops' and 'status' only (two tabs)
+//   - First transmission dismiss → switchStatusTab('ops') +
+//     switchOpsSegment('directives')
+//   - Morning transmission dismiss → switchStatusTab('status')
+//   - completeQuest() directive re-render guard updated to use
+//     activeOpsSegment === 'directives' (not activeStatusTab)
+//   - showScreen routing updated: screen-minigames and encounter
+//     now route into OPS segments rather than standalone screens
+//   - saveGear() updated: triggers renderStatusWindow re-render only
 // ═══════════════════════════════════════════════════════════════
 
 // ─── STORAGE KEYS ────────────────────────────────────────────
@@ -34,6 +47,11 @@ const NEURAL_KEY_KEY      = 'syd_neural_key';
 const NEURAL_PROVIDER_KEY = 'syd_neural_provider';
 const FIELD_NOTES_KEY     = 'syd_field_notes';
 const AUDIO_MINUTES_KEY   = 'syd_audio_minutes';
+
+// ─── RESPEC CONSTANTS ─────────────────────────────────────────
+// [TUNING TARGET] Starting SIG awarded to every new operative on account creation.
+// Covers approximately 4 game sessions before any directive income arrives.
+const STARTING_SIG = 20;
 
 // ─── FIREBASE ────────────────────────────────────────────────
 const FIREBASE_CONFIG = {
@@ -297,6 +315,9 @@ function savePlayer() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(player));
 }
 
+// ─── CREATE PLAYER ───────────────────────────────────────────
+// RESPEC: sig initialised to STARTING_SIG (was 0).
+// Career skill tracks initialised empty here — Block C seeds them from Call 2.
 function createPlayer(name, scanTraits, pathData) {
     console.log('[SYD] createPlayer:', name);
     const stats = {};
@@ -328,7 +349,7 @@ function createPlayer(name, scanTraits, pathData) {
         lastActiveDate:  today(),
         capacity:        maxCapacity,
         maxCapacity,
-        sig:             0,
+        sig:             STARTING_SIG,   // RESPEC: 20 starting SIG (was 0)
         scanComplete:    true,
         pathComplete:    !!pathData,
         pathData:        pathData || null,
@@ -342,12 +363,10 @@ function createPlayer(name, scanTraits, pathData) {
     savePlayer();
     dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear(), player.operatorDays);
     updateStatusScreen();
-    // PASS 2: Route through orientation before first transmission
+
+    // RESPEC: Route to screen-status → STATUS tab on creation.
+    // First transmission will dismiss to OPS tab → DIRECTIVES segment.
     showScreen('screen-status');
-    // activeStatusTab is set to 'directives' after first transmission dismiss
-    // so the landing here is fine — it will be set to status, then first tx shows,
-    // then dismiss routes to directives.
-    // Force status tab as default during creation (first tx will switch to directives on dismiss)
     if (typeof switchStatusTab === 'function') switchStatusTab('status');
     runFirstTransmission();
 }
@@ -365,13 +384,13 @@ function calculateLuck()  {
 
 // ─── FIRST TRANSMISSION ──────────────────────────────────────
 // Fires once on first ever launch, after onboarding completes.
-// PASS 1: Button now says [ VIEW MY DIRECTIVES ] and routes to DIRECTIVES tab.
+// RESPEC: Dismiss routes to OPS tab → DIRECTIVES segment.
 const FIRST_TX_LINES = [
     'THIS IS YOUR TERMINAL.',
     'YOUR STATS ARE CONSEQUENCES OF YOUR REAL-WORLD ACTIONS — NOT SCORES.',
     'COMPLETE TODAY\'S DIRECTIVES AND THEY RISE.',
     'MOMENTUM TRACKS CONSISTENCY. CONSECUTIVE DAYS COMPOUND IT.',
-    'SIG IS EARNED THROUGH EXECUTION. SPEND IT IN THE TRAINING FLOOR.',
+    'SIG IS EARNED THROUGH EXECUTION. SPEND IT IN THE GAMES SECTION.',
     '[ DIRECTIVES HAVE BEEN ISSUED. ]'
 ];
 
@@ -381,17 +400,14 @@ function runFirstTransmission() {
     const linesEl = document.getElementById('briefing-lines');
     const btn     = document.getElementById('briefing-directives-btn');
     if (!overlay) return;
+
     overlay.classList.remove('hidden');
     linesEl.innerHTML = '';
-    btn.classList.add('hidden');
 
     let idx = 0;
     function nextLine() {
-        if (idx >= FIRST_TX_LINES.length) {
-            setTimeout(() => {
-                btn.classList.remove('hidden');
-                requestAnimationFrame(() => requestAnimationFrame(() => btn.classList.add('briefing-btn--visible')));
-            }, 400);
+        if (idx === FIRST_TX_LINES.length) {
+            setTimeout(() => btn.classList.remove('hidden'), 600);
             return;
         }
         const el = document.createElement('div');
@@ -404,14 +420,15 @@ function runFirstTransmission() {
         setTimeout(nextLine, 1000);
     }
 
-    // PASS 1: dismiss routes to DIRECTIVES tab (first time only)
+    // RESPEC: Dismiss → OPS tab → DIRECTIVES segment
     btn.onclick = () => {
         playUIClick();
         overlay.classList.add('hidden');
         player.hasSeenBriefing = true;
         savePlayer();
-        // Land on DIRECTIVES for first time — they need to see their directives
-        if (typeof switchStatusTab === 'function') switchStatusTab('directives');
+        // Land on OPS tab, DIRECTIVES segment — operative needs to see their directives
+        if (typeof switchStatusTab === 'function') switchStatusTab('ops');
+        if (typeof switchOpsSegment === 'function') switchOpsSegment('directives');
     };
 
     nextLine();
@@ -452,6 +469,8 @@ function today() {
 }
 
 // ─── DIRECTIVE COMPLETION ────────────────────────────────────
+// RESPEC: Guard updated from activeStatusTab === 'directives' to
+// activeOpsSegment === 'directives' (segment state, not tab state).
 function completeQuest(id, stat, baseXP) {
     if (!player) return;
     if ((player.completedToday || []).includes(id)) return;
@@ -488,9 +507,14 @@ function completeQuest(id, stat, baseXP) {
 
     updateStatusScreen();
 
-    if (activeStatusTab === 'directives' && typeof renderDirectivesTab === 'function') {
+    // RESPEC: Re-render directives list only when DIRECTIVES segment is active
+    if (typeof activeOpsSegment !== 'undefined' && activeOpsSegment === 'directives'
+        && typeof renderDirectivesSegment === 'function') {
         const container = document.getElementById('status-tab-content');
-        if (container) renderDirectivesTab(container);
+        if (container) {
+            // Re-render the OPS tab content which includes the directives segment
+            renderDirectivesSegment(container);
+        }
     }
 
     const allNowDone = (player.completedToday || []).length >= (dailyQuests || []).length && (dailyQuests || []).length > 0;
@@ -502,7 +526,7 @@ function completeQuest(id, stat, baseXP) {
 }
 
 // ─── STATUS SCREEN ────────────────────────────────────────────
-// PASS 1: Header no longer includes sig badge (sig shown in STATUS tab identity block).
+// RESPEC: Header no longer includes sig badge (sig shown in OPS/GAMES section).
 function updateStatusScreen(animate) {
     if (!player) return;
 
@@ -512,7 +536,6 @@ function updateStatusScreen(animate) {
     const levelEl = document.getElementById('player-level');
     const rankEl  = document.getElementById('rank-badge');
 
-    // PASS 1: sig badge removed from header
     if (nameEl)  nameEl.textContent  = player.name;
     if (levelEl) levelEl.textContent = level;
     if (rankEl)  { rankEl.textContent = rank; rankEl.className = 'rank-badge ' + rankCssClass(rank); }
@@ -720,7 +743,7 @@ function goBack() {
 }
 
 // ─── RELAUNCH BOOT ───────────────────────────────────────────
-// PASS 1: After boot, lands on STATUS tab (not directives).
+// RESPEC: After boot, lands on STATUS tab (returning operative reference view).
 function runRelaunchBoot() {
     return new Promise(resolve => {
         const overlay = document.getElementById('relaunch-boot');
@@ -766,6 +789,11 @@ function runRelaunchBoot() {
 }
 
 // ─── SHOW SCREEN ─────────────────────────────────────────────
+// RESPEC: screen-minigames is no longer a standalone destination for
+// the operative — GAMES now lives inside OPS. The screen remains in HTML
+// for individual active game sessions (screen-minigame), but
+// navTo('screen-minigames') from within the app routes to OPS/GAMES.
+// The screen-minigames case is kept so any deep links don't break.
 function showScreen(id, isBack) {
     const prev = document.querySelector('.screen.active');
     const prevId = prev ? prev.id : null;
@@ -786,6 +814,8 @@ function showScreen(id, isBack) {
         stopStatusAmbient();
     }
 
+    // RESPEC: screen-minigames still renders hub for individual game sessions.
+    // The OPS/GAMES segment handles the hub view inside screen-status.
     if (id === 'screen-minigames' && typeof renderMiniGameHub === 'function') {
         renderMiniGameHub(player ? player.sig : 0);
     }
@@ -1228,6 +1258,7 @@ function renderSynthesisReveal(pathData, onDone) {
 // ─── PASS 2: ORIENTATION SCREEN ──────────────────────────────
 // Single screen explaining what the operative can do.
 // Fires between synthesis reveal and first transmission.
+// RESPEC: Copy updated to reference GAMES instead of Training Floor.
 // onDone: callback to advance to createPlayer → first transmission.
 function renderOrientationScreen(onDone) {
     showScreen('screen-orientation');
@@ -1244,7 +1275,7 @@ function renderOrientationScreen(onDone) {
                 <p class="or-syd-line">Here is how this works.</p>
                 <p class="or-syd-line">Every day you get <strong>directives</strong> — real-world tasks that build your stats. Complete them. That is the main thing.</p>
                 <p class="or-syd-line">Each day you also get an <strong>encounter</strong> — a judgment call or a lesson. Optional. No penalty for skipping. But doing them sharpens something directives cannot.</p>
-                <p class="or-syd-line">The <strong>Training Floor</strong> has five games that cost SIG to enter and train specific stats. SIG is earned by completing directives.</p>
+                <p class="or-syd-line">The <strong>GAMES</strong> section has five games that cost SIG to enter and train specific stats. SIG is earned by completing directives. You start with ${STARTING_SIG} SIG.</p>
                 <p class="or-syd-line">Momentum tracks how many days in a row you show up. It multiplies your XP. The compounding starts slow. You will not feel it yet. Show up tomorrow anyway.</p>
             </div>
 
@@ -1380,9 +1411,7 @@ async function init() {
     if (installConfirm)  installConfirm.addEventListener('click',  () => { playUIClick(); acceptInstall(); });
     if (installDismiss)  installDismiss.addEventListener('click',  () => { playUIClick(); dismissInstall(); });
 
-    // PASS 1: Sound toggle stub — wiring moved to SETTINGS tab in status.js.
-    // The #sound-toggle element in index.html is now hidden.
-    // Legacy handler kept in case any code calls it directly.
+    // Sound toggle stub — kept for any legacy calls
     const soundToggle = document.getElementById('sound-toggle');
     if (soundToggle) soundToggle.addEventListener('click', cycleSoundState);
 
@@ -1406,7 +1435,7 @@ async function init() {
     dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear(), player?.operatorDays);
     await runRelaunchBoot();
 
-    // PASS 1: Returning operative lands on STATUS tab (not directives)
+    // RESPEC: Returning operative lands on STATUS tab (reference view)
     showScreen('screen-status');
     if (typeof switchStatusTab === 'function') switchStatusTab('status');
 
