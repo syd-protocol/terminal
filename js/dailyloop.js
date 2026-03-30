@@ -80,8 +80,8 @@ function showMorningTransmission() {
     btn.onclick = () => {
         playUIClick();
         overlay.classList.add('hidden');
-        // Switch to directives tab so operative sees today's mission
-        if (typeof switchStatusTab === 'function') switchStatusTab('directives');
+        // PASS 1: morning transmission dismiss lands on STATUS tab (not directives)
+        if (typeof switchStatusTab === 'function') switchStatusTab('status');
     };
 
     nextLine();

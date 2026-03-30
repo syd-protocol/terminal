@@ -40,16 +40,18 @@
     </div>
 
     <!-- First Transmission (post-onboarding briefing) -->
+    <!-- PASS 2 change: button text updated to [ VIEW MY DIRECTIVES ] -->
     <div class="overlay hidden" id="overlay-briefing">
         <div class="overlay-inner overlay-inner--briefing">
             <div class="briefing-lines" id="briefing-lines"></div>
             <button class="btn btn--primary hidden" id="briefing-directives-btn">
-                [ VIEW TODAY'S DIRECTIVES ]
+                [ VIEW MY DIRECTIVES ]
             </button>
         </div>
     </div>
 
     <!-- Morning Transmission (daily briefing, fires once per day) -->
+    <!-- PASS 1 change: button routes to STATUS tab (not directives) on relaunch -->
     <div class="overlay hidden" id="overlay-morning">
         <div class="overlay-inner overlay-inner--morning">
             <div class="morning-lines" id="morning-lines"></div>
@@ -93,13 +95,17 @@
     <!-- System log -->
     <div class="system-log system-log--default" id="system-log" style="opacity:0;"></div>
 
-    <!-- Sound toggle (persistent, always visible) -->
-    <button class="sound-toggle" id="sound-toggle" aria-label="Toggle sound">♪</button>
+    <!-- PASS 1: Sound toggle moved to Settings tab. Removed from global persistent position. -->
+    <!-- The sound-toggle button is now rendered inside renderSettingsTab() in status.js -->
+    <!-- Keeping a hidden stub so any legacy JS references do not throw -->
+    <button class="sound-toggle hidden" id="sound-toggle" aria-label="Toggle sound">♪</button>
 
 
     <!-- ═══════════════════════════════════════════════════════
          SCREEN: ONBOARDING — name entry terminal
-         New operative flow: name → scan → PATH → createPlayer
+         New operative flow: name → scan → [scan reveal] →
+         [neural key request] → PATH → [path synthesis reveal] →
+         [orientation] → createPlayer
     ═══════════════════════════════════════════════════════ -->
     <section id="screen-onboarding" class="screen active">
         <div class="screen-inner screen-inner--terminal">
@@ -121,6 +127,30 @@
             </div>
             <p class="scan-progress-label" id="scan-progress-label">SIGNAL ACQUISITION — 0%</p>
             <div id="scan-content"></div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: SCAN REVEAL — post-scan trait reveal
+         PASS 2 — new screen. Inserted between scan complete and PATH.
+         Content rendered by scan.js renderScanReveal()
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-scan-reveal" class="screen">
+        <div class="screen-inner screen-inner--centered">
+            <div id="scan-reveal-content"></div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: NEURAL KEY REQUEST — onboarding-only key entry
+         PASS 2 — new screen. Shown once between scan reveal and PATH.
+         Content rendered by app.js renderNeuralKeyRequest()
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-neural-request" class="screen">
+        <div class="screen-inner screen-inner--narrow">
+            <div id="neural-request-content"></div>
         </div>
     </section>
 
@@ -170,28 +200,66 @@
 
 
     <!-- ═══════════════════════════════════════════════════════
-         SCREEN: STATUS — five-tab Status Window
-         OPERATIVE · STATS · DIRECTIVES · PATH · SETTINGS
+         SCREEN: PATH SYNTHESIS REVEAL — post-PATH summary
+         PASS 2 — new screen. Shown between runPathSynthesis and createPlayer.
+         Content rendered by app.js renderSynthesisReveal()
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-synthesis-reveal" class="screen">
+        <div class="screen-inner screen-inner--narrow">
+            <div id="synthesis-reveal-content"></div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: ORIENTATION — app orientation after synthesis
+         PASS 2 — new screen. Shown between synthesis reveal and first transmission.
+         Content rendered by app.js renderOrientationScreen()
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-orientation" class="screen">
+        <div class="screen-inner screen-inner--narrow">
+            <div id="orientation-content"></div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCREEN: STATUS — four-tab Status Window
+         PASS 1 change: tabs are now STATUS · DIRECTIVES · ENCOUNTER · PATH · SETTINGS
+         Old OPERATIVE tab merged into STATUS.
+         Old STATS tab merged into STATUS.
+         ENCOUNTER is now a dedicated tab (not a card at the bottom of DIRECTIVES).
          Content rendered by status.js renderStatusWindow()
     ═══════════════════════════════════════════════════════ -->
     <section id="screen-status" class="screen">
         <div class="screen-inner screen-inner--status">
 
-            <!-- Status header bar -->
+            <!-- PASS 1: Header cleanup
+                 Shows: name · rank badge · level only.
+                 SIG badge moved to STATUS tab content.
+                 Music toggle removed (moved to SETTINGS tab).
+                 Rank badge and level badge are now tappable (wired in status.js).
+            -->
             <div class="status-header" id="status-header">
                 <span class="status-header-name" id="player-name"></span>
                 <div class="status-header-badges">
                     <span class="rank-badge" id="rank-badge"></span>
-                    <span class="status-header-level">LVL <span id="player-level">1</span></span>
-                    <span class="status-header-sig">⬡ <span id="sig-value">0</span></span>
+                    <span class="status-header-level" id="header-level-badge">LVL <span id="player-level">1</span></span>
                 </div>
             </div>
 
-            <!-- Five-tab nav -->
+            <!-- PASS 1: Five-tab nav — STATUS · DIRECTIVES · ENCOUNTER · PATH · SETTINGS
+                 OPERATIVE and STATS merged into STATUS.
+                 ENCOUNTER is its own tab.
+                 Tab IDs updated throughout status.js to match.
+                 The encounter tab shows a dot indicator when encounter is available and not done.
+            -->
             <nav class="status-tab-nav" id="status-tab-nav">
-                <button class="status-tab-btn status-tab-btn--active" id="status-tab-operative" data-tab="operative">OPERATIVE</button>
-                <button class="status-tab-btn" id="status-tab-stats"      data-tab="stats">STATS</button>
+                <button class="status-tab-btn status-tab-btn--active" id="status-tab-status"     data-tab="status">STATUS</button>
                 <button class="status-tab-btn" id="status-tab-directives" data-tab="directives">DIRECTIVES</button>
+                <button class="status-tab-btn" id="status-tab-encounter"  data-tab="encounter">
+                    ENCOUNTER<span class="tab-dot hidden" id="encounter-tab-dot"></span>
+                </button>
                 <button class="status-tab-btn" id="status-tab-path"       data-tab="path">PATH</button>
                 <button class="status-tab-btn" id="status-tab-settings"   data-tab="settings">SETTINGS</button>
             </nav>
@@ -205,7 +273,11 @@
 
     <!-- ═══════════════════════════════════════════════════════
          SCREEN: ENCOUNTER — daily encounter
-         Content rendered by encounter.js renderEncounterSituation()
+         PASS 1: encounter now lives in the ENCOUNTER tab inside screen-status.
+         screen-encounter is kept for backward compatibility but the primary
+         encounter flow renders inside the tab content area via renderEncounterTab().
+         encounter.js openEncounter() now renders into the tab content area
+         when called from the ENCOUNTER tab.
     ═══════════════════════════════════════════════════════ -->
     <section id="screen-encounter" class="screen">
         <div class="screen-inner screen-inner--narrow">
@@ -216,7 +288,7 @@
 
     <!-- ═══════════════════════════════════════════════════════
          SCREEN: MINIGAMES — mini-game hub
-         CASCADE · DRIFT · ECHO · FLOW · RESONANCE + scan replays
+         PASS 3: Scan replay section UI removed from hub (routing kept).
          Content rendered by minigames.js renderMiniGameHub()
     ═══════════════════════════════════════════════════════ -->
     <section id="screen-minigames" class="screen">
@@ -238,8 +310,8 @@
 
 
     <!-- ═══════════════════════════════════════════════════════
-         SCREEN: NEURAL LINK — Gemini API key + incursion generator
-         Content rendered by app.js renderNeuralScreen() (stub — Gemini phase)
+         SCREEN: NEURAL LINK — Gemini API key management
+         Accessible from SETTINGS tab.
     ═══════════════════════════════════════════════════════ -->
     <section id="screen-neural" class="screen">
         <div class="screen-inner screen-inner--narrow">
@@ -287,14 +359,15 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <!-- Modules — load order matters:
-         gemini.js   → shared Gemini API utility, must load before path.js and encounter.js
-         quests.js   → selection engine, must load before app.js
-         scan.js     → scan experiences, called from app.js startScan()
-         path.js     → PATH Protocol, called from app.js startPATH()
-         encounter.js→ encounter screen, called from status.js
-         minigames.js→ mini-game hub, called from showScreen()
-         status.js   → five-tab window, called from app.js updateStatusScreen()
-         app.js      → core engine, wires everything together
+         gemini.js    → shared Gemini API utility
+         quests.js    → selection engine
+         dailyloop.js → morning tx, close-of-day
+         scan.js      → scan experiences + scan reveal (PASS 2)
+         path.js      → PATH Protocol
+         encounter.js → encounter tab + screen
+         minigames.js → mini-game hub
+         status.js    → five-tab window (PASS 1 — new tab structure)
+         app.js       → core engine (PASS 1+2 — onboarding flow + routing)
     -->
     <script src="js/gemini.js"></script>
     <script src="js/quests.js"></script>

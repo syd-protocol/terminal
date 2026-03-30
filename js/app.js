@@ -2,31 +2,26 @@
 // SYD GES — app.js
 // Core engine. Refactored from Terminal for the Gamified Evolution System.
 //
-// What changed from Terminal:
-//   • Onboarding:  old lore boot → Scan + PATH Protocol
-//   • Currency:    gold → Sig
-//   • Resource:    HP/corrupted → Capacity (resource to manage, not punishment)
-//   • Status:      single screen → five-tab Status Window (status.js)
-//   • Screens:     screen-scan, screen-path-select, screen-path-chronicler,
-//                  screen-path-reimaginer, screen-path-loading,
-//                  screen-encounter, screen-minigames, screen-minigame added
-//   • Directives:  all selection logic in quests.js
-//   • Modules:     scan.js, path.js, encounter.js, minigames.js, status.js
+// PASS 1 changes:
+//   - showScreen('screen-status') after relaunch → land on STATUS tab
+//   - switchStatusTab calls updated from 'operative'/'stats' → 'status'
+//   - Morning transmission dismiss → STATUS tab (not directives)
+//   - First transmission dismiss → DIRECTIVES tab (first time only)
+//   - Sound toggle button wiring updated (button now in SETTINGS tab)
+//   - Header sig badge removed from updateStatusScreen()
 //
-// What kept from Terminal (unchanged or minimally extended):
-//   • Firebase config + getDB()
-//   • STAT_NAMES, STAT_FLOOR, STAT_KEYWORDS, classifyGoal()
-//   • xpForLevel(), levelFromXP(), earnedXP()
-//   • RANKS, rankFromLevel(), TITLES, titleFromLevel()
-//   • buildMomentum(), decayMomentum()
-//   • showScreen(), navTo(), goBack(), NAV history
-//   • Web Audio API sound system (all playTone variants)
-//   • PWA install prompt
-//   • Service Worker registration + SW_UPDATED reload
-//   • Firestore push/pull sync
-//   • Field notes (loadFieldNote, saveFieldNote)
-//   • checkDailyReset(), today()
-//   • loadQuests() — fetches /data/quests.json
+// PASS 2 changes:
+//   - startScan() now routes to renderScanReveal() after scan completes
+//     instead of going straight to PATH Protocol
+//   - renderScanReveal() — post-scan trait reveal screen
+//   - renderNeuralKeyRequest() — one-time neural key screen in onboarding
+//     (skipped if key already set via hasNeuralLink())
+//   - startPATH() → after runPathSynthesis completes, shows synthesis
+//     reveal screen before createPlayer()
+//   - renderSynthesisReveal() — post-PATH synthesis reveal screen
+//   - renderOrientationScreen() — app orientation screen before first tx
+//   - runFirstTransmission() button updated: [ VIEW MY DIRECTIVES ]
+//     routes to DIRECTIVES tab
 // ═══════════════════════════════════════════════════════════════
 
 // ─── STORAGE KEYS ────────────────────────────────────────────
@@ -41,14 +36,6 @@ const FIELD_NOTES_KEY     = 'syd_field_notes';
 const AUDIO_MINUTES_KEY   = 'syd_audio_minutes';
 
 // ─── FIREBASE ────────────────────────────────────────────────
-// Compat SDK loaded via <script> in index.html.
-// Existing Terminal project — do not create a new Firebase project.
-// GES extends the existing Firestore schema to store:
-//   syd_operatives/{uid}/profile   — name, stats, level, rank, momentum, capacity, sig
-//   syd_operatives/{uid}/path      — PATH Protocol output
-//   syd_operatives/{uid}/directives/{date} — completions, field notes
-//   syd_operatives/{uid}/encounters/{date} — response, verdict
-//   syd_operatives/{uid}/journal/{date}    — end-of-day entry
 const FIREBASE_CONFIG = {
     apiKey:            'AIzaSyAkuEPtCAc5YWRgb08zClJwnr9IXlrN5nE',
     authDomain:        'syd-protocol.firebaseapp.com',
@@ -74,13 +61,10 @@ function getDB() {
 const STAT_NAMES = ['strength', 'intelligence', 'agility', 'endurance', 'charisma'];
 const STAT_FLOOR = 10;
 
-// [TUNING TARGET] Soft cap per level: STAT_FLOOR + (level * STAT_GROWTH_RATE)
-// Cap rises as the operative levels up. Stats never look full or empty disproportionately.
+// [TUNING TARGET] Soft cap per level
 const STAT_GROWTH_RATE = 2;
 
 // ─── KEYWORD CLASSIFICATION ───────────────────────────────────
-// Local fallback for PATH track selection and goal-to-stat mapping.
-// Used by path.js getLocalFallbackInference() and by classifyGoal() directly.
 const STAT_KEYWORDS = {
     strength:     ['fitness','gym','health','weight','run','walk','exercise','body','eat','sleep','energy','strong','physical','diet','training','workout','sport'],
     intelligence: ['learn','study','read','skill','career','business','build','create','write','code','design','knowledge','degree','course','research','understand','develop'],
@@ -104,9 +88,6 @@ function classifyGoal(text) {
 }
 
 // ─── XP + LEVEL FORMULA ──────────────────────────────────────
-// [RESEARCH] Source: Game design literature on progression curves.
-// Finding: polynomial curves produce achievable early levels and demanding higher ones.
-// Applied: Terminal formula retained exactly.
 function xpForLevel(n) {
     if (n <= 1) return 0;
     return Math.floor(25 * Math.pow(n - 1, 1.9));
@@ -164,10 +145,6 @@ function titleFromLevel(level) {
 }
 
 // ─── MOMENTUM ────────────────────────────────────────────────
-// [RESEARCH] Source: Solo Leveling wiki and novel.
-// Finding: stats accumulate continuously, never reset. Applied: confirmed.
-// buildMomentum: approaches 1.5× asymptotically over 14 consecutive days.
-// decayMomentum: graceful — 1 day missed = 95%, 2 = 85%, 3 = 75%, 4+ = exponential.
 function buildMomentum(consecutiveDays) {
     return parseFloat((1 + 0.5 * (1 - Math.exp(-consecutiveDays / 14))).toFixed(4));
 }
@@ -176,23 +153,14 @@ function decayMomentum(current, missedDays) {
     if (missedDays === 1) return parseFloat((current * 0.95).toFixed(4));
     if (missedDays === 2) return parseFloat((current * 0.85).toFixed(4));
     if (missedDays === 3) return parseFloat((current * 0.75).toFixed(4));
-    // 4+ days: exponential decay toward floor of 1.0
     let m = current;
     for (let i = 0; i < missedDays - 3; i++) m = Math.max(1.0, m * 0.80);
     return parseFloat(m.toFixed(4));
 }
 
-// ─── CAPACITY (replaces HP) ───────────────────────────────────
-// Capacity is the operative's current resource. Not a punishment — a signal.
-// Drops under sustained high-intensity effort without recovery.
-// Recovers through rest-based directives.
-// Nothing catastrophic at zero — SYD reflects honestly.
-//
-// [TUNING TARGET] Base capacity and per-level growth
+// ─── CAPACITY ────────────────────────────────────────────────
 function calcMaxCapacity(level) { return 100 + level * 5; }
 
-// Capacity drop per missed day — gentler than Terminal's HP system.
-// [TUNING TARGET] Capacity decay values
 function applyCapacityDecay(player, missedDays) {
     const maxCap = player.maxCapacity || calcMaxCapacity(calculateLevel ? calculateLevel() : 1);
     if (missedDays === 1) player.capacity = Math.max(0, (player.capacity ?? maxCap) - 5);
@@ -202,7 +170,6 @@ function applyCapacityDecay(player, missedDays) {
 }
 
 // ─── SOUND SYSTEM ────────────────────────────────────────────
-// Web Audio API synthesis only — no audio files.
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx    = null;
 let soundEnabled = true;
@@ -239,8 +206,6 @@ function cycleSoundState() {
 }
 
 // ─── AUDIO ACCUMULATION ──────────────────────────────────────
-// Tracks total audio minutes for habituation fade — kept from Terminal.
-// [TUNING TARGET] Audio fade threshold in minutes
 const AUDIO_FADE_START_MINUTES = 20;
 const AUDIO_FADE_END_MINUTES   = 40;
 
@@ -261,7 +226,6 @@ function accumulateAudioMinutes() {
 }
 
 // ─── AMBIENT AUDIO ───────────────────────────────────────────
-// Status screen ambient — kept from Terminal, simplified.
 let ambientOsc = null; let ambientGain = null;
 function startStatusAmbient() {
     if (!soundEnabled) return;
@@ -322,13 +286,8 @@ function loadPlayer() {
         p.capacity    = p.maxCapacity;
     }
 
-    // Migration: existing players predate operatorDays — set high to skip Tier 0
     if (typeof p.operatorDays === 'undefined') p.operatorDays = 999;
-
-    // Migration: existing players predate PATH data
     if (typeof p.pathComplete === 'undefined') p.pathComplete = true;
-
-    // Migration: existing players predate scan
     if (typeof p.scanComplete === 'undefined') p.scanComplete = true;
 
     return p;
@@ -343,7 +302,6 @@ function createPlayer(name, scanTraits, pathData) {
     const stats = {};
     STAT_NAMES.forEach(s => { stats[s] = STAT_FLOOR; });
 
-    // Apply scan trait seeds on top of floor
     if (scanTraits && typeof seedStatsFromTraits === 'function') {
         const scanSeeds = seedStatsFromTraits(scanTraits);
         STAT_NAMES.forEach(s => {
@@ -351,7 +309,6 @@ function createPlayer(name, scanTraits, pathData) {
         });
     }
 
-    // Apply PATH data seeds on top of scan seeds
     if (pathData && pathData.statSeeds) {
         STAT_NAMES.forEach(s => {
             stats[s] = (stats[s] || STAT_FLOOR) + (pathData.statSeeds[s] || 0);
@@ -378,7 +335,6 @@ function createPlayer(name, scanTraits, pathData) {
         hasSeenBriefing: false
     };
 
-    // Save PATH data separately for the PATH tab
     if (pathData && typeof savePathData === 'function') {
         savePathData(pathData);
     }
@@ -386,7 +342,13 @@ function createPlayer(name, scanTraits, pathData) {
     savePlayer();
     dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear(), player.operatorDays);
     updateStatusScreen();
+    // PASS 2: Route through orientation before first transmission
     showScreen('screen-status');
+    // activeStatusTab is set to 'directives' after first transmission dismiss
+    // so the landing here is fine — it will be set to status, then first tx shows,
+    // then dismiss routes to directives.
+    // Force status tab as default during creation (first tx will switch to directives on dismiss)
+    if (typeof switchStatusTab === 'function') switchStatusTab('status');
     runFirstTransmission();
 }
 
@@ -403,7 +365,7 @@ function calculateLuck()  {
 
 // ─── FIRST TRANSMISSION ──────────────────────────────────────
 // Fires once on first ever launch, after onboarding completes.
-// SYD's voice. Brief. Specific. No tutorial announcement.
+// PASS 1: Button now says [ VIEW MY DIRECTIVES ] and routes to DIRECTIVES tab.
 const FIRST_TX_LINES = [
     'THIS IS YOUR TERMINAL.',
     'YOUR STATS ARE CONSEQUENCES OF YOUR REAL-WORLD ACTIONS — NOT SCORES.',
@@ -442,12 +404,14 @@ function runFirstTransmission() {
         setTimeout(nextLine, 1000);
     }
 
+    // PASS 1: dismiss routes to DIRECTIVES tab (first time only)
     btn.onclick = () => {
         playUIClick();
         overlay.classList.add('hidden');
         player.hasSeenBriefing = true;
         savePlayer();
-        switchStatusTab('directives');
+        // Land on DIRECTIVES for first time — they need to see their directives
+        if (typeof switchStatusTab === 'function') switchStatusTab('directives');
     };
 
     nextLine();
@@ -463,16 +427,13 @@ function checkDailyReset() {
     const diffDays = Math.round(diffMs / 86400000);
 
     if (diffDays === 1) {
-        // Consecutive day
         player.consecutiveDays = (player.consecutiveDays || 0) + 1;
         player.momentum        = buildMomentum(player.consecutiveDays);
-        // Full-completion bonus: restore 10 capacity
         if ((player.completedToday || []).length >= (dailyQuests || []).length && dailyQuests.length > 0) {
             const maxCap     = player.maxCapacity || calcMaxCapacity(calculateLevel());
             player.capacity  = Math.min(maxCap, (player.capacity || maxCap) + 10);
         }
     } else {
-        // Missed days
         player.consecutiveDays = 1;
         player._prevMomentum   = player.momentum;
         player.momentum        = decayMomentum(player.momentum || 1.0, diffDays - 1);
@@ -495,25 +456,20 @@ function completeQuest(id, stat, baseXP) {
     if (!player) return;
     if ((player.completedToday || []).includes(id)) return;
 
-    // Momentum multiplier on XP
     const momentum  = player.momentum || 1.0;
     const finalXP   = Math.round(baseXP * momentum);
     const statGain  = finalXP * 0.5;
 
-    // Apply stat gain
     player.stats[stat] = parseFloat(((player.stats[stat] || STAT_FLOOR) + statGain).toFixed(2));
 
-    // Award Sig
     // [TUNING TARGET] Sig reward per directive = baseXP / 2
     const sigReward = Math.floor(baseXP / 2);
     player.sig = (player.sig || 0) + sigReward;
 
-    // Mark complete
     player.completedToday = player.completedToday || [];
     player.completedToday.push(id);
     player.lastActiveDate = today();
 
-    // Capacity recovery from completing a directive (small, not full)
     // [TUNING TARGET] Capacity recovered per directive completion
     const maxCap    = player.maxCapacity || calcMaxCapacity(calculateLevel());
     player.capacity = Math.min(maxCap, (player.capacity || maxCap) + 2);
@@ -522,53 +478,45 @@ function completeQuest(id, stat, baseXP) {
     playQuestComplete();
     showFloatingXP(id, finalXP, momentum > 1.3);
 
-    // Check level up
     const prevLevel = levelFromXP(Math.max(0, earnedXP(player.stats) - statGain));
     const newLevel  = calculateLevel();
     if (newLevel > prevLevel) {
         showLevelUpOverlay(newLevel);
-        // Update max capacity on level up
         player.maxCapacity = calcMaxCapacity(newLevel);
         savePlayer();
     }
 
     updateStatusScreen();
 
-    // Re-render directives tab if active
     if (activeStatusTab === 'directives' && typeof renderDirectivesTab === 'function') {
         const container = document.getElementById('status-tab-content');
         if (container) renderDirectivesTab(container);
     }
 
-    // If all directives are now complete, offer close-of-day after a short pause
     const allNowDone = (player.completedToday || []).length >= (dailyQuests || []).length && (dailyQuests || []).length > 0;
     if (allNowDone && typeof shouldShowCloseOfDay === 'function' && shouldShowCloseOfDay()) {
         setTimeout(() => { if (typeof triggerCloseOfDay === 'function') triggerCloseOfDay(); }, 1800);
     }
 
-    // Attempt background cloud sync
     maybeSyncToCloud();
 }
 
 // ─── STATUS SCREEN ────────────────────────────────────────────
-// updateStatusScreen is the top-level function called throughout the app.
-// Updates the sticky header bar elements, then delegates tab content to status.js.
+// PASS 1: Header no longer includes sig badge (sig shown in STATUS tab identity block).
 function updateStatusScreen(animate) {
     if (!player) return;
 
-    // Update sticky header bar (outside tab content, always visible on screen-status)
     const level  = calculateLevel();
     const rank   = rankFromLevel(level);
     const nameEl  = document.getElementById('player-name');
     const levelEl = document.getElementById('player-level');
     const rankEl  = document.getElementById('rank-badge');
-    const sigEl   = document.getElementById('sig-value');
+
+    // PASS 1: sig badge removed from header
     if (nameEl)  nameEl.textContent  = player.name;
     if (levelEl) levelEl.textContent = level;
     if (rankEl)  { rankEl.textContent = rank; rankEl.className = 'rank-badge ' + rankCssClass(rank); }
-    if (sigEl)   sigEl.textContent   = player.sig || 0;
 
-    // Delegate tab content to status.js renderStatusWindow()
     if (typeof renderStatusWindow === 'function') {
         renderStatusWindow(animate);
     }
@@ -707,7 +655,7 @@ function loadFieldNote(questId) {
     return notes[`${questId}_${today()}`] || '';
 }
 
-// ─── NEURAL LINK (Gemini API key) ────────────────────────────
+// ─── NEURAL LINK ─────────────────────────────────────────────
 function getNeuralKey()      { return localStorage.getItem(NEURAL_KEY_KEY) || null; }
 function getNeuralProvider() { return localStorage.getItem(NEURAL_PROVIDER_KEY) || 'gemini'; }
 function setNeuralKey(k, p) {
@@ -716,8 +664,6 @@ function setNeuralKey(k, p) {
 }
 
 // ─── CLOUD SYNC ───────────────────────────────────────────────
-// Opt-in. Player data pushed to Firestore only with explicit consent.
-// All AI keys stored locally only — never synced.
 async function maybeSyncToCloud() {
     if (!player || !player.syncOptedIn) return;
     const lastPush = localStorage.getItem(SYNC_LAST_PUSH_KEY);
@@ -731,7 +677,6 @@ async function pushToCloud(immediate) {
     try {
         const uid = player.uid || generateUID();
         if (!player.uid) { player.uid = uid; savePlayer(); }
-        // Never sync API keys
         const { sig, stats, momentum, capacity, maxCapacity, operatorDays,
                 consecutiveDays, level, rank, name, pathData } = player;
         await database.collection('syd_operatives').doc(uid).set({
@@ -762,7 +707,9 @@ async function loadQuests() {
 
 // ─── NAV + HISTORY ───────────────────────────────────────────
 const NAV_HISTORY = [];
-const NAV_EXCLUDE = ['screen-scan', 'screen-path', 'screen-path-chronicler', 'screen-path-reimaginer', 'screen-path-loading'];
+const NAV_EXCLUDE = ['screen-scan', 'screen-scan-reveal', 'screen-neural-request',
+    'screen-path', 'screen-path-chronicler', 'screen-path-reimaginer',
+    'screen-path-loading', 'screen-synthesis-reveal', 'screen-orientation'];
 
 function navTo(screenId) { playUIClick(); showScreen(screenId); }
 
@@ -773,8 +720,7 @@ function goBack() {
 }
 
 // ─── RELAUNCH BOOT ───────────────────────────────────────────
-// Shown when an existing operative relaunches the app.
-// Short terminal sequence with momentum delta.
+// PASS 1: After boot, lands on STATUS tab (not directives).
 function runRelaunchBoot() {
     return new Promise(resolve => {
         const overlay = document.getElementById('relaunch-boot');
@@ -833,7 +779,6 @@ function showScreen(id, isBack) {
     const next = document.getElementById(id);
     if (next) next.classList.add('active');
 
-    // Screen-specific hooks
     if (id === 'screen-status') {
         startStatusAmbient();
         updateStatusScreen();
@@ -851,9 +796,6 @@ function showScreen(id, isBack) {
 }
 
 // ─── NEURAL LINK SCREEN WIRING ───────────────────────────────
-// Wires LINK and REMOVE KEY buttons on screen-neural.
-// Called whenever screen-neural becomes active.
-// Key is stored locally only — never synced to Firestore or Git.
 function wireNeuralScreen() {
     const backBtns = [
         document.getElementById('neural-header-back'),
@@ -869,13 +811,10 @@ function wireNeuralScreen() {
     const saveBtn   = document.getElementById('neural-key-save');
     const removeBtn = document.getElementById('neural-key-remove');
     const input     = document.getElementById('neural-key-input');
-    const statusEl  = document.getElementById('neural-key-status');
 
-    // Populate input if key already saved
     if (input) {
         const existing = getNeuralKey();
         if (existing) {
-            // Show masked placeholder so operative knows key exists
             input.placeholder = 'Key saved — paste a new one to replace';
             input.value = '';
         }
@@ -886,21 +825,11 @@ function wireNeuralScreen() {
         saveBtn.addEventListener('click', () => {
             playUIClick();
             const key = input ? input.value.trim() : '';
-
-            if (!key) {
-                showLog('[ PASTE YOUR GEMINI KEY TO LINK ]', 'system');
-                return;
-            }
-            if (key.length < 8) {
-                showLog('[ KEY TOO SHORT — CHECK YOU COPIED THE FULL KEY ]', 'system');
-                return;
-            }
-
+            if (!key) { showLog('[ PASTE YOUR GEMINI KEY TO LINK ]', 'system'); return; }
+            if (key.length < 8) { showLog('[ KEY TOO SHORT — CHECK YOU COPIED THE FULL KEY ]', 'system'); return; }
             setNeuralKey(key, 'gemini');
             if (input) { input.value = ''; input.placeholder = 'Key saved — paste a new one to replace'; }
             showLog('[ NEURAL LINK CONNECTED — AI FEATURES ACTIVE ]', 'accent');
-
-            // Refresh settings tab label if status window is visible
             if (typeof updateStatusScreen === 'function') updateStatusScreen();
         });
     }
@@ -951,18 +880,15 @@ function registerServiceWorker() {
         .then(reg => {
             navigator.serviceWorker.addEventListener('message', e => {
                 if (e.data && e.data.type === 'SW_UPDATED') {
-                    // Only reload if a player already exists — never mid-onboarding
                     if (player) window.location.reload();
                 }
             });
-            // Send re-engagement check
             if (reg.active && player) {
                 reg.active.postMessage({
                     type:           'CHECK_NOTIFICATION',
                     lastActiveDate: player.lastActiveDate || player.lastQuestDate,
                     playerName:     player.name
                 });
-                // Schedule tomorrow's morning notification
                 reg.active.postMessage({
                     type:       'SCHEDULE_MORNING',
                     playerName: player.name,
@@ -974,7 +900,6 @@ function registerServiceWorker() {
 }
 
 // ─── TYPE TEXT UTILITY ───────────────────────────────────────
-// Used by scan.js intro and relaunch boot. Returns a cancel function.
 function typeText(el, text, speed, onDone) {
     let i = 0;
     el.textContent = '';
@@ -985,57 +910,357 @@ function typeText(el, text, speed, onDone) {
     return () => clearInterval(iv);
 }
 
-// ─── INIT ────────────────────────────────────────────────────
-async function init() {
-    applySoundState(loadSoundState());
+// ═══════════════════════════════════════════════════════════════
+// PASS 2 — ONBOARDING FLOW ADDITIONS
+// ═══════════════════════════════════════════════════════════════
 
-    const questsPromise = loadQuests();
-    player              = loadPlayer();
-    currentGear         = loadGear();
+// ─── BRIDGE: NAME → SCAN ─────────────────────────────────────
+function startScan(name) {
+    window._pendingOperativeName = name;
 
-    // ── Wire global buttons ───────────────────────────────────
-    const soundToggle = document.getElementById('sound-toggle');
-    if (soundToggle) soundToggle.addEventListener('click', cycleSoundState);
+    if (typeof runScan === 'function') {
+        runScan(name, (scanTraits) => {
+            // PASS 2: Show scan reveal before PATH
+            renderScanReveal(scanTraits, () => {
+                // After reveal, check if neural key request is needed
+                renderNeuralKeyRequest(() => {
+                    startPATH(name, scanTraits);
+                });
+            });
+        });
+    } else {
+        startPATH(name, {});
+    }
+}
 
-    const installConfirm  = document.getElementById('install-confirm-btn');
-    const installDismiss  = document.getElementById('install-dismiss-btn');
-    if (installConfirm)  installConfirm.addEventListener('click',  () => { playUIClick(); acceptInstall(); });
-    if (installDismiss)  installDismiss.addEventListener('click',  () => { playUIClick(); dismissInstall(); });
+// ─── BRIDGE: SCAN → PATH ─────────────────────────────────────
+function startPATH(name, scanTraits) {
+    window._pendingScanTraits = scanTraits;
 
-    // ── New operative — run scan → PATH → createPlayer ────────
-    if (!player) {
-        allQuests = await questsPromise;
-        showScreen('screen-onboarding');
-        runNewOperativeFlow();
-        registerServiceWorker();
+    if (typeof runPATH === 'function') {
+        runPATH(scanTraits, (pathData) => {
+            stopStatusAmbient();
+            // PASS 2: Show synthesis reveal before createPlayer
+            renderSynthesisReveal(pathData, () => {
+                renderOrientationScreen(() => {
+                    createPlayer(name, scanTraits, pathData);
+                });
+            });
+        });
+    } else {
+        createPlayer(name, scanTraits, null);
+    }
+}
+
+// ─── PASS 2: POST-SCAN REVEAL SCREEN ─────────────────────────
+// Shows the seven trait scores as animated bars with SYD commentary.
+// Fires after completeScan(), before PATH Protocol.
+// onDone: callback to advance to neural key request.
+function renderScanReveal(scanTraits, onDone) {
+    showScreen('screen-scan-reveal');
+    const container = document.getElementById('scan-reveal-content');
+    if (!container) { if (onDone) onDone(); return; }
+
+    const traits = scanTraits || {};
+
+    // SYD's read — pick lines based on highest and lowest trait
+    const sorted = Object.entries(traits).sort((a, b) => b[1] - a[1]);
+    const highest = sorted[0] || null;
+    const lowest  = sorted[sorted.length - 1] || null;
+
+    const traitReadableNames = {
+        patternRecognition:    'pattern recognition',
+        cognitiveFlexibility:  'cognitive flexibility',
+        persistence:           'persistence',
+        executionSpeed:        'execution speed',
+        executionAccuracy:     'execution accuracy',
+        pressureStability:     'pressure stability',
+        socialReading:         'social reading'
+    };
+
+    const sydLines = [];
+    sydLines.push('Your scan is in. Here is what it found.');
+    if (highest) {
+        const highName = traitReadableNames[highest[0]] || highest[0];
+        const highPct  = Math.round(highest[1] * 100);
+        sydLines.push(`${highName.toUpperCase()} is your strongest signal at ${highPct}%. That is the engine. Everything else is downstream of that.`);
+    }
+    if (lowest && lowest[0] !== (highest && highest[0])) {
+        const lowName = traitReadableNames[lowest[0]] || lowest[0];
+        const lowPct  = Math.round(lowest[1] * 100);
+        sydLines.push(`${lowName.toUpperCase()} at ${lowPct}% is the gap. Not a flaw — a calibration target. The directives are built to close it.`);
+    }
+    sydLines.push('These traits seed your starting stats. They are stored. They grow with use.');
+
+    const traitOrder = [
+        'patternRecognition', 'cognitiveFlexibility', 'persistence',
+        'executionSpeed', 'executionAccuracy', 'pressureStability', 'socialReading'
+    ];
+
+    const traitDisplayNames = {
+        patternRecognition:    'PATTERN RECOGNITION',
+        cognitiveFlexibility:  'COGNITIVE FLEXIBILITY',
+        persistence:           'PERSISTENCE',
+        executionSpeed:        'EXECUTION SPEED',
+        executionAccuracy:     'EXECUTION ACCURACY',
+        pressureStability:     'PRESSURE STABILITY',
+        socialReading:         'SOCIAL READING'
+    };
+
+    container.innerHTML = `
+        <div class="scan-reveal-wrap">
+            <div class="scan-reveal-header">
+                <p class="scan-reveal-label">[ SIGNAL ACQUISITION — COMPLETE ]</p>
+            </div>
+
+            <div class="scan-reveal-syd">
+                ${sydLines.map(l => `<p class="scan-reveal-syd-line">${l}</p>`).join('')}
+            </div>
+
+            <div class="scan-reveal-traits">
+                ${traitOrder.map(key => {
+                    const score  = traits[key] !== undefined ? traits[key] : null;
+                    const pct    = score !== null ? Math.round(score * 100) : 0;
+                    const name   = traitDisplayNames[key] || key.toUpperCase();
+                    return `
+                        <div class="srt-row">
+                            <div class="srt-row-header">
+                                <span class="srt-name">${name}</span>
+                                <span class="srt-pct" id="srt-pct-${key}">${score !== null ? pct + '%' : '—'}</span>
+                            </div>
+                            <div class="srt-bar-wrap">
+                                <div class="srt-bar" id="srt-bar-${key}" style="width:0%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+
+            <button class="btn btn--primary scan-reveal-proceed" id="scan-reveal-proceed">
+                [ PROCEED TO CLASSIFICATION ]
+            </button>
+        </div>
+    `;
+
+    // Animate bars in sequence
+    setTimeout(() => {
+        traitOrder.forEach((key, i) => {
+            const score = traits[key] !== undefined ? traits[key] : 0;
+            const pct   = Math.round(score * 100);
+            setTimeout(() => {
+                const bar = document.getElementById('srt-bar-' + key);
+                if (bar) bar.style.width = pct + '%';
+            }, i * 120);
+        });
+    }, 300);
+
+    document.getElementById('scan-reveal-proceed').addEventListener('click', () => {
+        playUIClick();
+        if (onDone) onDone();
+    });
+}
+
+// ─── PASS 2: NEURAL KEY REQUEST SCREEN ──────────────────────
+// One-time screen between scan reveal and PATH.
+// Skipped if key is already set (hasNeuralLink() returns true).
+// onDone: callback to advance.
+function renderNeuralKeyRequest(onDone) {
+    // Skip if key already connected
+    if (typeof hasNeuralLink === 'function' && hasNeuralLink()) {
+        if (onDone) onDone();
         return;
     }
 
-    // ── Returning operative ───────────────────────────────────
-    allQuests = await Promise.race([
-        questsPromise,
-        new Promise(r => setTimeout(() => r([]), 4000))
-    ]);
-    if (!allQuests.length) allQuests = await questsPromise;
+    showScreen('screen-neural-request');
+    const container = document.getElementById('neural-request-content');
+    if (!container) { if (onDone) onDone(); return; }
 
-    checkDailyReset();
-    dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear(), player?.operatorDays);
-    await runRelaunchBoot();
-    showScreen('screen-status');
-    registerServiceWorker();
-    // Initialise daily loop — morning transmission, mid-day nudge, midnight close check
-    if (typeof initDailyLoop === 'function') initDailyLoop();
+    container.innerHTML = `
+        <div class="neural-request-wrap">
+            <div class="nr-header">
+                <p class="nr-syd-line">Before I classify you, I need to ask something.</p>
+                <p class="nr-syd-line">SYD can give you a personalised read. Your PATH analysis, stat explainers, and encounter evaluations can be specific to you — not generic.</p>
+                <p class="nr-syd-line">To activate it, connect a free Gemini key. This takes about 60 seconds.</p>
+            </div>
+
+            <a
+                href="https://aistudio.google.com/app/apikey"
+                target="_blank"
+                rel="noopener"
+                class="btn btn--primary nr-get-key-btn"
+            >
+                [ GET YOUR FREE GEMINI KEY ]
+            </a>
+
+            <div class="nr-input-group">
+                <input
+                    type="password"
+                    id="nr-key-input"
+                    class="settings-input nr-key-input"
+                    placeholder="Paste your key here — AIza..."
+                    autocomplete="off"
+                    spellcheck="false"
+                />
+                <button class="btn btn--primary" id="nr-link-btn">[ LINK ]</button>
+            </div>
+
+            <p class="nr-privacy-note">
+                Your key is stored on this device only. Never transmitted to SYD servers.
+            </p>
+
+            <button class="nr-skip-btn" id="nr-skip-btn">
+                I'll do this later — skip for now
+            </button>
+        </div>
+    `;
+
+    document.getElementById('nr-link-btn').addEventListener('click', () => {
+        playUIClick();
+        const input = document.getElementById('nr-key-input');
+        const key   = input ? input.value.trim() : '';
+        if (!key) {
+            showLog('[ PASTE YOUR KEY FIRST, OR TAP SKIP ]', 'system');
+            return;
+        }
+        if (key.length < 8) {
+            showLog('[ KEY TOO SHORT — CHECK YOU COPIED THE FULL KEY ]', 'system');
+            return;
+        }
+        if (typeof setNeuralKey === 'function') setNeuralKey(key, 'gemini');
+        showLog('[ NEURAL LINK CONNECTED ]', 'accent');
+        setTimeout(() => { if (onDone) onDone(); }, 600);
+    });
+
+    document.getElementById('nr-skip-btn').addEventListener('click', () => {
+        playUIClick();
+        if (onDone) onDone();
+    });
+}
+
+// ─── PASS 2: POST-PATH SYNTHESIS REVEAL ──────────────────────
+// Shows confirmed path, role, rank, top gap skills, hidden affinity hint.
+// SYD speaks 2–3 lines. CONTINUE button. Fires before createPlayer().
+// onDone: callback to advance to orientation.
+function renderSynthesisReveal(pathData, onDone) {
+    showScreen('screen-synthesis-reveal');
+    const container = document.getElementById('synthesis-reveal-content');
+    if (!container) { if (onDone) onDone(); return; }
+
+    if (!pathData) {
+        if (onDone) onDone();
+        return;
+    }
+
+    const pathName    = (pathData.confirmedPath && pathData.confirmedPath.path_name) || 'UNCLASSIFIED';
+    const role        = pathData.confirmedRole || pathName;
+    const rank        = pathData.confirmedRank || 'F';
+    const skills      = (pathData.gapAnalysis && pathData.gapAnalysis.skills) || [];
+    const top3Skills  = skills.slice(0, 3);
+    const affinity    = pathData.hiddenAffinity;
+
+    // Rank plain-language context
+    const rankContext = {
+        'F': 'Starting position. The system clocked where you are — not where you will be.',
+        'E': 'Early traction. You have real experience to build on.',
+        'D': 'Developing. You are past beginner. The next phase is deliberate practice.',
+        'C': 'Established. You know the terrain. The gap now is precision.',
+        'B': 'Senior. You operate under pressure. The gap is influence.',
+        'A': 'Recognised. Edge cases are what is left to master.',
+        'S': 'Elite. Almost nothing left to close.'
+    };
+
+    const sydLines = [];
+    sydLines.push(`Classification complete. You are confirmed on the ${pathName} path.`);
+    if (role && role !== pathName) {
+        sydLines.push(`Primary role: ${role}. That is where your record points.`);
+    }
+    if (top3Skills.length > 0) {
+        sydLines.push(`Three gaps identified: ${top3Skills.join(', ')}. These are what the directives will target first.`);
+    } else {
+        sydLines.push('Your directives will target the highest-leverage gaps for your path and rank.');
+    }
+
+    container.innerHTML = `
+        <div class="synthesis-reveal-wrap">
+            <div class="sr-header">
+                <p class="sr-label">[ CLASSIFICATION COMPLETE ]</p>
+            </div>
+
+            <div class="sr-path-block">
+                <p class="sr-path-name">${pathName}</p>
+                <p class="sr-role">${role !== pathName ? role : ''}</p>
+                <div class="sr-rank-row">
+                    <span class="rank-badge ${typeof rankCssClass === 'function' ? rankCssClass(rank) : ''}">${rank}</span>
+                    <span class="sr-rank-context">${rankContext[rank] || rankContext['F']}</span>
+                </div>
+            </div>
+
+            ${top3Skills.length > 0 ? `
+                <div class="sr-gaps-block">
+                    <p class="sr-section-label">[ GAP TARGETS ]</p>
+                    <div class="path-skill-tags">
+                        ${top3Skills.map(s => '<span class="path-skill-tag">' + s + '</span>').join('')}
+                    </div>
+                </div>
+            ` : ''}
+
+            ${affinity && affinity.stat ? `
+                <div class="sr-affinity-block">
+                    <p class="sr-section-label">[ HIDDEN AFFINITY — STORED ]</p>
+                    <p class="sr-affinity-note">Something was flagged in your signal. It unlocks at Level 20. SYD is holding it.</p>
+                </div>
+            ` : ''}
+
+            <div class="sr-syd-voice">
+                ${sydLines.map(l => `<p class="sr-syd-line">${l}</p>`).join('')}
+            </div>
+
+            <button class="btn btn--primary" id="sr-continue-btn">[ CONTINUE ]</button>
+        </div>
+    `;
+
+    document.getElementById('sr-continue-btn').addEventListener('click', () => {
+        playUIClick();
+        if (onDone) onDone();
+    });
+}
+
+// ─── PASS 2: ORIENTATION SCREEN ──────────────────────────────
+// Single screen explaining what the operative can do.
+// Fires between synthesis reveal and first transmission.
+// onDone: callback to advance to createPlayer → first transmission.
+function renderOrientationScreen(onDone) {
+    showScreen('screen-orientation');
+    const container = document.getElementById('orientation-content');
+    if (!container) { if (onDone) onDone(); return; }
+
+    container.innerHTML = `
+        <div class="orientation-wrap">
+            <div class="or-header">
+                <p class="or-label">[ SYD — ORIENTATION ]</p>
+            </div>
+
+            <div class="or-syd-voice">
+                <p class="or-syd-line">Here is how this works.</p>
+                <p class="or-syd-line">Every day you get <strong>directives</strong> — real-world tasks that build your stats. Complete them. That is the main thing.</p>
+                <p class="or-syd-line">Each day you also get an <strong>encounter</strong> — a judgment call or a lesson. Optional. No penalty for skipping. But doing them sharpens something directives cannot.</p>
+                <p class="or-syd-line">The <strong>Training Floor</strong> has five games that cost SIG to enter and train specific stats. SIG is earned by completing directives.</p>
+                <p class="or-syd-line">Momentum tracks how many days in a row you show up. It multiplies your XP. The compounding starts slow. You will not feel it yet. Show up tomorrow anyway.</p>
+            </div>
+
+            <button class="btn btn--primary or-continue-btn" id="or-continue-btn">
+                [ UNDERSTOOD — LET'S BEGIN ]
+            </button>
+        </div>
+    `;
+
+    document.getElementById('or-continue-btn').addEventListener('click', () => {
+        playUIClick();
+        if (onDone) onDone();
+    });
 }
 
 // ─── NEW OPERATIVE FLOW ──────────────────────────────────────
-// The full onboarding sequence for a new operative:
-//   1. Name entry (terminal screen)
-//   2. Scan (scan.js — three experiences)
-//   3. PATH Protocol (path.js — Chronicler or Re-imaginer)
-//   4. createPlayer() with trait seeds + PATH seeds
-//   5. First Transmission overlay
-//   6. Status Window (OPERATIVE tab)
-
 function runNewOperativeFlow() {
     startStatusAmbient();
     renderNameEntry();
@@ -1065,10 +1290,10 @@ function renderNameEntry() {
         </div>
     `;
 
-    const linesEl    = document.getElementById('onboarding-lines');
+    const linesEl     = document.getElementById('onboarding-lines');
     const nameSection = document.getElementById('onboarding-name-section');
-    const nameInput  = document.getElementById('onboarding-name-input');
-    const nameBtn    = document.getElementById('onboarding-name-btn');
+    const nameInput   = document.getElementById('onboarding-name-input');
+    const nameBtn     = document.getElementById('onboarding-name-btn');
 
     const introLines = [
         '> SIGNAL DETECTED',
@@ -1107,7 +1332,6 @@ function renderNameEntry() {
         setTimeout(nextLine, line === '' ? 200 : line.startsWith('>') ? 400 : 320);
     }
 
-    // Tap anywhere on the terminal to skip typing
     linesEl.addEventListener('click', () => {
         introLines.slice(idx).forEach(line => {
             const el = document.createElement('div');
@@ -1142,36 +1366,52 @@ function renderNameEntry() {
     nextLine();
 }
 
-// ─── BRIDGE: NAME → SCAN ─────────────────────────────────────
-function startScan(name) {
-    // Stash name temporarily until createPlayer is called
-    window._pendingOperativeName = name;
+// ─── INIT ────────────────────────────────────────────────────
+async function init() {
+    applySoundState(loadSoundState());
 
-    if (typeof runScan === 'function') {
-        runScan(name, (scanTraits) => {
-            // Scan complete — move to PATH Protocol
-            startPATH(name, scanTraits);
-        });
-    } else {
-        // scan.js not loaded — skip to PATH with no traits
-        startPATH(name, {});
+    const questsPromise = loadQuests();
+    player              = loadPlayer();
+    currentGear         = loadGear();
+
+    // Wire install banner
+    const installConfirm  = document.getElementById('install-confirm-btn');
+    const installDismiss  = document.getElementById('install-dismiss-btn');
+    if (installConfirm)  installConfirm.addEventListener('click',  () => { playUIClick(); acceptInstall(); });
+    if (installDismiss)  installDismiss.addEventListener('click',  () => { playUIClick(); dismissInstall(); });
+
+    // PASS 1: Sound toggle stub — wiring moved to SETTINGS tab in status.js.
+    // The #sound-toggle element in index.html is now hidden.
+    // Legacy handler kept in case any code calls it directly.
+    const soundToggle = document.getElementById('sound-toggle');
+    if (soundToggle) soundToggle.addEventListener('click', cycleSoundState);
+
+    // ── New operative — run scan → PATH → createPlayer ────────
+    if (!player) {
+        allQuests = await questsPromise;
+        showScreen('screen-onboarding');
+        runNewOperativeFlow();
+        registerServiceWorker();
+        return;
     }
-}
 
-// ─── BRIDGE: SCAN → PATH ─────────────────────────────────────
-function startPATH(name, scanTraits) {
-    window._pendingScanTraits = scanTraits;
+    // ── Returning operative ───────────────────────────────────
+    allQuests = await Promise.race([
+        questsPromise,
+        new Promise(r => setTimeout(() => r([]), 4000))
+    ]);
+    if (!allQuests.length) allQuests = await questsPromise;
 
-    if (typeof runPATH === 'function') {
-        runPATH(scanTraits, (pathData) => {
-            // PATH complete — create operative
-            stopStatusAmbient();
-            createPlayer(name, scanTraits, pathData);
-        });
-    } else {
-        // path.js not loaded — create player with scan traits only
-        createPlayer(name, scanTraits, null);
-    }
+    checkDailyReset();
+    dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear(), player?.operatorDays);
+    await runRelaunchBoot();
+
+    // PASS 1: Returning operative lands on STATUS tab (not directives)
+    showScreen('screen-status');
+    if (typeof switchStatusTab === 'function') switchStatusTab('status');
+
+    registerServiceWorker();
+    if (typeof initDailyLoop === 'function') initDailyLoop();
 }
 
 document.addEventListener('DOMContentLoaded', init);

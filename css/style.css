@@ -7084,3 +7084,662 @@ body {
     color:        var(--text-secondary);
     line-height:  1.6;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SYD GES — style_additions_pass1_2.css
+   Pass 1 + Pass 2 UI/UX overhaul additions.
+   INSTRUCTION: Append these to /css/style.css after the existing
+   style_additions.css content.
+
+   Pass 1 covers:
+     - New STATUS tab (merged OPERATIVE + STATS)
+     - Momentum and capacity inline explainers (tappable)
+     - Header drawer (rename, rank, level)
+     - Encounter tab inside status window
+     - Directives tab quick-bar
+     - Tab dot indicator on ENCOUNTER tab
+     - Header padding fix (content overlap)
+     - PATH tab rank clarification note
+     - SETTINGS tab sound toggle
+
+   Pass 2 covers:
+     - Scan reveal screen
+     - Neural key request screen
+     - Synthesis reveal screen
+     - Orientation screen
+     - Re-imaginer question visual distinction
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── PASS 1: HEADER CLEANUP ─────────────────────────────────── */
+/* PASS 1: sig badge removed from header — no .status-header-sig */
+/* PASS 1: header sticky overlap fix — add bottom padding to tab content */
+.status-header {
+    position: sticky;
+    top:      0;
+    z-index:  10;
+    cursor:   default;
+}
+
+/* Ensure tab content doesn't hide behind sticky header */
+.status-tab-content {
+    padding-top: 4px;
+}
+
+/* Header name is now tappable */
+.status-header-name {
+    cursor:  pointer;
+    padding: 4px 0;
+}
+.status-header-name:active {
+    opacity: 0.7;
+}
+
+/* Level badge — tappable */
+.status-header-level {
+    cursor:  pointer;
+    padding: 4px 6px;
+}
+.status-header-level:active {
+    opacity: 0.7;
+}
+
+/* Rank badge in header — tappable */
+.status-header .rank-badge {
+    cursor:  pointer;
+    padding: 4px 8px;
+}
+.status-header .rank-badge:active {
+    opacity: 0.7;
+}
+
+/* ─── PASS 1: ENCOUNTER TAB DOT INDICATOR ────────────────────── */
+.tab-dot {
+    display:          inline-block;
+    width:            6px;
+    height:           6px;
+    border-radius:    50%;
+    background:       var(--accent);
+    margin-left:      5px;
+    vertical-align:   middle;
+    position:         relative;
+    top:              -1px;
+    animation:        tab-dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tab-dot-pulse {
+    0%, 100% { opacity: 1;    transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ─── PASS 1: HEADER DRAWER ──────────────────────────────────── */
+.header-drawer {
+    background:     var(--surface);
+    border:         1px solid var(--border, rgba(255,255,255,0.08));
+    border-top:     none;
+    padding:        16px 20px 20px;
+    z-index:        9;
+    opacity:        0;
+    transform:      translateY(-6px);
+    transition:     opacity 0.25s ease, transform 0.25s ease;
+}
+
+.header-drawer--visible {
+    opacity:   1;
+    transform: translateY(0);
+}
+
+.header-drawer-inner {
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+}
+
+.header-drawer-label {
+    font-family:  var(--font-mono);
+    font-size:    0.75rem;
+    color:        var(--accent);
+    letter-spacing: 0.08em;
+    margin:       0;
+}
+
+.header-drawer-desc {
+    font-size:   0.9rem;
+    color:       var(--text-primary);
+    margin:      0;
+    line-height: 1.5;
+}
+
+.header-drawer-sub {
+    font-size:  0.8rem;
+    color:      var(--text-secondary);
+    margin:     0;
+    font-family: var(--font-mono);
+}
+
+.header-drawer-row {
+    display:     flex;
+    gap:         8px;
+    align-items: center;
+}
+
+.header-drawer-close {
+    background:   transparent;
+    border:       1px solid var(--border, rgba(255,255,255,0.08));
+    color:        var(--text-secondary);
+    font-family:  var(--font-mono);
+    font-size:    0.75rem;
+    padding:      8px 12px;
+    cursor:       pointer;
+    align-self:   flex-start;
+    letter-spacing: 0.05em;
+    min-height:   44px;
+}
+.header-drawer-close:active { opacity: 0.7; }
+
+/* XP bar inside level drawer */
+.hd-xp-bar-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            4px;
+}
+.hd-xp-bar {
+    width:         100%;
+    height:        4px;
+    background:    var(--surface-raised, rgba(255,255,255,0.06));
+    border-radius: 2px;
+    overflow:      hidden;
+}
+.hd-xp-bar-fill {
+    height:        100%;
+    background:    var(--accent);
+    border-radius: 2px;
+    transition:    width 0.6s ease;
+}
+.hd-xp-label {
+    font-family: var(--font-mono);
+    font-size:   0.7rem;
+    color:       var(--text-secondary);
+}
+
+/* ─── PASS 1: STATUS MAIN TAB ────────────────────────────────── */
+.status-main-tab {
+    padding:        16px 0 80px;
+    display:        flex;
+    flex-direction: column;
+    gap:            16px;
+}
+
+.sot-divider {
+    height:     1px;
+    background: var(--border, rgba(255,255,255,0.06));
+    margin:     4px 0;
+}
+
+/* Tappable metric rows */
+.sot-metric--tappable {
+    cursor: pointer;
+    padding: 10px 0;
+}
+.sot-metric--tappable:active { opacity: 0.8; }
+
+.sot-metric-header {
+    display:         flex;
+    justify-content: space-between;
+    align-items:     center;
+    margin-bottom:   6px;
+}
+
+.sot-metric-hint {
+    font-size:    0.65rem;
+    color:        var(--text-secondary);
+    font-family:  var(--font-sans, inherit);
+    font-weight:  400;
+    margin-left:  6px;
+    text-transform: none;
+    letter-spacing: 0;
+    opacity:      0.7;
+}
+
+/* Inline explainers — expand under metric or stat rows */
+.sot-inline-explainer {
+    margin-top:  10px;
+    padding:     10px 12px;
+    background:  var(--surface-raised, rgba(255,255,255,0.04));
+    border-left: 2px solid var(--accent);
+}
+
+.sot-inline-explainer-text {
+    font-size:   0.85rem;
+    color:       var(--text-secondary);
+    margin:      0;
+    line-height: 1.6;
+}
+
+/* Stat bars section label */
+.stats-section-label {
+    font-family:    var(--font-mono);
+    font-size:      0.7rem;
+    color:          var(--accent);
+    letter-spacing: 0.08em;
+    margin:         0 0 10px;
+}
+
+/* ─── PASS 1: DIRECTIVES TAB QUICK BAR ───────────────────────── */
+.directives-quick-bar {
+    display:         flex;
+    gap:             8px;
+    padding:         12px 0 16px;
+    border-bottom:   1px solid var(--border, rgba(255,255,255,0.06));
+    margin-bottom:   16px;
+}
+
+.dq-btn {
+    flex:           1;
+    background:     var(--surface, rgba(255,255,255,0.04));
+    border:         1px solid var(--border, rgba(255,255,255,0.08));
+    color:          var(--text-secondary);
+    font-family:    var(--font-mono);
+    font-size:      0.7rem;
+    padding:        10px 8px;
+    text-align:     center;
+    cursor:         pointer;
+    letter-spacing: 0.04em;
+    min-height:     44px;
+    transition:     color 0.2s ease, border-color 0.2s ease;
+}
+
+.dq-btn:active,
+.dq-btn:hover {
+    color:        var(--accent);
+    border-color: var(--accent);
+}
+
+/* ─── PASS 1: ENCOUNTER TAB ──────────────────────────────────── */
+.encounter-tab-wrap {
+    padding:        0 0 80px;
+}
+
+.encounter-tab-header {
+    display:         flex;
+    justify-content: space-between;
+    align-items:     center;
+    padding:         12px 0 16px;
+    border-bottom:   1px solid var(--border, rgba(255,255,255,0.06));
+    margin-bottom:   20px;
+}
+
+.enc-optional-note {
+    font-family: var(--font-mono);
+    font-size:   0.7rem;
+    color:       var(--text-secondary);
+    opacity:     0.7;
+}
+
+.enc-tab-done {
+    padding:         60px 0;
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    gap:             12px;
+    text-align:      center;
+}
+
+/* ─── PASS 1: PATH TAB RANK CLARIFICATION ────────────────────── */
+.path-rank-clarification {
+    background:  var(--surface, rgba(255,255,255,0.04));
+    border-left: 2px solid var(--text-secondary);
+    padding:     10px 14px;
+    margin-bottom: 16px;
+}
+
+.path-rank-note {
+    font-family: var(--font-mono);
+    font-size:   0.75rem;
+    color:       var(--text-secondary);
+    margin:      0;
+    line-height: 1.5;
+}
+
+/* ─── PASS 2: RE-IMAGINER QUESTION VISUAL FIX ────────────────── */
+/* Question text: larger, accent colour, visually distinct from inputs */
+.reimaginer-q {
+    font-size:      1.1rem !important;
+    color:          var(--text-primary) !important;
+    font-family:    var(--font-sans, inherit) !important;
+    font-weight:    500 !important;
+    line-height:    1.5 !important;
+    letter-spacing: 0 !important;
+    margin-bottom:  6px !important;
+}
+
+/* Hint text: clearly secondary */
+.reimaginer-hint {
+    font-size:   0.85rem !important;
+    color:       var(--text-secondary) !important;
+    font-style:  italic !important;
+    opacity:     0.8 !important;
+    margin-top:  0 !important;
+}
+
+/* Question fade transition — applied on re-render by setting opacity */
+.reimaginer-wrap {
+    animation: reimaginer-fade-in 0.3s ease;
+}
+
+@keyframes reimaginer-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── PASS 2: SCAN REVEAL SCREEN ─────────────────────────────── */
+.scan-reveal-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            24px;
+    padding:        32px 0 80px;
+}
+
+.scan-reveal-header {
+    text-align: center;
+}
+
+.scan-reveal-label {
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+}
+
+.scan-reveal-syd {
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+    padding:        16px;
+    background:     var(--surface, rgba(255,255,255,0.04));
+    border-left:    2px solid var(--accent);
+}
+
+.scan-reveal-syd-line {
+    font-size:   0.9rem;
+    color:       var(--text-primary);
+    margin:      0;
+    line-height: 1.6;
+}
+
+.scan-reveal-traits {
+    display:        flex;
+    flex-direction: column;
+    gap:            14px;
+}
+
+.srt-row {
+    display:        flex;
+    flex-direction: column;
+    gap:            5px;
+}
+
+.srt-row-header {
+    display:         flex;
+    justify-content: space-between;
+    align-items:     center;
+}
+
+.srt-name {
+    font-family:    var(--font-mono);
+    font-size:      0.72rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.06em;
+}
+
+.srt-pct {
+    font-family: var(--font-mono);
+    font-size:   0.72rem;
+    color:       var(--accent);
+}
+
+.srt-bar-wrap {
+    width:         100%;
+    height:        4px;
+    background:    var(--surface-raised, rgba(255,255,255,0.06));
+    border-radius: 2px;
+    overflow:      hidden;
+}
+
+.srt-bar {
+    height:        100%;
+    background:    var(--accent);
+    border-radius: 2px;
+    width:         0%;
+    transition:    width 0.6s ease;
+}
+
+.scan-reveal-proceed {
+    align-self:  center;
+    margin-top:  8px;
+    min-width:   240px;
+}
+
+/* ─── PASS 2: NEURAL KEY REQUEST SCREEN ──────────────────────── */
+.neural-request-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            20px;
+    padding:        40px 0 80px;
+}
+
+.nr-header {
+    display:        flex;
+    flex-direction: column;
+    gap:            12px;
+}
+
+.nr-syd-line {
+    font-size:   0.95rem;
+    color:       var(--text-primary);
+    margin:      0;
+    line-height: 1.6;
+}
+
+.nr-get-key-btn {
+    display:    block;
+    text-align: center;
+    text-decoration: none;
+    padding:    16px 20px;
+    min-height: 54px;
+    font-size:  0.9rem;
+}
+
+.nr-input-group {
+    display:         flex;
+    gap:             10px;
+    align-items:     stretch;
+}
+
+.nr-key-input {
+    flex:      1;
+    font-size: 0.9rem;
+    padding:   12px 14px;
+}
+
+.nr-privacy-note {
+    font-family: var(--font-mono);
+    font-size:   0.7rem;
+    color:       var(--text-secondary);
+    margin:      0;
+    opacity:     0.7;
+    line-height: 1.5;
+}
+
+.nr-skip-btn {
+    background:   transparent;
+    border:       none;
+    color:        var(--text-secondary);
+    font-family:  var(--font-mono);
+    font-size:    0.8rem;
+    cursor:       pointer;
+    padding:      12px 0;
+    text-align:   center;
+    text-decoration: underline;
+    min-height:   44px;
+    opacity:      0.8;
+}
+.nr-skip-btn:active { opacity: 0.5; }
+
+/* ─── PASS 2: SYNTHESIS REVEAL SCREEN ───────────────────────── */
+.synthesis-reveal-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            20px;
+    padding:        32px 0 80px;
+    animation:      reimaginer-fade-in 0.4s ease;
+}
+
+.sr-header {
+    text-align: center;
+}
+
+.sr-label {
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+}
+
+.sr-path-block {
+    text-align:  center;
+    padding:     20px 0;
+    border-top:  1px solid var(--border, rgba(255,255,255,0.06));
+    border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
+}
+
+.sr-path-name {
+    font-size:      1.6rem;
+    font-weight:    600;
+    color:          var(--text-primary);
+    margin:         0 0 6px;
+    letter-spacing: -0.01em;
+    line-height:    1.2;
+}
+
+.sr-role {
+    font-family: var(--font-mono);
+    font-size:   0.8rem;
+    color:       var(--text-secondary);
+    margin:      0 0 14px;
+    min-height:  1em;
+}
+
+.sr-rank-row {
+    display:         inline-flex;
+    align-items:     center;
+    gap:             10px;
+    justify-content: center;
+}
+
+.sr-rank-context {
+    font-family:  var(--font-mono);
+    font-size:    0.75rem;
+    color:        var(--text-secondary);
+    max-width:    240px;
+    text-align:   left;
+    line-height:  1.4;
+}
+
+.sr-gaps-block,
+.sr-affinity-block {
+    display:        flex;
+    flex-direction: column;
+    gap:            8px;
+}
+
+.sr-section-label {
+    font-family:    var(--font-mono);
+    font-size:      0.7rem;
+    color:          var(--accent);
+    letter-spacing: 0.08em;
+    margin:         0;
+}
+
+.sr-affinity-note {
+    font-family:  var(--font-mono);
+    font-size:    0.78rem;
+    color:        var(--text-secondary);
+    margin:       0;
+    font-style:   italic;
+    line-height:  1.5;
+}
+
+.sr-syd-voice {
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+    padding:        16px;
+    background:     var(--surface, rgba(255,255,255,0.04));
+    border-left:    2px solid var(--accent);
+}
+
+.sr-syd-line {
+    font-size:   0.9rem;
+    color:       var(--text-primary);
+    margin:      0;
+    line-height: 1.6;
+}
+
+/* ─── PASS 2: ORIENTATION SCREEN ─────────────────────────────── */
+.orientation-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            24px;
+    padding:        40px 0 80px;
+    animation:      reimaginer-fade-in 0.4s ease;
+}
+
+.or-header {
+    text-align: center;
+}
+
+.or-label {
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+}
+
+.or-syd-voice {
+    display:        flex;
+    flex-direction: column;
+    gap:            14px;
+}
+
+.or-syd-line {
+    font-size:   0.95rem;
+    color:       var(--text-primary);
+    margin:      0;
+    line-height: 1.65;
+}
+
+.or-syd-line strong {
+    color:       var(--accent);
+    font-weight: 600;
+}
+
+.or-continue-btn {
+    align-self: center;
+    min-width:  240px;
+}
+
+/* ─── PASS 1: SOUND TOGGLE — GLOBAL BUTTON NOW HIDDEN ────────── */
+/* Sound toggle moved to SETTINGS tab. The button stub in index.html is hidden. */
+.sound-toggle.hidden {
+    display: none !important;
+}
+
+/* ─── MIN TOUCH TARGET GUARANTEE ─────────────────────────────── */
+/* All buttons must be at least 44px tall on touch */
+.btn, .settings-row-btn, .dc-complete-btn,
+.enc-option-btn, .enc-skip-btn, .enc-submit-btn,
+.path-track-btn, .role-card, .rank-confirm-btn,
+.dq-btn, .nr-skip-btn, .header-drawer-close,
+.scan-reveal-proceed, .nr-get-key-btn, .or-continue-btn {
+    min-height: 44px;
+}

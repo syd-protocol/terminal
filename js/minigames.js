@@ -65,10 +65,10 @@ function renderMiniGameHub(sigBalance) {
             <div class="minigames-grid" id="minigames-grid">
                 ${games.map(g => renderGameCard(g, sigBalance, MINIGAME_COSTS[g.id])).join('')}
             </div>
-            <div class="minigames-section-label">[ SCAN REPLAY — TRAINS STATS + CALIBRATION ]</div>
-            <div class="minigames-grid minigames-grid--scan">
-                ${scanGames.map(g => renderScanReplayCard(g)).join('')}
-            </div>
+            <!-- PASS 3: Scan replay section UI removed from hub.
+                 Routing functions (enterScanReplay, renderScanReplayEntry) kept for
+                 internal use. Section hidden per UI spec — hub shows only the five
+                 training games. -->
         </div>
     `;
 
@@ -172,7 +172,7 @@ function completeMGSession(gameId, score) {
     const finalXP   = Math.max(2, Math.round(baseXP * Math.max(0.25, score)));
     const stats     = MINIGAME_STATS[gameId] || [];
     const xpPerStat = finalXP / stats.length;
-    const sigReward = Math.floor(finalXP / 3);   // [TUNING TARGET] Sig back on completion
+    const sigReward = Math.max(MINIGAME_COSTS[gameId] - 1, Math.floor(finalXP * 0.6));   // [TUNING TARGET] PASS 3: nearly self-sustaining — good score returns almost full cost
 
     if (player && typeof savePlayer === 'function') {
         stats.forEach(stat => {
