@@ -1,24 +1,42 @@
 // ═══════════════════════════════════════════════════════════════
-// SYD GES — path.js  (Batch 6 — Gemini integration)
+// SYD GES — path.js
 // PATH Protocol — both tracks feed into the same shared flow.
 //
 // Track A — The Chronicler:
-//   CV paste → Gemini/local classification → skill calibration →
-//   role mapping (3 rounds) → specialisation → rank confirmation →
-//   aspiration probe → synthesis (gap analysis + hidden affinity)
+//   CV paste → Call 2 fires → PATH loading screen absorbs wait →
+//   role mapping → rank confirmation → aspiration probe → synthesis reveal
 //
 // Track B — The Re-imaginer:
-//   4 conversational exchanges → same shared flow from skill
-//   calibration onward
+//   4 questions → Call 2 fires on TRANSMIT → PATH loading screen →
+//   role mapping → rank confirmation → aspiration probe → synthesis reveal
 //
-// Gemini calls (Batch 6):
-//   1. analyseCV()         — CV analysis → 3 paths, stat seeds, gap hints
-//   2. buildGapAnalysis()  — gap analysis per confirmed path + rank
-//   3. detectHiddenAffinity() — hidden affinity from trait scores + CV
-//   4. upgradeStatExplainer() — personalised stat explainer (called by status.js)
+// BLOCK C changes (supersedes Batch 6 Gemini calls):
+//   Old model: 3 separate Gemini calls (analyseCV, buildGapAnalysis,
+//              detectHiddenAffinity) fired at different points.
+//   New model: 1 bundled Call 2 fires when operative taps ANALYSE
+//              (Chronicler) or TRANSMIT on final Re-imaginer question.
+//              PATH loading screen absorbs the wait.
+//              One JSON response parsed once and distributed to:
+//                - Three path cards for role mapping (paths[])
+//                - Gap analysis (gap_analysis_prose, gap skills)
+//                - Hidden affinity (hidden_affinity_stat, hidden_affinity_read)
+//                - Career skill tracks (career_skill_tracks[]) → syd_career_skills
+//                - Stat explainers (stat_explainers{}) → syd_stat_explainer_cache
+//                - Synthesis SYD lines (synthesis_syd_lines[])
+//                - Orientation closing line (orientation_closing_line)
+//                - Initial career directives (initial_career_directives[]) → syd_career_directives
+//                - Initial career encounters (initial_career_encounters[]) → syd_career_encounters
 //
-// Each call has a genuinely good local fallback.
-// Local fallbacks ran the app cleanly through Batches 1–5.
+//   getPersonalisedStatExplainer() updated: checks cache first (seeded
+//   by Call 2), falls back to individual Gemini call only if cache miss.
+//
+//   Local fallback: getLocalFallbackBundle() returns the same shape as
+//   Call 2. Every field has a genuinely good local version. The experience
+//   runs fully without AI.
+//
+//   Storage keys added:
+//     syd_call2_bundle    — full parsed Call 2 response (for synthesis screen)
+//     syd_career_encounters — initial career encounters from Call 2
 // ═══════════════════════════════════════════════════════════════
 
 // ─── PATH STATE ──────────────────────────────────────────────
@@ -35,11 +53,18 @@ let pathState = {
     gapAnalysis:        null,     // { primaryGap, skills, geminiEnhanced: bool }
     hiddenAffinity:     null,     // { stat, read, geminiEnhanced: bool }
     statSeeds:          null,
+    call2Bundle:        null,     // BLOCK C: full parsed Call 2 response
     onComplete:         null
 };
 
 // [TUNING TARGET] Maximum stat bonus PATH data can seed above scan baseline
 const PATH_SEED_MAX_PER_STAT = 8;
+
+// ─── STORAGE KEYS ────────────────────────────────────────────
+const PATH_DATA_KEY            = 'syd_path_data';
+const CALL2_BUNDLE_KEY         = 'syd_call2_bundle';
+const CAREER_ENCOUNTERS_KEY    = 'syd_career_encounters';
+const STAT_EXPLAINER_CACHE_KEY = 'syd_stat_explainer_cache';
 
 // ─── PATH ENTRY POINT ────────────────────────────────────────
 // Called from app.js startPATH() after scan completes.
@@ -48,9 +73,9 @@ function runPATH(scanTraits, onComplete) {
         track: null, cvText: null, reimagineResponses: [],
         inference: null, confirmedPath: null, confirmedRole: null,
         confirmedSpec: null, confirmedRank: null, aspirationGoal: null,
-        gapAnalysis: null, hiddenAffinity: null, statSeeds: null, onComplete
+        gapAnalysis: null, hiddenAffinity: null, statSeeds: null,
+        call2Bundle: null, onComplete
     };
-    // Store scan traits so Gemini can read them at synthesis time
     pathState._scanTraits = scanTraits || {};
     showScreen('screen-path');
     renderPathSelect();
@@ -97,7 +122,8 @@ function renderPathSelect() {
 }
 
 // ─── TRACK A: THE CHRONICLER ──────────────────────────────────
-// CV paste → Gemini analysis → shared flow
+// BLOCK C: Call 2 fires when operative taps ANALYSE.
+// PATH loading screen is shown immediately — Call 2 resolves behind it.
 function runChronicler() {
     showScreen('screen-path-chronicler');
     const container = document.getElementById('chronicler-content');
@@ -123,7 +149,7 @@ function runChronicler() {
                     spellcheck="false"
                 ></textarea>
             </div>
-            <button class="btn btn--primary" id="cv-submit-btn">[ TRANSMIT RECORD ]</button>
+            <button class="btn btn--primary" id="cv-submit-btn">[ ANALYSE ]</button>
             <p class="path-privacy-note">
                 [ Processed on-device. Nothing leaves until you opt in to cloud sync. ]
             </p>
@@ -139,7 +165,13 @@ function runChronicler() {
         const cvText = document.getElementById('cv-input').value.trim();
         if (!cvText) { document.getElementById('cv-input').focus(); return; }
         pathState.cvText = cvText;
-        runSkillCalibration();
+        // BLOCK C: Show loading screen immediately, fire Call 2 behind it
+        showScreen('screen-path-loading');
+        renderPathLoading('ANALYSING YOUR SIGNAL — STANDING BY');
+        fireCall2Bundle().then(bundle => {
+            applyCall2Bundle(bundle);
+            runRoleMapping(0);
+        });
     });
 }
 
@@ -231,65 +263,69 @@ function renderReImaginerQuestion(idx) {
 
 function advanceReImaginer(currentIdx, total) {
     if (currentIdx + 1 >= total) {
-        runSkillCalibration();
+        // BLOCK C: Final question — fire Call 2 now. Show loading screen immediately.
+        showScreen('screen-path-loading');
+        renderPathLoading('ANALYSING YOUR SIGNAL — STANDING BY');
+        fireCall2Bundle().then(bundle => {
+            applyCall2Bundle(bundle);
+            runRoleMapping(0);
+        });
     } else {
         renderReImaginerQuestion(currentIdx + 1);
     }
 }
 
-// ─── SHARED FLOW: SKILL CALIBRATION ──────────────────────────
-// Entry point for both tracks into the shared flow.
-// Tries Gemini first (analyseCV), falls back to local classification.
-function runSkillCalibration() {
-    showScreen('screen-path-loading');
-    renderPathLoading('SKILL CALIBRATION — ANALYSING YOUR SIGNAL');
-
-    analyseCV().then(inference => {
-        pathState.inference = inference;
-        runRoleMapping(0);
-    });
-}
-
-// ─── GEMINI CALL 1: CV ANALYSIS ───────────────────────────────
-// Sends the CV (Chronicler) or Re-imaginer answers to Gemini.
-// Returns { paths: [...], offlineMode: bool, statSeeds: {...} }
+// ═══════════════════════════════════════════════════════════════
+// BLOCK C: CALL 2 — PATH + CAREER INTELLIGENCE BUNDLE
 //
-// Gemini returns the same shape as the local fallback:
-//   paths[0..2] = { path_name, narrative, target_roles[], mapped_skills[] }
+// Single call. One parse. Distributes to all downstream systems.
+// Fires immediately on ANALYSE (Chronicler) or TRANSMIT (Re-imaginer).
+// PATH loading screen absorbs the wait. No perceived delay.
 //
-// Extended from the master design doc prompt to include:
-//   - stat seeding hints per path
-//   - gap hints (skills the operative currently lacks for each path)
-//   - hidden affinity signal (where trait energy is actually strongest)
+// Output JSON shape (see respec for full spec):
+// {
+//   paths[], hidden_affinity_stat, hidden_affinity_read,
+//   gap_analysis_prose, career_skill_tracks[], synthesis_syd_lines[],
+//   orientation_closing_line, stat_explainers{}, initial_career_directives[],
+//   initial_career_encounters[]
+// }
 //
-// Local fallback: getLocalFallbackInference() — keyword classification.
+// [RESEARCH] Source: SYD Respec v2 — Call 2 spec.
+// Finding: bundling all synthesis data in one call prevents multiple
+//          round-trips and allows the loading screen to absorb all AI latency.
+// Applied: single large call, full JSON parsed once, all fields distributed.
+// ═══════════════════════════════════════════════════════════════
 
-async function analyseCV() {
-    if (!hasNeuralLink()) return getLocalFallbackInference();
+async function fireCall2Bundle() {
+    if (!hasNeuralLink()) {
+        return getLocalFallbackBundle();
+    }
 
-    const inputText = pathState.cvText || pathState.reimagineResponses.join('\n\n');
-    const isCV      = pathState.track === 'chronicler';
+    const inputText    = pathState.cvText || pathState.reimagineResponses.join('\n\n');
+    const isCV         = pathState.track === 'chronicler';
+    const traits       = pathState._scanTraits || {};
+    const traitSummary = Object.entries(traits).map(([k, v]) => `${k}: ${v}`).join(', ') || 'not available';
 
-    // [RESEARCH] Source: Anthropic prompting docs — prompt engineering overview.
-    // Finding: explicit JSON-only instruction + schema reduces hallucination rate.
-    // Applied: STRICT JSON instruction, schema inline, no markdown.
+    // [RESEARCH] Source: SYD Respec v2 — Call 2 prompt spec.
+    // Finding: one large prompt with explicit JSON schema prevents Gemini
+    //          from producing partial responses across multiple calls.
+    // Applied: full schema inline, all fields required, STRICT JSON only.
     const prompt = `
-You are an elite Career Strategist and Executive Talent Mapper. Analyse the provided ${isCV ? 'CV/Resume' : 'career self-assessment responses'} and identify exactly THREE distinct, high-impact career paths the individual is uniquely positioned for.
+You are SYD — an elite career intelligence system. Perform a complete operative classification and career analysis from the provided ${isCV ? 'CV/Resume' : 'career self-assessment responses'}.
 
-Do not just read the job titles. Analyse the systems and impact the person has created to uncover their true professional DNA.
+OPERATIVE SCAN TRAITS (psychometric game scores, 0.0–1.0):
+${traitSummary}
 
-Also identify:
-1. STAT SEEDS — which of the five stats (strength, intelligence, agility, endurance, charisma) each path primarily develops. Use only these five stat names. Provide a number from 1 to ${PATH_SEED_MAX_PER_STAT} for each stat that this path develops (omit stats with 0 contribution).
-2. GAP SKILLS — 3 to 5 specific skills the person does NOT currently demonstrate but which this path requires. Be honest and specific. These are the gaps they need to close.
-3. HIDDEN AFFINITY SIGNAL — across all three paths, which single stat shows the strongest underlying energy in this person's record, independent of what they said they wanted? One word only — the stat name.
+Your output will seed multiple downstream systems. Every field is required. Do not omit any.
 
-Output ONLY valid JSON. No markdown. No preamble. No explanation outside the JSON.
+Output ONLY valid JSON. No markdown fences. No preamble. No explanation outside the JSON.
 
+Required JSON shape:
 {
   "paths": [
     {
-      "path_name": "Strategic name of Path 1",
-      "narrative": "2 to 3 sentence strategic explanation referencing specific evidence from their record.",
+      "path_name": "Strategic name for this career path",
+      "narrative": "2–3 sentences referencing specific evidence from their record. Be specific.",
       "target_roles": ["Role 1", "Role 2", "Role 3"],
       "mapped_skills": ["Skill 1", "Skill 2", "Skill 3"],
       "stat_seeds": { "intelligence": 6, "agility": 4 },
@@ -298,39 +334,195 @@ Output ONLY valid JSON. No markdown. No preamble. No explanation outside the JSO
     { "path_name": "...", "narrative": "...", "target_roles": [], "mapped_skills": [], "stat_seeds": {}, "gap_skills": [] },
     { "path_name": "...", "narrative": "...", "target_roles": [], "mapped_skills": [], "stat_seeds": {}, "gap_skills": [] }
   ],
-  "hidden_affinity_stat": "intelligence"
+  "hidden_affinity_stat": "intelligence",
+  "hidden_affinity_read": "2–3 sentences. Stored now, revealed at Level 20. Specific to this person.",
+  "gap_analysis_prose": "2–3 sentences in SYD voice. Rank-aware. Honest about the distance.",
+  "career_skill_tracks": [
+    {
+      "name": "Skill name specific to this operative and path",
+      "stat": "intelligence",
+      "description": "What this skill is and why it matters for this path."
+    }
+  ],
+  "synthesis_syd_lines": [
+    "Line 1 — specific to this operative. References something from their record.",
+    "Line 2 — forward-looking. What this path means for them.",
+    "Line 3 — honest about the distance and what is required."
+  ],
+  "orientation_closing_line": "One personalised line ending the orientation screen.",
+  "stat_explainers": {
+    "strength": "Personalised 2–3 sentence read for this operative's STR in context of their path.",
+    "intelligence": "...",
+    "agility": "...",
+    "endurance": "...",
+    "charisma": "..."
+  },
+  "initial_career_directives": [
+    {
+      "id": "cd_001",
+      "title": "Directive title — active verb, specific outcome",
+      "desc": "What the operative actually does. Real action, real professional consequence.",
+      "intel": "Mental model name — one sentence on what it is. One sentence on why it matters for this path at this rank.",
+      "stat": "intelligence",
+      "career_skill": "Matching name from career_skill_tracks",
+      "xp": 12,
+      "tier": 1
+    }
+  ],
+  "initial_career_encounters": [
+    {
+      "id": "ce_001",
+      "type": "A",
+      "situation": "Encounter situation — specific, domain-grounded, realistic",
+      "options": [
+        { "id": "o1", "text": "Option text" },
+        { "id": "o2", "text": "Option text" }
+      ],
+      "reasonings": [
+        { "id": "r1", "text": "Reasoning text" },
+        { "id": "r2", "text": "Reasoning text" }
+      ],
+      "domain": "Path name",
+      "tier": 1
+    }
+  ]
 }
+
+Rules for career directives:
+- Generate 7–10 directives
+- Each must be a real-world action with real professional consequences — NOT "read about X" or "study Y"
+- Outcome-oriented. What the operative does AND what it changes.
+- The intel field explains the professional leverage — why this specific action matters at their current rank.
+
+Rules for career encounters:
+- Generate 2–3 encounters
+- Domain-grounded to the confirmed path
+- Realistic professional judgment calls
 
 ${isCV ? 'CV TO ANALYSE' : 'SELF-ASSESSMENT RESPONSES'}:
 ${inputText}
 `.trim();
 
-    const result = await geminiClassify(prompt);
+    const result = await geminiGenerateLarge(prompt);
 
     if (!result.ok) {
-        console.warn('[SYD] CV analysis fell back to local:', result.error);
-        return getLocalFallbackInference();
+        console.warn('[SYD] Call 2 failed — using local fallback bundle.');
+        return getLocalFallbackBundle();
     }
 
     const parsed = extractJSON(result.text);
     if (!parsed || !Array.isArray(parsed.paths) || parsed.paths.length < 2) {
-        console.warn('[SYD] CV analysis JSON parse failed — falling back to local.');
-        return getLocalFallbackInference();
+        console.warn('[SYD] Call 2 JSON parse failed — using local fallback bundle.');
+        return getLocalFallbackBundle();
     }
 
-    // Store hidden affinity stat for synthesis
+    // Store hidden affinity stat so synthesis can reference it
     pathState._geminiHiddenAffinityStat = parsed.hidden_affinity_stat || null;
 
-    return {
-        paths:       parsed.paths,
-        offlineMode: false
-    };
+    return { ...parsed, geminiEnhanced: true };
 }
 
-// ─── LOCAL FALLBACK: INFERENCE ────────────────────────────────
-// Produces three path objects from keyword classification.
-// The Gemini call returns the same shape with richer content.
-function getLocalFallbackInference() {
+// ─── APPLY CALL 2 BUNDLE ─────────────────────────────────────
+// Parses the full Call 2 response (or local fallback) and distributes
+// all fields to their respective storage and pathState locations.
+// Called once immediately after fireCall2Bundle() resolves.
+function applyCall2Bundle(bundle) {
+    if (!bundle) bundle = getLocalFallbackBundle();
+
+    pathState.call2Bundle = bundle;
+    pathState.inference   = {
+        paths:       bundle.paths || [],
+        offlineMode: !bundle.geminiEnhanced
+    };
+
+    // ── Store full bundle for synthesis screen ────────────────
+    try { localStorage.setItem(CALL2_BUNDLE_KEY, JSON.stringify(bundle)); }
+    catch(e) { /* non-critical */ }
+
+    // ── Seed career skill tracks ──────────────────────────────
+    // Only seed if Call 2 returned career_skill_tracks AND Block B
+    // has not already built tracks from local data.
+    // Call 2 tracks are richer (Gemini-named, Gemini-described).
+    if (bundle.career_skill_tracks && bundle.career_skill_tracks.length > 0
+        && typeof loadCareerSkills === 'function') {
+
+        const rank    = typeof rankFromLevel === 'function'
+            ? rankFromLevel(typeof calculateLevel === 'function' ? calculateLevel() : 1)
+            : 'F';
+        const softCap = typeof getCareerSkillSoftCap === 'function'
+            ? getCareerSkillSoftCap(rank)
+            : 40;
+        const pathName = (bundle.paths && bundle.paths[0]) ? bundle.paths[0].path_name : '';
+
+        const geminiTracks = bundle.career_skill_tracks.slice(0, 5).map((t, i) => ({
+            id:             'cs_' + String(i + 1).padStart(3, '0'),
+            name:           t.name || ('Career Skill ' + (i + 1)),
+            stat:           t.stat || 'intelligence',
+            score:          0,
+            softCap,
+            pathName,
+            description:    t.description || '',
+            geminiEnhanced: true
+        }));
+
+        // Merge with any existing tracks (preserve scores if tracks already existed)
+        const existing = loadCareerSkills();
+        const merged   = geminiTracks.map(gt => {
+            const prior = existing.find(e => e.name === gt.name);
+            return prior ? { ...gt, score: prior.score, softCap: prior.softCap } : gt;
+        });
+
+        if (typeof saveCareerSkills === 'function') saveCareerSkills(merged);
+    }
+
+    // ── Cache stat explainers ─────────────────────────────────
+    if (bundle.stat_explainers && typeof bundle.stat_explainers === 'object') {
+        try {
+            localStorage.setItem(STAT_EXPLAINER_CACHE_KEY, JSON.stringify(bundle.stat_explainers));
+        } catch(e) { /* non-critical */ }
+    }
+
+    // ── Cache initial career directives ──────────────────────
+    if (bundle.initial_career_directives && bundle.initial_career_directives.length > 0) {
+        try {
+            // Tag each as a career directive for quests.js
+            const tagged = bundle.initial_career_directives.map(d => ({
+                ...d, _isCareerDirective: true
+            }));
+            localStorage.setItem('syd_career_directives', JSON.stringify(tagged));
+        } catch(e) { /* non-critical */ }
+    }
+
+    // ── Cache initial career encounters ──────────────────────
+    if (bundle.initial_career_encounters && bundle.initial_career_encounters.length > 0) {
+        try {
+            localStorage.setItem(CAREER_ENCOUNTERS_KEY, JSON.stringify(bundle.initial_career_encounters));
+        } catch(e) { /* non-critical */ }
+    }
+
+    // ── Store synthesis lines and orientation line for screens ─
+    // These are read by app.js renderSynthesisReveal() and renderOrientationScreen()
+    if (bundle.synthesis_syd_lines) {
+        try { localStorage.setItem('syd_synthesis_lines', JSON.stringify(bundle.synthesis_syd_lines)); }
+        catch(e) {}
+    }
+    if (bundle.orientation_closing_line) {
+        try { localStorage.setItem('syd_orientation_closing', bundle.orientation_closing_line); }
+        catch(e) {}
+    }
+
+    // ── Store hidden affinity for synthesis ──────────────────
+    if (bundle.hidden_affinity_stat) {
+        pathState._geminiHiddenAffinityStat = bundle.hidden_affinity_stat;
+    }
+}
+
+// ─── LOCAL FALLBACK BUNDLE ───────────────────────────────────
+// Returns the same shape as Call 2 with genuinely good local content.
+// Used when Neural Link is not connected, or Call 2 fails.
+// Every field is populated — no empty arrays, no null values.
+// The experience runs fully without AI.
+function getLocalFallbackBundle() {
     const inputText = pathState.cvText || pathState.reimagineResponses.join(' ');
     const result    = (typeof classifyGoal === 'function')
         ? classifyGoal(inputText)
@@ -382,11 +574,94 @@ function getLocalFallbackInference() {
     const primary = statToPath[result.primaryStat]    || statToPath.intelligence;
     const linked1 = statToPath[result.linkedStats[0]] || statToPath.agility;
     const linked2 = statToPath[result.linkedStats[1]] || statToPath.endurance;
+    const paths   = [primary, linked1, linked2];
 
-    return { paths: [primary, linked1, linked2], offlineMode: true };
+    const gapSkills = primary.gap_skills || [];
+
+    // Local career skill tracks — derived from gap skills
+    const careerTracks = gapSkills.slice(0, 3).map((skill, i) => ({
+        name:        skill,
+        stat:        guessStatFromSkillNameLocal(skill),
+        description: `${skill} is a key professional capability for the ${primary.path_name} path. Closing this gap early creates compounding returns.`
+    }));
+
+    // Local synthesis lines
+    const synthLines = [
+        `Classification complete. You are confirmed on the ${primary.path_name} path.`,
+        `Your record points to ${(primary.target_roles || [])[0] || 'this direction'}. That is where the signal is strongest.`,
+        `Three gaps have been identified: ${gapSkills.slice(0, 3).join(', ')}. The directives will target these first.`
+    ];
+
+    // Local stat explainers — brief and rank-neutral (Gemini upgrades these)
+    const statExplainers = {
+        strength:     `STRENGTH maps to your execution and delivery capacity. It rises as you complete what you start, under pressure and without motivation as a prerequisite.`,
+        intelligence: `INTELLIGENCE maps to how sharply you read systems and make calls with incomplete information. It rises through deliberate analysis, not just exposure.`,
+        agility:      `AGILITY maps to how quickly you adapt when the situation changes under you. It rises through exposure to novelty and practice at switching frames.`,
+        endurance:    `ENDURANCE maps to how long you sustain effort before your output degrades. It rises through consistent action over time — not intensity.`,
+        charisma:     `CHARISMA maps to how accurately you read and move people. It rises through deliberate practice at the gap between what is said and what is meant.`
+    };
+
+    // Local career directives — 3 generic outcome-oriented directives
+    const localDirs = gapSkills.slice(0, 3).map((skill, i) => ({
+        id:           'cd_local_' + String(i + 1).padStart(3, '0'),
+        title:        `Apply ${skill} in a real context this week`,
+        desc:         `Identify one situation in your current work where ${skill.toLowerCase()} is the constraint. Address it directly — not in theory. Make a visible, documented change.`,
+        intel:        `${skill} — the gap between knowing and applying. At your rank, closing this gap requires action under real conditions, not preparation.`,
+        stat:         guessStatFromSkillNameLocal(skill),
+        career_skill: skill,
+        xp:           10,
+        tier:         1,
+        _isCareerDirective: true
+    }));
+
+    // Local career encounter — one generic professional judgment scenario
+    const localEnc = [{
+        id:        'ce_local_001',
+        type:      'A',
+        situation: `You are in a meeting where a senior colleague proposes a direction that you know from experience is likely to fail. They are well-respected. The room is deferring to them.`,
+        options: [
+            { id: 'o1', text: 'Say nothing — raise it privately with them afterwards.' },
+            { id: 'o2', text: 'Disagree directly in the room with your reasoning.' },
+            { id: 'o3', text: 'Ask a clarifying question that surfaces the issue without confronting.' }
+        ],
+        reasonings: [
+            { id: 'r1', text: 'Avoiding conflict preserves relationships but lets a bad decision go unchallenged.' },
+            { id: 'r2', text: 'Direct disagreement is honest but risks the relationship if done without care.' },
+            { id: 'r3', text: 'A good question moves the conversation without making it about you.' }
+        ],
+        domain: primary.path_name,
+        tier:   1
+    }];
+
+    return {
+        paths,
+        hidden_affinity_stat:     result.primaryStat,
+        hidden_affinity_read:     `Your underlying signal is ${result.primaryStat.toUpperCase()} — this runs through your record whether you named it or not. The directives here build from that foundation.`,
+        gap_analysis_prose:       `You are early. The gap between where you are and expert practice on the ${primary.path_name} path is large — and entirely closeable. The directives are calibrated to that distance.`,
+        career_skill_tracks:      careerTracks,
+        synthesis_syd_lines:      synthLines,
+        orientation_closing_line: `Show up tomorrow. That is the whole thing.`,
+        stat_explainers:          statExplainers,
+        initial_career_directives: localDirs,
+        initial_career_encounters: localEnc,
+        geminiEnhanced:           false
+    };
+}
+
+// Local stat-from-skill-name mapping (mirrors app.js guessStatFromSkillName)
+function guessStatFromSkillNameLocal(skillName) {
+    const lower = (skillName || '').toLowerCase();
+    if (/communicat|stakeholder|influence|relationship|network|present|lead|trust|persuad|negotiat|social|people/.test(lower)) return 'charisma';
+    if (/strateg|analys|research|data|system|architect|think|model|knowledge|learn|problem/.test(lower)) return 'intelligence';
+    if (/adapt|pivot|change|flexible|agile|creative|innovate|experiment|risk/.test(lower)) return 'agility';
+    if (/deliver|execut|operati|manage|project|timeline|output|consistent|follow/.test(lower)) return 'endurance';
+    if (/physical|health|energy|strength|resilience|endure|sustain|pressure/.test(lower)) return 'strength';
+    return 'intelligence';
 }
 
 // ─── SHARED FLOW: ROLE MAPPING (3 ROUNDS) ────────────────────
+// Unchanged from Batch 6. Uses pathState.inference.paths seeded by
+// applyCall2Bundle() above.
 function runRoleMapping(round) {
     showScreen('screen-path');
     const container = document.getElementById('path-content');
@@ -603,233 +878,98 @@ function runAspirationProbe() {
 }
 
 // ─── SHARED FLOW: SYNTHESIS ───────────────────────────────────
-// Runs Gemini gap analysis and hidden affinity in parallel.
-// Falls back gracefully if either call fails.
-// Fires onComplete with the full pathData object.
+// BLOCK C: runPathSynthesis() no longer fires Gemini calls.
+// All synthesis data already arrived via Call 2 (fireCall2Bundle).
+// Assembles pathData from pathState and the stored call2Bundle,
+// then fires onComplete.
 function runPathSynthesis() {
-    showScreen('screen-path-loading');
-    renderPathLoading('SYNTHESIS — BUILDING YOUR OPERATIVE PROFILE');
+    const bundle    = pathState.call2Bundle || getLocalFallbackBundle();
+    const confirmedPath = pathState.confirmedPath;
 
-    Promise.all([
-        buildGapAnalysis(),
-        detectHiddenAffinity()
-    ]).then(([gapAnalysis, hiddenAffinity]) => {
-        pathState.gapAnalysis   = gapAnalysis;
-        pathState.hiddenAffinity = hiddenAffinity;
+    // Gap analysis — use bundle's gap data tied to the confirmed path
+    const gapSkills = (confirmedPath && confirmedPath.gap_skills && confirmedPath.gap_skills.length > 0)
+        ? confirmedPath.gap_skills
+        : (bundle.initial_career_directives || [])
+            .map(d => d.career_skill)
+            .filter(Boolean)
+            .slice(0, 5);
 
-        // Stat seeding: use Gemini stat_seeds from the confirmed path if available,
-        // otherwise fall back to the local stat seed map.
-        let statSeeds = null;
-        if (pathState.confirmedPath && pathState.confirmedPath.stat_seeds) {
-            statSeeds = pathState.confirmedPath.stat_seeds;
-        } else {
-            // [TUNING TARGET] PATH stat seeding per confirmed path name (local fallback)
-            const statSeedMap = {
-                'Execution and Delivery':    { strength: 6, endurance: 4 },
-                'Strategy and Knowledge':    { intelligence: 6, agility: 4 },
-                'Adaptation and Innovation': { agility: 6, intelligence: 4 },
-                'Consistency and Systems':   { endurance: 6, strength: 4 },
-                'Influence and Community':   { charisma: 8 }
-            };
-            const pathName = pathState.confirmedPath ? pathState.confirmedPath.path_name : '';
-            statSeeds = statSeedMap[pathName]
-                || { intelligence: 3, agility: 3, strength: 2, endurance: 2, charisma: 2 };
-        }
-
-        pathState.statSeeds = statSeeds;
-
-        const pathData = {
-            track:          pathState.track,
-            confirmedPath:  pathState.confirmedPath,
-            confirmedRole:  pathState.confirmedRole,
-            confirmedSpec:  pathState.confirmedSpec,
-            confirmedRank:  pathState.confirmedRank,
-            aspirationGoal: pathState.aspirationGoal,
-            gapAnalysis:    pathState.gapAnalysis,
-            hiddenAffinity: pathState.hiddenAffinity,
-            statSeeds:      pathState.statSeeds,
-            inference:      pathState.inference
-        };
-
-        if (typeof pathState.onComplete === 'function') {
-            pathState.onComplete(pathData);
-        }
-    });
-}
-
-// ─── GEMINI CALL 2: GAP ANALYSIS ─────────────────────────────
-// Generates a personalised gap read for the confirmed path and rank.
-// Tells the operative specifically what they lack for the path they chose.
-//
-// Returns { primaryGap, skills[], geminiEnhanced: bool }
-// Local fallback: rank-aware text from getRankGapRead() + skills from path.
-
-async function buildGapAnalysis() {
-    const path = pathState.confirmedPath;
-    const rank = pathState.confirmedRank || 'F';
-
-    // If Gemini already returned gap_skills in the CV analysis, use those
-    // as the skills list. Gap analysis Gemini call adds the personalised prose.
-    const existingGapSkills = (path && path.gap_skills) || [];
-
-    if (!hasNeuralLink()) {
-        return buildLocalGapAnalysis(path, rank, existingGapSkills);
-    }
-
-    const pathName    = path ? path.path_name : 'unknown';
-    const confirmedRole = pathState.confirmedRole || pathName;
-    const inputText   = pathState.cvText || pathState.reimagineResponses.join('\n\n');
-
-    // [RESEARCH] Source: SYD master design doc — gap analysis spec.
-    // Finding: gap reads must be honest, specific, and rank-calibrated.
-    // Applied: rank and role injected into prompt; vague feedback blocked by instruction.
-    const prompt = `
-You are SYD — a direct, honest career intelligence system. Write a gap analysis for an operative.
-
-OPERATIVE PROFILE:
-- Confirmed path: ${pathName}
-- Confirmed role: ${confirmedRole}
-- Confirmed rank: ${rank} (rank scale: F = early career, E = some experience, D = developing, C = established, B = senior, A = recognised, S = elite)
-- Gaps already identified from record: ${existingGapSkills.join(', ') || 'none identified yet'}
-
-Based on the above, write a gap analysis in SYD's voice. Rules:
-- 2 to 3 sentences maximum
-- Specific to this path and rank — not generic career advice
-- Honest about the distance between where they are and where this path leads
-- Do not use the word "journey" or "passion" or "potential" — too soft
-- SYD speaks in short, declarative sentences. No fluff
-- Output ONLY the gap analysis text. No JSON. No labels. No preamble.
-
-OPERATIVE RECORD (for context):
-${inputText.slice(0, 1500)}
-`.trim();
-
-    const result = await geminiGenerate(prompt);
-
-    if (!result.ok) {
-        console.warn('[SYD] Gap analysis fell back to local:', result.error);
-        return buildLocalGapAnalysis(path, rank, existingGapSkills);
-    }
-
-    const text = result.text.trim();
-    if (!text || text.length < 20) {
-        return buildLocalGapAnalysis(path, rank, existingGapSkills);
-    }
-
-    return {
-        primaryGap:      text,
-        skills:          existingGapSkills.length > 0
-                             ? existingGapSkills
-                             : (path ? (path.mapped_skills || []) : []),
-        geminiEnhanced:  true
+    const gapAnalysis = {
+        primaryGap:     bundle.gap_analysis_prose || buildLocalGapRead(confirmedPath, pathState.confirmedRank),
+        skills:         gapSkills,
+        geminiEnhanced: !!bundle.geminiEnhanced
     };
+
+    // Hidden affinity — from bundle, or local fallback
+    const hiddenAffinity = (bundle.hidden_affinity_stat && bundle.hidden_affinity_read)
+        ? {
+            stat:           bundle.hidden_affinity_stat,
+            read:           bundle.hidden_affinity_read,
+            geminiEnhanced: !!bundle.geminiEnhanced
+          }
+        : buildLocalHiddenAffinity(pathState._scanTraits || {}, pathState._geminiHiddenAffinityStat);
+
+    // Stat seeds
+    let statSeeds = null;
+    if (confirmedPath && confirmedPath.stat_seeds) {
+        statSeeds = confirmedPath.stat_seeds;
+    } else {
+        const statSeedMap = {
+            'Execution and Delivery':    { strength: 6, endurance: 4 },
+            'Strategy and Knowledge':    { intelligence: 6, agility: 4 },
+            'Adaptation and Innovation': { agility: 6, intelligence: 4 },
+            'Consistency and Systems':   { endurance: 6, strength: 4 },
+            'Influence and Community':   { charisma: 8 }
+        };
+        const pathName = confirmedPath ? confirmedPath.path_name : '';
+        statSeeds = statSeedMap[pathName]
+            || { intelligence: 3, agility: 3, strength: 2, endurance: 2, charisma: 2 };
+    }
+
+    pathState.gapAnalysis    = gapAnalysis;
+    pathState.hiddenAffinity = hiddenAffinity;
+    pathState.statSeeds      = statSeeds;
+
+    // Attach synthesis lines and orientation closing line to pathData
+    // so app.js renderSynthesisReveal() and renderOrientationScreen() can use them
+    const pathData = {
+        track:               pathState.track,
+        confirmedPath:       pathState.confirmedPath,
+        confirmedRole:       pathState.confirmedRole,
+        confirmedSpec:       pathState.confirmedSpec,
+        confirmedRank:       pathState.confirmedRank,
+        aspirationGoal:      pathState.aspirationGoal,
+        gapAnalysis:         pathState.gapAnalysis,
+        hiddenAffinity:      pathState.hiddenAffinity,
+        statSeeds:           pathState.statSeeds,
+        inference:           pathState.inference,
+        synthesisSydLines:   bundle.synthesis_syd_lines || [],
+        orientationClosing:  bundle.orientation_closing_line || null,
+        geminiEnhanced:      !!bundle.geminiEnhanced
+    };
+
+    if (typeof pathState.onComplete === 'function') {
+        pathState.onComplete(pathData);
+    }
 }
 
-// Local fallback: builds a gap analysis from rank context and path skills.
-function buildLocalGapAnalysis(path, rank, existingGapSkills) {
-    // Rank-aware gap prose (same strings rendered in status.js PATH tab)
-    const rankGap = {
+// ─── LOCAL GAP READ ──────────────────────────────────────────
+function buildLocalGapRead(confirmedPath, rank) {
+    const r = rank || 'F';
+    const reads = {
         'F': 'You are early. The gap between where you are and expert practice in this path is large — and entirely closeable. The directives are calibrated to that distance.',
-        'E': 'You have real experience. The gap now is about deliberate practice rather than exposure. You have seen enough to know what you do not know yet.',
+        'E': 'You have real experience. The gap now is about deliberate practice rather than exposure.',
         'D': 'You are developing. The gap at this stage is mostly about application — converting understanding into repeatable, pressure-tested execution.',
         'C': 'You are established. The gap is precision. The difference between your current practice and expert practice is not knowledge — it is the consistency of applying what you already know.',
-        'B': 'You are capable in senior contexts. The gap now is influence and system-level thinking — moving from doing well yourself to making others do well.',
+        'B': 'You are capable in senior contexts. The gap now is influence and system-level thinking.',
         'A': 'You are recognised. The remaining gap is in edge cases — the situations that do not fit the patterns you have already mastered.',
         'S': 'You operate at a level most practitioners never reach. The remaining gaps are narrow, specific, and hard to name without direct observation.'
     };
-
-    const skills = existingGapSkills.length > 0
-        ? existingGapSkills
-        : (path ? (path.mapped_skills || []) : []);
-
-    return {
-        primaryGap:     rankGap[rank] || rankGap['F'],
-        skills,
-        geminiEnhanced: false
-    };
+    return reads[r] || reads['F'];
 }
 
-// ─── GEMINI CALL 3: HIDDEN AFFINITY ──────────────────────────
-// Surfaces where the operative's trait energy is actually strongest,
-// independent of what they said they wanted.
-//
-// Unlocked at Level 20 in the Status Window (status.js checks level).
-// Stored in pathData.hiddenAffinity from day one — just revealed later.
-//
-// Returns { stat, read, geminiEnhanced: bool }
-// Local fallback: dominant trait score from scan, plain text read.
-
-async function detectHiddenAffinity() {
-    const traits     = pathState._scanTraits || {};
-    const path       = pathState.confirmedPath;
-    const inputText  = pathState.cvText || pathState.reimagineResponses.join('\n\n');
-
-    // If Gemini already flagged the hidden affinity stat during CV analysis, use it
-    // as the primary signal. The call here adds the personalised prose explanation.
-    const geminiAffinityStat = pathState._geminiHiddenAffinityStat || null;
-
-    if (!hasNeuralLink()) {
-        return buildLocalHiddenAffinity(traits, geminiAffinityStat);
-    }
-
-    const traitSummary = Object.entries(traits)
-        .map(([k, v]) => `${k}: ${v}`)
-        .join(', ');
-
-    // [RESEARCH] Source: SYD master design doc — hidden affinity spec.
-    // Finding: affinity is where trait energy is strongest independent of stated goal.
-    // Applied: explicitly contrasted against the confirmed path to find the divergence.
-    const prompt = `
-You are SYD — a direct, honest career intelligence system. Identify an operative's hidden affinity.
-
-HIDDEN AFFINITY means: the stat domain where this person's underlying signals are strongest, independent of what they said they wanted. It may match their confirmed path — or it may point somewhere they have not looked yet.
-
-OPERATIVE DATA:
-- Confirmed path: ${path ? path.path_name : 'unconfirmed'}
-- Scan trait scores: ${traitSummary || 'not available'}
-- Strongest stat suggested by AI CV analysis: ${geminiAffinityStat || 'not identified'}
-
-The five stats are: strength, intelligence, agility, endurance, charisma.
-
-Write a hidden affinity read in SYD's voice. Rules:
-- Name the hidden affinity stat on the first line in uppercase only (e.g. INTELLIGENCE)
-- Then write 2 to 3 sentences explaining what this means for this operative specifically
-- Be direct. Specific. Reference the stat. Reference the confirmed path if the affinity diverges from it
-- Do not use the word "journey" or "passion" — too soft
-- Output ONLY the stat name on line 1, then the read. No JSON. No labels. No preamble.
-
-OPERATIVE RECORD (for context):
-${inputText.slice(0, 1200)}
-`.trim();
-
-    const result = await geminiGenerate(prompt);
-
-    if (!result.ok) {
-        console.warn('[SYD] Hidden affinity fell back to local:', result.error);
-        return buildLocalHiddenAffinity(traits, geminiAffinityStat);
-    }
-
-    const lines = result.text.trim().split('\n').filter(l => l.trim());
-    if (lines.length < 2) {
-        return buildLocalHiddenAffinity(traits, geminiAffinityStat);
-    }
-
-    const stat = lines[0].trim().toLowerCase().replace(/[^a-z]/g, '');
-    const read = lines.slice(1).join(' ').trim();
-
-    // Validate the stat is one of the five
-    const validStats = ['strength', 'intelligence', 'agility', 'endurance', 'charisma'];
-    if (!validStats.includes(stat)) {
-        return buildLocalHiddenAffinity(traits, geminiAffinityStat);
-    }
-
-    return { stat, read, geminiEnhanced: true };
-}
-
-// Local fallback: uses scan trait scores or the CV-analysis stat flag
-// to determine affinity, then produces a plain-text read.
+// ─── LOCAL HIDDEN AFFINITY ───────────────────────────────────
 function buildLocalHiddenAffinity(traits, geminiAffinityStat) {
-    // Trait → stat mapping (from master design doc)
     const TRAIT_TO_STAT = {
         patternRecognition:  'intelligence',
         cognitiveFlexibility:'agility',
@@ -840,7 +980,6 @@ function buildLocalHiddenAffinity(traits, geminiAffinityStat) {
         socialReading:       'charisma'
     };
 
-    // Find the dominant trait from scan scores
     let dominantStat = geminiAffinityStat || null;
 
     if (!dominantStat && traits && Object.keys(traits).length > 0) {
@@ -869,33 +1008,29 @@ function buildLocalHiddenAffinity(traits, geminiAffinityStat) {
     };
 }
 
-// ─── GEMINI CALL 4: PERSONALISED STAT EXPLAINER ──────────────
-// Called by status.js when an operative taps a stat bar.
-// Generates a personalised read combining trait scores and PATH data.
-// Caches result in localStorage so it does not re-call on every tab open.
+// ─── PERSONALISED STAT EXPLAINER ─────────────────────────────
+// BLOCK C: Checks the stat explainer cache first (seeded by Call 2).
+// If cache miss, falls back to individual Gemini call (Batch 6 behaviour).
+// This means most operatives with Neural Link will never trigger the
+// individual call — Call 2 pre-populated everything.
 //
 // Returns { text, geminiEnhanced: bool } via Promise.
-// Local fallback: the static STAT_EXPLAINERS from status.js.
-
-const STAT_EXPLAINER_CACHE_KEY = 'syd_stat_explainer_cache';
 
 async function getPersonalisedStatExplainer(stat, statValue, pathData, scanTraits) {
-    if (!hasNeuralLink()) return { text: null, geminiEnhanced: false };
-
-    // Check cache first — explainers do not change unless PATH is re-run
+    // Check Call 2 cache first
     try {
         const cached = JSON.parse(localStorage.getItem(STAT_EXPLAINER_CACHE_KEY) || '{}');
-        if (cached[stat]) return { text: cached[stat], geminiEnhanced: true };
-    } catch (e) { /* ignore */ }
+        if (cached[stat] && cached[stat].length > 10) {
+            return { text: cached[stat], geminiEnhanced: true };
+        }
+    } catch(e) { /* fall through to Gemini call */ }
 
-    const pathName     = pathData && pathData.confirmedPath ? pathData.confirmedPath.path_name : 'unknown';
+    if (!hasNeuralLink()) return { text: null, geminiEnhanced: false };
+
+    const pathName      = pathData && pathData.confirmedPath ? pathData.confirmedPath.path_name : 'unknown';
     const confirmedRole = pathData ? (pathData.confirmedRole || pathName) : 'unknown';
     const rank          = pathData ? (pathData.confirmedRank || 'F') : 'F';
 
-    // Build trait context for this specific stat
-    // [RESEARCH] Source: SYD master design doc — trait-to-stat mapping.
-    // Finding: traits are the hidden engine, stats the dashboard.
-    // Applied: relevant traits injected so Gemini can personalise to actual scan data.
     const STAT_TRAITS = {
         strength:     ['executionAccuracy', 'persistence', 'pressureStability'],
         intelligence: ['patternRecognition', 'cognitiveFlexibility'],
@@ -909,9 +1044,6 @@ async function getPersonalisedStatExplainer(stat, statValue, pathData, scanTrait
         .map(t => `${t}: ${(scanTraits && scanTraits[t] != null) ? scanTraits[t] : 'not measured'}`)
         .join(', ');
 
-    // [RESEARCH] Source: SYD master design doc — stat explainer example.
-    // Finding: explainers must combine trait signals AND career data in one voice.
-    // Applied: prompt explicitly requests both; register example included.
     const prompt = `
 You are SYD — a direct, honest career intelligence system. Write a stat explainer for one operative.
 
@@ -941,20 +1073,19 @@ Write the explainer in SYD's voice. Rules:
 
     const text = result.text.trim();
 
-    // Cache it
+    // Cache it for future taps
     try {
         const cached = JSON.parse(localStorage.getItem(STAT_EXPLAINER_CACHE_KEY) || '{}');
         cached[stat] = text;
         localStorage.setItem(STAT_EXPLAINER_CACHE_KEY, JSON.stringify(cached));
-    } catch (e) { /* ignore */ }
+    } catch(e) {}
 
     return { text, geminiEnhanced: true };
 }
 
-// Called by app.js or status.js when PATH is re-run — wipes the explainer cache
-// so Gemini regenerates them for the new profile.
+// Called if PATH is re-run — wipes explainer cache so Call 2 regenerates them
 function clearStatExplainerCache() {
-    try { localStorage.removeItem(STAT_EXPLAINER_CACHE_KEY); } catch (e) { /* ignore */ }
+    try { localStorage.removeItem(STAT_EXPLAINER_CACHE_KEY); } catch(e) {}
 }
 
 // ─── LOADING SCREEN ───────────────────────────────────────────
@@ -983,8 +1114,6 @@ function renderPathLoading(label) {
 }
 
 // ─── PATH DATA SAVE / LOAD ────────────────────────────────────
-const PATH_DATA_KEY = 'syd_path_data';
-
 function savePathData(pathData) {
     try { localStorage.setItem(PATH_DATA_KEY, JSON.stringify(pathData)); }
     catch(e) { console.warn('[SYD] Could not save PATH data:', e); }
@@ -992,4 +1121,13 @@ function savePathData(pathData) {
 function loadPathData() {
     try { const r = localStorage.getItem(PATH_DATA_KEY); return r ? JSON.parse(r) : null; }
     catch(e) { return null; }
+}
+
+// ─── CAREER ENCOUNTERS LOAD ───────────────────────────────────
+// Called by encounter.js to check for career encounters seeded by Call 2.
+function loadCareerEncounters() {
+    try {
+        const raw = localStorage.getItem(CAREER_ENCOUNTERS_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch(e) { return []; }
 }

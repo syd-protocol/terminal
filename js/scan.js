@@ -10,10 +10,26 @@
 // Trait scores are 0–1 floats, calculated from real performance.
 // Never shown to the operative. Fed into stat seeding via seedStatsFromTraits().
 // All three games available for replay after onboarding via minigames.js.
+//
+// BLOCK C changes:
+//   - Call 1 (scan analysis) fires immediately after completeScan().
+//     Result is stored in localStorage under syd_scan_commentary.
+//   - renderScanReveal() in app.js already renders bars from local data
+//     (instant). Call 1 result updates the SYD commentary lines in place
+//     when the Gemini response arrives — no spinner, no blocking wait.
+//   - fireScanAnalysis(traits) — fires Call 1, stores result, signals
+//     app.js to update the reveal screen if it is still visible.
+//   - getScanCommentary() — loads cached Call 1 result from localStorage.
+//   - clearScanCommentary() — called if scan is replayed so stale
+//     commentary is not shown for new scores.
+//   - Local fallback: TRAIT_DESCRIPTIONS in status.js. If Call 1 has not
+//     returned yet when the reveal screen renders, the local descriptions
+//     are already showing and nothing changes.
 // ═══════════════════════════════════════════════════════════════
 
 // ─── TRAIT DEFINITIONS ───────────────────────────────────────
-const SCAN_TRAITS_KEY = 'syd_scan_traits';
+const SCAN_TRAITS_KEY      = 'syd_scan_traits';
+const SCAN_COMMENTARY_KEY  = 'syd_scan_commentary';
 
 const TRAIT_NAMES = [
     'executionSpeed',
@@ -47,6 +63,23 @@ function loadScanTraits() {
     catch(e) { return null; }
 }
 
+// ─── SCAN COMMENTARY CACHE ───────────────────────────────────
+// Stores Call 1 result from Gemini so it survives page navigation.
+// Shape: { highest_trait_read, lowest_trait_read, signal_summary, forward_line }
+function saveScanCommentary(commentary) {
+    try { localStorage.setItem(SCAN_COMMENTARY_KEY, JSON.stringify(commentary)); }
+    catch(e) { /* ignore — commentary is enhancement, not essential */ }
+}
+function getScanCommentary() {
+    try {
+        const raw = localStorage.getItem(SCAN_COMMENTARY_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
+}
+function clearScanCommentary() {
+    try { localStorage.removeItem(SCAN_COMMENTARY_KEY); } catch(e) {}
+}
+
 // Converts raw trait scores (0–1) into stat seed bonuses.
 // Called by createPlayer() in app.js after scan completes.
 function seedStatsFromTraits(traits) {
@@ -78,6 +111,8 @@ function runScan(name, onComplete) {
     scanState.operativeName = name;
     scanState.traits        = {};
     scanState.onComplete    = onComplete;
+    // Clear any stale commentary from a previous scan session
+    clearScanCommentary();
     showScreen('screen-scan');
     renderScanIntro();
 }
@@ -207,94 +242,96 @@ function getSBRoundConfig(round) {
             decoys:  [3, 12, 7]
         }
     ];
-    return configs[Math.min(round, configs.length - 1)];
+    return configs[round] || configs[0];
 }
 
 function renderSBRound() {
-    const config   = getSBRoundConfig(sbState.round);
-    const roundEl  = document.getElementById('sb-round-label');
-    const ruleEl   = document.getElementById('sb-rule-text');
-    const grid     = document.getElementById('sb-grid');
-    const feedback = document.getElementById('sb-feedback');
-    if (!grid) return;
+    const config    = getSBRoundConfig(sbState.round);
+    const roundEl   = document.getElementById('sb-round-label');
+    const ruleEl    = document.getElementById('sb-rule-text');
+    const feedEl    = document.getElementById('sb-feedback');
+    const gridEl    = document.getElementById('sb-grid');
+    const timerEl   = document.getElementById('sb-timer-bar');
 
-    if (roundEl)  roundEl.textContent  = `ROUND ${sbState.round + 1} / ${SB_ROUNDS}`;
-    if (ruleEl)   ruleEl.textContent   = config.rule;
-    if (feedback) feedback.textContent = '\u00a0';
+    if (roundEl) roundEl.textContent = `ROUND ${sbState.round + 1} / ${SB_ROUNDS}`;
+    if (ruleEl)  ruleEl.textContent  = config.rule;
+    if (feedEl)  feedEl.textContent  = '\u00a0';
 
-    grid.innerHTML = '';
-    const total = SB_GRID_SIZE * SB_GRID_SIZE;
-    for (let i = 0; i < total; i++) {
+    if (!gridEl) return;
+    gridEl.innerHTML = '';
+    gridEl.style.gridTemplateColumns = `repeat(${SB_GRID_SIZE}, 1fr)`;
+
+    const totalNodes = SB_GRID_SIZE * SB_GRID_SIZE;
+    const allTargets = new Set([...config.lit, config.correct, ...config.decoys]);
+
+    for (let i = 0; i < totalNodes; i++) {
         const node = document.createElement('button');
-        node.className   = 'sb-node';
-        node.dataset.idx = i;
+        node.className    = 'sb-node';
+        node.dataset.idx  = i;
+
         if (config.lit.includes(i))    node.classList.add('sb-node--lit');
         if (config.decoys.includes(i)) node.classList.add('sb-node--decoy');
-        node.addEventListener('click', () => onSBNodeTap(i, config));
-        grid.appendChild(node);
+        if (i === config.correct)      node.classList.add('sb-node--target');
+
+        // Only tappable if it is a target or decoy (not a lit node or blank)
+        if (i === config.correct || config.decoys.includes(i)) {
+            node.addEventListener('click', () => handleSBTap(i, config));
+        } else {
+            node.disabled = true;
+        }
+        gridEl.appendChild(node);
     }
 
     // Start countdown timer
-    clearInterval(sbState.timer);
     sbState.timeLeft = SB_ROUND_DURATION_MS;
-    const timerBar   = document.getElementById('sb-timer-bar');
+    if (sbState.timer) clearInterval(sbState.timer);
+    const startTime = Date.now();
     sbState.timer = setInterval(() => {
-        sbState.timeLeft -= 50;
-        const pct = Math.max(0, sbState.timeLeft / SB_ROUND_DURATION_MS * 100);
-        if (timerBar) {
-            timerBar.style.width = pct + '%';
-            timerBar.className   = 'sb-timer-bar' + (pct < 30 ? ' sb-timer-bar--critical' : '');
-        }
-        if (sbState.timeLeft <= 0) {
+        const elapsed  = Date.now() - startTime;
+        const pct      = Math.max(0, 1 - elapsed / SB_ROUND_DURATION_MS);
+        if (timerEl) timerEl.style.width = (pct * 100) + '%';
+        if (pct <= 0) {
             clearInterval(sbState.timer);
-            onSBTimeout(config);
+            // Time expired — count as attempted, not correct
+            sbState.attempted++;
+            if (sbState.round >= 1) sbState.flexRounds++;
+            advanceSBRound(false);
         }
-    }, 50);
+    }, 80);
 }
 
-function onSBNodeTap(idx, config) {
-    clearInterval(sbState.timer);
-    // Disable all nodes immediately to prevent double-tap
-    document.querySelectorAll('.sb-node').forEach(n => n.disabled = true);
-
+function handleSBTap(nodeIdx, config) {
+    if (sbState.timer) clearInterval(sbState.timer);
     sbState.attempted++;
 
-    const feedback   = document.getElementById('sb-feedback');
-    const tappedNode = document.querySelector('.sb-node[data-idx="' + idx + '"]');
-
-    if (idx === config.correct) {
+    const isCorrect = nodeIdx === config.correct;
+    if (isCorrect) {
         sbState.correct++;
-        if (sbState.round >= 1) { sbState.flexCorrect++; sbState.flexRounds++; }
-        if (tappedNode) tappedNode.classList.add('sb-node--correct');
-        playTone(660, 0.12, 'square', 0.1);
-        if (feedback) { feedback.textContent = '[ SIGNAL LOCKED ]'; feedback.className = 'sb-feedback sb-feedback--correct'; }
+        if (sbState.round >= 1) {
+            sbState.flexRounds++;
+            sbState.flexCorrect++;
+        }
     } else {
         if (sbState.round >= 1) sbState.flexRounds++;
-        const correctNode = document.querySelector('.sb-node[data-idx="' + config.correct + '"]');
-        if (tappedNode)  tappedNode.classList.add('sb-node--wrong');
-        if (correctNode) correctNode.classList.add('sb-node--correct');
-        playTone(220, 0.1, 'sawtooth', 0.08);
-        if (feedback) { feedback.textContent = '[ INCORRECT — PATTERN REVEALED ]'; feedback.className = 'sb-feedback sb-feedback--wrong'; }
     }
 
-    setTimeout(() => advanceSBRound(), 900);
+    const feedEl = document.getElementById('sb-feedback');
+    if (feedEl) feedEl.textContent = isCorrect ? '[ CONFIRMED ]' : '[ INCORRECT ]';
+
+    // Highlight result
+    const nodes = document.querySelectorAll('.sb-node');
+    nodes.forEach(n => { n.disabled = true; });
+    const targetNode = document.querySelector(`.sb-node[data-idx="${config.correct}"]`);
+    if (targetNode) targetNode.classList.add(isCorrect ? 'sb-node--success' : 'sb-node--revealed');
+    if (!isCorrect) {
+        const tappedNode = document.querySelector(`.sb-node[data-idx="${nodeIdx}"]`);
+        if (tappedNode) tappedNode.classList.add('sb-node--wrong');
+    }
+
+    setTimeout(() => advanceSBRound(isCorrect), 900);
 }
 
-function onSBTimeout(config) {
-    document.querySelectorAll('.sb-node').forEach(n => n.disabled = true);
-    sbState.attempted++;
-    if (sbState.round >= 1) sbState.flexRounds++;
-
-    const correctNode = document.querySelector('.sb-node[data-idx="' + config.correct + '"]');
-    if (correctNode) correctNode.classList.add('sb-node--correct');
-
-    const feedback = document.getElementById('sb-feedback');
-    if (feedback) { feedback.textContent = '[ TIME EXPIRED ]'; feedback.className = 'sb-feedback sb-feedback--wrong'; }
-
-    setTimeout(() => advanceSBRound(), 900);
-}
-
-function advanceSBRound() {
+function advanceSBRound(wasCorrect) {
     sbState.round++;
     if (sbState.round >= SB_ROUNDS) {
         completeSB();
@@ -304,13 +341,14 @@ function advanceSBRound() {
 }
 
 function completeSB() {
-    const pr   = sbState.attempted > 0 ? sbState.correct / SB_ROUNDS : 0.3;
-    const cf   = sbState.flexRounds > 0 ? sbState.flexCorrect / sbState.flexRounds : 0.3;
-    const pers = Math.min(1, sbState.attempted / SB_ROUNDS);
+    const total      = SB_ROUNDS;
+    const pattern    = sbState.correct / total;
+    const flex       = sbState.flexRounds > 0 ? sbState.flexCorrect / sbState.flexRounds : 0.3;
+    const persist    = sbState.attempted / total;
 
-    scanState.traits.patternRecognition   = parseFloat(pr.toFixed(2));
-    scanState.traits.cognitiveFlexibility = parseFloat(cf.toFixed(2));
-    scanState.traits.persistence          = parseFloat(pers.toFixed(2));
+    scanState.traits.patternRecognition   = parseFloat(Math.min(1, pattern).toFixed(2));
+    scanState.traits.cognitiveFlexibility = parseFloat(Math.min(1, flex).toFixed(2));
+    scanState.traits.persistence          = parseFloat(Math.min(1, persist).toFixed(2));
 
     showScanBridge('SIGNAL BREACH COMPLETE', runPrecisionShooter);
 }
@@ -319,20 +357,20 @@ function completeSB() {
 // EXPERIENCE 2 — PRECISION SHOOTER
 // Measures: Execution Speed, Execution Accuracy, Pressure Stability
 //
-// Canvas-based. Targets appear one at a time at random positions.
-// Tap to hit. Pressure increases: targets shrink and expire faster
-// each wave. Three waves of five targets each.
+// A canvas-based tapping game. Targets appear one at a time.
+// Hit the target before it expires. Three waves of increasing speed.
+// Wave 1: slow. Wave 2: medium. Wave 3: fast.
 //
-// executionSpeed    = hits / total targets (responded in time)
-// executionAccuracy = hits / tap attempts  (hit vs mis-tap)
-// pressureStability = wave 3 accuracy relative to wave 1
+// executionSpeed    = hits / total targets (normalised)
+// executionAccuracy = hits / attempts (normalised)
+// pressureStability = wave 3 hit rate / wave 1 hit rate
 // ═══════════════════════════════════════════════════════════════
 
-// [TUNING TARGET] Precision Shooter wave parameters
-const PS_WAVES            = 3;
+// [TUNING TARGET] Precision Shooter parameters
+const PS_WAVES           = 3;
 const PS_TARGETS_PER_WAVE = 5;
-const PS_TARGET_DURATIONS = [1800, 1300, 950];  // ms a target stays visible per wave
-const PS_TARGET_SIZES     = [56,   44,   32];   // px diameter per wave
+const PS_DURATIONS_MS    = [2200, 1600, 1100];   // [TUNING TARGET] ms per wave
+const PS_TARGET_SIZE_PX  = 52;                   // [TUNING TARGET] touch target size
 
 let psState = null;
 
@@ -345,11 +383,11 @@ function runPrecisionShooter() {
         targetIdx:    0,
         hits:         0,
         attempts:     0,
+        totalTargets: PS_WAVES * PS_TARGETS_PER_WAVE,
         waveHits:     [0, 0, 0],
         waveAttempts: [0, 0, 0],
-        activeTimer:  null,
         animFrame:    null,
-        totalTargets: PS_WAVES * PS_TARGETS_PER_WAVE
+        activeTimer:  null
     };
 
     const container = document.getElementById('scan-content');
@@ -361,36 +399,27 @@ function runPrecisionShooter() {
                 <span class="scan-game-tag">[ PRECISION SHOOTER ]</span>
                 <span class="ps-wave-label" id="ps-wave-label">WAVE 1 / ${PS_WAVES}</span>
             </div>
-            <p class="ps-instruction" id="ps-instruction">Tap targets as they appear. Accurate wins — not fastest.</p>
-            <div class="ps-arena" id="ps-arena">
-                <canvas id="ps-canvas" class="ps-canvas"></canvas>
+            <div class="ps-stats-bar">
+                <span class="ps-stat">HITS: <strong id="ps-hits">0</strong></span>
             </div>
-            <div class="ps-score-row">
-                <span class="ps-score-label">HITS:&nbsp;</span>
-                <span class="ps-score-val" id="ps-hits">0</span>
-                <span class="ps-score-label">&nbsp;/ ${psState.totalTargets}</span>
-            </div>
+            <canvas id="ps-canvas" class="ps-canvas"></canvas>
+            <p class="ps-cue" id="ps-cue">Tap the target before it closes.</p>
         </div>
     `;
 
-    // Size canvas once layout settles
-    const arena  = document.getElementById('ps-arena');
+    // Size canvas to match container
     const canvas = document.getElementById('ps-canvas');
-    requestAnimationFrame(() => {
-        canvas.width  = arena.offsetWidth  || 320;
-        canvas.height = arena.offsetHeight || 260;
-        startPSWave();
-    });
+    if (canvas) {
+        canvas.width  = canvas.offsetWidth  || 320;
+        canvas.height = canvas.offsetHeight || 320;
+    }
+
+    startPSWave();
 }
 
 function startPSWave() {
-    const waveLabel = document.getElementById('ps-wave-label');
-    if (waveLabel) waveLabel.textContent = 'WAVE ' + (psState.wave + 1) + ' / ' + PS_WAVES;
-    const instr = document.getElementById('ps-instruction');
-    if (instr) {
-        if (psState.wave === 1) instr.textContent = '[ PRESSURE INCREASING ]';
-        if (psState.wave === 2) instr.textContent = '[ FINAL WAVE — HOLD STEADY ]';
-    }
+    const waveEl = document.getElementById('ps-wave-label');
+    if (waveEl) waveEl.textContent = `WAVE ${psState.wave + 1} / ${PS_WAVES}`;
     psState.targetIdx = 0;
     showPSTarget();
 }
@@ -398,72 +427,57 @@ function startPSWave() {
 function showPSTarget() {
     const canvas = document.getElementById('ps-canvas');
     if (!canvas) return;
-    const ctx  = canvas.getContext('2d');
-    const size = PS_TARGET_SIZES[psState.wave];
-    const dur  = PS_TARGET_DURATIONS[psState.wave];
+    const ctx    = canvas.getContext('2d');
+    const dur    = PS_DURATIONS_MS[psState.wave] || PS_DURATIONS_MS[0];
+    const size   = PS_TARGET_SIZE_PX;
+    const margin = size / 2 + 10;
 
-    const pad = size / 2 + 10;
-    const x   = pad + Math.random() * (canvas.width  - pad * 2);
-    const y   = pad + Math.random() * (canvas.height - pad * 2);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const startTime = Date.now();
+    const x = margin + Math.random() * (canvas.width  - margin * 2);
+    const y = margin + Math.random() * (canvas.height - margin * 2);
 
-    function drawTarget(scale, alpha) {
-        const r = (size / 2) * scale;
+    // Animate target appearing
+    let startTime = null;
+    function drawTarget(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const scale   = Math.min(1, elapsed / 150);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.globalAlpha = alpha;
-        ctx.strokeStyle = '#4fc3f7';
-        ctx.lineWidth   = 2;
-        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = '#4fc3f7';
-        ctx.beginPath(); ctx.arc(x, y, r * 0.2, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = scale;
+        ctx.fillStyle   = 'var(--accent)';
         ctx.beginPath();
-        ctx.moveTo(x - r * 0.55, y); ctx.lineTo(x + r * 0.55, y);
-        ctx.moveTo(x, y - r * 0.55); ctx.lineTo(x, y + r * 0.55);
-        ctx.stroke();
+        ctx.arc(x, y, (size / 2) * scale, 0, Math.PI * 2);
+        ctx.fill();
         ctx.globalAlpha = 1;
+        if (scale < 1) psState.animFrame = requestAnimationFrame(drawTarget);
     }
-
-    function animate() {
-        const elapsed  = Date.now() - startTime;
-        const progress = Math.min(1, elapsed / dur);
-        drawTarget(1 - progress * 0.25, 1 - progress * 0.5);
-        if (progress < 1) {
-            psState.animFrame = requestAnimationFrame(animate);
-        }
-    }
-    psState.animFrame = requestAnimationFrame(animate);
+    psState.animFrame = requestAnimationFrame(drawTarget);
 
     function onTap(e) {
         e.preventDefault();
-        const rect   = canvas.getBoundingClientRect();
-        const touch  = e.touches ? e.touches[0] : e;
-        const cx     = touch.clientX - rect.left;
-        const cy     = touch.clientY - rect.top;
-        const dist   = Math.sqrt((cx - x) * (cx - x) + (cy - y) * (cy - y));
-        const hitR   = size / 2 + 10;
+        const rect  = canvas.getBoundingClientRect();
+        const tapX  = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        const tapY  = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        const dist  = Math.hypot(tapX - x, tapY - y);
+        const isHit = dist <= (size / 2) + 8; // 8px touch tolerance
 
+        if (psState.activeTimer) { clearTimeout(psState.activeTimer); psState.activeTimer = null; }
         cancelAnimationFrame(psState.animFrame);
-        clearTimeout(psState.activeTimer);
-        canvas.removeEventListener('click',      onTap);
-        canvas.removeEventListener('touchstart', onTap);
 
         psState.attempts++;
         psState.waveAttempts[psState.wave]++;
 
-        if (dist <= hitR) {
+        if (isHit) {
             psState.hits++;
             psState.waveHits[psState.wave]++;
-            playTone(660, 0.1, 'square', 0.09);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.globalAlpha = 0.6;
-            ctx.fillStyle   = '#80cbc4';
+            ctx.fillStyle = 'var(--accent)';
+            ctx.globalAlpha = 0.5;
             ctx.beginPath(); ctx.arc(x, y, size / 2, 0, Math.PI * 2); ctx.fill();
             ctx.globalAlpha = 1;
         } else {
-            playTone(180, 0.08, 'sawtooth', 0.06);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.globalAlpha = 0.35;
             ctx.strokeStyle = '#ff4d4d';
             ctx.lineWidth   = 1.5;
             ctx.beginPath(); ctx.arc(x, y, size / 2, 0, Math.PI * 2); ctx.stroke();
@@ -627,6 +641,10 @@ function completeFT() {
 }
 
 // ─── SCAN COMPLETE ────────────────────────────────────────────
+// BLOCK C: After saving traits, fires Call 1 (scan analysis) in the
+// background. The reveal screen renders immediately from local data.
+// When Call 1 resolves, it stores the result and updates the SYD
+// commentary lines in place — if the reveal screen is still visible.
 function completeScan() {
     updateScanProgress(3, 3, 'SIGNAL ACQUISITION COMPLETE');
     saveScanTraits(scanState.traits);
@@ -642,11 +660,120 @@ function completeScan() {
         </div>
     `;
 
+    // BLOCK C: Fire Call 1 immediately — result will arrive while the
+    // operative reads the scan reveal screen. No blocking wait here.
+    fireScanAnalysis(scanState.traits);
+
     setTimeout(() => {
         if (typeof scanState.onComplete === 'function') {
             scanState.onComplete(scanState.traits);
         }
     }, 1400);
+}
+
+// ─── BLOCK C: CALL 1 — SCAN ANALYSIS ────────────────────────
+// Fires after scan completes. Input: seven trait scores.
+// Output: { highest_trait_read, lowest_trait_read, signal_summary, forward_line }
+//
+// Result stored in localStorage under syd_scan_commentary.
+// The scan reveal screen in app.js polls this via getScanCommentary()
+// and updates SYD commentary lines in place when it arrives.
+//
+// Silent failure: if no key, network error, or quota — local TRAIT_DESCRIPTIONS
+// in status.js are already showing and nothing updates. No operative-visible failure.
+//
+// [RESEARCH] Source: SYD Respec v2 — Call 1 spec.
+// Finding: scan reveal should update SYD commentary in place, not block on AI.
+// Applied: fire-and-forget pattern with DOM update on resolve.
+
+async function fireScanAnalysis(traits) {
+    if (!hasNeuralLink()) return; // No key — local fallback already showing
+
+    const traitSummary = Object.entries(traits)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(', ');
+
+    // Find highest and lowest trait for focused commentary
+    const sorted  = Object.entries(traits).sort((a, b) => b[1] - a[1]);
+    const highest = sorted[0]  ? sorted[0][0]  : 'patternRecognition';
+    const lowest  = sorted[sorted.length - 1] ? sorted[sorted.length - 1][0] : 'socialReading';
+
+    const prompt = `
+You are SYD — a direct, honest career intelligence system. Provide a scan analysis for an operative who just completed three psychometric games.
+
+TRAIT SCORES (0.0 to 1.0, higher is stronger):
+${traitSummary}
+
+Highest trait: ${highest} (${traits[highest] !== undefined ? traits[highest] : 'n/a'})
+Lowest trait:  ${lowest}  (${traits[lowest]  !== undefined ? traits[lowest]  : 'n/a'})
+
+Write four fields in SYD's voice. Rules:
+- Be specific about the actual scores — reference numbers where useful
+- Do not use the word "journey" or "passion" — too soft
+- Short, declarative sentences. SYD is not encouraging. SYD is precise.
+- Output ONLY valid JSON with exactly these four keys. No markdown. No preamble.
+
+{
+  "highest_trait_read": "1–2 sentences specific to the highest score and what it signals about this operative.",
+  "lowest_trait_read": "1–2 sentences specific to the lowest score and what to expect from the directives targeting it.",
+  "signal_summary": "One line in SYD voice — the overarching read of this operative's signal profile.",
+  "forward_line": "One personalised line for the scan reveal screen closing — what comes next for this specific profile."
+}
+`.trim();
+
+    const result = await geminiClassify(prompt);
+
+    if (!result.ok) return; // Silent fallback — local descriptions already showing
+
+    const parsed = extractJSON(result.text);
+    if (!parsed || !parsed.signal_summary) return; // Malformed — silent fallback
+
+    saveScanCommentary(parsed);
+
+    // If the scan reveal screen is currently visible, update the SYD lines in place.
+    // This is the "updates in place" behaviour from the respec.
+    updateScanRevealCommentary(parsed);
+}
+
+// ─── UPDATE SCAN REVEAL COMMENTARY ───────────────────────────
+// Called by fireScanAnalysis() when Call 1 resolves.
+// If the scan reveal screen is visible and the commentary elements exist,
+// replaces the local SYD lines with the personalised Gemini versions.
+// No-op if the operative has already advanced past the reveal screen.
+function updateScanRevealCommentary(commentary) {
+    if (!commentary) return;
+
+    // The scan reveal SYD lines are in .scan-reveal-syd-line elements.
+    // app.js renders them from local data — we replace their content here
+    // if the screen is still active.
+    const revealScreen = document.getElementById('screen-scan-reveal');
+    if (!revealScreen || !revealScreen.classList.contains('active')) return;
+
+    const sydLines = document.querySelectorAll('.scan-reveal-syd-line');
+    if (!sydLines || sydLines.length === 0) return;
+
+    // Replace lines in order: summary, highest read, lowest read, forward line.
+    // app.js renders 3–4 lines; we map our four fields onto them.
+    const replacements = [
+        commentary.signal_summary,
+        commentary.highest_trait_read,
+        commentary.lowest_trait_read,
+        commentary.forward_line
+    ].filter(Boolean);
+
+    replacements.forEach((text, i) => {
+        if (sydLines[i]) {
+            sydLines[i].textContent = text;
+            // Subtle fade-in to signal the update
+            sydLines[i].style.opacity = '0';
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    sydLines[i].style.transition = 'opacity 0.4s ease';
+                    sydLines[i].style.opacity    = '1';
+                });
+            });
+        }
+    });
 }
 
 // ─── BRIDGE SCREEN ────────────────────────────────────────────
