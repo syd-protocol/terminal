@@ -225,12 +225,11 @@ async function geminiGenerateLarge(prompt) {
 function extractJSON(text) {
     if (!text) return null;
 
-    // Pass 1: strip ```json ... ``` or ``` ... ``` fences
+    // Pass 1: strip ```json ... ``` or ``` ... ``` fences and handle leading/trailing text
     try {
         const cleaned = text
-            .replace(/^```json\s*/i, '')
-            .replace(/^```\s*/,      '')
-            .replace(/\s*```$/,      '')
+            .replace(/```json\s*([\s\S]*?)\s*```/i, '$1')
+            .replace(/```\s*([\s\S]*?)\s*```/g,      '$1')
             .trim();
         return JSON.parse(cleaned);
     } catch (_) { /* try next */ }

@@ -1135,3 +1135,23 @@ function loadCareerEncounters() {
         return raw ? JSON.parse(raw) : [];
     } catch(e) { return []; }
 }
+
+// ─── CALL 4: CAREER REFRESH ──────────────────────────────────
+// Fires in the background when the career directive cache is low.
+async function fireCall4() {
+    if (!hasNeuralLink()) return;
+    
+    const bundle = loadPathData();
+    if (!bundle || !bundle.aspirationGoal) return;
+
+    const prompt = `Refresh career directives for a ${bundle.confirmedRole} (${bundle.confirmedSpec}) aiming for ${bundle.aspirationGoal.targetRole}. Return 10 new directives in JSON format.`;
+    
+    const result = await geminiSilentCall(prompt, 0.2);
+    if (result.ok && result.data) {
+        const newDirectives = extractJSON(result.data);
+        if (newDirectives) {
+            localStorage.setItem('syd_career_directives', JSON.stringify(newDirectives));
+            console.log('[SYD] Call 4 successful: Career cache refreshed.');
+        }
+    }
+}
