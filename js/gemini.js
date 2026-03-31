@@ -225,11 +225,14 @@ async function geminiGenerateLarge(prompt) {
 function extractJSON(text) {
     if (!text) return null;
 
-    // Pass 1: strip ```json ... ``` or ``` ... ``` fences and handle leading/trailing text
+    // Pass 1: strip ```json ... ``` or ``` ... ``` fences and handle leading/trailing text.
+    // NOTE: greedy ([\s\S]*) is intentional — large JSON payloads (Call 2 bundle) are
+    // multi-kilobyte and a non-greedy match can stop at the first ``` it finds inside
+    // a string value, truncating the object and causing a parse failure.
     try {
         const cleaned = text
-            .replace(/```json\s*([\s\S]*?)\s*```/i, '$1')
-            .replace(/```\s*([\s\S]*?)\s*```/g,      '$1')
+            .replace(/```json\s*([\s\S]*)\s*```/i, '$1')
+            .replace(/```\s*([\s\S]*)\s*```/g,      '$1')
             .trim();
         return JSON.parse(cleaned);
     } catch (_) { /* try next */ }
