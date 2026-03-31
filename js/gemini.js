@@ -30,7 +30,7 @@
 // ─── MODEL CONSTANTS ─────────────────────────────────────────
 // [TUNING TARGET] Model names — update if Google renames endpoints
 const GEMINI_MODEL_CLASSIFY   = 'gemini-2.5-flash-lite';   // classification calls
-const GEMINI_MODEL_GENERATE   = 'gemini-2.5-flash-preview-04-17';        // generative calls
+const GEMINI_MODEL_GENERATE   = 'gemini-2.5-flash';        // generative calls
 const GEMINI_API_BASE         = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 // [TUNING TARGET] Temperature per call type
