@@ -447,7 +447,11 @@ function applyCall2Bundle(bundle) {
         && typeof loadCareerSkills === 'function') {
 
         const rank    = typeof rankFromLevel === 'function'
-            ? rankFromLevel(typeof calculateLevel === 'function' ? calculateLevel() : 1)
+            // Guard: calculateLevel() requires player to be non-null.
+            // During onboarding, player does not exist yet — use level 1 (F-rank).
+            ? rankFromLevel(typeof calculateLevel === 'function' && typeof player !== 'undefined' && player
+                ? calculateLevel()
+                : 1)
             : 'F';
         const softCap = typeof getCareerSkillSoftCap === 'function'
             ? getCareerSkillSoftCap(rank)

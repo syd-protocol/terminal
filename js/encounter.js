@@ -40,7 +40,8 @@
 // ─── ENCOUNTER POOL ──────────────────────────────────────────
 const ENCOUNTER_KEY           = 'syd_encounter_today';
 const ENCOUNTER_DONE_KEY      = 'syd_encounter_done';
-const CAREER_ENCOUNTERS_KEY   = 'syd_career_encounters';
+// CAREER_ENCOUNTERS_KEY lives in path.js as the owner of career encounter storage.
+// encounter.js reads directly from the storage key string to avoid const collision.
 
 // [TUNING TARGET] Encounter tier unlock levels — same as directives
 const ENCOUNTER_TIER_UNLOCK = { 1: 1, 2: 10, 3: 25 };
@@ -117,7 +118,7 @@ function getTodaysCareerEncounter(level) {
     if (operatorDays <= 7) return null;
 
     try {
-        const raw = localStorage.getItem(CAREER_ENCOUNTERS_KEY);
+        const raw = localStorage.getItem('syd_career_encounters');
         if (!raw) return null;
         const pool = JSON.parse(raw);
         if (!Array.isArray(pool) || pool.length === 0) return null;

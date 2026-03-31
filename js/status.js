@@ -928,6 +928,7 @@ function renderStatusMainContent(container, animate) {
                     <span class="rank-badge sot-rank-badge ${rankCssClass(rank)}">${rank}</span>
                     <span class="sot-level-badge">LVL ${level}</span>
                     <span class="sot-sig-badge">&#x2B21; ${sig} SIG</span>
+                    <button class="sot-settings-shortcut" id="sot-settings-shortcut" title="Settings">&#x2699;</button>
                 </div>
             </div>
 
@@ -1113,8 +1114,20 @@ function renderStatusMainContent(container, animate) {
     // ── Wire Settings section ─────────────────────────────────
     wireSettingsSection();
 
-    // ── Wire Career Skills tappable rows ─────────────────────
+    // ── Wire career skills tappable rows ─────────────────────
     wireCareerSkillsSection();
+
+    // ── Wire settings cogwheel shortcut ──────────────────────
+    const settingsShortcut = document.getElementById('sot-settings-shortcut');
+    if (settingsShortcut) {
+        settingsShortcut.addEventListener('click', () => {
+            playUIClick();
+            const anchor = document.getElementById('status-settings-anchor');
+            if (anchor) {
+                anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    }
 
     // ── Animate stat numbers on initial render ────────────────
     if (animate) {
@@ -1758,7 +1771,7 @@ function buildSettingsSection() {
           };
 
     return `
-        <div class="status-section status-section--settings">
+        <div class="status-section status-section--settings" id="status-settings-anchor">
             <p class="status-section-label">[ SETTINGS ]</p>
 
             <div class="settings-section">

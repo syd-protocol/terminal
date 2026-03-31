@@ -54,8 +54,6 @@ function getCurrentTier(level) {
 //             → Slot 3 of life-stat always carries a field note reflection prompt
 //
 // Gear does NOT apply during Tier 0 (days 1–7). All Tier 0 runs at Gear 1.
-// Career directives are also skipped during Tier 0 — no mixing until Day 8.
-// Gear unlocks after the operative completes all 7 Tier 0 days.
 
 // ─── TIER 0: OPERATIVE DAYS 1–7 ──────────────────────────────
 // Deterministic day-matched directives for the first 7 operative days.
@@ -137,9 +135,9 @@ function getCareerDirectivesFromCache(count, completedToday) {
 // The same operative gets the same directives all day.
 // Pool is filtered to directives at or below the current tier.
 //
-// BLOCK B: After life-stat selection, career directives are mixed in
-// from the career cache at the gear-appropriate count (3/5/7).
-// This only applies after Tier 0 and when the career cache is populated.
+// Career directive mixing appended after life-stat selection when
+// the career cache is populated. No Tier 0 exception — career
+// directives mix from Day 1 if the cache exists.
 //
 // Graceful tier fallback: if the current tier pool is empty for a stat,
 // SYD falls back to the highest available lower tier and flags it.
@@ -147,13 +145,23 @@ function getCareerDirectivesFromCache(count, completedToday) {
 
 function getDailyQuests(allQuests, level, gear, operatorDays) {
 
-    // ── Tier 0: days 1–7 — deterministic, no career mixing ───────
-    // Career directives are never mixed during Tier 0. The Tier 0
-    // experience is deliberately controlled and cannot be disrupted
-    // by an empty or partially-populated career cache.
+    // ── Tier 0: days 1–7 — deterministic life-stat directives ───────
+    // Career directives ARE mixed from Day 1 when the cache is populated.
+    // If the cache is empty (Call 2 not yet run), career mixing is a no-op
+    // and the Tier 0 experience is unchanged.
     if (typeof operatorDays === 'number' && operatorDays >= 1 && operatorDays <= 7) {
         const tier0 = getTier0DayQuests(allQuests, operatorDays);
-        if (tier0.length > 0) return tier0;
+        if (tier0.length > 0) {
+            // Append career directives at Gear 1 count (3) — same logic as standard path
+            const completedIds = (typeof player !== 'undefined' && player && player.completedToday)
+                ? player.completedToday : [];
+            const careerDir = getCareerDirectivesFromCache(3, completedIds);
+            if (careerDir.length > 0) {
+                const existingIds = new Set(tier0.map(d => d.id));
+                careerDir.forEach(cd => { if (!existingIds.has(cd.id)) tier0.push(cd); });
+            }
+            return tier0;
+        }
         // If Tier 0 pool is entirely empty (data gap), fall through to standard selection.
     }
 
@@ -237,12 +245,13 @@ function getDailyQuests(allQuests, level, gear, operatorDays) {
         }
     });
 
-    // ── BLOCK B: Career directive mixing ─────────────────────────
+    // ── Career directive mixing ───────────────────────────────────
     // Career directives are appended after life-stat directives.
     // Count is determined by gear level: 3 / 5 / 7.
-    // Skipped silently if cache is empty (no Gemini Call 2 yet,
-    // Neural Link not connected, or first week of Tier 0 — already
-    // handled above).
+    // Skipped silently if cache is empty — works at all levels including
+    // Tier 0 (Days 1–7). Career directives show from Day 1 when the cache
+    // is populated. Before Call 2 has run or Neural Link is connected,
+    // the cache is empty and this step is a no-op.
     //
     // The current player's completedToday is accessed via the global
     // `player` variable (set in app.js). If player is not yet defined,
