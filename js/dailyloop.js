@@ -132,8 +132,10 @@ function buildMorningLines() {
         lines.push(`MOMENTUM: ${momentum.toFixed(2)}×. Building. Keep showing up.`);
     } else if (momentum >= 1.05) {
         lines.push(`MOMENTUM: ${momentum.toFixed(2)}×. Early stages. The compounding is not visible yet. Trust the system.`);
+    } else if (dayNum === 1) {
+        lines.push(`MOMENTUM: ${momentum.toFixed(2)}×. Baseline. Show up today and the compounding begins.`);
     } else {
-        lines.push(`MOMENTUM: ${momentum.toFixed(2)}×. You missed days. The system registered it. Today is the reset.`);
+        lines.push(`MOMENTUM: ${momentum.toFixed(2)}×. The system registered the gap. Today is the reset.`);
     }
 
     // Capacity read

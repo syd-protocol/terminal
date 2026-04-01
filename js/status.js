@@ -1979,16 +1979,17 @@ function wireSettingsSection() {
     if (syncBtn) {
         syncBtn.addEventListener('click', () => {
             playUIClick();
-            const hasKey = typeof getNeuralKey === 'function' && getNeuralKey();
-            if (!hasKey) {
+            if (typeof player !== 'undefined' && player && player.syncOptedIn) {
                 if (typeof showLog === 'function') {
-                    showLog('[ CLOUD SYNC — CONNECT NEURAL LINK FIRST ]', 'system');
+                    showLog('[ CLOUD SYNC ACTIVE — DATA IS BACKED UP ]', 'accent');
                 }
-                setTimeout(() => { if (typeof navTo === 'function') navTo('screen-neural'); }, 600);
-                return;
-            }
-            if (typeof showLog === 'function') {
-                showLog('[ CLOUD SYNC — COMING SOON. YOUR KEY IS ACTIVE. ]', 'system');
+            } else {
+                if (typeof renderCloudSyncOptIn === 'function') {
+                    renderCloudSyncOptIn(() => {
+                        showScreen('screen-status');
+                        if (typeof renderStatusWindow === 'function') renderStatusWindow(false);
+                    });
+                }
             }
         });
     }

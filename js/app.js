@@ -1023,6 +1023,62 @@ function generateUID() {
     return 'syd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
+// ─── CLOUD SYNC HELPERS ───────────────────────────────────────
+// getCloudSyncEnabled / getCurrentUID are called by dailyloop.js.
+// Cloud sync is independent of Neural Link — any operative can opt in.
+
+function getCloudSyncEnabled() {
+    return !!(player && player.syncOptedIn);
+}
+
+function getCurrentUID() {
+    if (!player) return null;
+    if (!player.uid) { player.uid = generateUID(); savePlayer(); }
+    return player.uid;
+}
+
+// Opt the operative into cloud sync. Assigns a UID if none exists,
+// sets syncOptedIn on the player object, persists, and fires an
+// immediate push so their data is backed up right away.
+function enableCloudSync() {
+    if (!player) return;
+    if (!player.uid) { player.uid = generateUID(); }
+    player.syncOptedIn = true;
+    savePlayer();
+    pushToCloud(true);
+}
+
+// Renders the cloud sync opt-in screen.
+// onDone: called when operative confirms or skips.
+function renderCloudSyncOptIn(onDone) {
+    showScreen('screen-path');
+    const container = document.getElementById('path-content');
+    if (!container) { if (onDone) onDone(); return; }
+
+    container.innerHTML = `
+        <div class="cloud-sync-optin-wrap">
+            <p class="cso-label">[ CLOUD SYNC ]</p>
+            <p class="cso-syd-line">Your career path and progress are currently on this device only.</p>
+            <p class="cso-syd-line">Enable cloud sync and they follow you — open SYD on any device and pick up exactly where you left off.</p>
+            <p class="cso-syd-line">No account needed. Your data is stored under a private ID. Nothing is shared.</p>
+            <button class="btn btn--primary" id="cso-enable-btn">[ ENABLE CLOUD SYNC ]</button>
+            <button class="cso-skip-btn" id="cso-skip-btn">Not now — keep it local</button>
+        </div>
+    `;
+
+    document.getElementById('cso-enable-btn').addEventListener('click', () => {
+        playUIClick();
+        enableCloudSync();
+        showLog('[ CLOUD SYNC ENABLED — DATA BACKED UP ]', 'accent');
+        setTimeout(() => { if (onDone) onDone(); }, 700);
+    });
+
+    document.getElementById('cso-skip-btn').addEventListener('click', () => {
+        playUIClick();
+        if (onDone) onDone();
+    });
+}
+
 // ─── QUEST LOADING ───────────────────────────────────────────
 async function loadQuests() {
     try {
@@ -1273,8 +1329,10 @@ function startPATH(name, scanTraits) {
             // PASS 2: Show synthesis reveal → signal translation → orientation → createPlayer
             renderSynthesisReveal(pathData, () => {
                 renderSignalTranslationScreen(() => {
-                    renderOrientationScreen(() => {
-                        createPlayer(name, scanTraits, pathData);
+                    renderCloudSyncOptIn(() => {
+                        renderOrientationScreen(() => {
+                            createPlayer(name, scanTraits, pathData);
+                        });
                     });
                 });
             });

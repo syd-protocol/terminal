@@ -580,8 +580,8 @@ ANALYSIS RULES — follow these strictly:
 7. synthesis_syd_lines must sound like intelligence analysis, not LinkedIn endorsements.
 8. career_skill_tracks must be named after what the operative actually does, not generic skill categories.
 9. initial_career_directives must be REAL actions with REAL professional consequences — not study tasks or research exercises.
-10. current_role_match and target_roles must be calibrated to the operative's ACTUAL seniority level, inferred from years in role and career progression visible in their record — not just from the skills they demonstrate. Someone with 2–3 years average tenure in individual contributor roles should NOT receive Director or VP titles as current_role_match. Use this heuristic: under 3 years average tenure or no direct reports mentioned → IC to Senior IC titles. 3–6 years with team leadership evidence → Manager to Senior Manager. 6+ years with consistent leadership and budget/team ownership → Director level. VP and above requires explicit evidence of organisational scope. When seniority is unclear, default DOWN. current_role_match must be a role the operative could send a CV to tomorrow and be a plausible applicant — not an aspirational title.
-11. The confirmed rank from the scan is implicit in the operative's record. Do not suggest roles that would require a rank higher than their demonstrated seniority. A C-rank operative maps to Senior Manager or equivalent — not Director, not VP.
+10. current_role_match and target_roles must contain ONLY the role name — no seniority prefix of any kind. Do not use Senior, Junior, Associate, Head of, Lead, Director, VP, Chief, or Principal. The role name alone is correct: "Community Manager" not "Senior Community Manager", "Data Analyst" not "Head of Data". Seniority is communicated separately through the operative's rank — it must not appear in role titles.
+11. current_role_match must be a role the operative could send a CV to tomorrow and be a plausible applicant based on their actual record. If uncertain, default to the more junior version of the role. target_roles are the direction their pattern points — they should be reachable within 2–4 years of deliberate work, not aspirational fantasy titles.
 
 Your output will seed multiple downstream systems. Every field is required. Do not omit any.
 
@@ -950,6 +950,13 @@ function renderSignalTranslationOPS() {
 function applyCall2Bundle(bundle) {
     if (!bundle) bundle = getLocalFallbackBundle();
 
+    // If the local model cannot support this domain, show the honest message
+    // and stop the flow here — do not present a fabricated path.
+    if (bundle._unsupportedDomain) {
+        _renderUnsupportedDomainScreen();
+        return;
+    }
+
     pathState.call2Bundle = bundle;
     pathState.inference   = {
         paths:       bundle.paths || [],
@@ -1042,6 +1049,71 @@ function applyCall2Bundle(bundle) {
     }
 }
 
+// ─── UNSUPPORTED DOMAIN BUNDLE ───────────────────────────────
+// Returned when the operative's domain does not match local coverage
+// or when domain matches but evidence lines are too thin to be confident.
+// Honest about the limitation — never fabricates a path.
+function _getUnsupportedDomainBundle() {
+    return {
+        paths: [{
+            path_name:         'UNCLASSIFIED',
+            current_role_match: 'Unknown',
+            narrative:         '',
+            target_roles:      [],
+            mapped_skills:     [],
+            stat_seeds:        {},
+            gap_skills:        []
+        }],
+        _unsupportedDomain: true,
+        geminiEnhanced: false
+    };
+}
+
+// ─── UNSUPPORTED DOMAIN SCREEN ───────────────────────────────
+// Shown when local data cannot support the operative's domain.
+// Honest, not apologetic. Gives a clear path forward.
+function _renderUnsupportedDomainScreen() {
+    showScreen('screen-path');
+    const container = document.getElementById('path-content');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="path-select">
+            <div class="path-syd-voice">
+                <p class="path-voice-line path-voice-line--visible">
+                    My local data does not have enough coverage for your field to give you an accurate read.
+                </p>
+                <p class="path-voice-line path-voice-line--visible">
+                    A generic path would be inaccurate. I will not do that.
+                </p>
+                <p class="path-voice-line path-voice-line--visible">
+                    Connect a Neural Link key — the AI read handles any domain — then restart PATH.
+                </p>
+            </div>
+            <div class="path-track-choices">
+                <button class="path-track-btn" id="ud-neural-btn">
+                    <span class="path-track-tag">RECOMMENDED</span>
+                    <span class="path-track-label">Connect Neural Link</span>
+                    <span class="path-track-sub">Takes 60 seconds. Unlocks an accurate read for any field.</span>
+                </button>
+                <button class="path-track-btn" id="ud-restart-btn">
+                    <span class="path-track-label">Restart PATH</span>
+                    <span class="path-track-sub">Try the Re-imaginer track instead — no CV required.</span>
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('ud-neural-btn').addEventListener('click', () => {
+        playUIClick();
+        navTo('screen-neural');
+    });
+    document.getElementById('ud-restart-btn').addEventListener('click', () => {
+        playUIClick();
+        if (typeof renderPathSelect === 'function') renderPathSelect();
+    });
+}
+
 // ─── LOCAL FALLBACK BUNDLE ───────────────────────────────────
 // Returns the same shape as Call 2 with genuinely good local content.
 // Used when Neural Link is not connected, or Call 2 fails.
@@ -1083,9 +1155,9 @@ function getLocalFallbackBundle() {
         },
         endurance:    {
             path_name:         'Consistency and Systems',
-            current_role_match:'Programme Manager',
+            current_role_match:'Operations Coordinator',
             narrative:    'Your pattern shows sustained effort and a systems-building orientation over long time horizons.',
-            target_roles: ['Systems Architect', 'Programme Manager', 'Operations Lead'],
+            target_roles: ['Programme Manager', 'Operations Manager', 'Systems Manager'],
             mapped_skills: ['Sustained Effort', 'Process Design', 'Long-term Discipline'],
             stat_seeds:   { endurance: 6, strength: 4 },
             gap_skills:   ['Creative flexibility', 'Stakeholder influence', 'Rapid pivoting']
@@ -1114,7 +1186,7 @@ function getLocalFallbackBundle() {
             path_name:          'Community and Ecosystem Building',
             current_role_match: 'Community Manager',
             narrative:          'Your record shows a consistent pattern of building and activating communities — growing membership, driving engagement, and converting community presence into strategic value.',
-            target_roles:       ['Head of Community', 'Community Strategy Lead', 'Ecosystem Development Manager'],
+            target_roles:       ['Community Strategy Manager', 'Ecosystem Development Manager', 'Community Programme Manager'],
             mapped_skills:      ['Community Strategy', 'Stakeholder Engagement', 'Program Management'],
             stat_seeds:         { charisma: 7, intelligence: 4 },
             gap_skills:         ['Data-driven community health measurement', 'Community monetisation strategy', 'Crisis communications at scale']
@@ -1159,7 +1231,7 @@ function getLocalFallbackBundle() {
             path_name:          'People and Talent Operations',
             current_role_match: 'HR Business Partner',
             narrative:          'Your record shows experience in talent operations — hiring, onboarding, performance management, and people processes across teams.',
-            target_roles:       ['Senior HR Business Partner', 'Head of People Operations', 'Talent Acquisition Manager'],
+            target_roles:       ['People Operations Manager', 'Talent Acquisition Manager', 'HR Programme Manager'],
             mapped_skills:      ['Talent Acquisition', 'Performance Management', 'People Analytics'],
             stat_seeds:         { charisma: 7, endurance: 4 },
             gap_skills:         ['Organisational design at scale', 'Compensation benchmarking', 'HRIS systems and automation']
@@ -1168,7 +1240,7 @@ function getLocalFallbackBundle() {
             path_name:          'Operations and Process Delivery',
             current_role_match: 'Operations Manager',
             narrative:          'Your record shows process management, operational delivery, and coordination across teams — with a pattern of improving efficiency and reliability.',
-            target_roles:       ['Senior Operations Manager', 'Head of Operations', 'COO (scale-up)'],
+            target_roles:       ['Operations Programme Manager', 'Business Operations Manager', 'Regional Operations Manager'],
             mapped_skills:      ['Process Optimisation', 'Vendor Management', 'Operational Reporting'],
             stat_seeds:         { strength: 7, endurance: 5 },
             gap_skills:         ['Change management at scale', 'Lean or Six Sigma certification', 'Cross-functional budget ownership']
@@ -1177,7 +1249,7 @@ function getLocalFallbackBundle() {
             path_name:          'Learning Design and Talent Development',
             current_role_match: 'Learning and Development Manager',
             narrative:          'Your record shows experience designing and delivering learning programmes — curriculum development, facilitation, and talent incubation.',
-            target_roles:       ['Senior L&D Manager', 'Head of Learning Experience', 'Curriculum Lead'],
+            target_roles:       ['L&D Programme Manager', 'Learning Experience Designer', 'Curriculum Manager'],
             mapped_skills:      ['Instructional Design', 'Programme Management', 'Facilitation'],
             stat_seeds:         { intelligence: 7, charisma: 4 },
             gap_skills:         ['LMS platform ownership', 'Learning impact measurement and ROI', 'Large-scale digital learning deployment']
@@ -1186,7 +1258,7 @@ function getLocalFallbackBundle() {
             path_name:          'Sales and Revenue Growth',
             current_role_match: 'Account Executive',
             narrative:          'Your record shows experience in pipeline management, client acquisition, and revenue generation — with a pattern of closing deals and managing commercial relationships.',
-            target_roles:       ['Senior Account Executive', 'Sales Manager', 'Head of Sales'],
+            target_roles:       ['Sales Manager', 'Account Manager', 'Commercial Manager'],
             mapped_skills:      ['Pipeline Management', 'Client Relationship Management', 'Commercial Negotiation'],
             stat_seeds:         { charisma: 8, endurance: 3 },
             gap_skills:         ['Enterprise sales cycle management', 'Sales team leadership', 'Revenue forecasting and territory planning']
@@ -1195,7 +1267,7 @@ function getLocalFallbackBundle() {
             path_name:          'Marketing and Brand Growth',
             current_role_match: 'Marketing Manager',
             narrative:          'Your record shows experience across marketing channels — content, campaigns, brand, and audience growth — with a pattern of connecting products to audiences.',
-            target_roles:       ['Senior Marketing Manager', 'Head of Marketing', 'Growth Lead'],
+            target_roles:       ['Growth Marketing Manager', 'Brand Manager', 'Content Strategy Manager'],
             mapped_skills:      ['Campaign Strategy', 'Content Marketing', 'Growth Analytics'],
             stat_seeds:         { intelligence: 6, charisma: 5 },
             gap_skills:         ['Paid acquisition and performance marketing', 'Marketing attribution and analytics', 'Brand strategy at scale']
@@ -1204,7 +1276,7 @@ function getLocalFallbackBundle() {
             path_name:          'Data and Analytics',
             current_role_match: 'Data Analyst',
             narrative:          'Your record shows experience working with data — analysis, visualisation, and generating insights that inform decisions.',
-            target_roles:       ['Senior Data Analyst', 'Analytics Manager', 'Head of Data'],
+            target_roles:       ['Analytics Manager', 'Business Intelligence Analyst', 'Data Strategy Manager'],
             mapped_skills:      ['Data Analysis', 'SQL and Data Tooling', 'Insight Communication'],
             stat_seeds:         { intelligence: 8, agility: 3 },
             gap_skills:         ['Machine learning and predictive modelling', 'Data engineering and pipeline ownership', 'Executive data storytelling']
@@ -1213,7 +1285,7 @@ function getLocalFallbackBundle() {
             path_name:          'Legal and Compliance',
             current_role_match: 'Legal Counsel',
             narrative:          'Your record shows experience in legal analysis, contract management, and compliance — advising on risk and regulatory requirements.',
-            target_roles:       ['Senior Legal Counsel', 'Head of Legal', 'General Counsel'],
+            target_roles:       ['Commercial Legal Counsel', 'Compliance Manager', 'Contract Manager'],
             mapped_skills:      ['Contract Drafting and Review', 'Regulatory Compliance', 'Risk Assessment'],
             stat_seeds:         { intelligence: 8, endurance: 3 },
             gap_skills:         ['Board-level governance experience', 'Cross-border legal jurisdiction', 'Litigation management at scale']
@@ -1222,52 +1294,36 @@ function getLocalFallbackBundle() {
             path_name:          'Healthcare and Clinical Operations',
             current_role_match: 'Clinical Coordinator',
             narrative:          'Your record shows experience in healthcare delivery, clinical operations, or public health — with a pattern of improving care quality and operational efficiency.',
-            target_roles:       ['Senior Clinical Coordinator', 'Healthcare Programme Manager', 'Head of Clinical Operations'],
+            target_roles:       ['Healthcare Programme Manager', 'Clinical Operations Manager', 'Public Health Manager'],
             mapped_skills:      ['Clinical Protocol Management', 'Healthcare Systems Navigation', 'Stakeholder Coordination'],
             stat_seeds:         { endurance: 7, charisma: 4 },
             gap_skills:         ['Healthcare technology implementation', 'Clinical research methodology', 'Health policy and regulatory navigation']
         }
     };
 
-    // Adjusts a domain path's current_role_match to match actual seniority
-    function calibratePathToSeniority(path, tier) {
-        if (!path || !tier) return path;
-        const SENIORITY_PREFIX = {
-            ic:             '',
-            senior_ic:      'Senior ',
-            manager:        '',        // role titles already imply management level
-            senior_manager: 'Senior ',
-            director:       ''
-        };
-        // Titles that should never get a "Senior" prefix (they already imply seniority)
-        const NO_PREFIX = /^(head of|director|vp |chief|principal|lead |senior )/i;
-        const base = path.current_role_match || '';
-        const prefix = SENIORITY_PREFIX[tier] || '';
-        const adjusted = (prefix && !NO_PREFIX.test(base))
-            ? prefix + base.charAt(0).toLowerCase() + base.slice(1)
-            : base;
-        // For IC tier, strip any "Senior" or "Manager" from the title
-        if (tier === 'ic') {
-            const stripped = base
-                .replace(/^Senior\s+/i, '')
-                .replace(/\s+Manager$/i, ' Coordinator')
-                .replace(/\s+Lead$/i, '');
-            return { ...path, current_role_match: stripped };
-        }
-        return { ...path, current_role_match: adjusted };
-    }
-
-    // Pick primary path by domain signal if strong, fall back to stat classification
+    // Pick primary path by domain signal if strong, fall back to stat classification.
+    // seniority prefixes removed — rank badge communicates experience level instead.
     let primary, linked1, linked2;
 
     if (cvSignal && cvSignal.domainPrimary && DOMAIN_TO_PATHS[cvSignal.domainPrimary]) {
-        primary = calibratePathToSeniority(DOMAIN_TO_PATHS[cvSignal.domainPrimary], cvSignal.seniorityTier);
+        primary = DOMAIN_TO_PATHS[cvSignal.domainPrimary];
+
+        // If domain matches but evidence is too thin, tell the operative honestly
+        // rather than presenting a low-confidence local read as accurate.
+        const evidence = (cvSignal.evidenceLines || []).length;
+        if (evidence < 2 && !cvSignal.leadershipEvidence) {
+            return _getUnsupportedDomainBundle();
+        }
+
         linked1 = (cvSignal.domainSecondary && DOMAIN_TO_PATHS[cvSignal.domainSecondary])
-            ? calibratePathToSeniority(DOMAIN_TO_PATHS[cvSignal.domainSecondary], cvSignal.seniorityTier)
+            ? DOMAIN_TO_PATHS[cvSignal.domainSecondary]
             : statToPath[result.linkedStats[0]] || statToPath.agility;
         linked2 = statToPath[result.linkedStats[1]] || statToPath.endurance;
+    } else if (cvSignal && cvSignal.domainPrimary && !DOMAIN_TO_PATHS[cvSignal.domainPrimary]) {
+        // Domain detected but not in our local coverage — honest fallback
+        return _getUnsupportedDomainBundle();
     } else {
-        // No domain match — fall back to stat classification
+        // No domain match at all — fall back to stat classification
         primary = statToPath[result.primaryStat]    || statToPath.intelligence;
         linked1 = statToPath[result.linkedStats[0]] || statToPath.agility;
         linked2 = statToPath[result.linkedStats[1]] || statToPath.endurance;
@@ -1515,17 +1571,48 @@ function runRankConfirmation() {
 }
 
 function inferStartingRank() {
+    // Re-imaginer track has no record — always starts at F
     if (pathState.track === 'reimaginer') return 'F';
 
-    const text    = pathState.cvText || '';
-    const words   = text.split(/\s+/).length;
-    const hasYears = /\d{4}/.test(text);
-    const hasMgmt  = /manag|lead|head|director|vp|chief|founder/i.test(text);
+    const text = pathState.cvText || '';
+    if (!text || text.length < 80) return 'F';
 
-    if (!hasYears || words < 100) return 'F';
-    if (hasMgmt && words > 400)   return 'C';
-    if (words > 250)              return 'E';
-    return 'F';
+    // Use the structured CV signals already extracted by the path engine
+    const cvSignal = extractCVSignals(text);
+    const years    = cvSignal.yearsTotal      || 0;
+    const evidence = (cvSignal.evidenceLines  || []).length;
+    const hasTeam  = cvSignal.leadershipEvidence;
+
+    // ── Rank table ────────────────────────────────────────────
+    // Rank is earned by the combination of time served AND demonstrated
+    // impact (evidence lines = quantified outcomes in the CV).
+    // Leadership is additive — it can push someone up one rank if
+    // years and evidence are both present.
+    //
+    // Default DOWN when uncertain — the rank confirmation screen
+    // lets the operative self-correct if the read is off.
+    //
+    //   F  — 0–1 year, or any experience with no evidence of outcome
+    //   E  — 1–3 years with at least 1 evidence line; or 3–5 years minimal evidence
+    //   D  — 3–6 years with 3+ evidence lines
+    //   C  — 5–8 years with 5+ evidence lines and consistent impact
+    //   B  — 8+ years with 7+ evidence lines; or C-conditions + team leadership
+
+    let rank = 'F';
+
+    if (years >= 8 && evidence >= 7) {
+        rank = hasTeam ? 'B' : 'C';
+    } else if (years >= 5 && evidence >= 5) {
+        rank = hasTeam ? 'C' : 'D';
+    } else if (years >= 3 && evidence >= 3) {
+        rank = 'D';
+    } else if (years >= 1 && evidence >= 1) {
+        rank = 'E';
+    } else if (years >= 3 && evidence < 3) {
+        rank = 'E';  // time served, limited demonstrated impact
+    }
+
+    return rank;
 }
 
 function getRankContext(rank) {
