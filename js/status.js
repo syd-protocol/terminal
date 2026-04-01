@@ -335,7 +335,7 @@ function renderOpsTab(container) {
                 <button class="ops-segment-btn ${activeOpsSegment === 'games' ? 'ops-segment-btn--active' : ''}"
                     data-segment="games">GAMES</button>
                 <button class="ops-segment-btn ${activeOpsSegment === 'signal' ? 'ops-segment-btn--active' : ''}"
-                    data-segment="signal">SIGNAL</button>
+                    data-segment="signal">CV REFRAME</button>
             </div>
             <div class="ops-segment-content" id="ops-segment-content"></div>
         </div>
@@ -471,17 +471,30 @@ function renderSignalSegment(container) {
                         <ul class="st-bullets">
                             ${(kit.current_bullets || []).map(b => `<li class="st-bullet">${b}</li>`).join('')}
                         </ul>
-                        <button class="st-copy-btn" id="st-copy-now-ops">[ COPY BULLETS ]</button>
+                        <div class="st-role-section-header">
+                            <div>
+                                <p class="st-role-tag">APPLY FOR THIS NOW</p>
+                                <p class="st-role-name">${kit.current_role || 'Current Match'}</p>
+                                ${kit.headline_current ? `<p class="st-headline">${kit.headline_current}</p>` : ''}
+                            </div>
+                            <button class="st-copy-btn st-copy-btn--inline" id="st-copy-now-ops">COPY TO CV →</button>
+                        </div>
+                        <ul class="st-bullets">
+                            ${(kit.current_bullets || []).map(b => `<li class="st-bullet">${b}</li>`).join('')}
+                        </ul>
                     </div>
                     <div class="st-role-section st-role-section--target">
-                        <p class="st-role-tag">WHERE YOUR PATTERN LEADS</p>
-                        <p class="st-role-name">${kit.target_role || 'Target Direction'}</p>
-                        ${kit.headline_target ? `<p class="st-headline">${kit.headline_target}</p>` : ''}
+                        <div class="st-role-section-header">
+                            <div>
+                                <p class="st-role-tag">WHERE YOUR PATTERN LEADS</p>
+                                <p class="st-role-name">${kit.target_role || 'Target Direction'}</p>
+                                ${kit.headline_target ? `<p class="st-headline">${kit.headline_target}</p>` : ''}
+                            </div>
+                            <button class="st-copy-btn st-copy-btn--inline" id="st-copy-target-ops">COPY TO CV →</button>
+                        </div>
                         <ul class="st-bullets">
                             ${(kit.target_bullets || []).map(b => `<li class="st-bullet">${b}</li>`).join('')}
                         </ul>
-                        <button class="st-copy-btn" id="st-copy-target-ops">[ COPY BULLETS ]</button>
-                    </div>
                 </div>
 
                 ${kit.gap_note ? `

@@ -790,26 +790,47 @@ function renderSignalTranslationScreen(onDone) {
     if (!container) { if (onDone) onDone(); return; }
 
     function renderKit(kit) {
+        const operativeName = (function() {
+            try {
+                const p = JSON.parse(localStorage.getItem('syd_player') || '{}');
+                const full = (p.name || '').trim();
+                return full ? full.split(' ')[0] : null;
+            } catch(_) { return null; }
+        })();
+        const nameAddr = operativeName ? `${operativeName} — ` : '';
+
         container.innerHTML = `
             <div class="signal-translation-wrap">
-                <div class="st-header">
-                    <p class="st-label">[ SIGNAL TRANSLATION ]</p>
-                    <p class="st-sub">Your record qualifies you for roles you have not been claiming. Here is how to reframe what you have already built.</p>
+
+                <div class="st-syd-intro">
+                    <p class="st-syd-line">${nameAddr}your record already has the evidence for roles you have not been applying to.</p>
+                    <p class="st-syd-line">Below are two versions of what you have built — one framed for a role you can apply for right now, one framed for where your pattern is pointing.</p>
+                    <p class="st-syd-line">These are ready to paste into your CV or LinkedIn summary. Copy the version that fits where you are going.</p>
                 </div>
 
                 <div class="st-role-block">
                     <div class="st-role-section">
-                        <p class="st-role-tag">APPLY FOR THIS NOW</p>
-                        <p class="st-role-name">${kit.current_role || 'Current Match'}</p>
-                        <p class="st-headline">${kit.headline_current || ''}</p>
+                        <div class="st-role-section-header">
+                            <div>
+                                <p class="st-role-tag">APPLY FOR THIS NOW</p>
+                                <p class="st-role-name">${kit.current_role || 'Current Match'}</p>
+                                ${kit.headline_current ? `<p class="st-headline">${kit.headline_current}</p>` : ''}
+                            </div>
+                            <button class="st-copy-btn st-copy-btn--inline" id="st-copy-now-btn">COPY TO CV →</button>
+                        </div>
                         <ul class="st-bullets">
                             ${(kit.current_bullets || []).map(b => `<li class="st-bullet">${b}</li>`).join('')}
                         </ul>
                     </div>
                     <div class="st-role-section st-role-section--target">
-                        <p class="st-role-tag">WHERE YOUR PATTERN LEADS</p>
-                        <p class="st-role-name">${kit.target_role || 'Target Direction'}</p>
-                        <p class="st-headline">${kit.headline_target || ''}</p>
+                        <div class="st-role-section-header">
+                            <div>
+                                <p class="st-role-tag">WHERE YOUR PATTERN LEADS</p>
+                                <p class="st-role-name">${kit.target_role || 'Target Direction'}</p>
+                                ${kit.headline_target ? `<p class="st-headline">${kit.headline_target}</p>` : ''}
+                            </div>
+                            <button class="st-copy-btn st-copy-btn--inline" id="st-copy-target-btn">COPY TO CV →</button>
+                        </div>
                         <ul class="st-bullets">
                             ${(kit.target_bullets || []).map(b => `<li class="st-bullet">${b}</li>`).join('')}
                         </ul>
@@ -818,29 +839,24 @@ function renderSignalTranslationScreen(onDone) {
 
                 ${kit.gap_note ? `
                     <div class="st-gap-block">
-                        <p class="st-gap-label">[ GAP TO CLOSE ]</p>
+                        <p class="st-gap-label">[ WHAT IS STILL MISSING ]</p>
                         <p class="st-gap-note">${kit.gap_note}</p>
+                        <p class="st-gap-sub">Your directives will target this directly.</p>
                     </div>
                 ` : ''}
 
-                <p class="st-footer-note">These bullet points are yours. Copy them. The directives are built to close the gap above.</p>
-
-                <div class="st-actions">
-                    ${onDone ? `<button class="btn btn--primary" id="st-continue-btn">[ CONTINUE TO ORIENTATION ]</button>` : ''}
-                    <button class="btn st-copy-btn" id="st-copy-now-btn">[ COPY CURRENT ROLE BULLETS ]</button>
-                    <button class="btn st-copy-btn" id="st-copy-target-btn">[ COPY TARGET ROLE BULLETS ]</button>
-                </div>
+                ${onDone ? `<button class="btn btn--primary st-continue-main" id="st-continue-btn">[ BEGIN PROTOCOL ]</button>` : ''}
             </div>
         `;
 
-        // Copy handlers
+        // Copy handlers — copy headline + bullets as plain text for CV paste
         document.getElementById('st-copy-now-btn').addEventListener('click', () => {
             playUIClick();
             const text = (kit.headline_current ? kit.headline_current + '\n\n' : '')
                 + (kit.current_bullets || []).map(b => '• ' + b).join('\n');
             navigator.clipboard.writeText(text).then(() => {
                 const btn = document.getElementById('st-copy-now-btn');
-                if (btn) { btn.textContent = '[ COPIED ]'; setTimeout(() => { btn.textContent = '[ COPY CURRENT ROLE BULLETS ]'; }, 2000); }
+                if (btn) { btn.textContent = '✓ COPIED'; setTimeout(() => { btn.textContent = 'COPY TO CV →'; }, 2500); }
             }).catch(() => {});
         });
 
@@ -850,7 +866,7 @@ function renderSignalTranslationScreen(onDone) {
                 + (kit.target_bullets || []).map(b => '• ' + b).join('\n');
             navigator.clipboard.writeText(text).then(() => {
                 const btn = document.getElementById('st-copy-target-btn');
-                if (btn) { btn.textContent = '[ COPIED ]'; setTimeout(() => { btn.textContent = '[ COPY TARGET ROLE BULLETS ]'; }, 2000); }
+                if (btn) { btn.textContent = '✓ COPIED'; setTimeout(() => { btn.textContent = 'COPY TO CV →'; }, 2500); }
             }).catch(() => {});
         });
 
@@ -1806,6 +1822,19 @@ function renderPathLoading(label) {
     const container = document.getElementById('path-loading-content');
     if (!container) return;
 
+    const LOADING_TIPS = [
+        'SYD reads patterns, not job titles. What you built matters more than what you called yourself.',
+        'The scan traits you just completed are feeding into the classification right now.',
+        'Most operatives underestimate their seniority. SYD reads the evidence, not the self-assessment.',
+        'Three paths will emerge. They are not predictions — they are signals from your record.',
+        'The gap analysis is the most useful part. It tells you exactly what to build next.',
+        'Career paths are not linear. SYD is looking for the pattern beneath the sequence.',
+        'You will be asked to confirm your starting rank. Be honest — it only affects where the directives begin.',
+        'The longer this takes, the more thoroughly Gemini is reading your record.',
+        'SYD does not tell you what you want to hear. It tells you what the data shows.',
+        'Your hidden affinity stat is calculated now. It unlocks at Level 20.'
+    ];
+
     container.innerHTML = `
         <div class="path-loading">
             <div class="path-loading-icon">⬡</div>
@@ -1814,8 +1843,26 @@ function renderPathLoading(label) {
                 <div class="path-loading-fill" id="path-loading-fill"></div>
             </div>
             <p class="path-loading-sub">[ DO NOT CLOSE — SIGNAL PROCESSING ]</p>
+            <p class="path-loading-tip" id="path-loading-tip"></p>
         </div>
     `;
+
+    // Rotate tips every 4 seconds
+    let tipIdx = Math.floor(Math.random() * LOADING_TIPS.length);
+    const tipEl = document.getElementById('path-loading-tip');
+    function showTip() {
+        if (!tipEl) return;
+        tipEl.style.opacity = '0';
+        setTimeout(() => {
+            tipEl.textContent = LOADING_TIPS[tipIdx % LOADING_TIPS.length];
+            tipEl.style.opacity = '1';
+            tipIdx++;
+        }, 400);
+    }
+    showTip();
+    const tipInterval = setInterval(showTip, 4000);
+    // Store interval so it can be cleared if needed (stored on container)
+    container._tipInterval = tipInterval;
 
     let pct = 0;
     const fill = document.getElementById('path-loading-fill');

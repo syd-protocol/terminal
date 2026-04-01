@@ -5161,6 +5161,17 @@ body {
     color:       var(--text-secondary);
     opacity:     0.6;
 }
+.path-loading-tip {
+    font-size:    0.82rem;
+    color:        var(--text-secondary);
+    line-height:  1.6;
+    max-width:    300px;
+    text-align:   center;
+    min-height:   3em;
+    transition:   opacity 0.4s ease;
+    margin-top:   8px;
+    font-style:   italic;
+}
 
 /* Aspiration */
 .aspiration-wrap { width: 100%; max-width: 480px; }
@@ -9293,6 +9304,64 @@ body {
     cursor:          pointer;
     text-decoration: underline;
     padding:         4px 0;
+}
+
+/* ─── SYD INTRO VOICE (CV Reframe screen) ───────────────────── */
+.st-syd-intro {
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+    padding:        14px 16px;
+    background:     var(--surface);
+    border-left:    2px solid var(--accent);
+    margin-bottom:  4px;
+}
+.st-syd-line {
+    font-size:   0.88rem;
+    color:       var(--text-primary);
+    margin:      0;
+    line-height: 1.6;
+}
+
+/* ─── ROLE SECTION HEADER (inline copy button) ──────────────── */
+.st-role-section-header {
+    display:         flex;
+    justify-content: space-between;
+    align-items:     flex-start;
+    gap:             12px;
+    margin-bottom:   10px;
+}
+.st-copy-btn--inline {
+    flex-shrink:    0;
+    background:     transparent;
+    border:         1px solid var(--accent);
+    color:          var(--accent);
+    font-family:    var(--font-mono);
+    font-size:      0.65rem;
+    letter-spacing: 0.08em;
+    padding:        5px 10px;
+    cursor:         pointer;
+    border-radius:  3px;
+    transition:     background 0.2s, color 0.2s;
+    min-height:     36px;
+    align-self:     flex-start;
+    margin-top:     2px;
+    white-space:    nowrap;
+}
+.st-copy-btn--inline:hover {
+    background: var(--accent);
+    color:      var(--bg);
+}
+.st-gap-sub {
+    font-family: var(--font-mono);
+    font-size:   0.72rem;
+    color:       var(--text-secondary);
+    margin-top:  6px;
+}
+.st-continue-main {
+    align-self: center;
+    min-width:  260px;
+    margin-top: 8px;
 }
 
 /* ─── ROLE CARD — SPLIT LAYOUT (Round 1 path cards) ─────────── */
