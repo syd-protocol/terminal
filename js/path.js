@@ -349,49 +349,138 @@ function showCall2FailureScreen(rawError, isQuota) {
     });
 }
 
-// ─── CV SIGNAL STRIPPER ───────────────────────────────────────
-// Reduces a full CV to signal-rich lines only before sending to Gemini.
-// Removes: bio paragraph, key skills headers, pure responsibility bullets.
-// Keeps: role/company/date lines, bullets with numbers or outcomes,
-//        talks, frameworks, personal projects.
-// Goal: force Gemini to read evidence, not self-description.
-function stripCVToSignal(cvText) {
-    if (!cvText || cvText.length < 200) return cvText;
+// ─── CV SIGNAL EXTRACTOR ─────────────────────────────────────
+// Runs locally on the raw CV or re-imaginer responses.
+// Extracts structured signals used two ways:
+//   1. Replaces full CV in the Gemini prompt (smaller, cleaner input)
+//   2. Feeds the local fallback path picker (makes local useful)
+//
+// Returns a CVSignal object — see shape below.
 
-    const lines = cvText.split('\n');
-    const kept  = [];
-    let skipMode = false;
-
-    for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed) { kept.push(''); continue; }
-
-        // Skip the bio paragraph and KEY SKILLS section entirely
-        if (/^#{1,3}\s*(BIO|KEY SKILLS)/i.test(trimmed)) { skipMode = true; continue; }
-        // Resume capturing at WORK EXPERIENCE or any new major section
-        if (/^#{1,3}\s*(WORK|EDUCATION|TALKS|PERSONAL|HOBBIES)/i.test(trimmed)) { skipMode = false; }
-        if (skipMode) continue;
-
-        // Always keep headings (role/company lines)
-        if (/^#{1,6}\s/.test(trimmed)) { kept.push(trimmed); continue; }
-
-        // Keep date lines
-        if (/\d{4}/.test(trimmed) && trimmed.length < 80) { kept.push(trimmed); continue; }
-
-        // Keep bullets — but only those with evidence (numbers, outcomes, named things)
-        if (trimmed.startsWith('*') || trimmed.startsWith('-')) {
-            const hasEvidence = /\d|%|\$|USD|partnership|launched|built|grew|secured|led|designed|closed|reduced|increased|founded|created|managed|negotiated/i.test(trimmed);
-            if (hasEvidence) kept.push(trimmed);
-            continue;
-        }
-
-        // Keep everything in TALKS, PERSONAL PROJECTS (all signal)
-        kept.push(trimmed);
+function extractCVSignals(cvText) {
+    if (!cvText || cvText.length < 50) {
+        return {
+            seniorityTier: 'ic', yearsTotal: 0, avgTenureYears: 0,
+            domainPrimary: 'general', domainSecondary: null,
+            evidenceLines: [], leadershipEvidence: false,
+            founderEvidence: false, technicalEvidence: false,
+            educationLevel: 'none', rawLength: 0
+        };
     }
 
-    const stripped = kept.join('\n').replace(/\n{3,}/g, '\n\n').trim();
-    // Safety: if stripping removed too much, return original
-    return stripped.length > 300 ? stripped : cvText;
+    const lower = cvText.toLowerCase();
+    const lines = cvText.split('\n').map(l => l.trim()).filter(Boolean);
+
+    // ── Evidence lines: bullets with quantified outcomes ─────
+    const evidenceLines = lines.filter(l => {
+        const isBullet = l.startsWith('*') || l.startsWith('-') || l.startsWith('•');
+        const hasSignal = /\d|%|\$|USD|GBP|NGN|partnership|launched|built|grew|secured|led|designed|closed|reduced|increased|founded|created|managed|negotiated|delivered|deployed|raised|generated|saved|hired|trained|scaled/i.test(l);
+        return isBullet && hasSignal;
+    }).slice(0, 8);
+
+    // ── Years and tenure ─────────────────────────────────────
+    const yearMatches = cvText.match(/\b(20\d\d|19\d\d)\b/g) || [];
+    const years = yearMatches.map(Number).filter(y => y >= 1990 && y <= new Date().getFullYear());
+    const yearsTotal = years.length >= 2
+        ? Math.max(...years) - Math.min(...years)
+        : 0;
+
+    // Average tenure: count role headings and divide span
+    const roleHeadings = lines.filter(l => /^#{1,4}/.test(l) && l.length > 8).length;
+    const avgTenureYears = roleHeadings > 0 && yearsTotal > 0
+        ? parseFloat((yearsTotal / roleHeadings).toFixed(1))
+        : 0;
+
+    // ── Domain detection ─────────────────────────────────────
+    const DOMAIN_SIGNALS = {
+        community:   ['community', 'forum', 'discourse', 'engagement', 'members', 'moderati', 'ecosystem'],
+        product:     ['product manager', 'product management', 'roadmap', 'user story', 'backlog', 'sprint', 'mvp', 'feature', 'product lead'],
+        engineering: ['engineer', 'developer', 'software', 'backend', 'frontend', 'fullstack', 'devops', 'coding', 'programming', 'api', 'infrastructure'],
+        design:      ['ux', 'ui', 'user experience', 'user interface', 'figma', 'sketch', 'wireframe', 'prototype', 'design system', 'visual design'],
+        finance:     ['finance', 'financial', 'accounting', 'accountant', 'audit', 'tax', 'treasury', 'budget', 'p&l', 'revenue', 'forecast', 'investment', 'banking'],
+        hr:          ['human resources', 'hr ', 'talent acquisition', 'recruitment', 'recruiter', 'people operations', 'compensation', 'onboarding', 'performance management', 'organisational'],
+        operations:  ['operations', 'logistics', 'supply chain', 'procurement', 'process improvement', 'lean', 'six sigma', 'facilities', 'vendor management'],
+        learning:    ['learning', 'training', 'curriculum', 'instructional', 'education', 'teaching', 'facilitation', 'talent development', 'l&d', 'capacity building'],
+        sales:       ['sales', 'revenue target', 'quota', 'pipeline', 'account executive', 'business development', 'client acquisition', 'closing deals', 'crm'],
+        marketing:   ['marketing', 'seo', 'sem', 'content strategy', 'brand', 'campaign', 'social media', 'growth hacking', 'demand generation', 'copywriting'],
+        data:        ['data analyst', 'data scientist', 'analytics', 'sql', 'tableau', 'power bi', 'machine learning', 'python', 'statistics', 'data engineering'],
+        legal:       ['legal', 'lawyer', 'attorney', 'solicitor', 'counsel', 'compliance', 'contracts', 'litigation', 'regulatory', 'intellectual property'],
+        health:      ['healthcare', 'clinical', 'medical', 'nursing', 'hospital', 'patient', 'pharma', 'public health', 'health system', 'doctor', 'physician']
+    };
+
+    const domainScores = {};
+    for (const [domain, signals] of Object.entries(DOMAIN_SIGNALS)) {
+        domainScores[domain] = signals.filter(s => lower.includes(s)).length;
+    }
+    const sortedDomains = Object.entries(domainScores)
+        .sort((a, b) => b[1] - a[1])
+        .filter(([, score]) => score > 0);
+
+    const domainPrimary   = sortedDomains[0]  ? sortedDomains[0][0]  : 'general';
+    const domainSecondary = sortedDomains[1]  ? sortedDomains[1][0]  : null;
+
+    // ── Seniority tier ───────────────────────────────────────
+    const hasDirector  = /\bdirector\b|\bvp\b|\bvice president\b|\bhead of\b|\bchief\b|\bcxo\b|\bceo\b|\bcto\b|\bcoo\b|\bcmo\b/i.test(cvText);
+    const hasManager   = /\bmanager\b|\bsenior manager\b|\blead\b|\bteam lead\b|\bprinciple\b/i.test(cvText);
+    const hasSeniorIC  = /\bsenior\b|\bstaff\b|\bprincipal\b|\bspecialist\b|\bconsultant\b|\barchitect\b/i.test(cvText);
+    const hasFounder   = /\bfounder\b|\bco-founder\b|\bco founder\b/i.test(cvText);
+    const hasTeam      = /\bteam of\b|\bdirect report|\bmanag\w+ a team|\bmanag\w+ \d+ people|\bmanag\w+ \d+ staff/i.test(cvText);
+
+    let seniorityTier = 'ic';
+    if (yearsTotal >= 8 && (hasDirector || hasFounder) && hasTeam)  seniorityTier = 'director';
+    else if (yearsTotal >= 5 && hasManager && hasTeam)               seniorityTier = 'senior_manager';
+    else if (yearsTotal >= 3 && (hasManager || hasFounder))          seniorityTier = 'manager';
+    else if (yearsTotal >= 2 && hasSeniorIC)                         seniorityTier = 'senior_ic';
+
+    // ── Other signals ────────────────────────────────────────
+    const leadershipEvidence = hasManager || hasDirector || hasFounder || hasTeam;
+    const founderEvidence    = hasFounder;
+    const technicalEvidence  = domainScores.engineering > 0 || domainScores.data > 0
+        || /\bjavascript\b|\bpython\b|\breact\b|\bnode\b|\bsql\b|\bgit\b|\baws\b|\bapi\b/i.test(cvText);
+    const educationLevel     = /\bphd\b|\bdoctorate\b|\bmaster\b|\bmba\b/i.test(cvText) ? 'postgrad'
+        : /\bbachelor\b|\bb\.sc\b|\bb\.a\b|\bdegree\b|\buniversity\b/i.test(cvText) ? 'degree'
+        : /\bcertif|\bdiploma\b/i.test(cvText) ? 'cert'
+        : 'none';
+
+    return {
+        seniorityTier,
+        yearsTotal,
+        avgTenureYears,
+        domainPrimary,
+        domainSecondary,
+        evidenceLines,
+        leadershipEvidence,
+        founderEvidence,
+        technicalEvidence,
+        educationLevel,
+        rawLength: cvText.length
+    };
+}
+
+// Formats CVSignal into a compact structured string for Gemini
+// Much smaller than the full CV, more reliable to reason about
+function formatSignalForPrompt(signal, evidenceLines) {
+    const tierLabels = {
+        ic: 'Individual Contributor',
+        senior_ic: 'Senior Individual Contributor',
+        manager: 'Manager / Team Lead',
+        senior_manager: 'Senior Manager',
+        director: 'Director / Head of / VP'
+    };
+    return [
+        `SENIORITY: ${tierLabels[signal.seniorityTier] || 'Individual Contributor'}`,
+        `CAREER SPAN: ~${signal.yearsTotal} years`,
+        `AVERAGE TENURE: ~${signal.avgTenureYears} years per role`,
+        `PRIMARY DOMAIN: ${signal.domainPrimary}`,
+        signal.domainSecondary ? `SECONDARY DOMAIN: ${signal.domainSecondary}` : null,
+        `LEADERSHIP EVIDENCE: ${signal.leadershipEvidence ? 'yes' : 'no'}`,
+        `FOUNDER EVIDENCE: ${signal.founderEvidence ? 'yes' : 'no'}`,
+        `TECHNICAL EVIDENCE: ${signal.technicalEvidence ? 'yes' : 'no'}`,
+        `EDUCATION: ${signal.educationLevel}`,
+        '',
+        'TOP EVIDENCE LINES (quantified outcomes from record):',
+        ...(evidenceLines.length > 0 ? evidenceLines : ['— no quantified evidence detected']),
+    ].filter(l => l !== null).join('\n');
 }
 
 async function fireCall2Bundle() {
@@ -399,9 +488,11 @@ async function fireCall2Bundle() {
         return getLocalFallbackBundle();
     }
 
-    const rawInput     = pathState.cvText || pathState.reimagineResponses.join('\n\n');
-    const inputText    = pathState.track === 'chronicler'
-        ? stripCVToSignal(rawInput)
+    const rawInput  = pathState.cvText || pathState.reimagineResponses.join('\n\n');
+    const isCV      = pathState.track === 'chronicler';
+    const cvSignal  = isCV ? extractCVSignals(rawInput) : null;
+    const inputText = isCV
+        ? formatSignalForPrompt(cvSignal, cvSignal.evidenceLines)
         : rawInput;
     const operativeName = (function() {
         try {
@@ -410,7 +501,6 @@ async function fireCall2Bundle() {
             return full ? full.split(' ')[0] : 'the operative';
         } catch(_) { return 'the operative'; }
     })();
-    const isCV         = pathState.track === 'chronicler';
     const traits       = pathState._scanTraits || {};
     const traitSummary = Object.entries(traits).map(([k, v]) => `${k}: ${v}`).join(', ') || 'not available';
 
@@ -521,7 +611,7 @@ Rules for career encounters:
 - Domain-grounded to the confirmed path
 - Realistic professional judgment calls
 
-${isCV ? 'CV TO ANALYSE' : 'SELF-ASSESSMENT RESPONSES'}:
+${isCV ? 'STRUCTURED CAREER SIGNALS (extracted from CV)' : 'SELF-ASSESSMENT RESPONSES'}:
 ${inputText}
 `.trim();
 
@@ -574,7 +664,9 @@ async function fireCall2B(pathData) {
 
     // Use stripped CV or reimaginer responses — same as Call 2
     const rawInput  = pathState.cvText || pathState.reimagineResponses.join('\n\n');
-    const inputText = pathState.track === 'chronicler' ? stripCVToSignal(rawInput) : rawInput;
+    const inputText = pathState.track === 'chronicler'
+        ? formatSignalForPrompt(extractCVSignals(rawInput), extractCVSignals(rawInput).evidenceLines)
+        : rawInput;
 
     const prompt = `
 You are SYD — a career intelligence system. Your task is to produce a Signal Translation Kit for operative ${operativeName}.
@@ -935,9 +1027,175 @@ function getLocalFallbackBundle() {
         }
     };
 
-    const primary = statToPath[result.primaryStat]    || statToPath.intelligence;
-    const linked1 = statToPath[result.linkedStats[0]] || statToPath.agility;
-    const linked2 = statToPath[result.linkedStats[1]] || statToPath.endurance;
+    // Domain-aware override: if CV signals are extractable, use them
+    // to pick more accurate paths than pure keyword stat matching
+    const rawInput  = pathState.cvText || pathState.reimagineResponses.join(' ');
+    const isCV      = pathState.track === 'chronicler';
+    const cvSignal  = isCV ? extractCVSignals(rawInput) : null;
+
+    const DOMAIN_TO_PATHS = {
+        community: {
+            path_name:          'Community and Ecosystem Building',
+            current_role_match: 'Senior Community Manager',
+            narrative:          'Your record shows a consistent pattern of building and activating communities — growing membership, driving engagement, and converting community presence into strategic value.',
+            target_roles:       ['Head of Community', 'Community Strategy Lead', 'Ecosystem Development Manager'],
+            mapped_skills:      ['Community Strategy', 'Stakeholder Engagement', 'Program Management'],
+            stat_seeds:         { charisma: 7, intelligence: 4 },
+            gap_skills:         ['Data-driven community health measurement', 'Community monetisation strategy', 'Crisis communications at scale']
+        },
+        product: {
+            path_name:          'Product and Growth',
+            current_role_match: 'Product Manager',
+            narrative:          'Your record shows experience across product ideation, development and stakeholder management — with a pattern of translating user needs into product decisions.',
+            target_roles:       ['Senior Product Manager', 'Group Product Manager', 'Head of Product'],
+            mapped_skills:      ['Product Strategy', 'Roadmap Management', 'Stakeholder Alignment'],
+            stat_seeds:         { intelligence: 7, agility: 4 },
+            gap_skills:         ['Quantitative product analytics', 'Technical architecture fluency', 'P&L ownership']
+        },
+        engineering: {
+            path_name:          'Engineering and Technical Delivery',
+            current_role_match: 'Software Engineer',
+            narrative:          'Your record demonstrates technical building capacity — writing, shipping, and maintaining software with clear delivery focus.',
+            target_roles:       ['Senior Software Engineer', 'Tech Lead', 'Engineering Manager'],
+            mapped_skills:      ['Technical Problem Solving', 'Code Quality', 'System Design'],
+            stat_seeds:         { intelligence: 7, strength: 4 },
+            gap_skills:         ['System architecture at scale', 'Cross-team technical leadership', 'Technical roadmap planning']
+        },
+        design: {
+            path_name:          'Experience and Design',
+            current_role_match: 'UX Designer',
+            narrative:          'Your record shows experience translating user problems into designed solutions — research, wireframing, testing, and iteration.',
+            target_roles:       ['Senior UX Designer', 'Product Designer', 'Design Lead'],
+            mapped_skills:      ['User Research', 'Interaction Design', 'Design Systems'],
+            stat_seeds:         { intelligence: 6, agility: 5 },
+            gap_skills:         ['Design leadership and team management', 'Design strategy at org level', 'Quantitative usability measurement']
+        },
+        finance: {
+            path_name:          'Finance and Commercial Analysis',
+            current_role_match: 'Financial Analyst',
+            narrative:          'Your record demonstrates financial analysis, reporting, and commercial decision support — with a pattern of translating numbers into business insights.',
+            target_roles:       ['Senior Financial Analyst', 'Finance Manager', 'Finance Business Partner'],
+            mapped_skills:      ['Financial Modelling', 'Budget Management', 'Commercial Analysis'],
+            stat_seeds:         { intelligence: 7, endurance: 4 },
+            gap_skills:         ['Executive-level financial storytelling', 'Treasury and cash flow management', 'M&A due diligence experience']
+        },
+        hr: {
+            path_name:          'People and Talent Operations',
+            current_role_match: 'HR Business Partner',
+            narrative:          'Your record shows experience in talent operations — hiring, onboarding, performance management, and people processes across teams.',
+            target_roles:       ['Senior HR Business Partner', 'Head of People Operations', 'Talent Acquisition Manager'],
+            mapped_skills:      ['Talent Acquisition', 'Performance Management', 'People Analytics'],
+            stat_seeds:         { charisma: 7, endurance: 4 },
+            gap_skills:         ['Organisational design at scale', 'Compensation benchmarking', 'HRIS systems and automation']
+        },
+        operations: {
+            path_name:          'Operations and Process Delivery',
+            current_role_match: 'Operations Manager',
+            narrative:          'Your record shows process management, operational delivery, and coordination across teams — with a pattern of improving efficiency and reliability.',
+            target_roles:       ['Senior Operations Manager', 'Head of Operations', 'COO (scale-up)'],
+            mapped_skills:      ['Process Optimisation', 'Vendor Management', 'Operational Reporting'],
+            stat_seeds:         { strength: 7, endurance: 5 },
+            gap_skills:         ['Change management at scale', 'Lean or Six Sigma certification', 'Cross-functional budget ownership']
+        },
+        learning: {
+            path_name:          'Learning Design and Talent Development',
+            current_role_match: 'Learning and Development Manager',
+            narrative:          'Your record shows experience designing and delivering learning programmes — curriculum development, facilitation, and talent incubation.',
+            target_roles:       ['Senior L&D Manager', 'Head of Learning Experience', 'Curriculum Lead'],
+            mapped_skills:      ['Instructional Design', 'Programme Management', 'Facilitation'],
+            stat_seeds:         { intelligence: 7, charisma: 4 },
+            gap_skills:         ['LMS platform ownership', 'Learning impact measurement and ROI', 'Large-scale digital learning deployment']
+        },
+        sales: {
+            path_name:          'Sales and Revenue Growth',
+            current_role_match: 'Account Executive',
+            narrative:          'Your record shows experience in pipeline management, client acquisition, and revenue generation — with a pattern of closing deals and managing commercial relationships.',
+            target_roles:       ['Senior Account Executive', 'Sales Manager', 'Head of Sales'],
+            mapped_skills:      ['Pipeline Management', 'Client Relationship Management', 'Commercial Negotiation'],
+            stat_seeds:         { charisma: 8, endurance: 3 },
+            gap_skills:         ['Enterprise sales cycle management', 'Sales team leadership', 'Revenue forecasting and territory planning']
+        },
+        marketing: {
+            path_name:          'Marketing and Brand Growth',
+            current_role_match: 'Marketing Manager',
+            narrative:          'Your record shows experience across marketing channels — content, campaigns, brand, and audience growth — with a pattern of connecting products to audiences.',
+            target_roles:       ['Senior Marketing Manager', 'Head of Marketing', 'Growth Lead'],
+            mapped_skills:      ['Campaign Strategy', 'Content Marketing', 'Growth Analytics'],
+            stat_seeds:         { intelligence: 6, charisma: 5 },
+            gap_skills:         ['Paid acquisition and performance marketing', 'Marketing attribution and analytics', 'Brand strategy at scale']
+        },
+        data: {
+            path_name:          'Data and Analytics',
+            current_role_match: 'Data Analyst',
+            narrative:          'Your record shows experience working with data — analysis, visualisation, and generating insights that inform decisions.',
+            target_roles:       ['Senior Data Analyst', 'Analytics Manager', 'Head of Data'],
+            mapped_skills:      ['Data Analysis', 'SQL and Data Tooling', 'Insight Communication'],
+            stat_seeds:         { intelligence: 8, agility: 3 },
+            gap_skills:         ['Machine learning and predictive modelling', 'Data engineering and pipeline ownership', 'Executive data storytelling']
+        },
+        legal: {
+            path_name:          'Legal and Compliance',
+            current_role_match: 'Legal Counsel',
+            narrative:          'Your record shows experience in legal analysis, contract management, and compliance — advising on risk and regulatory requirements.',
+            target_roles:       ['Senior Legal Counsel', 'Head of Legal', 'General Counsel'],
+            mapped_skills:      ['Contract Drafting and Review', 'Regulatory Compliance', 'Risk Assessment'],
+            stat_seeds:         { intelligence: 8, endurance: 3 },
+            gap_skills:         ['Board-level governance experience', 'Cross-border legal jurisdiction', 'Litigation management at scale']
+        },
+        health: {
+            path_name:          'Healthcare and Clinical Operations',
+            current_role_match: 'Clinical Coordinator',
+            narrative:          'Your record shows experience in healthcare delivery, clinical operations, or public health — with a pattern of improving care quality and operational efficiency.',
+            target_roles:       ['Senior Clinical Coordinator', 'Healthcare Programme Manager', 'Head of Clinical Operations'],
+            mapped_skills:      ['Clinical Protocol Management', 'Healthcare Systems Navigation', 'Stakeholder Coordination'],
+            stat_seeds:         { endurance: 7, charisma: 4 },
+            gap_skills:         ['Healthcare technology implementation', 'Clinical research methodology', 'Health policy and regulatory navigation']
+        }
+    };
+
+    // Adjusts a domain path's current_role_match to match actual seniority
+    function calibratePathToSeniority(path, tier) {
+        if (!path || !tier) return path;
+        const SENIORITY_PREFIX = {
+            ic:             '',
+            senior_ic:      'Senior ',
+            manager:        '',        // role titles already imply management level
+            senior_manager: 'Senior ',
+            director:       ''
+        };
+        // Titles that should never get a "Senior" prefix (they already imply seniority)
+        const NO_PREFIX = /^(head of|director|vp |chief|principal|lead |senior )/i;
+        const base = path.current_role_match || '';
+        const prefix = SENIORITY_PREFIX[tier] || '';
+        const adjusted = (prefix && !NO_PREFIX.test(base))
+            ? prefix + base.charAt(0).toLowerCase() + base.slice(1)
+            : base;
+        // For IC tier, strip any "Senior" or "Manager" from the title
+        if (tier === 'ic') {
+            const stripped = base
+                .replace(/^Senior\s+/i, '')
+                .replace(/\s+Manager$/i, ' Coordinator')
+                .replace(/\s+Lead$/i, '');
+            return { ...path, current_role_match: stripped };
+        }
+        return { ...path, current_role_match: adjusted };
+    }
+
+    // Pick primary path by domain signal if strong, fall back to stat classification
+    let primary, linked1, linked2;
+
+    if (cvSignal && cvSignal.domainPrimary && DOMAIN_TO_PATHS[cvSignal.domainPrimary]) {
+        primary = calibratePathToSeniority(DOMAIN_TO_PATHS[cvSignal.domainPrimary], cvSignal.seniorityTier);
+        linked1 = (cvSignal.domainSecondary && DOMAIN_TO_PATHS[cvSignal.domainSecondary])
+            ? calibratePathToSeniority(DOMAIN_TO_PATHS[cvSignal.domainSecondary], cvSignal.seniorityTier)
+            : statToPath[result.linkedStats[0]] || statToPath.agility;
+        linked2 = statToPath[result.linkedStats[1]] || statToPath.endurance;
+    } else {
+        primary = statToPath[result.primaryStat]    || statToPath.intelligence;
+        linked1 = statToPath[result.linkedStats[0]] || statToPath.agility;
+        linked2 = statToPath[result.linkedStats[1]] || statToPath.endurance;
+    }
+
     const paths   = [primary, linked1, linked2];
 
     const gapSkills = primary.gap_skills || [];
@@ -1038,7 +1296,7 @@ function runRoleMapping(round) {
     const voiceLines = [
         'Your record points to three possible paths. The first column is where you are now. The second is where the pattern leads.',
         'Confirmed. Which of these roles do you actually see yourself in?',
-        'One more. Pick the specialisation that fits.'
+        'One more. Which of these roles fits best within that path?'
     ];
 
     let cardData = paths;
@@ -1056,8 +1314,15 @@ function runRoleMapping(round) {
         }
     }
     if (round === 2 && pathState.confirmedPath) {
-        const skills = pathState.confirmedPath.mapped_skills || [];
-        cardData = skills.map(s => ({ path_name: s, narrative: '', target_roles: [], mapped_skills: [] }));
+        // Show target_roles as specialisation options — these are real-world job titles
+        // that sit within the confirmed path, so the operative is narrowing to a specific role
+        const roles = pathState.confirmedPath.target_roles || [];
+        cardData = roles.map(r => ({ path_name: r, narrative: '', target_roles: [], mapped_skills: [] }));
+        // If no target_roles, fall back to mapped_skills (old behaviour)
+        if (cardData.length === 0) {
+            const skills = pathState.confirmedPath.mapped_skills || [];
+            cardData = skills.map(s => ({ path_name: s, narrative: '', target_roles: [], mapped_skills: [] }));
+        }
     }
 
     container.innerHTML = `

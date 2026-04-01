@@ -167,7 +167,7 @@ async function geminiGenerate(prompt) {
 // Call 2 (PATH + career bundle) is larger than standard calls.
 // Uses a higher token ceiling and the Flash model for quality.
 // [TUNING TARGET] Max tokens for bundled calls
-const TOKENS_BUNDLE = 8192;
+const TOKENS_BUNDLE = 12288;
 
 async function geminiGenerateLarge(prompt, temperature) {
     const key = (typeof getNeuralKey === 'function') ? getNeuralKey() : null;
