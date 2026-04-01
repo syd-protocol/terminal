@@ -169,7 +169,7 @@ async function geminiGenerate(prompt) {
 // [TUNING TARGET] Max tokens for bundled calls
 const TOKENS_BUNDLE = 8192;
 
-async function geminiGenerateLarge(prompt) {
+async function geminiGenerateLarge(prompt, temperature) {
     const key = (typeof getNeuralKey === 'function') ? getNeuralKey() : null;
     if (!key) return { ok: false, error: 'No Neural Link key set.', quota: false };
 
@@ -177,7 +177,7 @@ async function geminiGenerateLarge(prompt) {
     const body = {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-            temperature:     TEMP_GENERATE,
+            temperature:     (temperature !== undefined) ? temperature : TEMP_GENERATE,
             maxOutputTokens: TOKENS_BUNDLE
         }
     };

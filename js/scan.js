@@ -177,7 +177,7 @@ function renderScanIntro() {
 
 // [TUNING TARGET] Signal Breach round duration
 const SB_ROUND_DURATION_MS = 5000;
-const SB_ROUNDS            = 3;
+const SB_ROUNDS            = 5;
 const SB_GRID_SIZE         = 4;
 
 let sbState = null;
@@ -240,6 +240,18 @@ function getSBRoundConfig(round) {
             lit:     [0, 4, 8, 9, 10],
             correct: 11,
             decoys:  [3, 12, 7]
+        },
+        {
+            rule:    '[ INVERSION ] The lit nodes are decoys. Find the one that does not belong.',
+            lit:     [1, 2, 3, 5, 6, 7],
+            correct: 0,
+            decoys:  [4, 8, 12]
+        },
+        {
+            rule:    '[ FINAL SEQUENCE ] Three rules active. Complete the cross-pattern.',
+            lit:     [1, 4, 6, 9, 11],
+            correct: 14,
+            decoys:  [2, 7, 13]
         }
     ];
     return configs[round] || configs[0];
@@ -368,7 +380,7 @@ function completeSB() {
 
 // [TUNING TARGET] Precision Shooter parameters
 const PS_WAVES           = 3;
-const PS_TARGETS_PER_WAVE = 5;
+const PS_TARGETS_PER_WAVE = 7;
 const PS_DURATIONS_MS    = [2200, 1600, 1100];   // [TUNING TARGET] ms per wave
 const PS_TARGET_SIZE_PX  = 52;                   // [TUNING TARGET] touch target size
 

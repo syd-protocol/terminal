@@ -1284,6 +1284,37 @@ function startPATH(name, scanTraits) {
     }
 }
 
+// ─── ONBOARDING BACK NAVIGATION ─────────────────────────────
+// Onboarding screens are excluded from NAV_HISTORY (they are one-way
+// by design). This function handles explicit back navigation within
+// the onboarding flow only. Each screen re-renders its predecessor.
+function onboardingBack(fromScreen) {
+    playUIClick();
+    switch(fromScreen) {
+        case 'track-select':
+            // Back from track selection → name entry
+            showScreen('screen-onboarding');
+            renderNameEntry();
+            break;
+        case 'chronicler':
+            // Back from CV paste → track selection
+            showScreen('screen-path');
+            if (typeof renderPathSelect === 'function') renderPathSelect();
+            break;
+        case 'reimaginer':
+            // Back from re-imaginer → track selection
+            showScreen('screen-path');
+            if (typeof renderPathSelect === 'function') renderPathSelect();
+            break;
+        case 'rank-confirm':
+            // Back from rank confirmation → role mapping round 0
+            if (typeof runRoleMapping === 'function') runRoleMapping(0);
+            break;
+        default:
+            break;
+    }
+}
+
 // ─── OPS: SIGNAL TRANSLATION ENTRY ──────────────────────────
 function openSignalTranslation() {
     if (typeof renderSignalTranslationOPS === 'function') {
@@ -1311,6 +1342,16 @@ function renderScanReveal(scanTraits, onDone) {
         executionAccuracy:     'execution accuracy',
         pressureStability:     'pressure stability',
         socialReading:         'social reading'
+    };
+
+    const traitExplainers = {
+        patternRecognition:   'How quickly you identify structure in unfamiliar information. High scorers read situations fast. Low scorers need more exposure before the pattern clicks.',
+        cognitiveFlexibility: 'How well you adapt when the rules change mid-task. High scorers pivot cleanly. Low scorers get anchored to the previous approach.',
+        persistence:          'Whether you keep attempting when the task is unclear or time is running out. High scorers stay engaged under uncertainty. Low scorers disengage early.',
+        executionSpeed:       'How quickly you act on a clear target. High scorers are fast and decisive. Low scorers are deliberate — this is not always a weakness, but it affects high-velocity roles.',
+        executionAccuracy:    'How precisely you hit what you aim at under time pressure. High scorers are clean and efficient. Low scorers sacrifice precision for speed — or freeze trying to be perfect.',
+        pressureStability:    'How well your performance holds up as difficulty increases. High scorers are consistent across all conditions. Low scorers degrade under load — the directives address this directly.',
+        socialReading:        'How accurately you read social situations and people\'s underlying motivations. High scorers navigate interpersonal dynamics well. Low scorers tend to read the surface, not the signal.'
     };
 
     const sydLines = [];
@@ -1355,7 +1396,7 @@ function renderScanReveal(scanTraits, onDone) {
                     const pct    = score !== null ? Math.round(score * 100) : 0;
                     const name   = traitDisplayNames[key] || key.toUpperCase();
                     return `
-                        <div class="srt-row">
+                        <div class="srt-row srt-row--tappable" data-trait="${key}">
                             <div class="srt-row-header">
                                 <span class="srt-name">${name}</span>
                                 <span class="srt-pct" id="srt-pct-${key}">${score !== null ? pct + '%' : '—'}</span>
@@ -1363,6 +1404,7 @@ function renderScanReveal(scanTraits, onDone) {
                             <div class="srt-bar-wrap">
                                 <div class="srt-bar" id="srt-bar-${key}" style="width:0%"></div>
                             </div>
+                            <div class="srt-explainer hidden" id="srt-exp-${key}"></div>
                         </div>
                     `;
                 }).join('')}
@@ -1383,6 +1425,23 @@ function renderScanReveal(scanTraits, onDone) {
             }, i * 120);
         });
     }, 300);
+
+    // Wire trait tap explainers
+    document.querySelectorAll('.srt-row--tappable').forEach(row => {
+        row.addEventListener('click', () => {
+            playUIClick();
+            const key     = row.dataset.trait;
+            const expEl   = document.getElementById('srt-exp-' + key);
+            if (!expEl) return;
+            const isOpen  = !expEl.classList.contains('hidden');
+            // Close all others first
+            document.querySelectorAll('.srt-explainer').forEach(e => e.classList.add('hidden'));
+            if (!isOpen) {
+                expEl.textContent = traitExplainers[key] || '';
+                expEl.classList.remove('hidden');
+            }
+        });
+    });
 
     document.getElementById('scan-reveal-proceed').addEventListener('click', () => {
         playUIClick();

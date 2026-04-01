@@ -5145,14 +5145,14 @@ body {
 .path-loading-bar {
     width:         240px;
     height:        3px;
-    background:    var(--surface);
+    background:    var(--border);
     border-radius: 2px;
     overflow:      hidden;
 }
 .path-loading-fill {
     height:     100%;
     background: var(--accent);
-    transition: width 0.3s ease;
+    transition: width 0.6s ease;
     width:      0%;
 }
 .path-loading-sub {
@@ -9352,4 +9352,75 @@ body {
     .status-tab-btn  { font-size: 0.68rem; padding: 10px 12px; }
     .sot-name { font-size: 1.2rem; }
     .screen-inner--narrow { padding: 24px 16px 80px; }
+}
+
+/* ─── CALL 2 FAILURE SCREEN ─────────────────────────────────── */
+.call-failure-wrap {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            20px;
+    padding-top:    80px;
+    text-align:     center;
+}
+.call-failure-label {
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    color:          var(--red);
+    letter-spacing: 0.1em;
+}
+.call-failure-reason {
+    font-size:   0.88rem;
+    color:       var(--text-primary);
+    line-height: 1.6;
+    max-width:   320px;
+}
+.call-failure-actions {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            12px;
+    margin-top:     8px;
+}
+.call-failure-local-btn {
+    background:      none;
+    border:          none;
+    color:           var(--text-secondary);
+    font-family:     var(--font-mono);
+    font-size:       0.75rem;
+    cursor:          pointer;
+    text-decoration: underline;
+    padding:         4px 0;
+    min-height:      44px;
+}
+
+/* ─── SCAN REVEAL — TRAIT EXPLAINERS ────────────────────────── */
+.srt-row--tappable {
+    cursor: pointer;
+}
+.srt-row--tappable:hover .srt-name {
+    color: var(--accent);
+}
+.srt-explainer {
+    font-size:    0.78rem;
+    color:        var(--text-secondary);
+    line-height:  1.5;
+    padding-top:  6px;
+    padding-left: 2px;
+    border-left:  1px solid var(--border);
+    padding-left: 8px;
+    margin-top:   4px;
+    animation:    fadeIn 0.2s ease;
+}
+
+/* ─── SCAN GAME — VISUAL IMPROVEMENTS ──────────────────────── */
+.sb-node--lit {
+    animation: sb-pulse 1.4s ease-in-out infinite;
+}
+@keyframes sb-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.6; }
+}
+.sb-timer-bar {
+    transition: width 0.08s linear;
 }

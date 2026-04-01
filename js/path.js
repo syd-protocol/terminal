@@ -88,6 +88,7 @@ function renderPathSelect() {
 
     container.innerHTML = `
         <div class="path-select">
+            <button class="path-back-btn" id="path-select-back">← BACK</button>
             <div class="path-syd-voice">
                 <p class="path-voice-line path-voice-line--visible">Good. Now I need your history.</p>
                 <p class="path-voice-line path-voice-line--visible">
@@ -118,6 +119,9 @@ function renderPathSelect() {
     });
     document.getElementById('btn-reimaginer').addEventListener('click', () => {
         playUIClick(); pathState.track = 'reimaginer'; runReImaginer();
+    });
+    document.getElementById('path-select-back').addEventListener('click', () => {
+        if (typeof onboardingBack === 'function') onboardingBack('track-select');
     });
 }
 
@@ -296,6 +300,55 @@ function advanceReImaginer(currentIdx, total) {
 // Applied: single large call, full JSON parsed once, all fields distributed.
 // ═══════════════════════════════════════════════════════════════
 
+// ─── CALL 2 FAILURE SCREEN ───────────────────────────────────
+// Shown when Call 2 fails or returns unparseable JSON.
+// Gives the operative a plain-English reason and two options:
+//   Retry  — reruns fireCall2Bundle() from scratch
+//   Continue locally — returns the local fallback bundle immediately
+// Returns a Promise that resolves to a bundle either way.
+
+function showCall2FailureScreen(rawError, isQuota) {
+    return new Promise(resolve => {
+        showScreen('screen-path-loading');
+        const container = document.getElementById('path-loading-content');
+        if (!container) { resolve(getLocalFallbackBundle()); return; }
+
+        let reason = 'Something went wrong reading the AI response.';
+        if (isQuota) {
+            reason = 'The Gemini API rate limit was hit — too many requests in a short window. Wait a minute before retrying.';
+        } else if (rawError && rawError.includes('API key')) {
+            reason = 'Your Neural Link key was rejected. Check it is correct in the Neural screen.';
+        } else if (rawError && rawError.includes('Network')) {
+            reason = 'A network error occurred. Check your connection.';
+        } else if (rawError && rawError.toLowerCase().includes('could not be read')) {
+            reason = 'The AI returned a response but it could not be parsed. This sometimes happens with very long CVs — try again.';
+        }
+
+        container.innerHTML = `
+            <div class="call-failure-wrap">
+                <p class="call-failure-label">[ SIGNAL INTERRUPTED ]</p>
+                <p class="call-failure-reason">${reason}</p>
+                <div class="call-failure-actions">
+                    <button class="btn btn--primary" id="cf-retry-btn">[ RETRY WITH AI ]</button>
+                    <button class="call-failure-local-btn" id="cf-local-btn">continue without AI →</button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('cf-retry-btn').addEventListener('click', () => {
+            playUIClick();
+            showScreen('screen-path-loading');
+            renderPathLoading('ANALYSING YOUR SIGNAL — STANDING BY');
+            fireCall2Bundle().then(resolve);
+        });
+
+        document.getElementById('cf-local-btn').addEventListener('click', () => {
+            playUIClick();
+            resolve(getLocalFallbackBundle());
+        });
+    });
+}
+
 // ─── CV SIGNAL STRIPPER ───────────────────────────────────────
 // Reduces a full CV to signal-rich lines only before sending to Gemini.
 // Removes: bio paragraph, key skills headers, pure responsibility bullets.
@@ -381,6 +434,8 @@ ANALYSIS RULES — follow these strictly:
 7. synthesis_syd_lines must sound like intelligence analysis, not LinkedIn endorsements.
 8. career_skill_tracks must be named after what the operative actually does, not generic skill categories.
 9. initial_career_directives must be REAL actions with REAL professional consequences — not study tasks or research exercises.
+10. current_role_match and target_roles must be calibrated to the operative's ACTUAL seniority level, inferred from years in role and career progression visible in their record — not just from the skills they demonstrate. Someone with 2–3 years average tenure in individual contributor roles should NOT receive Director or VP titles as current_role_match. Use this heuristic: under 3 years average tenure or no direct reports mentioned → IC to Senior IC titles. 3–6 years with team leadership evidence → Manager to Senior Manager. 6+ years with consistent leadership and budget/team ownership → Director level. VP and above requires explicit evidence of organisational scope.
+11. The confirmed rank from the scan is implicit in the operative's record. Do not suggest roles that would require a rank higher than their demonstrated seniority. A C-rank operative maps to Senior Manager or equivalent — not Director, not VP.
 
 Your output will seed multiple downstream systems. Every field is required. Do not omit any.
 
@@ -470,17 +525,17 @@ ${isCV ? 'CV TO ANALYSE' : 'SELF-ASSESSMENT RESPONSES'}:
 ${inputText}
 `.trim();
 
-    const result = await geminiGenerateLarge(prompt);
+    const result = await geminiGenerateLarge(prompt, 0.3);
 
     if (!result.ok) {
-        console.warn('[SYD] Call 2 failed — using local fallback bundle.');
-        return getLocalFallbackBundle();
+        console.warn('[SYD] Call 2 failed — offering retry.');
+        return await showCall2FailureScreen(result.error, result.quota);
     }
 
     const parsed = extractJSON(result.text);
     if (!parsed || !Array.isArray(parsed.paths) || parsed.paths.length < 2) {
-        console.warn('[SYD] Call 2 JSON parse failed — using local fallback bundle.');
-        return getLocalFallbackBundle();
+        console.warn('[SYD] Call 2 JSON parse failed — offering retry.');
+        return await showCall2FailureScreen('Response arrived but could not be read.', false);
     }
 
     // Store hidden affinity stat so synthesis can reference it
@@ -554,7 +609,7 @@ OPERATIVE RECORD:
 ${inputText}
 `.trim();
 
-    const result = await geminiGenerate(prompt);
+    const result = await geminiGenerateLarge(prompt);
     if (!result.ok) return;
 
     const parsed = extractJSON(result.text);
@@ -1441,10 +1496,10 @@ function renderPathLoading(label) {
     let pct = 0;
     const fill = document.getElementById('path-loading-fill');
     const iv = setInterval(() => {
-        pct = Math.min(92, pct + Math.random() * 9);
+        pct = Math.min(88, pct + Math.random() * 4);
         if (fill) fill.style.width = pct + '%';
-        if (pct >= 92) clearInterval(iv);
-    }, 180);
+        if (pct >= 88) clearInterval(iv);
+    }, 400);
 }
 
 // ─── PATH DATA SAVE / LOAD ────────────────────────────────────
