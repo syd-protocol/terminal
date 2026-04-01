@@ -1,24 +1,24 @@
-const CACHE_NAME = 'syd-v50';
+const CACHE_NAME = 'syd-v51';
 
 // These are the app shell files we want to pre-cache during install.
 // On every new deploy, bump CACHE_NAME so the install event fires again,
 // the old cache is deleted, and fresh files are fetched immediately.
 const PRECACHE_ASSETS = [
-    '/',
-    '/index.html',
-    '/css/style.css',
-    '/js/gemini.js',
-    '/js/app.js',
-    '/js/quests.js',
-    '/js/scan.js',
-    '/js/path.js',
-    '/js/encounter.js',
-    '/js/minigames.js',
-    '/js/dailyloop.js',
-    '/js/status.js',
-    '/data/quests.json',
-    '/data/encounters.json',
-    '/manifest.json'
+    '/terminal/',
+    '/terminal/index.html',
+    '/terminal/css/style.css',
+    '/terminal/js/gemini.js',
+    '/terminal/js/app.js',
+    '/terminal/js/quests.js',
+    '/terminal/js/scan.js',
+    '/terminal/js/path.js',
+    '/terminal/js/encounter.js',
+    '/terminal/js/minigames.js',
+    '/terminal/js/dailyloop.js',
+    '/terminal/js/status.js',
+    '/terminal/data/quests.json',
+    '/terminal/data/encounters.json',
+    '/terminal/manifest.json'
 ];
 
 // ─── INSTALL ──────────────────────────────────────────────────
@@ -137,7 +137,7 @@ self.addEventListener('message', e => {
         if (diffDays >= 3) {
             self.registration.showNotification('SYD', {
                 body:     `${playerName || 'Operative'}, your momentum is decaying. The System is standing by.`,
-                icon:     '/icons/icon-192.png',
+                icon:     '/terminal/icons/icon-192.png',
                 tag:      'syd-reengagement',
                 renotify: false,
                 data:     { url: '/' }
@@ -165,7 +165,7 @@ self.addEventListener('message', e => {
             const mStr = momentum >= 1.3 ? 'high' : momentum >= 1.1 ? 'building' : 'low';
             self.registration.showNotification('SYD', {
                 body:     `${playerName || 'Operative'} — morning transmission. Momentum ${mStr}. Directives queued.`,
-                icon:     '/icons/icon-192.png',
+                icon:     '/terminal/icons/icon-192.png',
                 tag:      'syd-morning',
                 renotify: true,
                 data:     { url: '/' }
@@ -188,7 +188,7 @@ self.addEventListener('notificationclick', e => {
                         return client.focus();
                     }
                 }
-                if (clients.openWindow) return clients.openWindow('/');
+                if (clients.openWindow) return clients.openWindow('/terminal/');
             })
     );
 });
