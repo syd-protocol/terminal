@@ -296,12 +296,60 @@ function advanceReImaginer(currentIdx, total) {
 // Applied: single large call, full JSON parsed once, all fields distributed.
 // ═══════════════════════════════════════════════════════════════
 
+// ─── CV SIGNAL STRIPPER ───────────────────────────────────────
+// Reduces a full CV to signal-rich lines only before sending to Gemini.
+// Removes: bio paragraph, key skills headers, pure responsibility bullets.
+// Keeps: role/company/date lines, bullets with numbers or outcomes,
+//        talks, frameworks, personal projects.
+// Goal: force Gemini to read evidence, not self-description.
+function stripCVToSignal(cvText) {
+    if (!cvText || cvText.length < 200) return cvText;
+
+    const lines = cvText.split('\n');
+    const kept  = [];
+    let skipMode = false;
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) { kept.push(''); continue; }
+
+        // Skip the bio paragraph and KEY SKILLS section entirely
+        if (/^#{1,3}\s*(BIO|KEY SKILLS)/i.test(trimmed)) { skipMode = true; continue; }
+        // Resume capturing at WORK EXPERIENCE or any new major section
+        if (/^#{1,3}\s*(WORK|EDUCATION|TALKS|PERSONAL|HOBBIES)/i.test(trimmed)) { skipMode = false; }
+        if (skipMode) continue;
+
+        // Always keep headings (role/company lines)
+        if (/^#{1,6}\s/.test(trimmed)) { kept.push(trimmed); continue; }
+
+        // Keep date lines
+        if (/\d{4}/.test(trimmed) && trimmed.length < 80) { kept.push(trimmed); continue; }
+
+        // Keep bullets — but only those with evidence (numbers, outcomes, named things)
+        if (trimmed.startsWith('*') || trimmed.startsWith('-')) {
+            const hasEvidence = /\d|%|\$|USD|partnership|launched|built|grew|secured|led|designed|closed|reduced|increased|founded|created|managed|negotiated/i.test(trimmed);
+            if (hasEvidence) kept.push(trimmed);
+            continue;
+        }
+
+        // Keep everything in TALKS, PERSONAL PROJECTS (all signal)
+        kept.push(trimmed);
+    }
+
+    const stripped = kept.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    // Safety: if stripping removed too much, return original
+    return stripped.length > 300 ? stripped : cvText;
+}
+
 async function fireCall2Bundle() {
     if (!hasNeuralLink()) {
         return getLocalFallbackBundle();
     }
 
-    const inputText    = pathState.cvText || pathState.reimagineResponses.join('\n\n');
+    const rawInput     = pathState.cvText || pathState.reimagineResponses.join('\n\n');
+    const inputText    = pathState.track === 'chronicler'
+        ? stripCVToSignal(rawInput)
+        : rawInput;
     const isCV         = pathState.track === 'chronicler';
     const traits       = pathState._scanTraits || {};
     const traitSummary = Object.entries(traits).map(([k, v]) => `${k}: ${v}`).join(', ') || 'not available';
@@ -311,10 +359,21 @@ async function fireCall2Bundle() {
     //          from producing partial responses across multiple calls.
     // Applied: full schema inline, all fields required, STRICT JSON only.
     const prompt = `
-You are SYD — an elite career intelligence system. Perform a complete operative classification and career analysis from the provided ${isCV ? 'CV/Resume' : 'career self-assessment responses'}.
+You are SYD — an elite career intelligence system. Your job is NOT to summarise what the operative already knows about themselves. Your job is to read beneath the surface and identify the patterns they cannot see from inside their own record.
 
 OPERATIVE SCAN TRAITS (psychometric game scores, 0.0–1.0):
 ${traitSummary}
+
+ANALYSIS RULES — follow these strictly:
+1. The three paths must be DISTINCT in type, not variations of the same theme. If two paths feel similar, you have not dug deep enough.
+2. path_name must be a role archetype the operative has NOT explicitly stated on their CV — infer from the pattern of what they actually built, not what they called themselves.
+3. narrative must cite SPECIFIC evidence (a named project, a number, a dated event) and connect it to a non-obvious pattern. Never restate the operative's own job title or bio language.
+4. gap_skills must be things genuinely absent from the record — not polish on existing skills.
+5. hidden_affinity_stat must reflect the scan traits AND the record pattern — not just the highest stat.
+6. gap_analysis_prose must be honest and specific. Name the actual gap. Do not soften it.
+7. synthesis_syd_lines must sound like intelligence analysis, not LinkedIn endorsements.
+8. career_skill_tracks must be named after what the operative actually does, not generic skill categories.
+9. initial_career_directives must be REAL actions with REAL professional consequences — not study tasks or research exercises.
 
 Your output will seed multiple downstream systems. Every field is required. Do not omit any.
 
