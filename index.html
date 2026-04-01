@@ -105,12 +105,31 @@
 
 
     <!-- ═══════════════════════════════════════════════════════
+         SCREEN: TITLE — entry point for new operatives
+         Shown before onboarding. Single begin action.
+    ═══════════════════════════════════════════════════════ -->
+    <section id="screen-title" class="screen active">
+        <div class="screen-inner screen-inner--terminal">
+            <div class="title-screen-wrap">
+                <p class="title-screen-logo">SYD</p>
+                <div class="title-screen-lines">
+                    <p class="title-screen-line">I read who you are and what you have built.</p>
+                    <p class="title-screen-line">I translate it into roles, language, and a path to grow.</p>
+                    <p class="title-screen-line">The rest is on you.</p>
+                </div>
+                <button class="btn btn--primary title-screen-btn" id="title-begin-btn">[ BEGIN PROTOCOL ]</button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
          SCREEN: ONBOARDING — name entry terminal
          New operative flow: name → scan → [scan reveal] →
          [neural key request] → PATH → [path synthesis reveal] →
          [orientation] → createPlayer
     ═══════════════════════════════════════════════════════ -->
-    <section id="screen-onboarding" class="screen active">
+    <section id="screen-onboarding" class="screen">
         <div class="screen-inner screen-inner--terminal">
             <div id="onboarding-content"></div>
         </div>

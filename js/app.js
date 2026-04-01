@@ -1037,7 +1037,7 @@ async function loadQuests() {
 
 // ─── NAV + HISTORY ───────────────────────────────────────────
 const NAV_HISTORY = [];
-const NAV_EXCLUDE = ['screen-scan', 'screen-scan-reveal', 'screen-neural-request',
+const NAV_EXCLUDE = ['screen-title', 'screen-scan', 'screen-scan-reveal', 'screen-neural-request',
     'screen-path', 'screen-path-chronicler', 'screen-path-reimaginer',
     'screen-path-loading', 'screen-synthesis-reveal', 'screen-orientation'];
 
@@ -1464,8 +1464,9 @@ function renderNeuralKeyRequest(onDone) {
         <div class="neural-request-wrap">
             <div class="nr-header">
                 <p class="nr-syd-line">Before I classify you, I need to ask something.</p>
-                <p class="nr-syd-line">SYD can give you a personalised read. Your PATH analysis, stat explainers, and encounter evaluations can be specific to you — not generic.</p>
-                <p class="nr-syd-line">To activate it, connect a free Gemini key. This takes about 60 seconds.</p>
+                <p class="nr-syd-line">I can read your record specifically — your actual CV, your actual pattern — and give you roles, career directives, and CV language built for you.</p>
+                <p class="nr-syd-line">Without this, I will read you from a local model. It works. But your role matches will be approximate and your CV reframe will be generic — not written from what you actually built.</p>
+                <p class="nr-syd-line">To activate the full read, connect a free Gemini key. Takes about 60 seconds.</p>
             </div>
             <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener"
                class="btn btn--primary nr-get-key-btn">
@@ -1729,11 +1730,18 @@ async function init() {
     const soundToggle = document.getElementById('sound-toggle');
     if (soundToggle) soundToggle.addEventListener('click', cycleSoundState);
 
-    // ── New operative — run scan → PATH → createPlayer ────────
+    // ── New operative — title screen → onboarding → scan → PATH → createPlayer ─
     if (!player) {
         allQuests = await questsPromise;
-        showScreen('screen-onboarding');
-        runNewOperativeFlow();
+        showScreen('screen-title');
+        const titleBtn = document.getElementById('title-begin-btn');
+        if (titleBtn) {
+            titleBtn.addEventListener('click', () => {
+                playUIClick();
+                showScreen('screen-onboarding');
+                runNewOperativeFlow();
+            });
+        }
         registerServiceWorker();
         return;
     }

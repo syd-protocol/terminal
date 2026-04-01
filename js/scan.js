@@ -186,6 +186,25 @@ function runSignalBreach() {
     updateScanProgress(1, 3, 'SIGNAL BREACH — READING PATTERN ENGINE');
     scanState.phase = 'signal_breach';
 
+    const container = document.getElementById('scan-content');
+    if (!container) { _runSignalBreachGame(); return; }
+
+    container.innerHTML = `
+        <div class="scan-brief">
+            <p class="scan-brief-tag">[ SIGNAL BREACH ]</p>
+            <p class="scan-brief-line">A grid of nodes will appear. Some are already lit — they form a partial sequence.</p>
+            <p class="scan-brief-line">Tap the one node that completes the pattern before time runs out.</p>
+            <p class="scan-brief-line">The rule changes across rounds. That is the point.</p>
+            <button class="btn btn--primary scan-brief-btn" id="sb-brief-start">[ READY ]</button>
+        </div>
+    `;
+    document.getElementById('sb-brief-start').addEventListener('click', () => {
+        playUIClick();
+        _runSignalBreachGame();
+    });
+}
+
+function _runSignalBreachGame() {
     sbState = {
         round:       0,
         correct:     0,
@@ -390,6 +409,24 @@ function runPrecisionShooter() {
     updateScanProgress(2, 3, 'PRECISION SHOOTER — READING EXECUTION ENGINE');
     scanState.phase = 'precision_shooter';
 
+    const container = document.getElementById('scan-content');
+    if (!container) { _runPrecisionShooterGame(); return; }
+
+    container.innerHTML = `
+        <div class="scan-brief">
+            <p class="scan-brief-tag">[ PRECISION SHOOTER ]</p>
+            <p class="scan-brief-line">Targets appear one at a time on the screen. Tap each one before it disappears.</p>
+            <p class="scan-brief-line">Speed matters. Accuracy matters. Both are being read.</p>
+            <button class="btn btn--primary scan-brief-btn" id="ps-brief-start">[ READY ]</button>
+        </div>
+    `;
+    document.getElementById('ps-brief-start').addEventListener('click', () => {
+        playUIClick();
+        _runPrecisionShooterGame();
+    });
+}
+
+function _runPrecisionShooterGame() {
     psState = {
         wave:         0,
         targetIdx:    0,

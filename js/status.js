@@ -1979,8 +1979,16 @@ function wireSettingsSection() {
     if (syncBtn) {
         syncBtn.addEventListener('click', () => {
             playUIClick();
+            const hasKey = typeof getNeuralKey === 'function' && getNeuralKey();
+            if (!hasKey) {
+                if (typeof showLog === 'function') {
+                    showLog('[ CLOUD SYNC — CONNECT NEURAL LINK FIRST ]', 'system');
+                }
+                setTimeout(() => { if (typeof navTo === 'function') navTo('screen-neural'); }, 600);
+                return;
+            }
             if (typeof showLog === 'function') {
-                showLog('[ CLOUD SYNC &mdash; AVAILABLE AFTER NEURAL LINK CONNECTED ]', 'system');
+                showLog('[ CLOUD SYNC — COMING SOON. YOUR KEY IS ACTIVE. ]', 'system');
             }
         });
     }

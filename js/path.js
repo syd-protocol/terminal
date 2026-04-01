@@ -580,7 +580,7 @@ ANALYSIS RULES — follow these strictly:
 7. synthesis_syd_lines must sound like intelligence analysis, not LinkedIn endorsements.
 8. career_skill_tracks must be named after what the operative actually does, not generic skill categories.
 9. initial_career_directives must be REAL actions with REAL professional consequences — not study tasks or research exercises.
-10. current_role_match and target_roles must be calibrated to the operative's ACTUAL seniority level, inferred from years in role and career progression visible in their record — not just from the skills they demonstrate. Someone with 2–3 years average tenure in individual contributor roles should NOT receive Director or VP titles as current_role_match. Use this heuristic: under 3 years average tenure or no direct reports mentioned → IC to Senior IC titles. 3–6 years with team leadership evidence → Manager to Senior Manager. 6+ years with consistent leadership and budget/team ownership → Director level. VP and above requires explicit evidence of organisational scope.
+10. current_role_match and target_roles must be calibrated to the operative's ACTUAL seniority level, inferred from years in role and career progression visible in their record — not just from the skills they demonstrate. Someone with 2–3 years average tenure in individual contributor roles should NOT receive Director or VP titles as current_role_match. Use this heuristic: under 3 years average tenure or no direct reports mentioned → IC to Senior IC titles. 3–6 years with team leadership evidence → Manager to Senior Manager. 6+ years with consistent leadership and budget/team ownership → Director level. VP and above requires explicit evidence of organisational scope. When seniority is unclear, default DOWN. current_role_match must be a role the operative could send a CV to tomorrow and be a plausible applicant — not an aspirational title.
 11. The confirmed rank from the scan is implicit in the operative's record. Do not suggest roles that would require a rank higher than their demonstrated seniority. A C-rank operative maps to Senior Manager or equivalent — not Director, not VP.
 
 Your output will seed multiple downstream systems. Every field is required. Do not omit any.
@@ -816,7 +816,7 @@ function renderSignalTranslationScreen(onDone) {
                                 <p class="st-role-name">${kit.current_role || 'Current Match'}</p>
                                 ${kit.headline_current ? `<p class="st-headline">${kit.headline_current}</p>` : ''}
                             </div>
-                            <button class="st-copy-btn st-copy-btn--inline" id="st-copy-now-btn">COPY TO CV →</button>
+                            <button class="st-copy-btn st-copy-btn--inline" id="st-copy-now-btn">[ COPY ]</button>
                         </div>
                         <ul class="st-bullets">
                             ${(kit.current_bullets || []).map(b => `<li class="st-bullet">${b}</li>`).join('')}
@@ -829,7 +829,7 @@ function renderSignalTranslationScreen(onDone) {
                                 <p class="st-role-name">${kit.target_role || 'Target Direction'}</p>
                                 ${kit.headline_target ? `<p class="st-headline">${kit.headline_target}</p>` : ''}
                             </div>
-                            <button class="st-copy-btn st-copy-btn--inline" id="st-copy-target-btn">COPY TO CV →</button>
+                            <button class="st-copy-btn st-copy-btn--inline" id="st-copy-target-btn">[ COPY ]</button>
                         </div>
                         <ul class="st-bullets">
                             ${(kit.target_bullets || []).map(b => `<li class="st-bullet">${b}</li>`).join('')}
@@ -845,6 +845,8 @@ function renderSignalTranslationScreen(onDone) {
                     </div>
                 ` : ''}
 
+                <p class="st-persist-note">[ This is saved. You can return to it from your OPS dashboard after you complete setup. ]</p>
+
                 ${onDone ? `<button class="btn btn--primary st-continue-main" id="st-continue-btn">[ BEGIN PROTOCOL ]</button>` : ''}
             </div>
         `;
@@ -856,7 +858,7 @@ function renderSignalTranslationScreen(onDone) {
                 + (kit.current_bullets || []).map(b => '• ' + b).join('\n');
             navigator.clipboard.writeText(text).then(() => {
                 const btn = document.getElementById('st-copy-now-btn');
-                if (btn) { btn.textContent = '✓ COPIED'; setTimeout(() => { btn.textContent = 'COPY TO CV →'; }, 2500); }
+                if (btn) { btn.textContent = '✓ COPIED — READY TO PASTE'; setTimeout(() => { btn.textContent = '[ COPY ]'; }, 2500); }
             }).catch(() => {});
         });
 
@@ -866,7 +868,7 @@ function renderSignalTranslationScreen(onDone) {
                 + (kit.target_bullets || []).map(b => '• ' + b).join('\n');
             navigator.clipboard.writeText(text).then(() => {
                 const btn = document.getElementById('st-copy-target-btn');
-                if (btn) { btn.textContent = '✓ COPIED'; setTimeout(() => { btn.textContent = 'COPY TO CV →'; }, 2500); }
+                if (btn) { btn.textContent = '✓ COPIED — READY TO PASTE'; setTimeout(() => { btn.textContent = '[ COPY ]'; }, 2500); }
             }).catch(() => {});
         });
 
@@ -1110,7 +1112,7 @@ function getLocalFallbackBundle() {
     const DOMAIN_TO_PATHS = {
         community: {
             path_name:          'Community and Ecosystem Building',
-            current_role_match: 'Senior Community Manager',
+            current_role_match: 'Community Manager',
             narrative:          'Your record shows a consistent pattern of building and activating communities — growing membership, driving engagement, and converting community presence into strategic value.',
             target_roles:       ['Head of Community', 'Community Strategy Lead', 'Ecosystem Development Manager'],
             mapped_skills:      ['Community Strategy', 'Stakeholder Engagement', 'Program Management'],
