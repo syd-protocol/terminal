@@ -393,23 +393,25 @@ function extractCVSignals(cvText) {
 
     // ── Domain detection ─────────────────────────────────────
     const DOMAIN_SIGNALS = {
-        community:   ['community', 'forum', 'discourse', 'engagement', 'members', 'moderati', 'ecosystem'],
-        product:     ['product manager', 'product management', 'roadmap', 'user story', 'backlog', 'sprint', 'mvp', 'feature', 'product lead'],
-        engineering: ['engineer', 'developer', 'software', 'backend', 'frontend', 'fullstack', 'devops', 'coding', 'programming', 'api', 'infrastructure'],
-        design:      ['ux', 'ui', 'user experience', 'user interface', 'figma', 'sketch', 'wireframe', 'prototype', 'design system', 'visual design'],
-        finance:     ['finance', 'financial', 'accounting', 'accountant', 'audit', 'tax', 'treasury', 'budget', 'p&l', 'revenue', 'forecast', 'investment', 'banking'],
-        hr:          ['human resources', 'hr ', 'talent acquisition', 'recruitment', 'recruiter', 'people operations', 'compensation', 'onboarding', 'performance management', 'organisational'],
-        operations:  ['operations', 'logistics', 'supply chain', 'procurement', 'process improvement', 'lean', 'six sigma', 'facilities', 'vendor management'],
-        learning:    ['learning', 'training', 'curriculum', 'instructional', 'education', 'teaching', 'facilitation', 'talent development', 'l&d', 'capacity building'],
-        sales:       ['sales', 'revenue target', 'quota', 'pipeline', 'account executive', 'business development', 'client acquisition', 'closing deals', 'crm'],
-        marketing:   ['marketing', 'seo', 'sem', 'content strategy', 'brand', 'campaign', 'social media', 'growth hacking', 'demand generation', 'copywriting'],
-        data:        ['data analyst', 'data scientist', 'analytics', 'sql', 'tableau', 'power bi', 'machine learning', 'python', 'statistics', 'data engineering'],
-        legal:       ['legal', 'lawyer', 'attorney', 'solicitor', 'counsel', 'compliance', 'contracts', 'litigation', 'regulatory', 'intellectual property'],
-        health:      ['healthcare', 'clinical', 'medical', 'nursing', 'hospital', 'patient', 'pharma', 'public health', 'health system', 'doctor', 'physician']
+        community:   ['community', 'forum', 'discourse', 'engagement', 'members', 'moderat', 'ecosystem', 'community manager', 'community lead', 'community advocate', 'user group', 'online community'],
+        product:     ['product manager', 'product management', 'product lead', 'product owner', 'roadmap', 'user story', 'backlog', 'sprint', 'mvp', 'product strategy', 'product development', 'product design'],
+        engineering: ['engineer', 'developer', 'software', 'backend', 'frontend', 'full stack', 'fullstack', 'devops', 'coding', 'programming', 'infrastructure', 'web development', 'mobile development', 'codebase', 'deployment'],
+        design:      ['user experience', 'user interface', 'ux design', 'ui design', 'figma', 'sketch', 'wireframe', 'prototype', 'design system', 'visual design', 'interaction design', 'product design', 'graphic design', 'brand design'],
+        finance:     ['finance', 'financial', 'accounting', 'accountant', 'audit', 'tax', 'treasury', 'budgeting', 'p&l', 'profit and loss', 'revenue reporting', 'forecasting', 'investment', 'banking', 'financial analysis', 'cost management'],
+        hr:          ['human resources', 'people operations', 'talent acquisition', 'recruitment', 'recruiter', 'hiring', 'onboarding', 'performance management', 'employee relations', 'compensation', 'hr manager', 'hr business partner', 'people manager', 'workforce planning'],
+        operations:  ['operations', 'logistics', 'supply chain', 'procurement', 'process improvement', 'lean', 'six sigma', 'facilities management', 'vendor management', 'operational efficiency', 'business operations', 'ops manager'],
+        learning:    ['learning and development', 'training', 'curriculum', 'instructional design', 'education', 'teaching', 'facilitation', 'talent development', 'l&d', 'capacity building', 'e-learning', 'learning program', 'upskilling', 'workshop design'],
+        sales:       ['sales', 'account executive', 'account manager', 'business development', 'revenue target', 'quota', 'pipeline', 'client acquisition', 'closing deals', 'crm', 'b2b sales', 'enterprise sales', 'sales manager', 'commercial'],
+        marketing:   ['marketing', 'seo', 'sem', 'content strategy', 'brand manager', 'campaign', 'social media', 'demand generation', 'copywriting', 'growth marketing', 'digital marketing', 'performance marketing', 'brand strategy', 'communications'],
+        data:        ['data analyst', 'data scientist', 'data engineer', 'analytics', 'sql', 'tableau', 'power bi', 'machine learning', 'python', 'statistics', 'data analysis', 'data insights', 'business intelligence', 'reporting analyst'],
+        legal:       ['legal', 'lawyer', 'attorney', 'solicitor', 'legal counsel', 'compliance', 'contract management', 'litigation', 'regulatory', 'intellectual property', 'corporate law', 'legal advisor', 'paralegal'],
+        health:      ['healthcare', 'clinical', 'medical', 'nursing', 'hospital', 'patient care', 'pharmaceutical', 'public health', 'health system', 'doctor', 'physician', 'health program', 'health coordinator', 'global health']
     };
 
     const domainScores = {};
     for (const [domain, signals] of Object.entries(DOMAIN_SIGNALS)) {
+        // Count distinct signal matches, not total occurrences — prevents
+        // a CV that mentions "community" 10 times from scoring unfairly high
         domainScores[domain] = signals.filter(s => lower.includes(s)).length;
     }
     const sortedDomains = Object.entries(domainScores)
@@ -427,10 +429,15 @@ function extractCVSignals(cvText) {
     const hasTeam      = /\bteam of\b|\bdirect report|\bmanag\w+ a team|\bmanag\w+ \d+ people|\bmanag\w+ \d+ staff/i.test(cvText);
 
     let seniorityTier = 'ic';
-    if (yearsTotal >= 8 && (hasDirector || hasFounder) && hasTeam)  seniorityTier = 'director';
-    else if (yearsTotal >= 5 && hasManager && hasTeam)               seniorityTier = 'senior_manager';
-    else if (yearsTotal >= 3 && (hasManager || hasFounder))          seniorityTier = 'manager';
-    else if (yearsTotal >= 2 && hasSeniorIC)                         seniorityTier = 'senior_ic';
+    // Title evidence takes priority — someone can reach Director in 4 years.
+    // Years are a floor check, not the primary signal.
+    if (hasDirector && (yearsTotal >= 5 || hasTeam))                  seniorityTier = 'director';
+    else if (hasFounder && yearsTotal >= 4)                           seniorityTier = 'director';
+    else if (hasFounder && yearsTotal >= 2)                           seniorityTier = 'manager';
+    else if (hasManager && hasTeam && yearsTotal >= 4)                seniorityTier = 'senior_manager';
+    else if (hasManager && yearsTotal >= 2)                           seniorityTier = 'manager';
+    else if (hasSeniorIC && yearsTotal >= 1)                          seniorityTier = 'senior_ic';
+    else if (yearsTotal >= 1)                                         seniorityTier = 'ic';
 
     // ── Other signals ────────────────────────────────────────
     const leadershipEvidence = hasManager || hasDirector || hasFounder || hasTeam;
@@ -454,6 +461,55 @@ function extractCVSignals(cvText) {
         technicalEvidence,
         educationLevel,
         rawLength: cvText.length
+    };
+}
+
+// ─── RE-IMAGINER SIGNAL EXTRACTOR ───────────────────────────
+// Classifies four short-form Re-imaginer answers into domain and stat signals.
+// Less precise than CV extraction — no dates, no titles — but gives a
+// meaningful starting point for the local fallback path picker.
+
+function extractReImaginerSignals(responses) {
+    const text  = (Array.isArray(responses) ? responses.join(' ') : responses || '').toLowerCase();
+
+    // Reuse domain signals from CV extractor but with looser single-word matches
+    // that work for short conversational answers
+    const REIMAGINER_DOMAIN_SIGNALS = {
+        community:   ['community', 'people', 'group', 'network', 'connect', 'bring together', 'organis', 'facilitat', 'moderate', 'engage', 'platform'],
+        product:     ['product', 'build', 'feature', 'roadmap', 'user', 'problem', 'solution', 'design thinking', 'prototype', 'test'],
+        engineering: ['code', 'program', 'develop', 'build apps', 'software', 'script', 'automat', 'debug', 'deploy', 'technical'],
+        design:      ['design', 'visual', 'interface', 'layout', 'creative', 'aesthetic', 'figma', 'illustration', 'branding', 'logo'],
+        finance:     ['money', 'budget', 'finance', 'invest', 'accounting', 'numbers', 'financial', 'cost', 'revenue', 'profit', 'economics'],
+        hr:          ['hiring', 'people', 'talent', 'recruit', 'culture', 'team building', 'performance', 'onboard', 'manage people'],
+        operations:  ['process', 'systems', 'efficiency', 'workflow', 'logistics', 'operations', 'coordinate', 'streamline', 'organise'],
+        learning:    ['teach', 'train', 'explain', 'mentor', 'coach', 'curriculum', 'learning', 'education', 'workshop', 'facilitate', 'skill', 'knowledge'],
+        sales:       ['sell', 'pitch', 'negotiate', 'close', 'client', 'persuade', 'revenue', 'business development', 'partnership', 'deal'],
+        marketing:   ['marketing', 'content', 'brand', 'audience', 'social media', 'write', 'communicate', 'storytell', 'campaign', 'messaging'],
+        data:        ['data', 'analytics', 'insight', 'research', 'pattern', 'analyse', 'statistics', 'measure', 'metrics', 'evidence'],
+        legal:       ['law', 'legal', 'compliance', 'contract', 'rights', 'regulation', 'policy', 'governance', 'risk'],
+        health:      ['health', 'medical', 'care', 'clinical', 'wellness', 'patient', 'medicine', 'therapy', 'nursing', 'public health']
+    };
+
+    const domainScores = {};
+    for (const [domain, signals] of Object.entries(REIMAGINER_DOMAIN_SIGNALS)) {
+        domainScores[domain] = signals.filter(s => text.includes(s)).length;
+    }
+    const sortedDomains = Object.entries(domainScores)
+        .sort((a, b) => b[1] - a[1])
+        .filter(([, score]) => score > 0);
+
+    return {
+        seniorityTier:      'ic',   // Re-imaginer has no career history — always IC
+        yearsTotal:         0,
+        avgTenureYears:     0,
+        domainPrimary:      sortedDomains[0] ? sortedDomains[0][0] : 'general',
+        domainSecondary:    sortedDomains[1] ? sortedDomains[1][0] : null,
+        evidenceLines:      [],
+        leadershipEvidence: false,
+        founderEvidence:    false,
+        technicalEvidence:  /code|program|develop|build|technical|script|automat/i.test(text),
+        educationLevel:     'none',
+        rawLength:          text.length
     };
 }
 
@@ -1031,7 +1087,9 @@ function getLocalFallbackBundle() {
     // to pick more accurate paths than pure keyword stat matching
     const rawInput  = pathState.cvText || pathState.reimagineResponses.join(' ');
     const isCV      = pathState.track === 'chronicler';
-    const cvSignal  = isCV ? extractCVSignals(rawInput) : null;
+    const cvSignal  = isCV
+        ? extractCVSignals(rawInput)
+        : extractReImaginerSignals(pathState.reimagineResponses || []);
 
     const DOMAIN_TO_PATHS = {
         community: {
@@ -1191,6 +1249,7 @@ function getLocalFallbackBundle() {
             : statToPath[result.linkedStats[0]] || statToPath.agility;
         linked2 = statToPath[result.linkedStats[1]] || statToPath.endurance;
     } else {
+        // No domain match — fall back to stat classification
         primary = statToPath[result.primaryStat]    || statToPath.intelligence;
         linked1 = statToPath[result.linkedStats[0]] || statToPath.agility;
         linked2 = statToPath[result.linkedStats[1]] || statToPath.endurance;
