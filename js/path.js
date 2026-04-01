@@ -350,6 +350,13 @@ async function fireCall2Bundle() {
     const inputText    = pathState.track === 'chronicler'
         ? stripCVToSignal(rawInput)
         : rawInput;
+    const operativeName = (function() {
+        try {
+            const p = JSON.parse(localStorage.getItem('syd_player') || '{}');
+            const full = (p.name || '').trim();
+            return full ? full.split(' ')[0] : 'the operative';
+        } catch(_) { return 'the operative'; }
+    })();
     const isCV         = pathState.track === 'chronicler';
     const traits       = pathState._scanTraits || {};
     const traitSummary = Object.entries(traits).map(([k, v]) => `${k}: ${v}`).join(', ') || 'not available';
@@ -359,7 +366,7 @@ async function fireCall2Bundle() {
     //          from producing partial responses across multiple calls.
     // Applied: full schema inline, all fields required, STRICT JSON only.
     const prompt = `
-You are SYD — an elite career intelligence system. Your job is NOT to summarise what the operative already knows about themselves. Your job is to read beneath the surface and identify the patterns they cannot see from inside their own record.
+You are SYD — an elite career intelligence system. The operative's name is ${operativeName}. Use this name (first name only if it contains spaces) when referencing them in narrative and synthesis fields — never use "the operative" or their surname alone. Your job is NOT to summarise what the operative already knows about themselves. Your job is to read beneath the surface and identify the patterns they cannot see from inside their own record.
 
 OPERATIVE SCAN TRAITS (psychometric game scores, 0.0–1.0):
 ${traitSummary}
@@ -744,8 +751,15 @@ function runRoleMapping(round) {
     if (round === 1 && pathState.confirmedPath) {
         const roles = pathState.confirmedPath.target_roles || [];
         cardData = roles.map(r => ({ path_name: r, narrative: '', target_roles: [], mapped_skills: [] }));
-        if (paths[1]) cardData.push({ path_name: (paths[1].target_roles || [])[0] || paths[1].path_name, narrative: '', target_roles: [], mapped_skills: [] });
-        if (paths[2]) cardData.push({ path_name: (paths[2].target_roles || [])[0] || paths[2].path_name, narrative: '', target_roles: [], mapped_skills: [] });
+        const existingNames = new Set(cardData.map(c => c.path_name));
+        if (paths[1]) {
+            const r1 = (paths[1].target_roles || [])[0] || paths[1].path_name;
+            if (!existingNames.has(r1)) cardData.push({ path_name: r1, narrative: '', target_roles: [], mapped_skills: [] });
+        }
+        if (paths[2]) {
+            const r2 = (paths[2].target_roles || [])[0] || paths[2].path_name;
+            if (!existingNames.has(r2)) cardData.push({ path_name: r2, narrative: '', target_roles: [], mapped_skills: [] });
+        }
     }
     if (round === 2 && pathState.confirmedPath) {
         const skills = pathState.confirmedPath.mapped_skills || [];
