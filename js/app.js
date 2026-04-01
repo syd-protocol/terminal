@@ -1270,15 +1270,24 @@ function startPATH(name, scanTraits) {
     if (typeof runPATH === 'function') {
         runPATH(scanTraits, (pathData) => {
             stopStatusAmbient();
-            // PASS 2: Show synthesis reveal before createPlayer
+            // PASS 2: Show synthesis reveal → signal translation → orientation → createPlayer
             renderSynthesisReveal(pathData, () => {
-                renderOrientationScreen(() => {
-                    createPlayer(name, scanTraits, pathData);
+                renderSignalTranslationScreen(() => {
+                    renderOrientationScreen(() => {
+                        createPlayer(name, scanTraits, pathData);
+                    });
                 });
             });
         });
     } else {
         createPlayer(name, scanTraits, null);
+    }
+}
+
+// ─── OPS: SIGNAL TRANSLATION ENTRY ──────────────────────────
+function openSignalTranslation() {
+    if (typeof renderSignalTranslationOPS === 'function') {
+        renderSignalTranslationOPS();
     }
 }
 

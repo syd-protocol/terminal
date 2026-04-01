@@ -390,15 +390,16 @@ Required JSON shape:
 {
   "paths": [
     {
-      "path_name": "Strategic name for this career path",
+      "path_name": "Strategic name for this career path — a direction archetype, not a job title",
+      "current_role_match": "The single most accurate real-world job title the operative could apply for TODAY based on their existing record. Hireable. Specific. Not aspirational.",
       "narrative": "2–3 sentences referencing specific evidence from their record. Be specific.",
       "target_roles": ["Role 1", "Role 2", "Role 3"],
       "mapped_skills": ["Skill 1", "Skill 2", "Skill 3"],
       "stat_seeds": { "intelligence": 6, "agility": 4 },
       "gap_skills": ["Gap skill 1", "Gap skill 2", "Gap skill 3"]
     },
-    { "path_name": "...", "narrative": "...", "target_roles": [], "mapped_skills": [], "stat_seeds": {}, "gap_skills": [] },
-    { "path_name": "...", "narrative": "...", "target_roles": [], "mapped_skills": [], "stat_seeds": {}, "gap_skills": [] }
+    { "path_name": "...", "current_role_match": "...", "narrative": "...", "target_roles": [], "mapped_skills": [], "stat_seeds": {}, "gap_skills": [] },
+    { "path_name": "...", "current_role_match": "...", "narrative": "...", "target_roles": [], "mapped_skills": [], "stat_seeds": {}, "gap_skills": [] }
   ],
   "hidden_affinity_stat": "intelligence",
   "hidden_affinity_read": "2–3 sentences. Stored now, revealed at Level 20. Specific to this person.",
@@ -486,6 +487,239 @@ ${inputText}
     pathState._geminiHiddenAffinityStat = parsed.hidden_affinity_stat || null;
 
     return { ...parsed, geminiEnhanced: true };
+}
+
+// ─── CALL 2B: SIGNAL TRANSLATION KIT ────────────────────────
+// Fires silently after applyCall2Bundle() once the operative has
+// confirmed their path and role. Uses the confirmed context that
+// Call 2 did not have. Produces CV bullet reframes for the
+// current_role_match and the top target role.
+//
+// Output stored under 'syd_signal_translation'.
+// Shape: { current_role, target_role, current_bullets[], target_bullets[], geminiEnhanced }
+//
+// Fires from runPathSynthesis() after pathData is assembled.
+// Does NOT block the onboarding flow — fires and stores silently.
+
+const SIGNAL_TRANSLATION_KEY = 'syd_signal_translation';
+
+async function fireCall2B(pathData) {
+    if (!hasNeuralLink() || !pathData) return;
+
+    const confirmedPath  = pathData.confirmedPath || {};
+    const currentRole    = confirmedPath.current_role_match || pathData.confirmedRole || 'their confirmed role';
+    const targetRole     = (confirmedPath.target_roles || [])[0] || confirmedPath.path_name || 'their target path';
+    const operativeName  = (function() {
+        try {
+            const p = JSON.parse(localStorage.getItem('syd_player') || '{}');
+            const full = (p.name || '').trim();
+            return full ? full.split(' ')[0] : 'the operative';
+        } catch(_) { return 'the operative'; }
+    })();
+
+    // Use stripped CV or reimaginer responses — same as Call 2
+    const rawInput  = pathState.cvText || pathState.reimagineResponses.join('\n\n');
+    const inputText = pathState.track === 'chronicler' ? stripCVToSignal(rawInput) : rawInput;
+
+    const prompt = `
+You are SYD — a career intelligence system. Your task is to produce a Signal Translation Kit for operative ${operativeName}.
+
+You have already analysed their record. Now you must reframe their existing experience in the language of two specific roles — the role they could apply for TODAY, and the role their pattern is pointing toward.
+
+CONFIRMED CURRENT ROLE MATCH: ${currentRole}
+CONFIRMED TARGET ROLE DIRECTION: ${targetRole}
+CONFIRMED PATH: ${confirmedPath.path_name || 'not specified'}
+
+RULES:
+1. Do not invent experience. Reframe only what exists in the record.
+2. current_bullets: reframe the 4 strongest evidence points from their record in the language, framing, and register of a ${currentRole} at a mid-to-senior level. Active verbs. Outcome-oriented. No fluff.
+3. target_bullets: reframe the same evidence points in the language of a ${targetRole}. Elevated framing. Show the strategic pattern, not just the task.
+4. headline_current: a one-line professional headline for their CV as a ${currentRole}.
+5. headline_target: a one-line professional headline for their CV as a ${targetRole}.
+6. gap_note: one honest sentence naming what is genuinely missing from their record to make the target role claim airtight. Specific. No softening.
+
+Output ONLY valid JSON. No markdown fences. No preamble.
+
+{
+  "current_role": "${currentRole}",
+  "target_role": "${targetRole}",
+  "headline_current": "...",
+  "headline_target": "...",
+  "current_bullets": ["bullet 1", "bullet 2", "bullet 3", "bullet 4"],
+  "target_bullets": ["bullet 1", "bullet 2", "bullet 3", "bullet 4"],
+  "gap_note": "..."
+}
+
+OPERATIVE RECORD:
+${inputText}
+`.trim();
+
+    const result = await geminiGenerate(prompt);
+    if (!result.ok) return;
+
+    const parsed = extractJSON(result.text);
+    if (!parsed || !Array.isArray(parsed.current_bullets)) return;
+
+    try {
+        localStorage.setItem(SIGNAL_TRANSLATION_KEY, JSON.stringify({
+            ...parsed, geminiEnhanced: true
+        }));
+        console.log('[SYD] Call 2B — Signal Translation Kit stored.');
+    } catch(e) { /* non-critical */ }
+}
+
+function loadSignalTranslation() {
+    try {
+        const raw = localStorage.getItem(SIGNAL_TRANSLATION_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
+}
+
+// ─── SIGNAL TRANSLATION SCREEN ──────────────────────────────
+// Shown once during onboarding (after synthesis reveal).
+// Also accessible from OPS via renderSignalTranslationOPS().
+// Renders whatever is in SIGNAL_TRANSLATION_KEY — if Call 2B
+// hasn't landed yet it shows a waiting state and polls.
+
+function renderSignalTranslationScreen(onDone) {
+    showScreen('screen-path');
+    const container = document.getElementById('path-content');
+    if (!container) { if (onDone) onDone(); return; }
+
+    function renderKit(kit) {
+        container.innerHTML = `
+            <div class="signal-translation-wrap">
+                <div class="st-header">
+                    <p class="st-label">[ SIGNAL TRANSLATION ]</p>
+                    <p class="st-sub">Your record qualifies you for roles you have not been claiming. Here is how to reframe what you have already built.</p>
+                </div>
+
+                <div class="st-role-block">
+                    <div class="st-role-section">
+                        <p class="st-role-tag">APPLY FOR THIS NOW</p>
+                        <p class="st-role-name">${kit.current_role || 'Current Match'}</p>
+                        <p class="st-headline">${kit.headline_current || ''}</p>
+                        <ul class="st-bullets">
+                            ${(kit.current_bullets || []).map(b => `<li class="st-bullet">${b}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="st-role-section st-role-section--target">
+                        <p class="st-role-tag">WHERE YOUR PATTERN LEADS</p>
+                        <p class="st-role-name">${kit.target_role || 'Target Direction'}</p>
+                        <p class="st-headline">${kit.headline_target || ''}</p>
+                        <ul class="st-bullets">
+                            ${(kit.target_bullets || []).map(b => `<li class="st-bullet">${b}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+
+                ${kit.gap_note ? `
+                    <div class="st-gap-block">
+                        <p class="st-gap-label">[ GAP TO CLOSE ]</p>
+                        <p class="st-gap-note">${kit.gap_note}</p>
+                    </div>
+                ` : ''}
+
+                <p class="st-footer-note">These bullet points are yours. Copy them. The directives are built to close the gap above.</p>
+
+                <div class="st-actions">
+                    ${onDone ? `<button class="btn btn--primary" id="st-continue-btn">[ CONTINUE TO ORIENTATION ]</button>` : ''}
+                    <button class="btn st-copy-btn" id="st-copy-now-btn">[ COPY CURRENT ROLE BULLETS ]</button>
+                    <button class="btn st-copy-btn" id="st-copy-target-btn">[ COPY TARGET ROLE BULLETS ]</button>
+                </div>
+            </div>
+        `;
+
+        // Copy handlers
+        document.getElementById('st-copy-now-btn').addEventListener('click', () => {
+            playUIClick();
+            const text = (kit.headline_current ? kit.headline_current + '\n\n' : '')
+                + (kit.current_bullets || []).map(b => '• ' + b).join('\n');
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('st-copy-now-btn');
+                if (btn) { btn.textContent = '[ COPIED ]'; setTimeout(() => { btn.textContent = '[ COPY CURRENT ROLE BULLETS ]'; }, 2000); }
+            }).catch(() => {});
+        });
+
+        document.getElementById('st-copy-target-btn').addEventListener('click', () => {
+            playUIClick();
+            const text = (kit.headline_target ? kit.headline_target + '\n\n' : '')
+                + (kit.target_bullets || []).map(b => '• ' + b).join('\n');
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('st-copy-target-btn');
+                if (btn) { btn.textContent = '[ COPIED ]'; setTimeout(() => { btn.textContent = '[ COPY TARGET ROLE BULLETS ]'; }, 2000); }
+            }).catch(() => {});
+        });
+
+        if (onDone) {
+            document.getElementById('st-continue-btn').addEventListener('click', () => {
+                playUIClick();
+                onDone();
+            });
+        }
+    }
+
+    function renderWaiting() {
+        container.innerHTML = `
+            <div class="signal-translation-wrap signal-translation-wrap--loading">
+                <p class="st-label">[ SIGNAL TRANSLATION ]</p>
+                <p class="st-loading-line">Translating your record into role-ready language...</p>
+                <div class="st-loading-bar"><div class="st-loading-fill" id="st-loading-fill"></div></div>
+                ${onDone ? `<button class="st-skip-small" id="st-skip-btn">skip for now →</button>` : ''}
+            </div>
+        `;
+        // Animate the loading bar
+        let pct = 0;
+        const fill = document.getElementById('st-loading-fill');
+        const iv = setInterval(() => {
+            pct = Math.min(88, pct + Math.random() * 7);
+            if (fill) fill.style.width = pct + '%';
+            if (pct >= 88) clearInterval(iv);
+        }, 200);
+
+        if (onDone) {
+            document.getElementById('st-skip-btn').addEventListener('click', () => {
+                playUIClick();
+                onDone();
+            });
+        }
+    }
+
+    // Poll for kit — Call 2B fires async, may not have landed yet
+    const kit = loadSignalTranslation();
+    if (kit && kit.current_bullets) {
+        renderKit(kit);
+    } else {
+        renderWaiting();
+        let attempts = 0;
+        const poll = setInterval(() => {
+            attempts++;
+            const fresh = loadSignalTranslation();
+            if (fresh && fresh.current_bullets) {
+                clearInterval(poll);
+                renderKit(fresh);
+            } else if (attempts >= 20) {
+                // 20 * 500ms = 10 seconds — give up gracefully
+                clearInterval(poll);
+                container.innerHTML = `
+                    <div class="signal-translation-wrap">
+                        <p class="st-label">[ SIGNAL TRANSLATION ]</p>
+                        <p class="st-loading-line">Translation is still processing. It will be available in OPS when ready.</p>
+                        ${onDone ? `<button class="btn btn--primary" id="st-continue-btn">[ CONTINUE ]</button>` : ''}
+                    </div>
+                `;
+                if (onDone) {
+                    const btn = document.getElementById('st-continue-btn');
+                    if (btn) btn.addEventListener('click', () => { playUIClick(); onDone(); });
+                }
+            }
+        }, 500);
+    }
+}
+
+// OPS-accessible version — no onDone callback, used from STATUS/OPS tab
+function renderSignalTranslationOPS() {
+    renderSignalTranslationScreen(null);
 }
 
 // ─── APPLY CALL 2 BUNDLE ─────────────────────────────────────
@@ -600,7 +834,8 @@ function getLocalFallbackBundle() {
 
     const statToPath = {
         strength:     {
-            path_name:    'Execution and Delivery',
+            path_name:         'Execution and Delivery',
+            current_role_match:'Project Manager',
             narrative:    'Your pattern shows strong delivery focus and a consistent bias toward getting things done rather than theorising about them.',
             target_roles: ['Operations Manager', 'Project Lead', 'Programme Director'],
             mapped_skills: ['Delivery', 'Operational Coordination', 'Physical Execution'],
@@ -608,7 +843,8 @@ function getLocalFallbackBundle() {
             gap_skills:   ['Strategic influence', 'Stakeholder communication', 'Systems thinking']
         },
         intelligence: {
-            path_name:    'Strategy and Knowledge',
+            path_name:         'Strategy and Knowledge',
+            current_role_match:'Product Manager',
             narrative:    'Your pattern shows strong analytical focus and a drive to understand the underlying system before acting on it.',
             target_roles: ['Strategy Lead', 'Product Manager', 'Research Lead'],
             mapped_skills: ['Analysis', 'Systems Thinking', 'Knowledge Architecture'],
@@ -616,7 +852,8 @@ function getLocalFallbackBundle() {
             gap_skills:   ['Executive presence', 'Stakeholder influence', 'Commercial acumen']
         },
         agility:      {
-            path_name:    'Adaptation and Innovation',
+            path_name:         'Adaptation and Innovation',
+            current_role_match:'Product Designer',
             narrative:    'Your pattern shows strong pivot capacity and a comfort with ambiguity that most people avoid.',
             target_roles: ['Innovation Lead', 'Consultant', 'Product Designer'],
             mapped_skills: ['Adaptability', 'Problem Framing', 'Creative Pivots'],
@@ -624,7 +861,8 @@ function getLocalFallbackBundle() {
             gap_skills:   ['Sustained execution', 'Process discipline', 'Long-horizon planning']
         },
         endurance:    {
-            path_name:    'Consistency and Systems',
+            path_name:         'Consistency and Systems',
+            current_role_match:'Programme Manager',
             narrative:    'Your pattern shows sustained effort and a systems-building orientation over long time horizons.',
             target_roles: ['Systems Architect', 'Programme Manager', 'Operations Lead'],
             mapped_skills: ['Sustained Effort', 'Process Design', 'Long-term Discipline'],
@@ -632,7 +870,8 @@ function getLocalFallbackBundle() {
             gap_skills:   ['Creative flexibility', 'Stakeholder influence', 'Rapid pivoting']
         },
         charisma:     {
-            path_name:    'Influence and Community',
+            path_name:         'Influence and Community',
+            current_role_match:'Community Manager',
             narrative:    'Your pattern shows strong social reading and a demonstrated capacity to move people and build trust.',
             target_roles: ['Community Lead', 'Business Development', 'Head of Growth'],
             mapped_skills: ['Relationship Building', 'Influence', 'Communication'],
@@ -742,7 +981,7 @@ function runRoleMapping(round) {
     const pct    = Math.round(((round + 1) / 3) * 100);
 
     const voiceLines = [
-        'Three paths emerged from your signal. Which feels closest to your real direction?',
+        'Your record points to three possible paths. The first column is where you are now. The second is where the pattern leads.',
         'Confirmed. Which of these roles do you actually see yourself in?',
         'One more. Pick the specialisation that fits.'
     ];
@@ -777,9 +1016,23 @@ function runRoleMapping(round) {
             </div>
             <div class="role-card-stack">
                 ${cardData.map((p, i) => `
-                    <button class="role-card" data-path-index="${i}">
-                        <span class="role-card-name">${p.path_name || 'PATH ' + (i + 1)}</span>
-                        ${p.narrative ? '<p class="role-card-narrative">' + p.narrative + '</p>' : ''}
+                    <button class="role-card ${round === 0 ? 'role-card--split' : ''}" data-path-index="${i}">
+                        ${round === 0 && p.current_role_match ? `
+                            <div class="role-card-split-row">
+                                <div class="role-card-now">
+                                    <span class="role-card-split-label">NOW</span>
+                                    <span class="role-card-split-value">${p.current_role_match}</span>
+                                </div>
+                                <div class="role-card-direction">
+                                    <span class="role-card-split-label">DIRECTION</span>
+                                    <span class="role-card-split-value">${p.path_name || 'PATH ' + (i + 1)}</span>
+                                </div>
+                            </div>
+                            ${p.narrative ? '<p class="role-card-narrative">' + p.narrative + '</p>' : ''}
+                        ` : `
+                            <span class="role-card-name">${p.path_name || 'PATH ' + (i + 1)}</span>
+                            ${p.narrative ? '<p class="role-card-narrative">' + p.narrative + '</p>' : ''}
+                        `}
                         ${(p.target_roles || []).length > 0 ? `
                             <div class="role-card-roles">
                                 ${p.target_roles.map(r => '<span class="role-tag">' + r + '</span>').join('')}
@@ -1024,6 +1277,10 @@ function runPathSynthesis() {
         orientationClosing:  bundle.orientation_closing_line || null,
         geminiEnhanced:      !!bundle.geminiEnhanced
     };
+
+    // Fire Call 2B silently — does not block onComplete
+    // Stores result in SIGNAL_TRANSLATION_KEY for the translation screen to poll
+    fireCall2B(pathData);
 
     if (typeof pathState.onComplete === 'function') {
         pathState.onComplete(pathData);
