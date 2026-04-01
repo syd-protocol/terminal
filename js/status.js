@@ -1046,7 +1046,7 @@ function renderStatusMainContent(container, animate) {
                 <div class="sot-badges">
                     <span class="rank-badge sot-rank-badge ${rankCssClass(rank)}">${rank}</span>
                     <span class="sot-level-badge">LVL ${level}</span>
-                    <span class="sot-sig-badge">&#x2B21; ${sig} SIG</span>
+                    <button class="sot-sig-badge sot-sig-badge--btn" id="sot-sig-badge">&#x2B21; ${sig} SIG</button>
                     <button class="sot-settings-shortcut" id="sot-settings-shortcut" title="Settings">&#x2699;</button>
                 </div>
             </div>
@@ -1168,6 +1168,16 @@ function renderStatusMainContent(container, animate) {
     });
 
     // ── Wire momentum row toggle ──────────────────────────────
+    const sigBadge = document.getElementById('sot-sig-badge');
+    if (sigBadge) {
+        sigBadge.addEventListener('click', () => {
+            playUIClick();
+            if (typeof showLog === 'function') {
+                showLog('[ SIG — earned by completing directives. Spent in GAMES. Current balance: ' + sig + ' ]', 'system');
+            }
+        });
+    }
+
     const momentumRow = document.getElementById('sot-momentum-row');
     if (momentumRow) {
         momentumRow.addEventListener('click', () => {
@@ -1621,8 +1631,8 @@ function buildPathSection(level) {
 
             <!-- Rank clarification note -->
             <p class="path-rank-note">
-                Your PATH rank reflects where SYD placed you based on your record.
-                The rank in the header rises separately through XP and level.
+                Your career level reflects where SYD placed you based on your record and years of experience.
+                The rank badge in the header is your game rank — it rises through XP and level.
             </p>
 
             <!-- Path name — tappable -->
@@ -1654,9 +1664,9 @@ function buildPathSection(level) {
             <!-- PATH rank badge — tappable -->
             ${rank ? `
                 <div class="path-inline-block tappable" id="path-tap-rank">
-                    <div class="path-inline-label">PATH STARTING RANK</div>
+                    <div class="path-inline-label">CAREER LEVEL</div>
                     <div class="path-rank-row">
-                        <span class="rank-badge ${rankCssClass(rank)}">${rank}</span>
+                        <span class="career-rank-label">${typeof careerRankLabel === 'function' ? careerRankLabel(rank) : rank}</span>
                     </div>
                     <div class="path-inline-expand hidden" id="path-expand-rank">
                         <p class="path-expand-text">${buildLocalGapRead(pathData) || ''}</p>

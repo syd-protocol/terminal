@@ -9493,3 +9493,129 @@ body {
 .sb-timer-bar {
     transition: width 0.08s linear;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   ADDENDUM — title screen, scan briefs, career rank, SIG badge
+   Added: feedback batch April 2026
+═══════════════════════════════════════════════════════════════ */
+
+/* ─── TITLE SCREEN ───────────────────────────────────────────── */
+.title-screen-wrap {
+    display:         flex;
+    flex-direction:  column;
+    justify-content: center;
+    min-height:      100vh;
+    padding:         0 0 80px;
+    gap:             0;
+}
+
+.title-screen-logo {
+    font-family:    var(--font-mono);
+    font-size:      2.8rem;
+    font-weight:    700;
+    color:          var(--accent);
+    letter-spacing: 0.18em;
+    margin-bottom:  40px;
+}
+
+.title-screen-lines {
+    display:        flex;
+    flex-direction: column;
+    gap:            12px;
+    margin-bottom:  48px;
+}
+
+.title-screen-line {
+    font-family:  var(--font-mono);
+    font-size:    1rem;
+    color:        var(--text-primary);
+    line-height:  1.75;
+    opacity:      0.92;
+}
+
+.title-screen-btn {
+    align-self:  flex-start;
+    min-width:   200px;
+}
+
+/* ─── SCAN BRIEF ─────────────────────────────────────────────── */
+.scan-brief {
+    display:        flex;
+    flex-direction: column;
+    gap:            16px;
+    padding-top:    8px;
+}
+
+.scan-brief-tag {
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    color:          var(--accent);
+    letter-spacing: 0.12em;
+}
+
+.scan-brief-line {
+    font-family:  var(--font-mono);
+    font-size:    0.95rem;
+    color:        var(--text-primary);
+    line-height:  1.7;
+    opacity:      0.9;
+}
+
+.scan-brief-btn {
+    margin-top: 8px;
+    align-self: flex-start;
+}
+
+/* ─── CAREER RANK LABEL ──────────────────────────────────────── */
+.career-rank-label,
+.sr-career-rank-label {
+    font-family:    var(--font-mono);
+    font-size:      1.1rem;
+    font-weight:    700;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.sr-rank-row {
+    display:     flex;
+    align-items: center;
+    gap:         12px;
+    margin-top:  8px;
+    flex-wrap:   wrap;
+}
+
+.sr-rank-context {
+    font-size:   0.85rem;
+    color:       var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* ─── SIG BADGE BUTTON ───────────────────────────────────────── */
+.sot-sig-badge--btn {
+    background:  transparent;
+    border:      1px solid var(--sig-gold);
+    color:       var(--sig-gold);
+    font-family: var(--font-mono);
+    font-size:   0.75rem;
+    padding:     3px 8px;
+    border-radius: 2px;
+    cursor:      pointer;
+    transition:  background 0.15s ease, opacity 0.15s ease;
+    min-height:  28px;
+}
+.sot-sig-badge--btn:active {
+    background: rgba(240, 192, 64, 0.12);
+    opacity:    0.8;
+}
+
+/* ─── SIGNAL TRANSLATION PERSIST NOTE ───────────────────────── */
+.st-persist-note {
+    font-family:  var(--font-mono);
+    font-size:    0.75rem;
+    color:        var(--text-secondary);
+    line-height:  1.6;
+    opacity:      0.7;
+    margin-top:   8px;
+    margin-bottom: 24px;
+}

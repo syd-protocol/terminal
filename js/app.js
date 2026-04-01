@@ -1603,7 +1603,7 @@ function renderSynthesisReveal(pathData, onDone) {
                 <p class="sr-path-name">${pathName}</p>
                 <p class="sr-role">${role !== pathName ? role : ''}</p>
                 <div class="sr-rank-row">
-                    <span class="rank-badge ${typeof rankCssClass === 'function' ? rankCssClass(rank) : ''}">${rank}</span>
+                    <span class="sr-career-rank-label">${typeof careerRankLabel === 'function' ? careerRankLabel(rank) : rank}</span>
                     <span class="sr-rank-context">${rankContext[rank] || rankContext['F']}</span>
                 </div>
             </div>

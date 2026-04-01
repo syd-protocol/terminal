@@ -59,7 +59,7 @@ let encounterPoolLoaded = false;
 async function loadEncounterPool() {
     if (encounterPoolLoaded) return;
     try {
-        const res  = await fetch('/data/encounters.json');
+        const res  = await fetch('data/encounters.json');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         ENCOUNTER_POOL      = data.encounters || [];

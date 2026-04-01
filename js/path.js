@@ -1429,7 +1429,7 @@ function runRoleMapping(round) {
     const voiceLines = [
         'Your record points to three possible paths. The first column is where you are now. The second is where the pattern leads.',
         'Confirmed. Which of these roles do you actually see yourself in?',
-        'One more. Which of these roles fits best within that path?'
+        'Last one. Which of these focus areas fits how you want to work within that path?'
     ];
 
     let cardData = paths;
@@ -1447,14 +1447,15 @@ function runRoleMapping(round) {
         }
     }
     if (round === 2 && pathState.confirmedPath) {
-        // Show target_roles as specialisation options — these are real-world job titles
-        // that sit within the confirmed path, so the operative is narrowing to a specific role
-        const roles = pathState.confirmedPath.target_roles || [];
-        cardData = roles.map(r => ({ path_name: r, narrative: '', target_roles: [], mapped_skills: [] }));
-        // If no target_roles, fall back to mapped_skills (old behaviour)
+        // Show mapped_skills as specialisation options — these are the focus areas
+        // within the confirmed path, not job titles. The operative is picking
+        // what kind of work within this path resonates most.
+        const skills = pathState.confirmedPath.mapped_skills || [];
+        cardData = skills.map(s => ({ path_name: s, narrative: '', target_roles: [], mapped_skills: [] }));
+        // If no mapped_skills, fall back to target_roles
         if (cardData.length === 0) {
-            const skills = pathState.confirmedPath.mapped_skills || [];
-            cardData = skills.map(s => ({ path_name: s, narrative: '', target_roles: [], mapped_skills: [] }));
+            const roles = pathState.confirmedPath.target_roles || [];
+            cardData = roles.map(r => ({ path_name: r, narrative: '', target_roles: [], mapped_skills: [] }));
         }
     }
 
@@ -1524,11 +1525,13 @@ function runRankConfirmation() {
     const inferredRank = inferStartingRank();
     const rankContext  = getRankContext(inferredRank);
 
+    const inferredLabel = careerRankLabel(inferredRank);
+
     container.innerHTML = `
         <div class="rank-confirm-wrap">
             <div class="path-syd-voice">
                 <p class="path-voice-line path-voice-line--visible">
-                    Based on what I have read, I am placing you at rank ${inferredRank}.
+                    Based on what I have read, I am placing you at <strong>${inferredLabel}</strong>.
                 </p>
                 <p class="path-voice-line path-voice-line--visible">
                     ${rankContext}
@@ -1540,21 +1543,20 @@ function runRankConfirmation() {
 
             <div class="rank-confirm-options">
                 <button class="rank-confirm-btn rank-confirm-btn--accept" id="rc-accept">
-                    <span class="rank-confirm-label">[ ${inferredRank}-RANK ]</span>
+                    <span class="rank-confirm-label">[ ${inferredLabel.toUpperCase()} ]</span>
                     <span class="rank-confirm-sub">This is accurate</span>
                 </button>
                 <button class="rank-confirm-btn" id="rc-lower">
-                    <span class="rank-confirm-label">[ LOWER RANK ]</span>
-                    <span class="rank-confirm-sub">I am earlier than this suggests</span>
+                    <span class="rank-confirm-label">[ EARLIER THAN THIS ]</span>
+                    <span class="rank-confirm-sub">I am less experienced than this suggests</span>
                 </button>
                 <button class="rank-confirm-btn" id="rc-higher">
-                    <span class="rank-confirm-label">[ HIGHER RANK ]</span>
+                    <span class="rank-confirm-label">[ FURTHER ALONG ]</span>
                     <span class="rank-confirm-sub">I have more experience than this suggests</span>
                 </button>
             </div>
             <p class="rank-confirm-note">
-                This affects where your daily encounters start and how quickly they scale.
-                It does not gate any content permanently.
+                This affects where your encounters and directives start. It does not gate any content permanently.
             </p>
         </div>
     `;
@@ -1570,59 +1572,64 @@ function runRankConfirmation() {
     });
 }
 
+// ─── CAREER RANK LABELS ───────────────────────────────────────
+// Internal keys (F/E/D/C/B/A) are preserved for storage and comparison.
+// These labels are what the operative sees — workplace-legible seniority.
+const CAREER_RANK_LABELS = {
+    'F': 'Intern',
+    'E': 'Junior',
+    'D': 'Mid-level',
+    'C': 'Senior',
+    'B': 'Lead',
+    'A': 'Principal'
+};
+function careerRankLabel(rank) {
+    return CAREER_RANK_LABELS[rank] || 'Intern';
+}
+
 function inferStartingRank() {
-    // Re-imaginer track has no record — always starts at F
     if (pathState.track === 'reimaginer') return 'F';
 
     const text = pathState.cvText || '';
-    if (!text || text.length < 80) return 'F';
+    if (!text || text.length < 100) return 'F';
 
-    // Use the structured CV signals already extracted by the path engine
-    const cvSignal = extractCVSignals(text);
-    const years    = cvSignal.yearsTotal      || 0;
-    const evidence = (cvSignal.evidenceLines  || []).length;
-    const hasTeam  = cvSignal.leadershipEvidence;
+    // Use the CV signal extractor — already available in this file
+    const signal = extractCVSignals(text);
+    const years  = signal.yearsTotal      || 0;
+    const impact = signal.evidenceLines   ? signal.evidenceLines.length : 0;
+    const hasLeadership = signal.leadershipEvidence || false;
 
-    // ── Rank table ────────────────────────────────────────────
-    // Rank is earned by the combination of time served AND demonstrated
-    // impact (evidence lines = quantified outcomes in the CV).
-    // Leadership is additive — it can push someone up one rank if
-    // years and evidence are both present.
+    // Formula: years gives the floor, evidence lines confirm the ceiling.
+    // Leadership evidence (managed a team, direct reports) adds one tier.
+    // Re-imaginer track always starts at Intern (F).
     //
-    // Default DOWN when uncertain — the rank confirmation screen
-    // lets the operative self-correct if the read is off.
-    //
-    //   F  — 0–1 year, or any experience with no evidence of outcome
-    //   E  — 1–3 years with at least 1 evidence line; or 3–5 years minimal evidence
-    //   D  — 3–6 years with 3+ evidence lines
-    //   C  — 5–8 years with 5+ evidence lines and consistent impact
-    //   B  — 8+ years with 7+ evidence lines; or C-conditions + team leadership
+    // Intern    (F): 0–1 years, or no dateable record
+    // Junior    (E): 1–3 years, thin evidence
+    // Mid-level (D): 3–6 years, some outcomes, OR 1–3 years with 4+ evidence lines
+    // Senior    (C): 5–8 years with 4+ evidence lines, OR leadership evidence + 4+ years
+    // Lead      (B): 8+ years with leadership evidence and 6+ evidence lines
+    // Principal (A): explicit organisational scope — reserved for exceptional records
 
-    let rank = 'F';
-
-    if (years >= 8 && evidence >= 7) {
-        rank = hasTeam ? 'B' : 'C';
-    } else if (years >= 5 && evidence >= 5) {
-        rank = hasTeam ? 'C' : 'D';
-    } else if (years >= 3 && evidence >= 3) {
-        rank = 'D';
-    } else if (years >= 1 && evidence >= 1) {
-        rank = 'E';
-    } else if (years >= 3 && evidence < 3) {
-        rank = 'E';  // time served, limited demonstrated impact
-    }
-
-    return rank;
+    if (years < 1)                                          return 'F';
+    if (years < 3 && impact < 4)                           return 'E';
+    if (years < 3 && impact >= 4)                          return 'D';
+    if (years < 5 && !hasLeadership)                       return 'D';
+    if (years < 5 && hasLeadership && impact >= 3)         return 'C';
+    if (years < 8 && impact >= 4)                          return 'C';
+    if (years >= 8 && hasLeadership && impact >= 6)        return 'B';
+    if (years >= 8 && impact >= 4)                         return 'C';
+    if (years >= 5)                                        return 'D';
+    return 'E';
 }
 
 function getRankContext(rank) {
     const contexts = {
-        'F': 'You are early in your career. Your directives and encounters will build from fundamentals.',
-        'E': 'You have some real-world experience. You will encounter frameworks quickly.',
-        'D': 'You are developing. Your path shows consistent progression across more than one context.',
-        'C': 'You are established. The gap between where you are and expert practice is visible and closeable.',
-        'B': 'You are capable and have demonstrated it in senior contexts.',
-        'A': 'You are recognised in your field. The work now is precision, not breadth.'
+        'F': 'No substantial record yet. Your directives build from fundamentals.',
+        'E': 'You have some real experience. Frameworks will come quickly.',
+        'D': 'Consistent track record. You are past beginner. The next phase is deliberate practice.',
+        'C': 'Established. You know the terrain. The gap now is precision and leverage.',
+        'B': 'You have led and delivered in serious contexts. The gap is influence at scale.',
+        'A': 'Recognised depth. Edge cases are what is left to master.'
     };
     return contexts[rank] || contexts['F'];
 }
