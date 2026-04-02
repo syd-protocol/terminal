@@ -1,0 +1,274 @@
+/* ═══════════════════════════════════════════════════════════════
+   SYD /loop — games-enhanced.css
+   Visual enhancement layer for all 8 games.
+   Loaded after style.css. Overrides and additions only.
+   April 2026
+═══════════════════════════════════════════════════════════════ */
+
+/* ─── PER-GAME COLOUR IDENTITIES ─────────────────────────────── */
+[data-game-id="cascade"]              { --game-color: #4fc3f7; }
+[data-game-id="drift"]                { --game-color: #ffa726; }
+[data-game-id="echo"]                 { --game-color: #ce93d8; }
+[data-game-id="flow"]                 { --game-color: #66bb6a; }
+[data-game-id="resonance"]            { --game-color: #f48fb1; }
+[data-game-id="scan_signal_breach"]   { --game-color: #4fc3f7; }
+[data-game-id="scan_precision_shooter"] { --game-color: #ffa726; }
+[data-game-id="scan_final_transmission"] { --game-color: #f48fb1; }
+
+.game-card[data-game-id] .game-card-name {
+    color: var(--game-color, var(--accent));
+}
+.game-card[data-game-id] .game-card-stat-tag {
+    border-color: var(--game-color, var(--accent));
+    color:        var(--game-color, var(--accent));
+}
+.game-card[data-game-id] .game-card-enter-btn:not(:disabled) {
+    border-color: var(--game-color, var(--accent));
+    color:        var(--game-color, var(--accent));
+}
+.game-card[data-game-id] .game-card-enter-btn:not(:disabled):hover {
+    background: color-mix(in srgb, var(--game-color, var(--accent)) 12%, transparent);
+}
+
+/* ─── RESULT SCREEN — GRADE ANIMATION ───────────────────────── */
+@keyframes gradeIn {
+    0%   { transform: scale(0.3); opacity: 0; }
+    60%  { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1.0); opacity: 1; }
+}
+
+@keyframes gradeGlow {
+    0%, 100% { text-shadow: 0 0 20px currentColor; }
+    50%       { text-shadow: 0 0 50px currentColor, 0 0 80px currentColor; }
+}
+
+@keyframes rewardSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.mg-result-grade--animate {
+    animation: gradeIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+               gradeGlow 1.5s ease-in-out 0.4s infinite;
+}
+
+.mg-result-rewards--slide {
+    animation: rewardSlideUp 0.35s ease 0.55s both;
+}
+
+.mg-result-voice {
+    font-family:  var(--font-mono, monospace);
+    font-size:    0.85rem;
+    color:        var(--text-secondary, #5a6a7a);
+    text-align:   center;
+    max-width:    280px;
+    line-height:  1.6;
+    margin:       0 auto;
+    font-style:   italic;
+}
+
+/* ─── CASCADE — arena + node overrides ──────────────────────── */
+.cas-cols {
+    height: 320px !important;
+}
+
+.cas-node {
+    width:     52px !important;
+    height:    52px !important;
+    font-size: 1.6rem !important;
+    transition: background 0.12s, border-color 0.12s, transform 0.1s !important;
+}
+
+.cas-score-row {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    padding:         6px 8px;
+    margin-bottom:   6px;
+}
+
+.cas-score-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.68rem;
+    color:          var(--text-secondary, #5a6a7a);
+    letter-spacing: 0.08em;
+}
+
+.cas-score {
+    font-family:    var(--font-mono, monospace);
+    font-size:      1rem;
+    font-weight:    700;
+    color:          #4fc3f7;
+    letter-spacing: 0.05em;
+}
+
+.cas-wave-inline {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.68rem;
+    color:          var(--text-secondary, #5a6a7a);
+    letter-spacing: 0.08em;
+}
+
+@keyframes nodeBurst {
+    0%   { transform: translateX(-50%) scale(1.0); opacity: 1; background: #fff; }
+    40%  { transform: translateX(-50%) scale(1.5); opacity: 0.8; }
+    100% { transform: translateX(-50%) scale(0.0); opacity: 0; }
+}
+
+.cas-node--burst {
+    animation: nodeBurst 0.4s ease-out forwards !important;
+    pointer-events: none;
+}
+
+@keyframes floatScoreAnim {
+    0%   { opacity: 1;   transform: translateY(0) translateX(-50%); }
+    100% { opacity: 0;   transform: translateY(-40px) translateX(-50%); }
+}
+
+.cas-float-score {
+    position:       absolute;
+    font-family:    var(--font-mono, monospace);
+    font-size:      1.1rem;
+    font-weight:    700;
+    color:          #4fc3f7;
+    pointer-events: none;
+    animation:      floatScoreAnim 0.8s ease-out forwards;
+    transform:      translateX(-50%);
+    z-index:        10;
+}
+
+/* ─── ECHO — grid + node overrides ──────────────────────────── */
+.echo-grid {
+    max-width: 300px !important;
+    gap:       16px  !important;
+}
+
+.echo-node {
+    min-height:   120px !important;
+    font-size:    2rem  !important;
+    position:     relative;
+    transition:   background 0.1s, border-color 0.1s, transform 0.08s !important;
+}
+
+.echo-node-symbol {
+    font-size:      1.8rem;
+    pointer-events: none;
+    transition:     transform 0.1s ease;
+}
+
+.echo-node--flash .echo-node-symbol {
+    transform: scale(1.2);
+}
+
+.echo-node--flash {
+    background:   rgba(206, 147, 216, 0.6) !important;
+    border-color: #ce93d8 !important;
+    box-shadow:   0 0 16px rgba(206, 147, 216, 0.5);
+}
+
+.echo-node--tap {
+    background:   rgba(206, 147, 216, 0.3) !important;
+    border-color: #ce93d8 !important;
+}
+
+@keyframes echoShake {
+    0%   { transform: translateX(0); }
+    20%  { transform: translateX(-5px); }
+    40%  { transform: translateX(5px); }
+    60%  { transform: translateX(-3px); }
+    80%  { transform: translateX(3px); }
+    100% { transform: translateX(0); }
+}
+
+.echo-node--shake {
+    animation: echoShake 0.22s ease !important;
+}
+
+.echo-progress-dots {
+    display:         flex;
+    justify-content: center;
+    gap:             8px;
+    margin-bottom:   10px;
+    min-height:      1.4em;
+}
+
+.echo-dot {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.9rem;
+    color:          var(--text-secondary, #5a6a7a);
+    transition:     color 0.15s, transform 0.15s;
+}
+
+.echo-dot--filled {
+    color:     #ce93d8;
+    transform: scale(1.15);
+}
+
+.echo-feedback {
+    color: #ce93d8 !important;
+}
+
+/* ─── DRIFT — canvas override ────────────────────────────────── */
+.drift-canvas {
+    height:     380px !important;
+    min-height: 340px !important;
+    cursor:     pointer;
+}
+
+/* ─── FLOW — canvas + tap button ────────────────────────────── */
+.flow-canvas {
+    width:         100%;
+    height:        180px;
+    display:       block;
+    border:        1px solid rgba(102, 187, 106, 0.25);
+    border-radius: 4px;
+    background:    var(--surface, #1a1a2e);
+    cursor:        pointer;
+    touch-action:  none;
+}
+
+.flow-tap-btn--wide {
+    width:          100% !important;
+    height:         64px !important;
+    border-radius:  6px  !important;
+    font-size:      1rem !important;
+    border-color:   #66bb6a !important;
+    color:          #66bb6a !important;
+    transition:     background 0.1s, transform 0.08s, box-shadow 0.1s !important;
+}
+
+.flow-tap-btn--wide:active {
+    background:  rgba(102, 187, 106, 0.2) !important;
+    transform:   scale(0.97) !important;
+    box-shadow:  0 0 20px rgba(102, 187, 106, 0.4) !important;
+}
+
+@keyframes tapButtonPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(102, 187, 106, 0.3); }
+    50%       { box-shadow: 0 0 24px rgba(102, 187, 106, 0.7); }
+}
+
+.flow-tap-btn--pulse {
+    animation: tapButtonPulse 0.6s ease-in-out infinite !important;
+}
+
+.flow-tap-btn--hit {
+    background:  rgba(102, 187, 106, 0.35) !important;
+    box-shadow:  0 0 30px rgba(102, 187, 106, 0.6) !important;
+}
+
+/* ─── RESONANCE — said block + option overrides ──────────────── */
+.resonance-said {
+    border-left: 3px solid #f48fb1 !important;
+}
+
+.resonance-opt:hover:not(:disabled) {
+    border-color: #f48fb1 !important;
+    background:   rgba(244, 143, 177, 0.06) !important;
+}
+
+.resonance-opt--selected {
+    border-color: #66bb6a !important;
+    color:        #66bb6a !important;
+    background:   rgba(102, 187, 106, 0.08) !important;
+}

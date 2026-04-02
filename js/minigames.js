@@ -35,8 +35,86 @@
 // ─── CONSTANTS ───────────────────────────────────────────────
 // [TUNING TARGET] Sig cost per session
 const MINIGAME_COSTS = {
-    cascade: 5, drift: 5, echo: 5, flow: 5, resonance: 5
+    cascade: 5, drift: 5, echo: 5, flow: 5, resonance: 5,
+    scan_signal_breach: 3, scan_precision_shooter: 3, scan_final_transmission: 3
 };
+
+// ─── GRADE SYSTEM ────────────────────────────────────────────
+// Seven grades: S/A/B/C/D/E/F
+// SIG reward is grade-based, not formula-based.
+// Voice lines cycle randomly — 3 per grade.
+
+const GRADE_THRESHOLDS = [
+    { grade: 'S', min: 0.85 },
+    { grade: 'A', min: 0.70 },
+    { grade: 'B', min: 0.55 },
+    { grade: 'C', min: 0.40 },
+    { grade: 'D', min: 0.25 },
+    { grade: 'E', min: 0.10 },
+    { grade: 'F', min: 0    }
+];
+
+const GRADE_SIG = { S: 8, A: 6, B: 5, C: 4, D: 3, E: 2, F: 1 };
+
+const GRADE_COLOURS = {
+    S: '#ffd54f',
+    A: '#80cbc4',
+    B: '#4fc3f7',
+    C: '#aaaaaa',
+    D: '#888888',
+    E: '#666666',
+    F: '#444444'
+};
+
+const GRADE_VOICE_LINES = {
+    S: [
+        'Signal locked. That is what this system is for.',
+        'Clean execution. The pattern held under pressure.',
+        'Optimal. The data confirms what the score shows.'
+    ],
+    A: [
+        'Strong read. One tier below peak — the gap is narrow.',
+        'Solid. The fundamentals are there. Sharpen the edge.',
+        'Above average signal. You know what to work on.'
+    ],
+    B: [
+        'Adequate. Not yet consistent. That changes with reps.',
+        'The pattern is forming. Keep going.',
+        'Mid-range. The ceiling is visible from here.'
+    ],
+    C: [
+        'Below the line. The session still counted.',
+        'You got through it. That is the baseline.',
+        'Partial signal. Show up again tomorrow.'
+    ],
+    D: [
+        'The system read the attempt. Not much else yet.',
+        'Low signal. The game is telling you something. Listen.',
+        'That did not land well. The record is honest.'
+    ],
+    E: [
+        'You played. That is what matters right now.',
+        'Rough session. The pattern will click — it takes time.',
+        'Not your round. Come back. It gets clearer.'
+    ],
+    F: [
+        "That one didn't land. Every operator has a first run. Come back and the pattern will start to make sense.",
+        "Not yet. The game recorded where you struggled. Play it again — it will feel different.",
+        'First attempts are data, not verdicts. Try again.'
+    ]
+};
+
+function getGrade(score) {
+    for (const t of GRADE_THRESHOLDS) {
+        if (score >= t.min) return t.grade;
+    }
+    return 'F';
+}
+
+function getGradeVoiceLine(grade) {
+    const lines = GRADE_VOICE_LINES[grade] || GRADE_VOICE_LINES['F'];
+    return lines[Math.floor(Math.random() * lines.length)];
+}
 
 // [TUNING TARGET] First-play localStorage key prefix
 // Appended with gameId: syd_game_firstplay_cascade, etc.
@@ -56,13 +134,17 @@ const MINIGAME_STATS = {
 
 const STAT_LABELS = {
     intelligence: 'INT', agility: 'AGI',
-    strength: 'STR', endurance: 'END', charisma: 'CHA'
+    strength: 'STR', endurance: 'END', charisma: 'CHA',
+    pat: 'PAT', cog: 'COG', per: 'PER',
+    spd: 'SPD', acc: 'ACC', pst: 'PST', soc: 'SOC'
 };
 
 // ─── GAME METADATA ───────────────────────────────────────────
 // Single source of truth for all game display data.
 // Block E: expanded with instructions (one-liner + detail lines)
 // and first-play SYD prompts.
+
+const SCAN_GAME_IDS = ['scan_signal_breach', 'scan_precision_shooter', 'scan_final_transmission'];
 
 const GAME_DATA = {
     cascade: {
@@ -129,6 +211,45 @@ const GAME_DATA = {
             'Five situations per session. Score = correct reads / total situations.'
         ],
         firstPlayPrompt: 'First time in RESONANCE. Read the situation. Pick what was actually meant — not what was said. There is no timer.'
+    },
+    scan_signal_breach: {
+        name:        'SIGNAL BREACH',
+        icon:        '⬡',
+        stats:       ['pat', 'cog', 'per'],
+        desc:        'Complete the pattern. Tap the node that connects the sequence.',
+        instructions: [
+            'A grid of nodes appears. Some are already lit — they form a partial sequence.',
+            'Tap the one node that completes the pattern before time runs out.',
+            'The rule changes across rounds. That is the point.',
+            'Calibrates: pattern recognition, cognitive flexibility, persistence.'
+        ],
+        firstPlayPrompt: 'SIGNAL BREACH calibrates how you read patterns under pressure. The rule changes mid-game. Stay adaptive.'
+    },
+    scan_precision_shooter: {
+        name:        'PRECISION SHOOTER',
+        icon:        '◎',
+        stats:       ['spd', 'acc', 'pst'],
+        desc:        'Tap targets before they vanish. Speed and accuracy both count.',
+        instructions: [
+            'Targets appear one at a time on screen. Tap each one before it disappears.',
+            'Speed matters. Accuracy matters. Both are being read.',
+            'Three waves — each faster than the last.',
+            'Calibrates: execution speed, accuracy, pressure stability.'
+        ],
+        firstPlayPrompt: 'PRECISION SHOOTER measures how fast and clean you execute under increasing pressure. Hit what you aim at.'
+    },
+    scan_final_transmission: {
+        name:        'FINAL TRANSMISSION',
+        icon:        '◆',
+        stats:       ['soc'],
+        desc:        'Read the social situation. Pick what was actually communicated.',
+        instructions: [
+            'Short social scenarios appear one at a time.',
+            'Three response options. Pick the one that reads the subtext correctly.',
+            'Not the literal words — what was actually meant.',
+            'Calibrates: social reading.'
+        ],
+        firstPlayPrompt: 'FINAL TRANSMISSION reads how accurately you decode what people actually mean. There is no timer — read carefully.'
     }
 };
 
@@ -162,20 +283,29 @@ function openMiniGame(gameId) {
     const gd = GAME_DATA[gameId];
     if (!gd) return;
 
+    const isScanGame = SCAN_GAME_IDS.includes(gameId);
+
     if (!hasSeenFirstPlay(gameId)) {
-        // Show first-play prompt before launching — renders inline in screen-minigame
         markFirstPlaySeen(gameId);
         if (typeof showScreen === 'function') showScreen('screen-minigame');
         renderFirstPlayPrompt(gameId, gd.firstPlayPrompt || '', () => {
-            enterMiniGame(gameId, sig);
+            if (isScanGame) {
+                enterScanReplayPaid(gameId, sig);
+            } else {
+                enterMiniGame(gameId, sig);
+            }
         });
     } else {
-        enterMiniGame(gameId, sig);
+        if (isScanGame) {
+            enterScanReplayPaid(gameId, sig);
+        } else {
+            enterMiniGame(gameId, sig);
+        }
     }
 }
 
 // Renders a one-line SYD first-play prompt inside screen-minigame.
-// Auto-advances after 3.5s or on tap.
+// Advances only on player tap — no auto-advance.
 function renderFirstPlayPrompt(gameId, promptText, onContinue) {
     const container = document.getElementById('minigame-active-content');
     if (!container) { onContinue(); return; }
@@ -193,10 +323,6 @@ function renderFirstPlayPrompt(gameId, promptText, onContinue) {
 
     const btn = document.getElementById('mg-firstplay-btn');
     if (btn) btn.addEventListener('click', () => { playUIClick(); onContinue(); });
-
-    // Auto-advance after 3.5 seconds
-    const autoTimer = setTimeout(() => onContinue(), 3500);
-    if (btn) btn.addEventListener('click', () => clearTimeout(autoTimer), { once: true });
 }
 
 // ─── GAMES HUB (OPS/GAMES SEGMENT) ───────────────────────────
@@ -207,16 +333,17 @@ function renderFirstPlayPrompt(gameId, promptText, onContinue) {
 function renderGamesHub(container, sig) {
     if (!container) return;
 
-    const sigVal = typeof sig === 'number' ? sig :
+    const sigVal  = typeof sig === 'number' ? sig :
         ((typeof player !== 'undefined' && player) ? (player.sig || 0) : 0);
 
-    const gameIds  = ['cascade', 'drift', 'echo', 'flow', 'resonance'];
+    const allIds  = ['cascade', 'drift', 'echo', 'flow', 'resonance',
+                     'scan_signal_breach', 'scan_precision_shooter', 'scan_final_transmission'];
 
     container.innerHTML = `
         <div class="games-segment-wrap">
 
             <div class="games-segment-header">
-                <p class="games-syd-line">These games train your stats. They cost SIG to enter. SIG comes from executing directives.</p>
+                <p class="games-syd-line">All games train something. They cost SIG to enter. SIG comes from executing directives.</p>
             </div>
 
             <div class="games-sig-balance">
@@ -226,24 +353,14 @@ function renderGamesHub(container, sig) {
             </div>
 
             <div class="games-list">
-                ${gameIds.map(id => buildGameCard(id, sigVal)).join('')}
-            </div>
-
-            <div class="games-scan-replay">
-                <p class="games-scan-replay-label">
-                    &#x25BA;
-                    <button class="games-scan-replay-link" id="games-scan-replay-btn">
-                        REPLAY SCAN GAMES &mdash; SIGNAL BREACH &middot; PRECISION SHOOTER &middot; FINAL TRANSMISSION
-                    </button>
-                </p>
-                <p class="games-scan-replay-note">Free to play. Calibrate traits. No SIG required.</p>
+                ${allIds.map(id => buildGameCard(id, sigVal)).join('')}
             </div>
 
         </div>
     `;
 
-    // Wire ENTER buttons
-    gameIds.forEach(id => {
+    // Wire all ENTER buttons
+    allIds.forEach(id => {
         const btn = document.getElementById('games-enter-' + id);
         if (btn && !btn.disabled) {
             btn.addEventListener('click', () => {
@@ -254,7 +371,7 @@ function renderGamesHub(container, sig) {
     });
 
     // Wire instruction expand toggles
-    gameIds.forEach(id => {
+    allIds.forEach(id => {
         const toggle = document.getElementById('games-instr-toggle-' + id);
         const panel  = document.getElementById('games-instr-panel-' + id);
         if (toggle && panel) {
@@ -266,15 +383,6 @@ function renderGamesHub(container, sig) {
             });
         }
     });
-
-    // Wire scan replay link
-    const replayBtn = document.getElementById('games-scan-replay-btn');
-    if (replayBtn) {
-        replayBtn.addEventListener('click', () => {
-            playUIClick();
-            renderScanReplayPicker();
-        });
-    }
 }
 
 function buildGameCard(id, sigVal) {
@@ -286,7 +394,7 @@ function buildGameCard(id, sigVal) {
     const instrHTML = (gd.instructions || []).map(l => `<p class="game-instr-line">${l}</p>`).join('');
 
     return `
-        <div class="game-card" id="game-card-${id}">
+        <div class="game-card" id="game-card-${id}" data-game-id="${id}">
             <div class="game-card-header">
                 <span class="game-card-icon">${gd.icon}</span>
                 <span class="game-card-name">[ ${gd.name} ]</span>
@@ -432,6 +540,14 @@ function enterScanReplay(gameId) {
     renderScanReplayEntry(gameId);
 }
 
+// Paid scan replay — deducts SIG then routes to scan experience
+function enterScanReplayPaid(gameId, sig) {
+    const cost = MINIGAME_COSTS[gameId] || 3;
+    if (player) { player.sig = Math.max(0, (player.sig || 0) - cost); savePlayer(); }
+    showScreen('screen-minigame');
+    renderScanReplayEntry(gameId);
+}
+
 // ─── SHARED GAME SHELL ────────────────────────────────────────
 function getMGContainer() { return document.getElementById('minigame-active-content'); }
 
@@ -458,15 +574,15 @@ function wireMGExit() {
 }
 
 // ─── SESSION COMPLETE ─────────────────────────────────────────
-// Awards stat XP and shows result overlay inside the game screen.
-// score: 0–1 float representing session performance.
-// Multiplied against base XP to get final reward — skilled play earns more.
+// Awards stat XP and shows result screen.
+// score: 0–1 float. Grade drives SIG reward and voice line.
 function completeMGSession(gameId, score) {
     const baseXP    = MINIGAME_XP[gameId] || 8;
-    const finalXP   = Math.max(2, Math.round(baseXP * Math.max(0.25, score)));
+    const finalXP   = Math.max(2, Math.round(baseXP * Math.max(0.1, score)));
     const stats     = MINIGAME_STATS[gameId] || [];
-    const xpPerStat = finalXP / stats.length;
-    const sigReward = Math.max(MINIGAME_COSTS[gameId] - 1, Math.floor(finalXP * 0.6));   // [TUNING TARGET] PASS 3: nearly self-sustaining — good score returns almost full cost
+    const xpPerStat = finalXP / (stats.length || 1);
+    const grade     = getGrade(score);
+    const sigReward = GRADE_SIG[grade] || 1;
 
     if (player && typeof savePlayer === 'function') {
         stats.forEach(stat => {
@@ -477,22 +593,36 @@ function completeMGSession(gameId, score) {
         if (typeof updateStatusScreen === 'function') updateStatusScreen();
     }
 
-    renderMGResult(gameId, score, finalXP, sigReward, stats);
+    renderMGResult(gameId, score, finalXP, sigReward, stats, grade);
 }
 
-function renderMGResult(gameId, score, xp, sig, stats) {
+function renderMGResult(gameId, score, xp, sig, stats, grade) {
     const container = getMGContainer();
     if (!container) return;
 
-    const grade = score >= 0.8 ? 'S' : score >= 0.6 ? 'A' : score >= 0.4 ? 'B' : 'C';
-    const gradeColour = { S: '#ffd54f', A: '#80cbc4', B: 'var(--accent)', C: 'var(--text-secondary)' }[grade];
-    const names = { cascade: 'CASCADE', drift: 'DRIFT', echo: 'ECHO', flow: 'FLOW', resonance: 'RESONANCE' };
+    // Resolve grade if not passed (backward compat)
+    if (!grade) grade = getGrade(score);
+
+    const gradeColour = GRADE_COLOURS[grade] || '#aaaaaa';
+    const voiceLine   = getGradeVoiceLine(grade);
+    const gameNames   = {
+        cascade: 'CASCADE', drift: 'DRIFT', echo: 'ECHO',
+        flow: 'FLOW', resonance: 'RESONANCE',
+        scan_signal_breach: 'SIGNAL BREACH',
+        scan_precision_shooter: 'PRECISION SHOOTER',
+        scan_final_transmission: 'FINAL TRANSMISSION'
+    };
 
     container.innerHTML = `
         <div class="mg-result-wrap">
-            <div class="mg-result-grade" style="color:${gradeColour}">${grade}</div>
-            <p class="mg-result-name">[ ${names[gameId] || gameId.toUpperCase()} COMPLETE ]</p>
-            <div class="mg-result-rewards">
+            <div class="mg-result-grade mg-result-grade--animate" id="mg-result-grade" style="color:${gradeColour}">${grade}</div>
+            <p class="mg-result-name">[ ${gameNames[gameId] || gameId.toUpperCase()} COMPLETE ]</p>
+            <p class="mg-result-voice">${voiceLine}</p>
+            <div class="mg-result-rewards mg-result-rewards--slide" id="mg-result-rewards">
+                <div class="mg-result-row">
+                    <span class="mg-result-label">GRADE</span>
+                    <span class="mg-result-val" style="color:${gradeColour}">${grade}</span>
+                </div>
                 <div class="mg-result-row">
                     <span class="mg-result-label">XP DISTRIBUTED</span>
                     <span class="mg-result-val">+${xp}</span>
@@ -512,8 +642,18 @@ function renderMGResult(gameId, score, xp, sig, stats) {
         </div>
     `;
 
-    playTone(440, 0.08, 'square', 0.1);
-    setTimeout(() => playTone(660, 0.12, 'square', 0.1), 90);
+    // Grade S/A get ascending tones, lower grades get a single muted tone
+    if (grade === 'S') {
+        [330, 440, 550, 660, 880].forEach((n, i) => setTimeout(() => playTone(n, 0.15, 'sine', 0.12), i * 70));
+    } else if (grade === 'A') {
+        playTone(440, 0.1, 'sine', 0.1);
+        setTimeout(() => playTone(660, 0.12, 'sine', 0.1), 90);
+    } else if (grade === 'B') {
+        playTone(440, 0.08, 'square', 0.08);
+        setTimeout(() => playTone(550, 0.1, 'square', 0.07), 90);
+    } else {
+        playTone(330, 0.1, 'square', 0.06);
+    }
 
     document.getElementById('mg-result-done').addEventListener('click', () => {
         playUIClick(); goBack();
@@ -535,8 +675,8 @@ function renderMGResult(gameId, score, xp, sig, stats) {
 // [TUNING TARGET] Cascade timing
 const CASCADE_WAVES        = 3;
 const CASCADE_NODES_PER_W  = [8, 10, 12];  // total nodes per wave
-const CASCADE_FALL_MS      = [2200, 1700, 1300]; // ms to fall full height per wave
-const CASCADE_INTERVAL_MS  = [900,  700,  550];  // ms between node spawns per wave
+const CASCADE_FALL_MS      = [3500, 2600, 1900]; // ms to fall full height per wave — slowed for enjoyment
+const CASCADE_INTERVAL_MS  = [1400, 1000,  700]; // ms between node spawns per wave
 
 const CASCADE_SYMBOLS = ['⬡', '◎', '◈', '▣'];
 
@@ -561,6 +701,11 @@ function runCascade() {
                 Catch matching nodes. Tap to hold, tap its match to clear.
             </p>
             <div class="cas-arena" id="cas-arena">
+                <div class="cas-score-row">
+                    <span class="cas-score-label">PAIRS</span>
+                    <span class="cas-score" id="cas-score">0 / 0</span>
+                    <span class="cas-wave-inline" id="cas-wave-label">WAVE 1 / ${CASCADE_WAVES}</span>
+                </div>
                 <div class="cas-cols" id="cas-cols">
                     ${[0,1,2,3].map(i => '<div class="cas-col" id="cas-col-' + i + '"></div>').join('')}
                 </div>
@@ -569,7 +714,6 @@ function runCascade() {
                     <span class="cas-held-symbol" id="cas-held-symbol">—</span>
                 </div>
             </div>
-            <div class="mg-wave-label" id="cas-wave-label">WAVE 1 / ${CASCADE_WAVES}</div>
         </div>
     `;
     wireMGExit();
@@ -667,13 +811,17 @@ function spawnCascadeNode(symbol, wave) {
         } else if (cascadeState.held.sym === symbol && cascadeState.held.el !== node) {
             // Match!
             cascadeState.clearedPairs++;
-            playTone(660, 0.12, 'square', 0.1);
-            setTimeout(() => playTone(880, 0.1, 'square', 0.08), 80);
+            playTone(660, 0.15, 'square', 0.12);
+            setTimeout(() => playTone(880, 0.12, 'square', 0.1), 80);
+            spawnFloatScore(node);
             flashNodeClear(cascadeState.held.el);
             flashNodeClear(node);
             cascadeState.held = null;
             const heldEl = document.getElementById('cas-held-symbol');
             if (heldEl) heldEl.textContent = '—';
+            // Update score display
+            const scoreEl = document.getElementById('cas-score');
+            if (scoreEl) scoreEl.textContent = cascadeState.clearedPairs + ' / ' + cascadeState.totalPairs;
         } else {
             // Wrong match — drop held node
             cascadeState.held.el.classList.remove('cas-node--held');
@@ -689,8 +837,23 @@ function spawnCascadeNode(symbol, wave) {
 
 function flashNodeClear(el) {
     if (!el) return;
-    el.classList.add('cas-node--clear');
-    setTimeout(() => el.remove(), 300);
+    el.classList.add('cas-node--burst');
+    setTimeout(() => el.remove(), 400);
+}
+
+function spawnFloatScore(referenceEl) {
+    if (!referenceEl) return;
+    const rect    = referenceEl.getBoundingClientRect();
+    const arena   = document.getElementById('cas-arena');
+    if (!arena) return;
+    const aRect   = arena.getBoundingClientRect();
+    const floater = document.createElement('div');
+    floater.className   = 'cas-float-score';
+    floater.textContent = '+1';
+    floater.style.left  = (rect.left - aRect.left + rect.width / 2) + 'px';
+    floater.style.top   = (rect.top  - aRect.top) + 'px';
+    arena.appendChild(floater);
+    setTimeout(() => floater.remove(), 800);
 }
 
 function advanceCascadeWave() {
@@ -721,10 +884,12 @@ function advanceCascadeWave() {
 // ═══════════════════════════════════════════════════════════════
 
 // [TUNING TARGET] Drift constants
-const DRIFT_ROUNDS     = 3;
-const DRIFT_ZONES      = 3;          // zones per round
-const DRIFT_SPEED      = [0.8, 1.2, 1.7];   // multiplier on base animation speed
-const DRIFT_ZONE_WIDTH = [0.12, 0.10, 0.08]; // zone width as fraction of path (easier → harder)
+const DRIFT_ROUNDS          = 3;
+const DRIFT_ZONES_PER_ROUND = [6, 7, 8];    // zones per round — more to tap
+const DRIFT_SPEED           = [0.6, 0.9, 1.3];  // multiplier on base speed — gentler ramp
+const DRIFT_ZONE_RADIUS     = [0.22, 0.16, 0.10]; // zone radius as fraction of canvas width
+const DRIFT_DOT_RADIUS      = 14;           // dot radius in px
+const DRIFT_ROUND_DURATION  = 6000;         // ms per round (base, before speed multiplier)
 
 let driftState = null;
 
@@ -734,7 +899,9 @@ function runDrift() {
 
     driftState = {
         round: 0, zonesHit: 0, totalZones: 0,
-        tapCount: 0, rafId: null
+        tapCount: 0, rafId: null,
+        ripples: [],   // active hit ripples for canvas drawing
+        _onTap: null
     };
 
     container.innerHTML =
@@ -752,12 +919,22 @@ function runDrift() {
     const canvas = document.getElementById('drift-canvas');
     if (canvas) {
         canvas.width  = canvas.offsetWidth  || 320;
-        canvas.height = canvas.offsetHeight || 160;
+        canvas.height = canvas.offsetHeight || 380;
         canvas.addEventListener('click',      () => onDriftTap());
         canvas.addEventListener('touchstart', () => onDriftTap(), { passive: true });
     }
 
     startDriftRound();
+}
+
+function driftPathPoint(t, W, H) {
+    // Vertical snake: dot travels downward, curving left and right.
+    // t goes 0→1 across the full round duration.
+    // y increases linearly; x oscillates sinusoidally.
+    const segments = 4; // number of S-curves
+    const y = t * H;
+    const x = W / 2 + Math.sin(t * Math.PI * segments) * (W * 0.38);
+    return { x, y };
 }
 
 function startDriftRound() {
@@ -770,99 +947,120 @@ function startDriftRound() {
     if (instr && w === 1) instr.textContent = '[ DRIFT ACCELERATING ]';
     if (instr && w === 2) instr.textContent = '[ FINAL ROUND — HOLD YOUR TIMING ]';
 
-    const ctx    = canvas.getContext('2d');
-    const W      = canvas.width;
-    const H      = canvas.height;
-    const speed  = DRIFT_SPEED[w];
-    const zoneW  = DRIFT_ZONE_WIDTH[w];
+    const ctx         = canvas.getContext('2d');
+    const W           = canvas.width;
+    const H           = canvas.height;
+    const speed       = DRIFT_SPEED[w];
+    const zoneCount   = DRIFT_ZONES_PER_ROUND[w];
+    const zoneRad     = DRIFT_ZONE_RADIUS[w] * W;
+    const roundDur    = DRIFT_ROUND_DURATION / speed;
 
-    // Build zone positions as t-values (0–1 across the round)
-    driftState.totalZones += DRIFT_ZONES;
+    // Spread zones evenly across the path (t values)
+    driftState.totalZones += zoneCount;
     const zones = [];
-    for (let i = 0; i < DRIFT_ZONES; i++) {
-        const t = 0.15 + i * (0.7 / (DRIFT_ZONES - 1 || 1));
-        zones.push({ t, hit: false });
+    for (let i = 0; i < zoneCount; i++) {
+        const t = 0.08 + (i / (zoneCount - 1 || 1)) * 0.84;
+        const pt = driftPathPoint(t, W, H);
+        zones.push({ t, x: pt.x, y: pt.y, hit: false, rippleAge: 0 });
     }
+    driftState._zones  = zones;
+    driftState._getT   = () => Math.min(1, elapsed / DRIFT_ROUND_DURATION);
+    driftState._W      = W;
+    driftState._H      = H;
 
-    const roundDuration = 4000 / speed;
     let elapsed = 0;
     let last    = null;
-    let tapped  = false;
 
     function frame(now) {
         if (!last) last = now;
-        elapsed += (now - last) * speed;
+        const dt = (now - last) * speed;
+        elapsed += dt;
         last = now;
 
-        const t   = Math.min(1, elapsed / 4000);
-        const x   = t * W;
-        const y   = H / 2 + Math.sin(t * Math.PI * 3) * (H * 0.3);
+        const t   = Math.min(1, elapsed / DRIFT_ROUND_DURATION);
+        const pos = driftPathPoint(t, W, H);
 
         ctx.clearRect(0, 0, W, H);
 
-        // Draw path
-        ctx.strokeStyle = 'rgba(79,195,247,0.15)';
-        ctx.lineWidth   = 1;
+        // Draw full snake path (faint guide)
+        ctx.strokeStyle = 'rgba(255,167,38,0.25)';
+        ctx.lineWidth   = 2;
         ctx.beginPath();
-        for (let i = 0; i <= 100; i++) {
-            const pt = i / 100;
-            const px = pt * W;
-            const py = H / 2 + Math.sin(pt * Math.PI * 3) * (H * 0.3);
-            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        for (let i = 0; i <= 120; i++) {
+            const pt = i / 120;
+            const p  = driftPathPoint(pt, W, H);
+            i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
         }
         ctx.stroke();
 
         // Draw zones
         zones.forEach(zone => {
-            const zx = zone.t * W;
-            const zy = H / 2 + Math.sin(zone.t * Math.PI * 3) * (H * 0.3);
-            const rad = zoneW * W / 2;
-            ctx.fillStyle = zone.hit
-                ? 'rgba(128,203,196,0.4)'
-                : 'rgba(79,195,247,0.25)';
-            ctx.beginPath();
-            ctx.arc(zx, zy, rad, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = zone.hit ? '#80cbc4' : 'var(--accent, #4fc3f7)';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
+            if (zone.hit) {
+                // Expanding ripple on hit
+                zone.rippleAge += dt;
+                const rippleR = zoneRad + zone.rippleAge * 0.08;
+                const alpha   = Math.max(0, 0.6 - zone.rippleAge * 0.003);
+                ctx.strokeStyle = `rgba(102,187,106,${alpha})`;
+                ctx.lineWidth   = 2;
+                ctx.beginPath();
+                ctx.arc(zone.x, zone.y, rippleR, 0, Math.PI * 2);
+                ctx.stroke();
+                // Solid green fill (fading)
+                ctx.fillStyle = `rgba(102,187,106,${alpha * 0.4})`;
+                ctx.beginPath();
+                ctx.arc(zone.x, zone.y, zoneRad * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Idle zone — amber circle
+                const pulse = 0.25 + 0.1 * Math.sin(now / 400);
+                ctx.fillStyle = `rgba(255,167,38,${pulse})`;
+                ctx.beginPath();
+                ctx.arc(zone.x, zone.y, zoneRad, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,167,38,0.7)';
+                ctx.lineWidth   = 1.5;
+                ctx.stroke();
+            }
         });
 
-        // Draw dot
-        ctx.fillStyle = '#fff';
+        // Draw dot with amber glow
+        ctx.shadowColor = 'rgba(255,167,38,0.8)';
+        ctx.shadowBlur  = 12;
+        ctx.fillStyle   = '#ffa726';
         ctx.beginPath();
-        ctx.arc(x, y, 8, 0, Math.PI * 2);
+        ctx.arc(pos.x, pos.y, DRIFT_DOT_RADIUS, 0, Math.PI * 2);
         ctx.fill();
+        ctx.shadowBlur = 0;
 
         if (t < 1) {
             driftState.rafId = requestAnimationFrame(frame);
         } else {
-            // Round over
             advanceDriftRound();
         }
     }
 
     driftState.rafId = requestAnimationFrame(frame);
 
-    // Tap handler checks if dot is inside any zone at tap time
-    driftState._onTap = () => {
-        if (!last) return;
-        driftState.tapCount++;
-        const t = Math.min(1, elapsed / 4000);
-        zones.forEach(zone => {
-            if (!zone.hit && Math.abs(t - zone.t) <= zoneW / 2) {
-                zone.hit = true;
-                driftState.zonesHit++;
-                playTone(660, 0.1, 'square', 0.09);
-            }
-        });
-    };
+    // _getT and _zones are already set above — closure gives live elapsed value
 
     window._mgCleanup = () => cancelAnimationFrame(driftState.rafId);
 }
 
 function onDriftTap() {
-    if (driftState && driftState._onTap) driftState._onTap();
+    if (!driftState || !driftState._getT || !driftState._zones) return;
+    driftState.tapCount++;
+    const t     = driftState._getT();
+    const w     = driftState.round;
+    const zones = driftState._zones;
+    zones.forEach(zone => {
+        if (zone.hit) return;
+        if (Math.abs(t - zone.t) <= DRIFT_ZONE_RADIUS[w] * 0.9) {
+            zone.hit       = true;
+            zone.rippleAge = 0;
+            driftState.zonesHit++;
+            playTone(880, 0.12, 'sine', 0.1);
+        }
+    });
 }
 
 function advanceDriftRound() {
@@ -870,14 +1068,13 @@ function advanceDriftRound() {
     driftState.round++;
     if (driftState.round >= DRIFT_ROUNDS) {
         const rawScore  = driftState.totalZones > 0 ? driftState.zonesHit / driftState.totalZones : 0;
-        // Penalise button-mashing slightly — more than 2x taps vs zones = slight deduction
         const precision = driftState.tapCount > 0
             ? Math.min(1, (driftState.zonesHit * 2) / driftState.tapCount)
             : rawScore;
-        const score     = (rawScore * 0.7 + precision * 0.3);
+        const score = (rawScore * 0.7 + precision * 0.3);
         completeMGSession('drift', Math.min(1, score));
     } else {
-        setTimeout(() => startDriftRound(), 600);
+        setTimeout(() => startDriftRound(), 700);
     }
 }
 
@@ -909,14 +1106,21 @@ function runEcho() {
         accepting: false
     };
 
+    const ECHO_SYMBOLS = ['⬡', '◎', '◈', '▣'];
+
     container.innerHTML =
         renderMGHeader('ECHO', ['intelligence', 'strength']) + `
         <div class="mg-game-body">
             <p class="mg-game-instruction" id="echo-instruction">
                 Watch SYD's sequence. Repeat it exactly.
             </p>
+            <div class="echo-progress-dots" id="echo-progress-dots"></div>
             <div class="echo-grid" id="echo-grid">
-                ${[0,1,2,3].map(i => '<button class="echo-node" id="echo-node-' + i + '" data-idx="' + i + '" disabled></button>').join('')}
+                ${[0,1,2,3].map(i => `
+                    <button class="echo-node" id="echo-node-${i}" data-idx="${i}" disabled>
+                        <span class="echo-node-symbol">${ECHO_SYMBOLS[i]}</span>
+                    </button>
+                `).join('')}
             </div>
             <div class="mg-wave-label" id="echo-round-label">ROUND 1 / ${ECHO_ROUNDS}</div>
             <p class="echo-feedback" id="echo-feedback">&nbsp;</p>
@@ -948,6 +1152,7 @@ function startEchoRound() {
     echoState.sequence  = seq;
     echoState.inputIdx  = 0;
     echoState.accepting = false;
+    updateEchoProgressDots(0, seq.length);
 
     // Disable all nodes during playback
     [0,1,2,3].forEach(i => {
@@ -981,6 +1186,14 @@ function playbackEchoSequence(seq, idx, onDone) {
     }
 }
 
+function updateEchoProgressDots(filled, total) {
+    const el = document.getElementById('echo-progress-dots');
+    if (!el) return;
+    el.innerHTML = Array.from({ length: total }, (_, i) =>
+        `<span class="echo-dot ${i < filled ? 'echo-dot--filled' : ''}">${i < filled ? '●' : '○'}</span>`
+    ).join('');
+}
+
 function onEchoTap(idx) {
     if (!echoState || !echoState.accepting) return;
     const nodeEl = document.getElementById('echo-node-' + idx);
@@ -995,6 +1208,7 @@ function onEchoTap(idx) {
 
     if (idx === echoState.sequence[echoState.inputIdx]) {
         echoState.inputIdx++;
+        updateEchoProgressDots(echoState.inputIdx, echoState.sequence.length);
         if (echoState.inputIdx >= echoState.sequence.length) {
             // Correct round complete
             echoState.roundsCleared++;
@@ -1015,11 +1229,11 @@ function onEchoTap(idx) {
         // Wrong tap — end round
         echoState.accepting = false;
         [0,1,2,3].forEach(i => { const b = document.getElementById('echo-node-' + i); if (b) b.disabled = true; });
-        if (nodeEl) nodeEl.classList.add('echo-node--wrong');
+        if (nodeEl) { nodeEl.classList.add('echo-node--wrong', 'echo-node--shake'); }
         if (fb) { fb.textContent = '[ SEQUENCE BROKEN ]'; }
         playTone(180, 0.1, 'sawtooth', 0.07);
         setTimeout(() => {
-            if (nodeEl) nodeEl.classList.remove('echo-node--wrong');
+            if (nodeEl) nodeEl.classList.remove('echo-node--wrong', 'echo-node--shake');
             echoState.round++;
             if (echoState.round >= ECHO_ROUNDS) {
                 completeMGSession('echo', echoState.roundsCleared / ECHO_ROUNDS);
@@ -1031,24 +1245,26 @@ function onEchoTap(idx) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// GAME 4 — FLOW  (Strength + Endurance)
+// GAME 4 — FLOW  (Strength + Endurance) — REDESIGNED
 //
-// A vertical bar must be kept in a green zone through rhythmic tapping.
-// Each tap pushes the bar up. Gravity pulls it down continuously.
-// Without tapping, the bar falls out of zone.
-// Tap too fast and it overshoots the top.
-// Three intervals of 8 seconds each. Zone narrows each interval.
-// Score = total time-in-zone / total time.
+// A glowing ball moves horizontally across the canvas, bouncing
+// vertically via sine wave. A vertical zone band is marked on the
+// canvas. The ball wraps from right edge back to left.
+// Player taps when the ball is inside the zone.
+// Three intervals — zone shifts position and narrows each round.
+// Score = correct taps / total windows.
 // ═══════════════════════════════════════════════════════════════
 
-// [TUNING TARGET] Flow physics
-const FLOW_INTERVALS     = 3;
-const FLOW_INTERVAL_MS   = 8000;  // 8 seconds per interval
-const FLOW_GRAVITY       = 0.006; // units/ms downward pull (fraction of bar height)
-const FLOW_TAP_BOOST     = 0.12;  // fraction of bar height per tap
-const FLOW_ZONE_CENTRES  = [0.5, 0.5, 0.5];        // zone centre as fraction of bar height
-const FLOW_ZONE_HEIGHTS  = [0.30, 0.22, 0.16];     // [TUNING TARGET] zone width narrows
-const FLOW_CLAMP         = [0.02, 0.98];             // min/max position
+// [TUNING TARGET] Flow rhythm constants
+const FLOW_INTERVALS       = 3;
+const FLOW_INTERVAL_MS     = 9000;    // ms per interval
+const FLOW_BALL_SPEED      = 0.00012; // horizontal fraction per ms (wraps at 1.0)
+const FLOW_BOUNCE_FREQ     = 2.8;     // sine frequency for vertical bounce
+const FLOW_TRAIL_LENGTH    = 8;       // number of trail positions
+const FLOW_ZONE_POSITIONS  = [0.35, 0.60, 0.50]; // zone centre x as fraction of width
+const FLOW_ZONE_WIDTHS     = [0.22, 0.16, 0.11]; // zone width as fraction of width
+const FLOW_TAP_WINDOW      = 0.5;     // seconds — how long a "window" lasts after ball enters zone
+const FLOW_WINDOWS_PER_INT = 4;       // windows available per interval
 
 let flowState = null;
 
@@ -1057,27 +1273,26 @@ function runFlow() {
     if (!container) return;
 
     flowState = {
-        interval: 0,
-        pos:      0.5,     // 0=bottom, 1=top
-        timeInZone: 0,
-        totalTime:  0,
-        rafId:   null,
-        tapped:  false
+        interval:    0,
+        ballX:       0.0,      // 0→1 horizontal position
+        trail:       [],       // last N positions [{x,y}]
+        hits:        0,
+        totalWindows: 0,
+        inWindow:    false,
+        windowTapped: false,
+        rafId:       null,
+        beatTimer:   null,
+        elapsed:     0
     };
 
     container.innerHTML =
         renderMGHeader('FLOW', ['strength', 'endurance']) + `
         <div class="mg-game-body">
             <p class="mg-game-instruction" id="flow-instruction">
-                Tap rhythmically to keep the bar in the zone.
+                Tap when the ball passes through the zone.
             </p>
-            <div class="flow-arena" id="flow-arena">
-                <div class="flow-track">
-                    <div class="flow-zone" id="flow-zone"></div>
-                    <div class="flow-bar" id="flow-bar"></div>
-                </div>
-                <button class="flow-tap-btn" id="flow-tap-btn">TAP</button>
-            </div>
+            <canvas id="flow-canvas" class="flow-canvas"></canvas>
+            <button class="flow-tap-btn flow-tap-btn--wide" id="flow-tap-btn">TAP</button>
             <div class="mg-wave-label" id="flow-interval-label">INTERVAL 1 / ${FLOW_INTERVALS}</div>
         </div>
     `;
@@ -1086,64 +1301,129 @@ function runFlow() {
     const tapBtn = document.getElementById('flow-tap-btn');
     if (tapBtn) {
         tapBtn.addEventListener('click',      () => onFlowTap());
-        tapBtn.addEventListener('touchstart', () => onFlowTap(), { passive: true });
+        tapBtn.addEventListener('touchstart', (e) => { e.preventDefault(); onFlowTap(); }, { passive: false });
     }
 
-    updateFlowZoneUI();
+    const canvas = document.getElementById('flow-canvas');
+    if (canvas) {
+        canvas.width  = canvas.offsetWidth  || 320;
+        canvas.height = canvas.offsetHeight || 180;
+    }
+
     startFlowInterval();
+    playFlowBeat();
 }
 
-function updateFlowZoneUI() {
-    const iv      = flowState.interval;
-    const centre  = FLOW_ZONE_CENTRES[iv];
-    const half    = FLOW_ZONE_HEIGHTS[iv] / 2;
-    const zoneEl  = document.getElementById('flow-zone');
-    if (zoneEl) {
-        const bottom = (centre - half) * 100;
-        const height = FLOW_ZONE_HEIGHTS[iv] * 100;
-        zoneEl.style.bottom = bottom + '%';
-        zoneEl.style.height = height + '%';
-    }
+function playFlowBeat() {
+    if (!flowState) return;
+    // Low rhythmic pulse matching the ball's horizontal cycle
+    playTone(110, 0.4, 'sine', 0.035);
+    // Schedule next beat aligned to ball wrap cycle
+    const cycleMs = 1000 / FLOW_BALL_SPEED;
+    flowState.beatTimer = setTimeout(playFlowBeat, cycleMs * 0.5);
 }
 
 function startFlowInterval() {
-    const iv      = flowState.interval;
-    const label   = document.getElementById('flow-interval-label');
-    const instr   = document.getElementById('flow-instruction');
+    const iv     = flowState.interval;
+    const label  = document.getElementById('flow-interval-label');
+    const instr  = document.getElementById('flow-instruction');
     if (label) label.textContent = 'INTERVAL ' + (iv + 1) + ' / ' + FLOW_INTERVALS;
-    if (instr && iv === 1) instr.textContent = '[ ZONE NARROWING ]';
-    if (instr && iv === 2) instr.textContent = '[ FINAL INTERVAL — HOLD IT ]';
+    if (instr && iv === 1) instr.textContent = '[ ZONE SHIFTING — STAY WITH IT ]';
+    if (instr && iv === 2) instr.textContent = '[ FINAL INTERVAL — FIND THE RHYTHM ]';
 
-    updateFlowZoneUI();
-    flowState.pos = 0.5;  // reset position
+    flowState.ballX        = 0;
+    flowState.trail        = [];
+    flowState.inWindow     = false;
+    flowState.windowTapped = false;
+    flowState.totalWindows += FLOW_WINDOWS_PER_INT;
 
-    let last       = null;
-    let elapsed    = 0;
+    const canvas = document.getElementById('flow-canvas');
+    if (!canvas) { advanceFlowInterval(); return; }
+    const ctx = canvas.getContext('2d');
+    const W   = canvas.width;
+    const H   = canvas.height;
+
+    const zoneCentreX = FLOW_ZONE_POSITIONS[iv] * W;
+    const zoneHalfW   = FLOW_ZONE_WIDTHS[iv] * W / 2;
+    const zoneLeft    = zoneCentreX - zoneHalfW;
+    const zoneRight   = zoneCentreX + zoneHalfW;
+
+    // Track which pass through the zone we're on for window counting
+    let windowsThisInterval = 0;
+    let wasInZone = false;
+    let elapsed   = 0;
+    let last      = null;
 
     function frame(now) {
         if (!last) last = now;
-        const dt   = now - last;
-        last       = now;
-        elapsed   += dt;
-        flowState.totalTime += dt;
+        const dt = now - last;
+        last     = now;
+        elapsed += dt;
 
-        // Apply gravity and clamp
-        flowState.pos = Math.max(
-            FLOW_CLAMP[0],
-            Math.min(FLOW_CLAMP[1], flowState.pos - FLOW_GRAVITY * dt)
-        );
+        // Advance ball horizontally, wrapping at 1.0
+        flowState.ballX = (flowState.ballX + FLOW_BALL_SPEED * dt) % 1.0;
 
-        // Check if in zone
-        const centre = FLOW_ZONE_CENTRES[iv];
-        const half   = FLOW_ZONE_HEIGHTS[iv] / 2;
-        const inZone = flowState.pos >= centre - half && flowState.pos <= centre + half;
-        if (inZone) flowState.timeInZone += dt;
+        // Ball vertical position — sine bounce
+        const ballXpx  = flowState.ballX * W;
+        const ballYpx  = H / 2 + Math.sin(flowState.ballX * Math.PI * 2 * FLOW_BOUNCE_FREQ) * (H * 0.35);
 
-        // Update bar UI
-        const barEl  = document.getElementById('flow-bar');
-        const zoneEl = document.getElementById('flow-zone');
-        if (barEl)  barEl.style.bottom = (flowState.pos * 100) + '%';
-        if (zoneEl) zoneEl.className   = 'flow-zone' + (inZone ? ' flow-zone--active' : '');
+        // Update trail
+        flowState.trail.push({ x: ballXpx, y: ballYpx });
+        if (flowState.trail.length > FLOW_TRAIL_LENGTH) flowState.trail.shift();
+
+        // Zone detection
+        const nowInZone = ballXpx >= zoneLeft && ballXpx <= zoneRight;
+
+        // New entry into zone = new window
+        if (nowInZone && !wasInZone && windowsThisInterval < FLOW_WINDOWS_PER_INT) {
+            windowsThisInterval++;
+            flowState.inWindow     = true;
+            flowState.windowTapped = false;
+            // Soft cue — ball entering zone
+            playTone(330, 0.06, 'sine', 0.04);
+        }
+        if (!nowInZone && wasInZone) {
+            flowState.inWindow = false;
+        }
+        wasInZone = nowInZone;
+
+        // Draw
+        ctx.clearRect(0, 0, W, H);
+
+        // Zone band
+        const zoneAlpha = nowInZone ? 0.35 : 0.18;
+        ctx.fillStyle   = `rgba(102,187,106,${zoneAlpha})`;
+        ctx.fillRect(zoneLeft, 0, zoneHalfW * 2, H);
+        ctx.strokeStyle = `rgba(102,187,106,${nowInZone ? 0.9 : 0.45})`;
+        ctx.lineWidth   = nowInZone ? 2 : 1;
+        ctx.strokeRect(zoneLeft, 0, zoneHalfW * 2, H);
+
+        // Trail (glow tail)
+        flowState.trail.forEach((pt, i) => {
+            const alpha = (i / flowState.trail.length) * 0.5;
+            const r     = 4 + (i / flowState.trail.length) * 6;
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle   = '#66bb6a';
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+
+        // Ball
+        ctx.shadowColor = 'rgba(102,187,106,0.9)';
+        ctx.shadowBlur  = 16;
+        ctx.fillStyle   = '#66bb6a';
+        ctx.beginPath();
+        ctx.arc(ballXpx, ballYpx, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Tap button pulse when in window
+        const tapBtn = document.getElementById('flow-tap-btn');
+        if (tapBtn) {
+            tapBtn.classList.toggle('flow-tap-btn--pulse', nowInZone && !flowState.windowTapped);
+        }
 
         if (elapsed < FLOW_INTERVAL_MS) {
             flowState.rafId = requestAnimationFrame(frame);
@@ -1153,25 +1433,45 @@ function startFlowInterval() {
     }
 
     flowState.rafId = requestAnimationFrame(frame);
-    window._mgCleanup = () => cancelAnimationFrame(flowState.rafId);
+    window._mgCleanup = () => {
+        cancelAnimationFrame(flowState.rafId);
+        if (flowState.beatTimer) clearTimeout(flowState.beatTimer);
+    };
 }
 
 function onFlowTap() {
     if (!flowState) return;
-    flowState.pos = Math.min(FLOW_CLAMP[1], flowState.pos + FLOW_TAP_BOOST);
-    playTone(440, 0.04, 'square', 0.06);
+    if (flowState.inWindow && !flowState.windowTapped) {
+        flowState.hits++;
+        flowState.windowTapped = true;
+        // Musical correct tap — C5
+        playTone(523, 0.15, 'sine', 0.12);
+        // Visual feedback on tap button
+        const tapBtn = document.getElementById('flow-tap-btn');
+        if (tapBtn) {
+            tapBtn.classList.add('flow-tap-btn--hit');
+            setTimeout(() => tapBtn.classList.remove('flow-tap-btn--hit'), 200);
+        }
+    } else {
+        // Miss tap — soft penalty tone
+        playTone(220, 0.06, 'sine', 0.04);
+    }
 }
 
 function advanceFlowInterval() {
     cancelAnimationFrame(flowState.rafId);
+    if (flowState.beatTimer) { clearTimeout(flowState.beatTimer); flowState.beatTimer = null; }
     flowState.interval++;
     if (flowState.interval >= FLOW_INTERVALS) {
-        const score = flowState.totalTime > 0
-            ? flowState.timeInZone / flowState.totalTime
-            : 0.3;
+        const score = flowState.totalWindows > 0
+            ? flowState.hits / flowState.totalWindows
+            : 0;
         completeMGSession('flow', score);
     } else {
-        setTimeout(() => startFlowInterval(), 500);
+        setTimeout(() => {
+            startFlowInterval();
+            playFlowBeat();
+        }, 600);
     }
 }
 
@@ -1277,6 +1577,7 @@ function renderResonanceScenario() {
             playUIClick();
             document.querySelectorAll('.resonance-opt').forEach(b => b.disabled = true);
             btn.classList.add('resonance-opt--selected');
+            btn.textContent = '✓ ' + btn.textContent;
             const idx = parseInt(btn.dataset.optIdx, 10);
             resonanceState.totalScore += sc.options[idx].score;
             setTimeout(() => {
