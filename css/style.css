@@ -7133,7 +7133,7 @@ body {
 
 /* Ensure tab content doesn't hide behind sticky header */
 .status-tab-content {
-    padding-top: 4px;
+    padding-top: 20px;
 }
 
 /* Header name is now tappable */

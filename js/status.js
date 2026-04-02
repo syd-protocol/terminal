@@ -1049,6 +1049,9 @@ function renderStatusMainContent(container, animate) {
                     <button class="sot-sig-badge sot-sig-badge--btn" id="sot-sig-badge">&#x2B21; ${sig} SIG</button>
                     <button class="sot-settings-shortcut" id="sot-settings-shortcut" title="Settings">&#x2699;</button>
                 </div>
+                <div class="sot-inline-explainer hidden" id="sig-explainer">
+                    <p class="sot-inline-explainer-text">SIG is the currency of the System. You earn it by completing directives. You spend it in GAMES to train specific stats. Current balance: ${sig} SIG.</p>
+                </div>
             </div>
 
             <div class="sot-divider"></div>
@@ -1172,9 +1175,8 @@ function renderStatusMainContent(container, animate) {
     if (sigBadge) {
         sigBadge.addEventListener('click', () => {
             playUIClick();
-            if (typeof showLog === 'function') {
-                showLog('[ SIG — earned by completing directives. Spent in GAMES. Current balance: ' + sig + ' ]', 'system');
-            }
+            const exp = document.getElementById('sig-explainer');
+            if (exp) exp.classList.toggle('hidden');
         });
     }
 
