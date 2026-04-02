@@ -272,3 +272,23 @@
     color:        #66bb6a !important;
     background:   rgba(102, 187, 106, 0.08) !important;
 }
+
+/* ─── ENTER BUTTON — consistent readable text ───────────────── */
+.game-card-enter-btn {
+    background:   transparent;
+    border-width: 1px;
+    border-style: solid;
+    font-family:  var(--font-mono, monospace);
+    font-size:    0.78rem;
+    letter-spacing: 0.08em;
+    padding:      10px 16px;
+    cursor:       pointer;
+    transition:   background 0.15s, opacity 0.15s;
+}
+.game-card-enter-btn:not(:disabled):active {
+    opacity: 0.75;
+}
+.game-card-enter-btn--locked {
+    opacity: 0.4;
+    cursor:  default;
+}

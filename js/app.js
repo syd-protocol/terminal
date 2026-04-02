@@ -838,6 +838,8 @@ function updateStatusScreen(animate) {
     if (nameEl)  nameEl.textContent  = player.name;
     if (levelEl) levelEl.textContent = level;
     if (rankEl)  { rankEl.textContent = rank; rankEl.className = 'rank-badge ' + rankCssClass(rank); }
+    const sigEl = document.getElementById('player-sig');
+    if (sigEl)   sigEl.textContent = Math.floor(player.sig || 0);
 
     if (typeof renderStatusWindow === 'function') {
         renderStatusWindow(animate);
@@ -1069,11 +1071,72 @@ function renderCloudSyncOptIn(onDone) {
     document.getElementById('cso-enable-btn').addEventListener('click', () => {
         playUIClick();
         enableCloudSync();
+        // Show sync ID immediately after enabling
+        const uid = player && player.uid ? player.uid : '—';
+        container.innerHTML = `
+            <div class="cloud-sync-optin-wrap">
+                <p class="cso-label">[ CLOUD SYNC ACTIVE ]</p>
+                <p class="cso-syd-line">Your data is now backed up. To access it on another device, use your Sync ID below.</p>
+                <div class="csm-id-block">
+                    <span class="csm-id-label">YOUR SYNC ID</span>
+                    <span class="csm-id-value" id="cso-uid-display">${uid}</span>
+                    <span class="csm-id-note">Copy this. On a new device, tap Manage Sync and enter it to restore your data.</span>
+                </div>
+                <button class="btn btn--primary" id="cso-copy-btn">[ COPY SYNC ID ]</button>
+                <button class="btn btn--primary" id="cso-done-btn">[ CONTINUE ]</button>
+            </div>
+        `;
+        document.getElementById('cso-copy-btn').addEventListener('click', () => {
+            playUIClick();
+            navigator.clipboard.writeText(uid).then(() => {
+                const btn = document.getElementById('cso-copy-btn');
+                if (btn) { btn.textContent = '✓ COPIED'; setTimeout(() => { btn.textContent = '[ COPY SYNC ID ]'; }, 2500); }
+            }).catch(() => {});
+        });
+        document.getElementById('cso-done-btn').addEventListener('click', () => {
+            playUIClick();
+            if (onDone) onDone();
+        });
         showLog('[ CLOUD SYNC ENABLED — DATA BACKED UP ]', 'accent');
-        setTimeout(() => { if (onDone) onDone(); }, 700);
     });
 
     document.getElementById('cso-skip-btn').addEventListener('click', () => {
+        playUIClick();
+        if (onDone) onDone();
+    });
+}
+
+function renderCloudSyncManage(onDone) {
+    showScreen('screen-path');
+    const container = document.getElementById('path-content');
+    if (!container) { if (onDone) onDone(); return; }
+
+    const uid = player && player.uid ? player.uid : '—';
+
+    container.innerHTML = `
+        <div class="csm-wrap">
+            <p class="csm-label">[ CLOUD SYNC — ACTIVE ]</p>
+            <p class="csm-syd-line">Your data is syncing. To access it on another device, use your Sync ID.</p>
+            <div class="csm-id-block">
+                <span class="csm-id-label">YOUR SYNC ID</span>
+                <span class="csm-id-value">${uid}</span>
+                <span class="csm-id-note">Enter this ID on a new device under Manage Sync to restore your data.</span>
+            </div>
+            <button class="btn btn--primary" id="csm-copy-btn">[ COPY SYNC ID ]</button>
+            <p class="csm-syd-line" style="margin-top:8px;">To restore on a new device, open SYD, go to Settings → Enable Cloud Sync → enter your Sync ID.</p>
+            <button class="cso-skip-btn" id="csm-done-btn">← BACK</button>
+        </div>
+    `;
+
+    document.getElementById('csm-copy-btn').addEventListener('click', () => {
+        playUIClick();
+        navigator.clipboard.writeText(uid).then(() => {
+            const btn = document.getElementById('csm-copy-btn');
+            if (btn) { btn.textContent = '✓ COPIED'; setTimeout(() => { btn.textContent = '[ COPY SYNC ID ]'; }, 2500); }
+        }).catch(() => {});
+    });
+
+    document.getElementById('csm-done-btn').addEventListener('click', () => {
         playUIClick();
         if (onDone) onDone();
     });

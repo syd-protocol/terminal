@@ -9619,3 +9619,91 @@ body {
     margin-top:   8px;
     margin-bottom: 24px;
 }
+
+/* ─── CLOUD SYNC OPT-IN SCREEN ──────────────────────────────── */
+.cloud-sync-optin-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            20px;
+    padding:        40px 0 80px;
+}
+
+.cso-label {
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    color:          var(--accent);
+    letter-spacing: 0.12em;
+}
+
+.cso-syd-line {
+    font-family:  var(--font-mono);
+    font-size:    0.9rem;
+    color:        var(--text-primary);
+    line-height:  1.7;
+    margin:       0;
+}
+
+.cso-skip-btn {
+    background:      transparent;
+    border:          none;
+    color:           var(--text-secondary);
+    font-family:     var(--font-mono);
+    font-size:       0.8rem;
+    cursor:          pointer;
+    padding:         12px 0;
+    text-align:      left;
+    text-decoration: underline;
+    min-height:      44px;
+    opacity:         0.8;
+}
+.cso-skip-btn:active { opacity: 0.5; }
+
+/* ─── CLOUD SYNC MANAGE SCREEN ───────────────────────────────── */
+.csm-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            20px;
+    padding:        40px 0 80px;
+}
+.csm-label {
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    color:          var(--accent);
+    letter-spacing: 0.12em;
+}
+.csm-syd-line {
+    font-family:  var(--font-mono);
+    font-size:    0.9rem;
+    color:        var(--text-primary);
+    line-height:  1.7;
+    margin:       0;
+}
+.csm-id-block {
+    background:    var(--panel);
+    border:        1px solid var(--border);
+    border-radius: 4px;
+    padding:       14px 16px;
+    display:       flex;
+    flex-direction: column;
+    gap:           8px;
+}
+.csm-id-label {
+    font-family:    var(--font-mono);
+    font-size:      0.68rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.1em;
+}
+.csm-id-value {
+    font-family:    var(--font-mono);
+    font-size:      0.85rem;
+    color:          var(--accent);
+    word-break:     break-all;
+    letter-spacing: 0.04em;
+}
+.csm-id-note {
+    font-family:  var(--font-mono);
+    font-size:    0.72rem;
+    color:        var(--text-secondary);
+    line-height:  1.6;
+    opacity:      0.8;
+}

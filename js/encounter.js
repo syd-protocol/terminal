@@ -464,7 +464,7 @@ function buildLocalJudgmentFeedback(enc) {
 
     // If free text is present, prepend an acknowledgement
     if (freeText && freeText.length > 10) {
-        text = `Your written read — "${freeText.slice(0, 80)}${freeText.length > 80 ? '...' : ''}" — shows the right instinct. ${text}`;
+        text = `What you wrote shows the right instinct. ${text}`;
     }
 
     return { text, geminiEnhanced: false };

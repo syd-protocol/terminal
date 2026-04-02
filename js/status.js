@@ -1991,16 +1991,17 @@ function wireSettingsSection() {
     if (syncBtn) {
         syncBtn.addEventListener('click', () => {
             playUIClick();
+            const onReturn = () => {
+                showScreen('screen-status');
+                if (typeof renderStatusWindow === 'function') renderStatusWindow(false);
+            };
             if (typeof player !== 'undefined' && player && player.syncOptedIn) {
-                if (typeof showLog === 'function') {
-                    showLog('[ CLOUD SYNC ACTIVE — DATA IS BACKED UP ]', 'accent');
+                if (typeof renderCloudSyncManage === 'function') {
+                    renderCloudSyncManage(onReturn);
                 }
             } else {
                 if (typeof renderCloudSyncOptIn === 'function') {
-                    renderCloudSyncOptIn(() => {
-                        showScreen('screen-status');
-                        if (typeof renderStatusWindow === 'function') renderStatusWindow(false);
-                    });
+                    renderCloudSyncOptIn(onReturn);
                 }
             }
         });

@@ -99,8 +99,9 @@ function showMorningTransmission() {
     btn.onclick = () => {
         playUIClick();
         overlay.classList.add('hidden');
-        // Morning transmission dismiss lands on STATUS tab
-        if (typeof switchStatusTab === 'function') switchStatusTab('status');
+        // Morning transmission dismiss → OPS tab → DIRECTIVES segment
+        if (typeof switchStatusTab  === 'function') switchStatusTab('ops');
+        if (typeof switchOpsSegment === 'function') switchOpsSegment('directives');
     };
 
     nextLine();

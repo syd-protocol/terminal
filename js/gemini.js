@@ -95,8 +95,11 @@ async function geminiCall({ prompt, model, temperature, maxTokens }) {
             return { ok: false, error: errMsg, quota: isQuota };
         }
 
-        const data = await res.json();
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const data  = await res.json();
+        // Thinking models (gemini-2.5-flash) may return thought parts before the text part.
+        // Find the first part that actually has a non-empty text field.
+        const parts = data?.candidates?.[0]?.content?.parts || [];
+        const text  = (parts.find(p => p.text && p.text.trim().length > 0) || {}).text || '';
         if (!text) {
             console.warn('[SYD Gemini] Empty response from model — falling back to local.');
             return { ok: false, error: 'Empty response from model.', quota: false };
@@ -200,8 +203,9 @@ async function geminiGenerateLarge(prompt, temperature) {
             return { ok: false, error: errMsg, quota: isQuota };
         }
 
-        const data = await res.json();
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const data  = await res.json();
+        const parts = data?.candidates?.[0]?.content?.parts || [];
+        const text  = (parts.find(p => p.text && p.text.trim().length > 0) || {}).text || '';
         if (!text) {
             console.warn('[SYD Gemini] Large call returned empty — falling back to local.');
             return { ok: false, error: 'Empty response.', quota: false };
