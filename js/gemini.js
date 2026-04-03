@@ -253,6 +253,63 @@ function extractJSON(text) {
         if (match) return JSON.parse(match[0]);
     } catch (_) { /* fall through */ }
 
+    // Pass 4: bracket-balancing repair.
+    // Handles Gemini dropping a closing brace mid-object (observed in Call 2
+    // responses where finishReason is STOP but a } is missing inside paths[]).
+    // Strategy: find the outermost { or [ start, then walk character by character
+    // tracking open/close counts, appending missing closers at the end.
+    try {
+        const startObj = text.indexOf('{');
+        const startArr = text.indexOf('[');
+        const start    = startObj === -1 ? startArr
+                       : startArr === -1 ? startObj
+                       : Math.min(startObj, startArr);
+        if (start !== -1) {
+            const opener  = text[start];
+            const closer  = opener === '{' ? '}' : ']';
+            const inners  = opener === '{' ? ['{', '}'] : ['[', ']'];
+            let   depth   = 0;
+            let   inStr   = false;
+            let   escaped = false;
+            let   end     = start;
+
+            for (let i = start; i < text.length; i++) {
+                const ch = text[i];
+                if (escaped)          { escaped = false; end = i; continue; }
+                if (ch === '\\')      { escaped = true;  end = i; continue; }
+                if (ch === '"')       { inStr = !inStr;  end = i; continue; }
+                if (inStr)            { end = i; continue; }
+                if (ch === '{' || ch === '[') { depth++; end = i; }
+                if (ch === '}' || ch === ']') { depth--; end = i; }
+            }
+
+            // Build repaired string: take everything up to the last char we saw,
+            // then close any unclosed braces/brackets in reverse order.
+            // We track which openers are unclosed by replaying the depth stack.
+            let   fragment = text.slice(start);
+            const stack    = [];
+            inStr   = false;
+            escaped = false;
+
+            for (let i = 0; i < fragment.length; i++) {
+                const ch = fragment[i];
+                if (escaped)     { escaped = false; continue; }
+                if (ch === '\\') { escaped = true;  continue; }
+                if (ch === '"')  { inStr = !inStr;  continue; }
+                if (inStr)       continue;
+                if (ch === '{')  stack.push('}');
+                if (ch === '[')  stack.push(']');
+                if (ch === '}' || ch === ']') {
+                    if (stack.length && stack[stack.length - 1] === ch) stack.pop();
+                }
+            }
+
+            // Append missing closers
+            const repaired = fragment.trimEnd() + stack.reverse().join('');
+            return JSON.parse(repaired);
+        }
+    } catch (_) { /* fall through to null */ }
+
     console.warn('[SYD Gemini] Could not extract JSON from response — falling back to local.');
     return null;
 }
