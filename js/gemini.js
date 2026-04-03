@@ -252,7 +252,55 @@ function extractJSON(text) {
         if (match) return JSON.parse(match[0]);
     } catch (_) { /* fall through */ }
 
-    // Pass 4: bracket-balancing repair.
+    // Pass 4: truncated-string repair.
+    // Handles MAX_TOKENS cut-off mid-string (observed in market signal grounding calls
+    // where finishReason is MAX_TOKENS and the last token lands inside a JSON string value).
+    // Strategy: find the last complete key-value pair boundary, truncate there, then close
+    // open brackets. This recovers partial arrays with at least one complete element.
+    try {
+        const startArr = text.indexOf('[');
+        const startObj = text.indexOf('{');
+        const start    = startArr === -1 ? startObj
+                       : startObj === -1 ? startArr
+                       : Math.min(startArr, startObj);
+        if (start !== -1) {
+            let fragment = text.slice(start);
+            // If there's an unclosed string, truncate before the last complete object.
+            // Find the last '}' that isn't inside a string.
+            let lastSafeClose = -1;
+            let inStr = false, escaped = false;
+            for (let i = 0; i < fragment.length; i++) {
+                const ch = fragment[i];
+                if (escaped)     { escaped = false; continue; }
+                if (ch === '\\') { escaped = true;  continue; }
+                if (ch === '"')  { inStr = !inStr;  continue; }
+                if (!inStr && ch === '}') lastSafeClose = i;
+            }
+            // If we're still in a string at EOF, the response was cut mid-value.
+            // Truncate to the last safe '}' and rebalance brackets.
+            if (inStr && lastSafeClose !== -1) {
+                fragment = fragment.slice(0, lastSafeClose + 1);
+                const stack = [];
+                inStr = false; escaped = false;
+                for (let i = 0; i < fragment.length; i++) {
+                    const ch = fragment[i];
+                    if (escaped)     { escaped = false; continue; }
+                    if (ch === '\\') { escaped = true;  continue; }
+                    if (ch === '"')  { inStr = !inStr;  continue; }
+                    if (inStr)       continue;
+                    if (ch === '{')  stack.push('}');
+                    if (ch === '[')  stack.push(']');
+                    if ((ch === '}' || ch === ']') && stack.length && stack[stack.length - 1] === ch) stack.pop();
+                }
+                const repaired = fragment.trimEnd() + stack.reverse().join('');
+                const result   = JSON.parse(repaired);
+                console.warn('[SYD Gemini] extractJSON: recovered truncated response, kept up to last safe close.');
+                return result;
+            }
+        }
+    } catch (_) { /* fall through */ }
+
+    // Pass 5: bracket-balancing repair.
     // Handles Gemini dropping a closing brace mid-object — observed consistently
     // in Call 2 responses where finishReason is STOP but a } is missing inside paths[].
     // Walks every character tracking bracket depth, string state, and escape sequences.

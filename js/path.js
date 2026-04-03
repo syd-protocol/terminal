@@ -1501,7 +1501,7 @@ Output ONLY a JSON array. No markdown. No preamble. No explanation.
 
 [{"role":"...","demand":"...","trend":"...","who_is_hiring":"...","one_signal":"..."}]`.trim();
 
-    const result = await geminiCallWithSearch({ prompt, temperature: 0.2, maxTokens: 1024 });
+    const result = await geminiCallWithSearch({ prompt, temperature: 0.2, maxTokens: 2048 });
     if (!result.ok) {
         console.warn('[SYD] Market signal call failed:', result.error);
         return null;
