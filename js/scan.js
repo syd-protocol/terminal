@@ -177,7 +177,7 @@ function renderScanIntro() {
 
 // [TUNING TARGET] Signal Breach round duration
 const SB_ROUND_DURATION_MS = 5000;
-const SB_ROUNDS            = 5;
+const SB_ROUNDS            = 3;
 const SB_GRID_SIZE         = 4;
 
 let sbState = null;
@@ -398,9 +398,9 @@ function completeSB() {
 // ═══════════════════════════════════════════════════════════════
 
 // [TUNING TARGET] Precision Shooter parameters
-const PS_WAVES           = 3;
+const PS_WAVES           = 2;
 const PS_TARGETS_PER_WAVE = 7;
-const PS_DURATIONS_MS    = [2200, 1600, 1100];   // [TUNING TARGET] ms per wave
+const PS_DURATIONS_MS    = [2200, 1600];          // [TUNING TARGET] ms per wave
 const PS_TARGET_SIZE_PX  = 52;                   // [TUNING TARGET] touch target size
 
 let psState = null;
@@ -578,10 +578,10 @@ function completePS() {
     const speed    = psState.hits / psState.totalTargets;
     const accuracy = psState.attempts > 0 ? psState.hits / psState.attempts : 0.3;
     const w1Rate   = psState.waveHits[0] / PS_TARGETS_PER_WAVE;
-    const w3Rate   = psState.waveHits[2] / PS_TARGETS_PER_WAVE;
+    const w2Rate   = psState.waveHits[1] / PS_TARGETS_PER_WAVE;
     const stability = w1Rate > 0
-        ? Math.min(1, w3Rate / w1Rate)
-        : (w3Rate > 0 ? 0.65 : 0.3);
+        ? Math.min(1, w2Rate / w1Rate)
+        : (w2Rate > 0 ? 0.65 : 0.3);
 
     scanState.traits.executionSpeed    = parseFloat(Math.min(1, speed).toFixed(2));
     scanState.traits.executionAccuracy = parseFloat(Math.min(1, accuracy).toFixed(2));

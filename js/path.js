@@ -1566,7 +1566,11 @@ function runRoleMapping(round) {
         }
     }
 
-    // Market signals — available if operative already fetched them this session
+    // Market signals — rehydrate from storage if not in memory (survives re-entry to screen)
+    if (!pathState.marketSignals) {
+        const stored = loadPathData();
+        if (stored && stored.marketSignals) pathState.marketSignals = stored.marketSignals;
+    }
     const signals = pathState.marketSignals || null;
 
     function buildMarketSignalBlock(signal) {
@@ -1617,6 +1621,7 @@ function runRoleMapping(round) {
 
     container.innerHTML = `
         <div class="role-mapping-wrap">
+            <button class="path-back-btn" id="role-map-back">← BACK</button>
             <div class="path-progress-bar">
                 <div class="path-progress-fill" style="width:${pct}%"></div>
             </div>
@@ -1637,6 +1642,19 @@ function runRoleMapping(round) {
             </div>
         </div>
     `;
+
+    // Wire back button
+    const roleMapBack = document.getElementById('role-map-back');
+    if (roleMapBack) {
+        roleMapBack.addEventListener('click', () => {
+            playUIClick();
+            if (round === 0) {
+                if (typeof onboardingBack === 'function') onboardingBack('rank-confirm');
+            } else {
+                runRoleMapping(round - 1);
+            }
+        });
+    }
 
     // Wire market signal fetch button
     const msFetchBtn = document.getElementById('ms-fetch-btn');
