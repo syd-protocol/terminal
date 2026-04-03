@@ -636,6 +636,7 @@ ANALYSIS RULES — follow these strictly:
 Your output will seed multiple downstream systems. Every field is required. Do not omit any.
 
 Output ONLY valid JSON. No markdown fences. No preamble. No explanation outside the JSON.
+CRITICAL: Every object in the paths array must be properly closed with } before the next object begins. Validate your bracket depth before outputting each path object.
 
 Required JSON shape:
 {
@@ -649,8 +650,24 @@ Required JSON shape:
       "stat_seeds": { "intelligence": 6, "agility": 4 },
       "gap_skills": ["Gap skill 1", "Gap skill 2", "Gap skill 3"]
     },
-    { "path_name": "...", "current_role_match": "...", "narrative": "...", "target_roles": [], "mapped_skills": [], "stat_seeds": {}, "gap_skills": [] },
-    { "path_name": "...", "current_role_match": "...", "narrative": "...", "target_roles": [], "mapped_skills": [], "stat_seeds": {}, "gap_skills": [] }
+    {
+      "path_name": "...",
+      "current_role_match": "...",
+      "narrative": "...",
+      "target_roles": [],
+      "mapped_skills": [],
+      "stat_seeds": {},
+      "gap_skills": []
+    },
+    {
+      "path_name": "...",
+      "current_role_match": "...",
+      "narrative": "...",
+      "target_roles": [],
+      "mapped_skills": [],
+      "stat_seeds": {},
+      "gap_skills": []
+    }
   ],
   "hidden_affinity_stat": "intelligence",
   "hidden_affinity_read": "2–3 sentences. Stored now, revealed at Level 20. Specific to this person.",

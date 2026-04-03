@@ -226,38 +226,11 @@ async function geminiGenerateLarge(prompt, temperature) {
 // BLOCK C: Extended to handle partial JSON responses — tries
 // progressively looser extraction before returning null.
 
-function extractJSON(text) {
-    if (!text) return null;
-
-    // Pass 1: strip ```json ... ``` or ``` ... ``` fences and handle leading/trailing text.
-    // NOTE: greedy ([\s\S]*) is intentional — large JSON payloads (Call 2 bundle) are
-    // multi-kilobyte and a non-greedy match can stop at the first ``` it finds inside
-    // a string value, truncating the object and causing a parse failure.
-    try {
-        const cleaned = text
-            .replace(/```json\s*([\s\S]*)\s*```/i, '$1')
-            .replace(/```\s*([\s\S]*)\s*```/g,      '$1')
-            .trim();
-        return JSON.parse(cleaned);
-    } catch (_) { /* try next */ }
-
-    // Pass 2: find the first {...} block in the text
-    try {
-        const match = text.match(/\{[\s\S]*\}/);
-        if (match) return JSON.parse(match[0]);
-    } catch (_) { /* try next */ }
-
-    // Pass 3: find the first [...] block (for array responses)
-    try {
-        const match = text.match(/\[[\s\S]*\]/);
-        if (match) return JSON.parse(match[0]);
-    } catch (_) { /* fall through */ }
-
-    // Pass 4: bracket-balancing repair.
-    // Handles Gemini dropping a closing brace mid-object (observed in Call 2
-    // responses where finishReason is STOP but a } is missing inside paths[]).
-    // Strategy: find the outermost { or [ start, then walk character by character
-    // tracking open/close counts, appending missing closers at the end.
+function extractJSON(text) {// Pass 4: bracket-balancing repair.
+    // Handles Gemini dropping a closing brace mid-object — observed consistently
+    // in Call 2 responses where finishReason is STOP but a } is missing inside paths[].
+    // Walks every character tracking bracket depth, string state, and escape sequences.
+    // Appends missing closers in reverse stack order and re-attempts parse.
     try {
         const startObj = text.indexOf('{');
         const startArr = text.indexOf('[');
@@ -265,31 +238,10 @@ function extractJSON(text) {
                        : startArr === -1 ? startObj
                        : Math.min(startObj, startArr);
         if (start !== -1) {
-            const opener  = text[start];
-            const closer  = opener === '{' ? '}' : ']';
-            const inners  = opener === '{' ? ['{', '}'] : ['[', ']'];
-            let   depth   = 0;
-            let   inStr   = false;
-            let   escaped = false;
-            let   end     = start;
-
-            for (let i = start; i < text.length; i++) {
-                const ch = text[i];
-                if (escaped)          { escaped = false; end = i; continue; }
-                if (ch === '\\')      { escaped = true;  end = i; continue; }
-                if (ch === '"')       { inStr = !inStr;  end = i; continue; }
-                if (inStr)            { end = i; continue; }
-                if (ch === '{' || ch === '[') { depth++; end = i; }
-                if (ch === '}' || ch === ']') { depth--; end = i; }
-            }
-
-            // Build repaired string: take everything up to the last char we saw,
-            // then close any unclosed braces/brackets in reverse order.
-            // We track which openers are unclosed by replaying the depth stack.
             let   fragment = text.slice(start);
             const stack    = [];
-            inStr   = false;
-            escaped = false;
+            let   inStr    = false;
+            let   escaped  = false;
 
             for (let i = 0; i < fragment.length; i++) {
                 const ch = fragment[i];
@@ -304,9 +256,12 @@ function extractJSON(text) {
                 }
             }
 
-            // Append missing closers
             const repaired = fragment.trimEnd() + stack.reverse().join('');
-            return JSON.parse(repaired);
+            const result   = JSON.parse(repaired);
+            if (stack.length > 0) {
+                console.warn('[SYD Gemini] extractJSON: repaired', stack.length, 'missing bracket(s).');
+            }
+            return result;
         }
     } catch (_) { /* fall through to null */ }
 

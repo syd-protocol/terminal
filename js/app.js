@@ -1243,10 +1243,52 @@ function enableCloudSync() {
 
 // Renders the cloud sync opt-in screen.
 // onDone: called when operative confirms or skips.
+// pendingData: { name, scanTraits, pathData } — passed during onboarding
+// when player does not yet exist. Used to generate a UID and push a minimal
+// record to Firestore so the sync ID is real before createPlayer() runs.
 function renderCloudSyncOptIn(onDone, pendingData) {
     showScreen('screen-path');
     const container = document.getElementById('path-content');
     if (!container) { if (onDone) onDone(); return; }
+
+    // ── Enable handler — works whether player exists or not ──────
+    function doEnable() {
+        let uid;
+        if (player) {
+            // Normal case — player exists (settings flow)
+            if (!player.uid) { player.uid = generateUID(); }
+            player.syncOptedIn = true;
+            savePlayer();
+            pushToCloud(true);
+            uid = player.uid;
+        } else if (pendingData) {
+            // Onboarding case — player not yet created
+            uid = generateUID();
+            const minimalPlayer = {
+                name:            pendingData.name       || 'OPERATIVE',
+                stats:           {},
+                sig:             0,
+                momentum:        1.0,
+                capacity:        100,
+                maxCapacity:     100,
+                operatorDays:    1,
+                consecutiveDays: 1,
+                uid,
+                syncOptedIn:     true,
+                pathData:        pendingData.pathData   || null,
+                scanTraits:      pendingData.scanTraits || null
+            };
+            // Temporarily set player so pushToCloud can run, then clear —
+            // createPlayer() sets the real player object immediately after.
+            player = minimalPlayer;
+            savePlayer();
+            pushToCloud(true);
+            window._pendingSyncUID = uid;
+        } else {
+            uid = generateUID();
+        }
+        return uid;
+    }
 
     function renderEnableMode() {
         container.innerHTML = `
@@ -1267,40 +1309,8 @@ function renderCloudSyncOptIn(onDone, pendingData) {
             playUIClick(); renderRestoreMode();
         });
         document.getElementById('cso-enable-btn').addEventListener('click', () => {
-        playUIClick();
-        // During onboarding, player does not yet exist — build a minimal pushable
-        // record from the pending data so the UID is generated and the initial
-        // push reaches Firestore before createPlayer() runs.
-        let uid;
-        if (player) {
-            enableCloudSync();
-            uid = player.uid;
-        } else if (pendingData) {
-            uid = generateUID();
-            const minimalPlayer = {
-                name:            pendingData.name        || 'OPERATIVE',
-                stats:           {},
-                sig:             0,
-                momentum:        1.0,
-                capacity:        100,
-                maxCapacity:     100,
-                operatorDays:    1,
-                consecutiveDays: 1,
-                uid,
-                syncOptedIn:     true,
-                pathData:        pendingData.pathData    || null,
-                scanTraits:      pendingData.scanTraits  || null
-            };
-            // Temporarily set player so pushToCloud works, then clear it —
-            // createPlayer() will set the real player object immediately after.
-            player = minimalPlayer;
-            savePlayer();
-            pushToCloud(true);
-            // Store uid for createPlayer to pick up so the same doc is used
-            window._pendingSyncUID = uid;
-        } else {
-            uid = '—';
-        }
+            playUIClick();
+            const uid = doEnable();
             container.innerHTML = `
                 <div class="cloud-sync-optin-wrap">
                     <p class="cso-label">[ CLOUD SYNC ACTIVE ]</p>
@@ -1322,15 +1332,12 @@ function renderCloudSyncOptIn(onDone, pendingData) {
                 }).catch(() => {});
             });
             document.getElementById('cso-done-btn').addEventListener('click', () => {
-                playUIClick();
-                if (onDone) onDone();
+                playUIClick(); if (onDone) onDone();
             });
             showLog('[ CLOUD SYNC ENABLED — DATA BACKED UP ]', 'accent');
         });
-
         document.getElementById('cso-skip-btn').addEventListener('click', () => {
-            playUIClick();
-            if (onDone) onDone();
+            playUIClick(); if (onDone) onDone();
         });
     }
 
@@ -1364,9 +1371,9 @@ function renderCloudSyncOptIn(onDone, pendingData) {
         });
         document.getElementById('cso-restore-btn').addEventListener('click', () => {
             playUIClick();
-            const uid = document.getElementById('cso-restore-input').value.trim();
+            const uid    = document.getElementById('cso-restore-input').value.trim();
+            const errEl  = document.getElementById('cso-restore-error');
             if (!uid) { showLog('[ ENTER YOUR SYNC ID ]', 'system'); return; }
-            const errEl = document.getElementById('cso-restore-error');
             if (errEl) { errEl.textContent = '[ LOCATING RECORD... ]'; errEl.classList.remove('hidden'); }
             pullFromCloud(uid).then(result => {
                 if (!result.ok) {
@@ -1375,14 +1382,12 @@ function renderCloudSyncOptIn(onDone, pendingData) {
                         : 'Something went wrong. Check your connection.';
                     if (errEl) errEl.textContent = msg;
                 } else {
-                    // Data written — reload for clean boot
                     window.location.reload();
                 }
             });
         });
         document.getElementById('cso-skip-btn2').addEventListener('click', () => {
-            playUIClick();
-            if (onDone) onDone();
+            playUIClick(); if (onDone) onDone();
         });
     }
 
