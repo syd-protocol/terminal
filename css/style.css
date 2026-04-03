@@ -5212,6 +5212,17 @@ body {
     font-size:   0.75rem;
     color:       var(--text-secondary);
 }
+.status-header-sig--btn {
+    background:  transparent;
+    border:      none;
+    padding:     0;
+    cursor:      pointer;
+    font-family: inherit;
+    font-size:   inherit;
+    color:       inherit;
+    line-height: inherit;
+}
+
 .status-header-sig {
     font-family: var(--font-mono);
     font-size:   0.75rem;

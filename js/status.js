@@ -134,6 +134,7 @@ function wireStatusHeader() {
     const nameEl  = document.getElementById('player-name');
     const rankEl  = document.getElementById('rank-badge');
     const levelEl = document.getElementById('header-level-badge');
+    const sigEl   = document.getElementById('header-sig-badge');
 
     if (nameEl && !nameEl.dataset.wired) {
         nameEl.dataset.wired = 'true';
@@ -157,6 +158,13 @@ function wireStatusHeader() {
         levelEl.addEventListener('click', () => {
             playUIClick();
             showHeaderDrawer('level');
+        });
+    }
+    if (sigEl && !sigEl.dataset.wired) {
+        sigEl.dataset.wired = 'true';
+        sigEl.addEventListener('click', () => {
+            playUIClick();
+            showHeaderDrawer('sig');
         });
     }
 }
@@ -235,6 +243,22 @@ function showHeaderDrawer(type) {
                     ? `<p class="header-drawer-sub">${levelsLeft} level${levelsLeft !== 1 ? 's' : ''} to ${nextRank.label}-RANK.</p>`
                     : '<p class="header-drawer-sub">Maximum rank achieved.</p>'
                 }
+                <button class="header-drawer-close" id="hd-close">CLOSE</button>
+            </div>
+        `;
+        setTimeout(() => {
+            const closeBtn = document.getElementById('hd-close');
+            if (closeBtn) closeBtn.addEventListener('click', () => { playUIClick(); drawer.remove(); });
+        }, 0);
+    }
+
+    else if (type === 'sig') {
+        const sig = player ? Math.floor(player.sig || 0) : 0;
+        drawer.innerHTML = `
+            <div class="header-drawer-inner">
+                <p class="header-drawer-label">[ SIG — ${sig} AVAILABLE ]</p>
+                <p class="header-drawer-desc">SIG is the currency of the System. Earned by completing directives. Spent in GAMES to train specific stats.</p>
+                <p class="header-drawer-sub">Good game scores return most of your SIG. S-rank returns more than you spent.</p>
                 <button class="header-drawer-close" id="hd-close">CLOSE</button>
             </div>
         `;
@@ -1047,6 +1071,7 @@ function renderStatusMainContent(container, animate) {
                     <span class="rank-badge sot-rank-badge ${rankCssClass(rank)}">${rank}</span>
                     <span class="sot-level-badge">LVL ${level}</span>
                     <button class="sot-sig-badge sot-sig-badge--btn" id="sot-sig-badge">&#x2B21; ${sig} SIG</button>
+                    <button class="sot-games-shortcut" id="sot-games-shortcut" title="Games">&#x1F3AE;</button>
                     <button class="sot-settings-shortcut" id="sot-settings-shortcut" title="Settings">&#x2699;</button>
                 </div>
                 <div class="sot-inline-explainer hidden" id="sig-explainer">
@@ -1173,10 +1198,23 @@ function renderStatusMainContent(container, animate) {
     // ── Wire momentum row toggle ──────────────────────────────
     const sigBadge = document.getElementById('sot-sig-badge');
     if (sigBadge) {
+        let _sigTapCount = 0;
+        let _sigTapTimer = null;
         sigBadge.addEventListener('click', () => {
             playUIClick();
+            // Toggle inline explainer
             const exp = document.getElementById('sig-explainer');
             if (exp) exp.classList.toggle('hidden');
+            // Triple-tap dev mode detector
+            _sigTapCount++;
+            clearTimeout(_sigTapTimer);
+            _sigTapTimer = setTimeout(() => { _sigTapCount = 0; }, 1000);
+            if (_sigTapCount >= 3) {
+                _sigTapCount = 0;
+                sessionStorage.setItem('syd_dev_sig', '1');
+                sigBadge.textContent = '⬡ ∞ SIG';
+                if (typeof showLog === 'function') showLog('[ DEV MODE — INFINITE SIG ACTIVE ]', 'accent');
+            }
         });
     }
 
@@ -1257,6 +1295,16 @@ function renderStatusMainContent(container, animate) {
             if (anchor) {
                 anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
+        });
+    }
+
+    // ── Wire games shortcut ───────────────────────────────────
+    const gamesShortcut = document.getElementById('sot-games-shortcut');
+    if (gamesShortcut) {
+        gamesShortcut.addEventListener('click', () => {
+            playUIClick();
+            if (typeof switchStatusTab  === 'function') switchStatusTab('ops');
+            if (typeof switchOpsSegment === 'function') switchOpsSegment('games');
         });
     }
 

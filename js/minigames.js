@@ -35,8 +35,7 @@
 // ─── CONSTANTS ───────────────────────────────────────────────
 // [TUNING TARGET] Sig cost per session
 const MINIGAME_COSTS = {
-    cascade: 5, drift: 5, echo: 5, flow: 5, resonance: 5,
-    scan_signal_breach: 3, scan_precision_shooter: 3, scan_final_transmission: 3
+    cascade: 5, drift: 5, echo: 5, flow: 5, resonance: 5
 };
 
 // ─── GRADE SYSTEM ────────────────────────────────────────────
@@ -134,17 +133,13 @@ const MINIGAME_STATS = {
 
 const STAT_LABELS = {
     intelligence: 'INT', agility: 'AGI',
-    strength: 'STR', endurance: 'END', charisma: 'CHA',
-    pat: 'PAT', cog: 'COG', per: 'PER',
-    spd: 'SPD', acc: 'ACC', pst: 'PST', soc: 'SOC'
+    strength: 'STR', endurance: 'END', charisma: 'CHA'
 };
 
 // ─── GAME METADATA ───────────────────────────────────────────
 // Single source of truth for all game display data.
 // Block E: expanded with instructions (one-liner + detail lines)
 // and first-play SYD prompts.
-
-const SCAN_GAME_IDS = ['scan_signal_breach', 'scan_precision_shooter', 'scan_final_transmission'];
 
 const GAME_DATA = {
     cascade: {
@@ -212,45 +207,6 @@ const GAME_DATA = {
         ],
         firstPlayPrompt: 'First time in RESONANCE. Read the situation. Pick what was actually meant — not what was said. There is no timer.'
     },
-    scan_signal_breach: {
-        name:        'SIGNAL BREACH',
-        icon:        '⬡',
-        stats:       ['pat', 'cog', 'per'],
-        desc:        'Complete the pattern. Tap the node that connects the sequence.',
-        instructions: [
-            'A grid of nodes appears. Some are already lit — they form a partial sequence.',
-            'Tap the one node that completes the pattern before time runs out.',
-            'The rule changes across rounds. That is the point.',
-            'Calibrates: pattern recognition, cognitive flexibility, persistence.'
-        ],
-        firstPlayPrompt: 'SIGNAL BREACH calibrates how you read patterns under pressure. The rule changes mid-game. Stay adaptive.'
-    },
-    scan_precision_shooter: {
-        name:        'PRECISION SHOOTER',
-        icon:        '◎',
-        stats:       ['spd', 'acc', 'pst'],
-        desc:        'Tap targets before they vanish. Speed and accuracy both count.',
-        instructions: [
-            'Targets appear one at a time on screen. Tap each one before it disappears.',
-            'Speed matters. Accuracy matters. Both are being read.',
-            'Three waves — each faster than the last.',
-            'Calibrates: execution speed, accuracy, pressure stability.'
-        ],
-        firstPlayPrompt: 'PRECISION SHOOTER measures how fast and clean you execute under increasing pressure. Hit what you aim at.'
-    },
-    scan_final_transmission: {
-        name:        'FINAL TRANSMISSION',
-        icon:        '◆',
-        stats:       ['soc'],
-        desc:        'Read the social situation. Pick what was actually communicated.',
-        instructions: [
-            'Short social scenarios appear one at a time.',
-            'Three response options. Pick the one that reads the subtext correctly.',
-            'Not the literal words — what was actually meant.',
-            'Calibrates: social reading.'
-        ],
-        firstPlayPrompt: 'FINAL TRANSMISSION reads how accurately you decode what people actually mean. There is no timer — read carefully.'
-    }
 };
 
 // ─── FIRST-PLAY PROMPT SYSTEM ────────────────────────────────
@@ -273,7 +229,7 @@ function openMiniGame(gameId) {
     const sig  = (typeof player !== 'undefined' && player) ? (player.sig || 0) : 0;
     const cost = MINIGAME_COSTS[gameId] || 5;
 
-    if (sig < cost) {
+    if (!sessionStorage.getItem('syd_dev_sig') && sig < cost) {
         if (typeof showLog === 'function') {
             showLog('[ INSUFFICIENT SIG — COMPLETE DIRECTIVES TO EARN MORE ]', 'system');
         }
@@ -283,24 +239,14 @@ function openMiniGame(gameId) {
     const gd = GAME_DATA[gameId];
     if (!gd) return;
 
-    const isScanGame = SCAN_GAME_IDS.includes(gameId);
-
     if (!hasSeenFirstPlay(gameId)) {
         markFirstPlaySeen(gameId);
         if (typeof showScreen === 'function') showScreen('screen-minigame');
         renderFirstPlayPrompt(gameId, gd.firstPlayPrompt || '', () => {
-            if (isScanGame) {
-                enterScanReplayPaid(gameId, sig);
-            } else {
-                enterMiniGame(gameId, sig);
-            }
+            enterMiniGame(gameId, sig);
         });
     } else {
-        if (isScanGame) {
-            enterScanReplayPaid(gameId, sig);
-        } else {
-            enterMiniGame(gameId, sig);
-        }
+        enterMiniGame(gameId, sig);
     }
 }
 
@@ -336,8 +282,7 @@ function renderGamesHub(container, sig) {
     const sigVal  = typeof sig === 'number' ? sig :
         ((typeof player !== 'undefined' && player) ? (player.sig || 0) : 0);
 
-    const allIds  = ['cascade', 'drift', 'echo', 'flow', 'resonance',
-                     'scan_signal_breach', 'scan_precision_shooter', 'scan_final_transmission'];
+    const allIds  = ['cascade', 'drift', 'echo', 'flow', 'resonance'];
 
     container.innerHTML = `
         <div class="games-segment-wrap">
@@ -523,8 +468,10 @@ function renderGameCard(game, sig, cost) {
 function enterMiniGame(gameId, sig) {
     const cost = MINIGAME_COSTS[gameId] || 0;
     if ((sig || 0) < cost) return;
-    // Deduct Sig before playing
-    if (player) { player.sig = Math.max(0, (player.sig || 0) - cost); savePlayer(); }
+    // Deduct Sig before playing (skipped in dev mode)
+    if (!sessionStorage.getItem('syd_dev_sig')) {
+        if (player) { player.sig = Math.max(0, (player.sig || 0) - cost); savePlayer(); }
+    }
     showScreen('screen-minigame');
     switch(gameId) {
         case 'cascade':   runCascade();   break;
@@ -536,14 +483,6 @@ function enterMiniGame(gameId, sig) {
 }
 
 function enterScanReplay(gameId) {
-    showScreen('screen-minigame');
-    renderScanReplayEntry(gameId);
-}
-
-// Paid scan replay — deducts SIG then routes to scan experience
-function enterScanReplayPaid(gameId, sig) {
-    const cost = MINIGAME_COSTS[gameId] || 3;
-    if (player) { player.sig = Math.max(0, (player.sig || 0) - cost); savePlayer(); }
     showScreen('screen-minigame');
     renderScanReplayEntry(gameId);
 }
@@ -883,13 +822,13 @@ function advanceCascadeWave() {
 // Score = zones hit / total zones, adjusted for precision.
 // ═══════════════════════════════════════════════════════════════
 
-// [TUNING TARGET] Drift constants
+// [TUNING TARGET] Drift constants — one active zone at a time
 const DRIFT_ROUNDS          = 3;
-const DRIFT_ZONES_PER_ROUND = [6, 7, 8];    // zones per round — more to tap
-const DRIFT_SPEED           = [0.6, 0.9, 1.3];  // multiplier on base speed — gentler ramp
-const DRIFT_ZONE_RADIUS     = [0.22, 0.16, 0.10]; // zone radius as fraction of canvas width
-const DRIFT_DOT_RADIUS      = 14;           // dot radius in px
-const DRIFT_ROUND_DURATION  = 6000;         // ms per round (base, before speed multiplier)
+const DRIFT_ZONES_PER_ROUND = [5, 6, 7];          // zones presented per round
+const DRIFT_SPEED           = [0.7, 1.0, 1.4];    // path traversal speed multiplier
+const DRIFT_ZONE_RADIUS     = [0.18, 0.13, 0.09]; // zone radius as fraction of canvas width
+const DRIFT_DOT_RADIUS      = 14;                  // dot radius in px
+const DRIFT_ROUND_DURATION  = 6000;                // ms per round at speed 1×
 
 let driftState = null;
 
@@ -899,8 +838,7 @@ function runDrift() {
 
     driftState = {
         round: 0, zonesHit: 0, totalZones: 0,
-        tapCount: 0, rafId: null,
-        ripples: [],   // active hit ripples for canvas drawing
+        rafId: null,
         _onTap: null
     };
 
@@ -947,85 +885,113 @@ function startDriftRound() {
     if (instr && w === 1) instr.textContent = '[ DRIFT ACCELERATING ]';
     if (instr && w === 2) instr.textContent = '[ FINAL ROUND — HOLD YOUR TIMING ]';
 
-    const ctx         = canvas.getContext('2d');
-    const W           = canvas.width;
-    const H           = canvas.height;
-    const speed       = DRIFT_SPEED[w];
-    const zoneCount   = DRIFT_ZONES_PER_ROUND[w];
-    const zoneRad     = DRIFT_ZONE_RADIUS[w] * W;
-    const roundDur    = DRIFT_ROUND_DURATION / speed;
+    const ctx       = canvas.getContext('2d');
+    const W         = canvas.width;
+    const H         = canvas.height;
+    const speed     = DRIFT_SPEED[w];
+    const zoneCount = DRIFT_ZONES_PER_ROUND[w];
+    const zoneRad   = DRIFT_ZONE_RADIUS[w] * W;
 
-    // Spread zones evenly across the path (t values)
     driftState.totalZones += zoneCount;
+
+    // Build zones spread evenly along the path. Only one is active at a time.
     const zones = [];
     for (let i = 0; i < zoneCount; i++) {
-        const t = 0.08 + (i / (zoneCount - 1 || 1)) * 0.84;
+        const t  = 0.05 + (i / (zoneCount - 1 || 1)) * 0.90;
         const pt = driftPathPoint(t, W, H);
-        zones.push({ t, x: pt.x, y: pt.y, hit: false, rippleAge: 0 });
+        zones.push({ t, x: pt.x, y: pt.y, hit: false, missed: false, active: false, rippleAge: 0 });
     }
-    driftState._zones  = zones;
-    driftState._getT   = () => Math.min(1, elapsed / DRIFT_ROUND_DURATION);
-    driftState._W      = W;
-    driftState._H      = H;
+
+    driftState._zones     = zones;
+    driftState._zoneRad   = zoneRad;
+    driftState._activeIdx = 0;
+    driftState._W         = W;
+    driftState._H         = H;
+    driftState._currentT  = 0;
+
+    // Activate the first zone
+    zones[0].active = true;
 
     let elapsed = 0;
     let last    = null;
 
     function frame(now) {
         if (!last) last = now;
-        const dt = (now - last) * speed;
-        elapsed += dt;
-        last = now;
+        const dt      = (now - last) * speed;
+        elapsed      += dt;
+        last          = now;
 
         const t   = Math.min(1, elapsed / DRIFT_ROUND_DURATION);
+        driftState._currentT = t;
         const pos = driftPathPoint(t, W, H);
 
         ctx.clearRect(0, 0, W, H);
 
-        // Draw full snake path (faint guide)
-        ctx.strokeStyle = 'rgba(255,167,38,0.25)';
-        ctx.lineWidth   = 2;
+        // Faint snake path guide
+        ctx.strokeStyle = 'rgba(255,167,38,0.18)';
+        ctx.lineWidth   = 1.5;
         ctx.beginPath();
         for (let i = 0; i <= 120; i++) {
-            const pt = i / 120;
-            const p  = driftPathPoint(pt, W, H);
+            const p = driftPathPoint(i / 120, W, H);
             i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
         }
         ctx.stroke();
 
+        // If dot has passed the active zone without a hit, mark missed and advance
+        const ai = driftState._activeIdx;
+        if (ai >= 0 && ai < zones.length) {
+            const az = zones[ai];
+            if (!az.hit && !az.missed && t > az.t + DRIFT_ZONE_RADIUS[w] * 1.1) {
+                az.missed = true;
+                az.active = false;
+                const next = ai + 1;
+                if (next < zones.length) {
+                    zones[next].active = true;
+                    driftState._activeIdx = next;
+                } else {
+                    driftState._activeIdx = -1;
+                }
+            }
+        }
+
         // Draw zones
         zones.forEach(zone => {
             if (zone.hit) {
-                // Expanding ripple on hit
                 zone.rippleAge += dt;
-                const rippleR = zoneRad + zone.rippleAge * 0.08;
-                const alpha   = Math.max(0, 0.6 - zone.rippleAge * 0.003);
+                const rippleR = zoneRad + zone.rippleAge * 0.06;
+                const alpha   = Math.max(0, 0.55 - zone.rippleAge * 0.003);
                 ctx.strokeStyle = `rgba(102,187,106,${alpha})`;
                 ctx.lineWidth   = 2;
                 ctx.beginPath();
                 ctx.arc(zone.x, zone.y, rippleR, 0, Math.PI * 2);
                 ctx.stroke();
-                // Solid green fill (fading)
-                ctx.fillStyle = `rgba(102,187,106,${alpha * 0.4})`;
+                ctx.fillStyle = `rgba(102,187,106,${alpha * 0.35})`;
                 ctx.beginPath();
                 ctx.arc(zone.x, zone.y, zoneRad * 0.7, 0, Math.PI * 2);
                 ctx.fill();
-            } else {
-                // Idle zone — amber circle
-                const pulse = 0.25 + 0.1 * Math.sin(now / 400);
+            } else if (zone.missed) {
+                ctx.strokeStyle = 'rgba(239,83,80,0.25)';
+                ctx.lineWidth   = 1;
+                ctx.beginPath();
+                ctx.arc(zone.x, zone.y, zoneRad * 0.5, 0, Math.PI * 2);
+                ctx.stroke();
+            } else if (zone.active) {
+                const pulse = 0.28 + 0.12 * Math.sin(now / 280);
                 ctx.fillStyle = `rgba(255,167,38,${pulse})`;
                 ctx.beginPath();
                 ctx.arc(zone.x, zone.y, zoneRad, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.strokeStyle = 'rgba(255,167,38,0.7)';
-                ctx.lineWidth   = 1.5;
+                ctx.strokeStyle = 'rgba(255,167,38,0.85)';
+                ctx.lineWidth   = 2;
+                ctx.beginPath();
+                ctx.arc(zone.x, zone.y, zoneRad, 0, Math.PI * 2);
                 ctx.stroke();
             }
         });
 
-        // Draw dot with amber glow
+        // Dot with amber glow
         ctx.shadowColor = 'rgba(255,167,38,0.8)';
-        ctx.shadowBlur  = 12;
+        ctx.shadowBlur  = 14;
         ctx.fillStyle   = '#ffa726';
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, DRIFT_DOT_RADIUS, 0, Math.PI * 2);
@@ -1040,38 +1006,40 @@ function startDriftRound() {
     }
 
     driftState.rafId = requestAnimationFrame(frame);
-
-    // _getT and _zones are already set above — closure gives live elapsed value
-
     window._mgCleanup = () => cancelAnimationFrame(driftState.rafId);
 }
 
 function onDriftTap() {
-    if (!driftState || !driftState._getT || !driftState._zones) return;
-    driftState.tapCount++;
-    const t     = driftState._getT();
-    const w     = driftState.round;
-    const zones = driftState._zones;
-    zones.forEach(zone => {
-        if (zone.hit) return;
-        if (Math.abs(t - zone.t) <= DRIFT_ZONE_RADIUS[w] * 0.9) {
-            zone.hit       = true;
-            zone.rippleAge = 0;
-            driftState.zonesHit++;
-            playTone(880, 0.12, 'sine', 0.1);
+    if (!driftState || driftState._activeIdx < 0) return;
+    const ai   = driftState._activeIdx;
+    const zone = driftState._zones[ai];
+    if (!zone || zone.hit || zone.missed) return;
+
+    const t = driftState._currentT;
+    const w = driftState.round;
+    if (Math.abs(t - zone.t) <= DRIFT_ZONE_RADIUS[w] * 1.1) {
+        zone.hit       = true;
+        zone.active    = false;
+        zone.rippleAge = 0;
+        driftState.zonesHit++;
+        playTone(880, 0.12, 'sine', 0.1);
+        const next = ai + 1;
+        if (next < driftState._zones.length) {
+            driftState._zones[next].active = true;
+            driftState._activeIdx = next;
+        } else {
+            driftState._activeIdx = -1;
         }
-    });
+    }
 }
 
 function advanceDriftRound() {
     cancelAnimationFrame(driftState.rafId);
     driftState.round++;
     if (driftState.round >= DRIFT_ROUNDS) {
-        const rawScore  = driftState.totalZones > 0 ? driftState.zonesHit / driftState.totalZones : 0;
-        const precision = driftState.tapCount > 0
-            ? Math.min(1, (driftState.zonesHit * 2) / driftState.tapCount)
-            : rawScore;
-        const score = (rawScore * 0.7 + precision * 0.3);
+        const score = driftState.totalZones > 0
+            ? driftState.zonesHit / driftState.totalZones
+            : 0;
         completeMGSession('drift', Math.min(1, score));
     } else {
         setTimeout(() => startDriftRound(), 700);
@@ -1257,14 +1225,14 @@ function onEchoTap(idx) {
 
 // [TUNING TARGET] Flow rhythm constants
 const FLOW_INTERVALS       = 3;
-const FLOW_INTERVAL_MS     = 9000;    // ms per interval
-const FLOW_BALL_SPEED      = 0.00012; // horizontal fraction per ms (wraps at 1.0)
-const FLOW_BOUNCE_FREQ     = 2.8;     // sine frequency for vertical bounce
-const FLOW_TRAIL_LENGTH    = 8;       // number of trail positions
-const FLOW_ZONE_POSITIONS  = [0.35, 0.60, 0.50]; // zone centre x as fraction of width
-const FLOW_ZONE_WIDTHS     = [0.22, 0.16, 0.11]; // zone width as fraction of width
-const FLOW_TAP_WINDOW      = 0.5;     // seconds — how long a "window" lasts after ball enters zone
-const FLOW_WINDOWS_PER_INT = 4;       // windows available per interval
+const FLOW_INTERVAL_MS     = 9000;     // ms per interval (unused — now loop-count based)
+const FLOW_BALL_SPEED      = 0.00012;  // horizontal fraction per ms (wraps at 1.0)
+const FLOW_BOUNCE_FREQ     = 2.8;      // sine frequency for vertical bounce
+const FLOW_TRAIL_LENGTH    = 8;        // number of trail positions
+const FLOW_ZONE_COUNTS     = [2, 3, 3];          // bands per interval
+const FLOW_ZONE_WIDTHS     = [0.18, 0.13, 0.09]; // band width as fraction of canvas width
+const FLOW_SPEED_MULT      = [1.0, 1.3, 1.7];    // ball speed multiplier per interval
+const FLOW_LOOPS_PER_INT   = 3;                   // ball wraps per interval before advancing
 
 let flowState = null;
 
@@ -1273,16 +1241,14 @@ function runFlow() {
     if (!container) return;
 
     flowState = {
-        interval:    0,
-        ballX:       0.0,      // 0→1 horizontal position
-        trail:       [],       // last N positions [{x,y}]
-        hits:        0,
+        interval:     0,
+        ballX:        0.0,      // 0→1 horizontal position
+        trail:        [],       // last N positions [{x,y}]
+        hits:         0,
         totalWindows: 0,
-        inWindow:    false,
-        windowTapped: false,
-        rafId:       null,
-        beatTimer:   null,
-        elapsed:     0
+        rafId:        null,
+        beatTimer:    null,
+        loopCount:    0         // number of full wraps completed this interval
     };
 
     container.innerHTML =
@@ -1324,18 +1290,16 @@ function playFlowBeat() {
 }
 
 function startFlowInterval() {
-    const iv     = flowState.interval;
-    const label  = document.getElementById('flow-interval-label');
-    const instr  = document.getElementById('flow-instruction');
+    const iv    = flowState.interval;
+    const label = document.getElementById('flow-interval-label');
+    const instr = document.getElementById('flow-instruction');
     if (label) label.textContent = 'INTERVAL ' + (iv + 1) + ' / ' + FLOW_INTERVALS;
-    if (instr && iv === 1) instr.textContent = '[ ZONE SHIFTING — STAY WITH IT ]';
-    if (instr && iv === 2) instr.textContent = '[ FINAL INTERVAL — FIND THE RHYTHM ]';
+    if (instr && iv === 1) instr.textContent = '[ MORE ZONES — FIND THE RHYTHM ]';
+    if (instr && iv === 2) instr.textContent = '[ FINAL INTERVAL — SPEED UP ]';
 
-    flowState.ballX        = 0;
-    flowState.trail        = [];
-    flowState.inWindow     = false;
-    flowState.windowTapped = false;
-    flowState.totalWindows += FLOW_WINDOWS_PER_INT;
+    flowState.ballX     = 0;
+    flowState.trail     = [];
+    flowState.loopCount = 0;
 
     const canvas = document.getElementById('flow-canvas');
     if (!canvas) { advanceFlowInterval(); return; }
@@ -1343,62 +1307,62 @@ function startFlowInterval() {
     const W   = canvas.width;
     const H   = canvas.height;
 
-    const zoneCentreX = FLOW_ZONE_POSITIONS[iv] * W;
-    const zoneHalfW   = FLOW_ZONE_WIDTHS[iv] * W / 2;
-    const zoneLeft    = zoneCentreX - zoneHalfW;
-    const zoneRight   = zoneCentreX + zoneHalfW;
+    const bandCount = FLOW_ZONE_COUNTS[iv];
+    const bandWidth = FLOW_ZONE_WIDTHS[iv] * W;
+    const speedMult = FLOW_SPEED_MULT[iv];
+    const spacing   = W / (bandCount + 1);
+    const bands     = [];
+    for (let b = 0; b < bandCount; b++) {
+        const cx = spacing * (b + 1);
+        bands.push({ left: cx - bandWidth / 2, right: cx + bandWidth / 2, hitThisPass: false });
+    }
 
-    // Track which pass through the zone we're on for window counting
-    let windowsThisInterval = 0;
-    let wasInZone = false;
-    let elapsed   = 0;
-    let last      = null;
+    flowState.totalWindows += bandCount * FLOW_LOOPS_PER_INT;
+
+    let last = null;
 
     function frame(now) {
         if (!last) last = now;
-        const dt = now - last;
-        last     = now;
-        elapsed += dt;
+        const dt  = now - last;
+        last       = now;
 
-        // Advance ball horizontally, wrapping at 1.0
-        flowState.ballX = (flowState.ballX + FLOW_BALL_SPEED * dt) % 1.0;
+        const prevX     = flowState.ballX;
+        flowState.ballX = (flowState.ballX + FLOW_BALL_SPEED * speedMult * dt) % 1.0;
+        const ballXpx   = flowState.ballX * W;
+        const ballYpx   = H / 2 + Math.sin(flowState.ballX * Math.PI * 2 * FLOW_BOUNCE_FREQ) * (H * 0.35);
 
-        // Ball vertical position — sine bounce
-        const ballXpx  = flowState.ballX * W;
-        const ballYpx  = H / 2 + Math.sin(flowState.ballX * Math.PI * 2 * FLOW_BOUNCE_FREQ) * (H * 0.35);
+        // Detect wrap
+        if (prevX > 0.9 && flowState.ballX < 0.1) {
+            flowState.loopCount++;
+            bands.forEach(b => b.hitThisPass = false);
+        }
 
         // Update trail
         flowState.trail.push({ x: ballXpx, y: ballYpx });
         if (flowState.trail.length > FLOW_TRAIL_LENGTH) flowState.trail.shift();
 
-        // Zone detection
-        const nowInZone = ballXpx >= zoneLeft && ballXpx <= zoneRight;
+        const inBands = bands.filter(b => ballXpx >= b.left && ballXpx <= b.right);
+        const anyUntapped = inBands.some(b => !b.hitThisPass);
 
-        // New entry into zone = new window
-        if (nowInZone && !wasInZone && windowsThisInterval < FLOW_WINDOWS_PER_INT) {
-            windowsThisInterval++;
-            flowState.inWindow     = true;
-            flowState.windowTapped = false;
-            // Soft cue — ball entering zone
-            playTone(330, 0.06, 'sine', 0.04);
-        }
-        if (!nowInZone && wasInZone) {
-            flowState.inWindow = false;
-        }
-        wasInZone = nowInZone;
+        const tapBtn = document.getElementById('flow-tap-btn');
+        if (tapBtn) tapBtn.classList.toggle('flow-tap-btn--pulse', anyUntapped);
 
-        // Draw
+        flowState._inBands = inBands;
+        flowState._bands   = bands;
+
         ctx.clearRect(0, 0, W, H);
 
-        // Zone band
-        const zoneAlpha = nowInZone ? 0.35 : 0.18;
-        ctx.fillStyle   = `rgba(102,187,106,${zoneAlpha})`;
-        ctx.fillRect(zoneLeft, 0, zoneHalfW * 2, H);
-        ctx.strokeStyle = `rgba(102,187,106,${nowInZone ? 0.9 : 0.45})`;
-        ctx.lineWidth   = nowInZone ? 2 : 1;
-        ctx.strokeRect(zoneLeft, 0, zoneHalfW * 2, H);
+        // Draw zone bands
+        bands.forEach(band => {
+            const ballInBand = ballXpx >= band.left && ballXpx <= band.right;
+            ctx.fillStyle   = `rgba(102,187,106,${ballInBand ? 0.35 : 0.15})`;
+            ctx.fillRect(band.left, 0, bandWidth, H);
+            ctx.strokeStyle = `rgba(102,187,106,${ballInBand ? 0.85 : 0.35})`;
+            ctx.lineWidth   = ballInBand ? 2 : 1;
+            ctx.strokeRect(band.left, 0, bandWidth, H);
+        });
 
-        // Trail (glow tail)
+        // Trail
         flowState.trail.forEach((pt, i) => {
             const alpha = (i / flowState.trail.length) * 0.5;
             const r     = 4 + (i / flowState.trail.length) * 6;
@@ -1419,16 +1383,10 @@ function startFlowInterval() {
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // Tap button pulse when in window
-        const tapBtn = document.getElementById('flow-tap-btn');
-        if (tapBtn) {
-            tapBtn.classList.toggle('flow-tap-btn--pulse', nowInZone && !flowState.windowTapped);
-        }
-
-        if (elapsed < FLOW_INTERVAL_MS) {
-            flowState.rafId = requestAnimationFrame(frame);
-        } else {
+        if (flowState.loopCount >= FLOW_LOOPS_PER_INT) {
             advanceFlowInterval();
+        } else {
+            flowState.rafId = requestAnimationFrame(frame);
         }
     }
 
@@ -1440,20 +1398,24 @@ function startFlowInterval() {
 }
 
 function onFlowTap() {
-    if (!flowState) return;
-    if (flowState.inWindow && !flowState.windowTapped) {
-        flowState.hits++;
-        flowState.windowTapped = true;
-        // Musical correct tap — C5
+    if (!flowState || !flowState._bands) return;
+    const inBands = flowState._inBands || [];
+    let scored = false;
+    inBands.forEach(band => {
+        if (!band.hitThisPass) {
+            band.hitThisPass = true;
+            flowState.hits++;
+            scored = true;
+        }
+    });
+    const tapBtn = document.getElementById('flow-tap-btn');
+    if (scored) {
         playTone(523, 0.15, 'sine', 0.12);
-        // Visual feedback on tap button
-        const tapBtn = document.getElementById('flow-tap-btn');
         if (tapBtn) {
             tapBtn.classList.add('flow-tap-btn--hit');
             setTimeout(() => tapBtn.classList.remove('flow-tap-btn--hit'), 200);
         }
     } else {
-        // Miss tap — soft penalty tone
         playTone(220, 0.06, 'sine', 0.04);
     }
 }
@@ -1486,6 +1448,7 @@ function advanceFlowInterval() {
 // ═══════════════════════════════════════════════════════════════
 
 const RESONANCE_SCENARIOS = [
+    // ── Original 5 ───────────────────────────────────────────────
     {
         said:    '"Let me know if you need any help with that."',
         options: [
@@ -1525,8 +1488,203 @@ const RESONANCE_SCENARIOS = [
             { text: 'They have concerns about the work and want to manage it.',                 score: 0.8 },
             { text: 'They are signalling they have capacity and would welcome the ask.',        score: 1.0 }
         ]
+    },
+    // ── Workplace deflection ──────────────────────────────────────
+    {
+        said:    '"I will look into that."',
+        options: [
+            { text: 'They intend to investigate and report back.',                              score: 0.3 },
+            { text: 'They are closing the topic without committing to action.',                 score: 1.0 },
+            { text: 'They are overwhelmed and buying time.',                                    score: 0.7 }
+        ]
+    },
+    {
+        said:    '"That is something we can revisit."',
+        options: [
+            { text: 'They plan to bring it up again at a specific point.',                      score: 0.3 },
+            { text: 'They are declining without saying no directly.',                           score: 1.0 },
+            { text: 'They agree but do not have bandwidth right now.',                          score: 0.6 }
+        ]
+    },
+    {
+        said:    '"Leave it with me."',
+        options: [
+            { text: 'They are taking full ownership of the problem.',                           score: 0.4 },
+            { text: 'They are asserting control and removing you from the loop.',               score: 1.0 },
+            { text: 'They want to help but need to check their capacity first.',                score: 0.6 }
+        ]
+    },
+    // ── Praise with an edge ───────────────────────────────────────
+    {
+        said:    '"You have come a long way."',
+        options: [
+            { text: 'They are genuinely acknowledging your growth.',                            score: 0.5 },
+            { text: 'They are reminding you where you started — subtly lowering your ceiling.', score: 1.0 },
+            { text: 'They are encouraging you to keep pushing.',                                score: 0.4 }
+        ]
+    },
+    {
+        said:    '"For someone at your level, that was impressive."',
+        options: [
+            { text: 'They are giving you a sincere compliment.',                                score: 0.3 },
+            { text: 'They are praising you while marking a ceiling on your perceived ability.', score: 1.0 },
+            { text: 'They are surprised and expressing it honestly.',                           score: 0.6 }
+        ]
+    },
+    {
+        said:    '"I did not expect that from you."',
+        options: [
+            { text: 'They are genuinely impressed and saying so.',                              score: 0.5 },
+            { text: 'They had low expectations and are now revising them upward.',              score: 1.0 },
+            { text: 'They are disappointed the outcome was different from what they wanted.',   score: 0.4 }
+        ]
+    },
+    // ── Ambiguous commitment ──────────────────────────────────────
+    {
+        said:    '"That could work."',
+        options: [
+            { text: 'They think it is a good idea.',                                            score: 0.3 },
+            { text: 'They see problems but are not ready to voice them.',                       score: 1.0 },
+            { text: 'They are genuinely undecided and keeping options open.',                   score: 0.7 }
+        ]
+    },
+    {
+        said:    '"I am not against it."',
+        options: [
+            { text: 'They are in favour of the idea.',                                          score: 0.3 },
+            { text: 'They have reservations but are withholding them.',                         score: 1.0 },
+            { text: 'They are neutral and will follow whoever pushes hardest.',                 score: 0.7 }
+        ]
+    },
+    // ── Status signalling ─────────────────────────────────────────
+    {
+        said:    '"I actually know the person who runs that team."',
+        options: [
+            { text: 'They are offering to make a useful introduction.',                         score: 0.4 },
+            { text: 'They are establishing social proximity to signal influence.',              score: 1.0 },
+            { text: 'They are sharing relevant context for the conversation.',                  score: 0.3 }
+        ]
+    },
+    {
+        said:    '"We dealt with something similar at my last company."',
+        options: [
+            { text: 'They are sharing directly applicable experience.',                         score: 0.5 },
+            { text: 'They are positioning their past to assert current authority.',             score: 1.0 },
+            { text: 'They are looking for permission to take the lead.',                        score: 0.6 }
+        ]
+    },
+    // ── Boundary-setting disguised as helpfulness ─────────────────
+    {
+        said:    '"I just want to make sure you have everything you need."',
+        options: [
+            { text: 'They are being genuinely supportive.',                                     score: 0.4 },
+            { text: 'They are checking whether you will ask for help — or stay out of their way.', score: 1.0 },
+            { text: 'They want to reduce the chance of being interrupted later.',               score: 0.8 }
+        ]
+    },
+    {
+        said:    '"Feel free to come to me if anything comes up."',
+        options: [
+            { text: 'They are making themselves available as a resource.',                      score: 0.5 },
+            { text: 'They are signalling they do not expect to be contacted.',                  score: 1.0 },
+            { text: 'They are being polite and expect the offer to be taken seriously.',        score: 0.4 }
+        ]
+    },
+    // ── Disagreement disguised as curiosity ───────────────────────
+    {
+        said:    '"Have you considered the other side of this?"',
+        options: [
+            { text: 'They are genuinely curious whether you have done full analysis.',          score: 0.4 },
+            { text: 'They disagree and are using a question to soften the pushback.',           score: 1.0 },
+            { text: 'They are testing how confident you are in your position.',                 score: 0.7 }
+        ]
+    },
+    {
+        said:    '"What makes you confident that is the right call?"',
+        options: [
+            { text: 'They want to understand your reasoning.',                                  score: 0.4 },
+            { text: 'They doubt the decision and are surfacing it as a question.',              score: 1.0 },
+            { text: 'They are helping you stress-test your thinking.',                          score: 0.6 }
+        ]
+    },
+    // ── Passive authority assertion ───────────────────────────────
+    {
+        said:    '"As I mentioned before..."',
+        options: [
+            { text: 'They are providing helpful context for those who missed it.',              score: 0.3 },
+            { text: 'They are asserting that they were right earlier and reasserting primacy.', score: 1.0 },
+            { text: 'They are mildly frustrated and expressing it indirectly.',                 score: 0.7 }
+        ]
+    },
+    {
+        said:    '"This is consistent with what we agreed."',
+        options: [
+            { text: 'They are confirming shared direction.',                                    score: 0.4 },
+            { text: 'They are using a prior agreement to close down current debate.',           score: 1.0 },
+            { text: 'They want to remind the group of the decision log.',                       score: 0.5 }
+        ]
+    },
+    // ── Social exit signals ───────────────────────────────────────
+    {
+        said:    '"We should do this again sometime."',
+        options: [
+            { text: 'They enjoyed the interaction and mean it literally.',                      score: 0.3 },
+            { text: 'It is a social closing phrase with no specific intent behind it.',         score: 1.0 },
+            { text: 'They are being polite but will not follow up unless you do.',              score: 0.8 }
+        ]
+    },
+    {
+        said:    '"Let us stay in touch."',
+        options: [
+            { text: 'They intend to maintain an active connection.',                            score: 0.3 },
+            { text: 'It is a ritual closing — intent depends entirely on follow-through.',      score: 1.0 },
+            { text: 'They want you to take the initiative if contact is to continue.',          score: 0.7 }
+        ]
+    },
+    // ── Uncertainty masked as confidence ──────────────────────────
+    {
+        said:    '"I am pretty sure that is right."',
+        options: [
+            { text: 'They are confident and hedging only out of politeness.',                   score: 0.4 },
+            { text: 'They are uncertain and masking it to avoid appearing weak.',               score: 1.0 },
+            { text: 'They want you to verify before acting on the information.',                score: 0.6 }
+        ]
+    },
+    {
+        said:    '"That should be fine."',
+        options: [
+            { text: 'They have assessed it and are giving a green light.',                      score: 0.4 },
+            { text: 'They have not fully assessed it and are deferring accountability.',        score: 1.0 },
+            { text: 'They are signalling low risk and encouraging you to proceed.',             score: 0.5 }
+        ]
+    },
+    // ── Delegated responsibility ──────────────────────────────────
+    {
+        said:    '"Whatever you think is best."',
+        options: [
+            { text: 'They trust your judgement completely.',                                    score: 0.4 },
+            { text: 'They are disengaging and placing all accountability on you.',              score: 1.0 },
+            { text: 'They do not have a strong view and are genuinely delegating.',             score: 0.6 }
+        ]
+    },
+    {
+        said:    '"I will follow your lead on this one."',
+        options: [
+            { text: 'They are showing deference and support.',                                  score: 0.5 },
+            { text: 'They are stepping back so the outcome — good or bad — is yours to own.',  score: 1.0 },
+            { text: 'They are busy and need someone else to hold the decision.',                score: 0.6 }
+        ]
     }
 ];
+
+function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
 
 let resonanceState = null;
 
@@ -1534,14 +1692,17 @@ function runResonance() {
     const container = getMGContainer();
     if (!container) return;
 
-    resonanceState = { idx: 0, totalScore: 0 };
+    resonanceState = {
+        idx: 0, totalScore: 0,
+        scenarios: shuffleArray(RESONANCE_SCENARIOS).slice(0, 5)
+    };
 
     container.innerHTML =
         renderMGHeader('RESONANCE', ['charisma', 'intelligence']) + `
         <div class="mg-game-body">
             <p class="mg-game-instruction">Read what was actually meant.</p>
             <div id="resonance-scenario-wrap"></div>
-            <div class="mg-wave-label" id="resonance-progress">1 / ${RESONANCE_SCENARIOS.length}</div>
+            <div class="mg-wave-label" id="resonance-progress">1 / 5</div>
         </div>
     `;
     wireMGExit();
@@ -1553,9 +1714,9 @@ function renderResonanceScenario() {
     const progEl  = document.getElementById('resonance-progress');
     if (!wrap) return;
 
-    const sc  = RESONANCE_SCENARIOS[resonanceState.idx];
-    const pct = Math.round((resonanceState.idx / RESONANCE_SCENARIOS.length) * 100);
-    if (progEl) progEl.textContent = (resonanceState.idx + 1) + ' / ' + RESONANCE_SCENARIOS.length;
+    const sc  = resonanceState.scenarios[resonanceState.idx];
+    const pct = Math.round((resonanceState.idx / resonanceState.scenarios.length) * 100);
+    if (progEl) progEl.textContent = (resonanceState.idx + 1) + ' / ' + resonanceState.scenarios.length;
 
     wrap.innerHTML = `
         <div class="resonance-scene">
@@ -1582,8 +1743,8 @@ function renderResonanceScenario() {
             resonanceState.totalScore += sc.options[idx].score;
             setTimeout(() => {
                 resonanceState.idx++;
-                if (resonanceState.idx >= RESONANCE_SCENARIOS.length) {
-                    const score = resonanceState.totalScore / RESONANCE_SCENARIOS.length;
+                if (resonanceState.idx >= resonanceState.scenarios.length) {
+                    const score = resonanceState.totalScore / resonanceState.scenarios.length;
                     completeMGSession('resonance', score);
                 } else {
                     renderResonanceScenario();

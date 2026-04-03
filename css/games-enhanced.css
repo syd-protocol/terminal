@@ -69,7 +69,7 @@
 
 /* ─── CASCADE — arena + node overrides ──────────────────────── */
 .cas-cols {
-    height: 320px !important;
+    height: min(480px, 55vh) !important;
 }
 
 .cas-node {
@@ -291,4 +291,26 @@
 .game-card-enter-btn--locked {
     opacity: 0.4;
     cursor:  default;
+}
+
+/* ─── GAMES SHORTCUT BUTTON (STATUS identity row) ───────────── */
+.sot-games-shortcut {
+    background:      transparent;
+    border:          1px solid var(--border);
+    color:           var(--accent);
+    font-size:       0.9rem;
+    width:           28px;
+    height:          28px;
+    border-radius:   50%;
+    cursor:          pointer;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    transition:      border-color 0.2s, color 0.2s;
+    flex-shrink:     0;
+    line-height:     1;
+}
+.sot-games-shortcut:active {
+    border-color: var(--accent);
+    background:   rgba(79, 195, 247, 0.1);
 }
