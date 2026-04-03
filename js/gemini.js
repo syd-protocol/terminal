@@ -226,7 +226,33 @@ async function geminiGenerateLarge(prompt, temperature) {
 // BLOCK C: Extended to handle partial JSON responses — tries
 // progressively looser extraction before returning null.
 
-function extractJSON(text) {// Pass 4: bracket-balancing repair.
+function extractJSON(text) {
+    if (!text) return null;
+
+    // Pass 1: strip ```json ... ``` or ``` ... ``` fences.
+    // NOTE: greedy ([\s\S]*) is intentional — large JSON payloads (Call 2 bundle) are
+    // multi-kilobyte; a non-greedy match can stop at the first ``` inside a string value.
+    try {
+        const cleaned = text
+            .replace(/```json\s*([\s\S]*)\s*```/i, '$1')
+            .replace(/```\s*([\s\S]*)\s*```/g,      '$1')
+            .trim();
+        return JSON.parse(cleaned);
+    } catch (_) { /* try next */ }
+
+    // Pass 2: find the first {...} block in the text
+    try {
+        const match = text.match(/\{[\s\S]*\}/);
+        if (match) return JSON.parse(match[0]);
+    } catch (_) { /* try next */ }
+
+    // Pass 3: find the first [...] block (for array responses)
+    try {
+        const match = text.match(/\[[\s\S]*\]/);
+        if (match) return JSON.parse(match[0]);
+    } catch (_) { /* fall through */ }
+
+    // Pass 4: bracket-balancing repair.
     // Handles Gemini dropping a closing brace mid-object — observed consistently
     // in Call 2 responses where finishReason is STOP but a } is missing inside paths[].
     // Walks every character tracking bracket depth, string state, and escape sequences.
@@ -285,7 +311,9 @@ async function geminiCallWithSearch({ prompt, temperature, maxTokens }) {
         tools:    [{ google_search: {} }],
         generationConfig: {
             temperature:     temperature !== undefined ? temperature : 0.3,
-            maxOutputTokens: maxTokens   !== undefined ? maxTokens  : 2048
+            // Search grounding adds ~800 tool-use prompt tokens overhead.
+            // 4096 output tokens gives comfortable headroom for 3-role signal JSON.
+            maxOutputTokens: maxTokens   !== undefined ? maxTokens  : 4096
         }
     };
 

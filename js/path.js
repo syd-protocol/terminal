@@ -1493,31 +1493,13 @@ async function fireMarketSignalCall(paths) {
     const roles = paths.map(p => p.current_role_match).filter(Boolean);
     if (!roles.length) return null;
 
-    const prompt = `
-You are a career market intelligence analyst. Use your search access to find current hiring data.
+    const prompt = `Search current job market data for these roles: ${roles.join(', ')}.
 
-For each of the following job roles, provide a concise market demand signal based on current job postings and hiring trends:
+For each role output a JSON object with: role (exact name), demand (high/moderate/emerging/low), trend (one sentence, max 15 words), who_is_hiring (one phrase, max 8 words), one_signal (one fact, max 12 words).
 
-Roles: ${roles.map((r, i) => `${i + 1}. ${r}`).join(', ')}
+Output ONLY a JSON array. No markdown. No preamble. No explanation.
 
-For each role return exactly:
-- demand: "high", "moderate", "emerging", or "low"
-- trend: one sentence on current direction (e.g. accelerating, stable, contracting)
-- who_is_hiring: the type of employer most actively hiring right now (e.g. "early-stage startups", "enterprise tech", "NGOs and impact organisations")
-- one_signal: one concrete, specific data point from current market (e.g. a sector, a geography, a named skill being required alongside this role)
-
-Output ONLY valid JSON. No markdown fences. No preamble.
-
-[
-  {
-    "role": "exact role name as given",
-    "demand": "high | moderate | emerging | low",
-    "trend": "one sentence",
-    "who_is_hiring": "one phrase",
-    "one_signal": "one concrete data point"
-  }
-]
-`.trim();
+[{"role":"...","demand":"...","trend":"...","who_is_hiring":"...","one_signal":"..."}]`.trim();
 
     const result = await geminiCallWithSearch({ prompt, temperature: 0.2, maxTokens: 1024 });
     if (!result.ok) {
