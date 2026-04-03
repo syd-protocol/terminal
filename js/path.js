@@ -1464,7 +1464,69 @@ function guessStatFromSkillNameLocal(skillName) {
     return 'intelligence';
 }
 
-// ─── SHARED FLOW: ROLE MAPPING (3 ROUNDS) ────────────────────
+// ─── CALL 3: MARKET SIGNAL ────────────────────────────────────
+// On-demand call. Fires only when operative taps [ GET MARKET SIGNAL ]
+// on the round 0 role mapping screen. Uses Gemini with Google Search
+// grounding to get live hiring signal for each current_role_match.
+// Result stored on pathState.marketSignals (array matching paths order).
+// Also written into pathData at synthesis so it reaches Firestore.
+async function fireMarketSignalCall(paths) {
+    if (!hasNeuralLink()) return null;
+
+    const roles = paths.map(p => p.current_role_match).filter(Boolean);
+    if (!roles.length) return null;
+
+    const prompt = `
+You are a career market intelligence analyst. Use your search access to find current hiring data.
+
+For each of the following job roles, provide a concise market demand signal based on current job postings and hiring trends:
+
+Roles: ${roles.map((r, i) => `${i + 1}. ${r}`).join(', ')}
+
+For each role return exactly:
+- demand: "high", "moderate", "emerging", or "low"
+- trend: one sentence on current direction (e.g. accelerating, stable, contracting)
+- who_is_hiring: the type of employer most actively hiring right now (e.g. "early-stage startups", "enterprise tech", "NGOs and impact organisations")
+- one_signal: one concrete, specific data point from current market (e.g. a sector, a geography, a named skill being required alongside this role)
+
+Output ONLY valid JSON. No markdown fences. No preamble.
+
+[
+  {
+    "role": "exact role name as given",
+    "demand": "high | moderate | emerging | low",
+    "trend": "one sentence",
+    "who_is_hiring": "one phrase",
+    "one_signal": "one concrete data point"
+  }
+]
+`.trim();
+
+    const result = await geminiCallWithSearch({ prompt, temperature: 0.2, maxTokens: 1024 });
+    if (!result.ok) {
+        console.warn('[SYD] Market signal call failed:', result.error);
+        return null;
+    }
+
+    const parsed = extractJSON(result.text);
+    if (!Array.isArray(parsed)) {
+        console.warn('[SYD] Market signal parse failed.');
+        return null;
+    }
+
+    // Map results back to path order by matching role name
+    return paths.map(p => {
+        const match = parsed.find(r =>
+            r.role && p.current_role_match &&
+            r.role.toLowerCase().trim() === p.current_role_match.toLowerCase().trim()
+        ) || parsed[paths.indexOf(p)] || null;
+        return match || null;
+    });
+}
+
+const DEMAND_COLOURS = { high: '#66bb6a', moderate: '#4fc3f7', emerging: '#ffa726', low: '#888888' };
+
+// ─── SHARED FLOW: ROLE MAPPING ───────────────────────────────
 // Unchanged from Batch 6. Uses pathState.inference.paths seeded by
 // applyCall2Bundle() above.
 function runRoleMapping(round) {
@@ -1497,17 +1559,62 @@ function runRoleMapping(round) {
         }
     }
     if (round === 2 && pathState.confirmedPath) {
-        // Show mapped_skills as specialisation options — these are the focus areas
-        // within the confirmed path, not job titles. The operative is picking
-        // what kind of work within this path resonates most.
         const skills = pathState.confirmedPath.mapped_skills || [];
         cardData = skills.map(s => ({ path_name: s, narrative: '', target_roles: [], mapped_skills: [] }));
-        // If no mapped_skills, fall back to target_roles
         if (cardData.length === 0) {
             const roles = pathState.confirmedPath.target_roles || [];
             cardData = roles.map(r => ({ path_name: r, narrative: '', target_roles: [], mapped_skills: [] }));
         }
     }
+
+    // Market signals — available if operative already fetched them this session
+    const signals = pathState.marketSignals || null;
+
+    function buildMarketSignalBlock(signal) {
+        if (!signal) return '';
+        const colour = DEMAND_COLOURS[signal.demand] || '#888888';
+        return `
+            <div class="ms-block">
+                <span class="ms-label">[ MARKET SIGNAL ]</span>
+                <span class="ms-demand" style="color:${colour}">${(signal.demand || '').toUpperCase()}</span>
+                <p class="ms-trend">${signal.trend || ''}</p>
+                <p class="ms-who">Hiring: <span class="ms-who-value">${signal.who_is_hiring || ''}</span></p>
+                <p class="ms-one-signal">${signal.one_signal || ''}</p>
+            </div>
+        `;
+    }
+
+    function renderCards() {
+        return cardData.map((p, i) => `
+            <button class="role-card ${round === 0 ? 'role-card--split' : ''}" data-path-index="${i}">
+                ${round === 0 && p.current_role_match ? `
+                    <div class="role-card-split-row">
+                        <div class="role-card-now">
+                            <span class="role-card-split-label">NOW</span>
+                            <span class="role-card-split-value">${p.current_role_match}</span>
+                        </div>
+                        <div class="role-card-direction">
+                            <span class="role-card-split-label">DIRECTION</span>
+                            <span class="role-card-split-value">${p.path_name || 'PATH ' + (i + 1)}</span>
+                        </div>
+                    </div>
+                    ${p.narrative ? '<p class="role-card-narrative">' + p.narrative + '</p>' : ''}
+                    ${buildMarketSignalBlock(signals ? signals[i] : null)}
+                ` : `
+                    <span class="role-card-name">${p.path_name || 'PATH ' + (i + 1)}</span>
+                    ${p.narrative ? '<p class="role-card-narrative">' + p.narrative + '</p>' : ''}
+                `}
+                ${(p.target_roles || []).length > 0 ? `
+                    <div class="role-card-roles">
+                        ${p.target_roles.map(r => '<span class="role-tag">' + r + '</span>').join('')}
+                    </div>
+                ` : ''}
+            </button>
+        `).join('');
+    }
+
+    // Market signal button only shown on round 0, only when Neural Link is connected
+    const showMSBtn = round === 0 && (typeof hasNeuralLink === 'function') && hasNeuralLink();
 
     container.innerHTML = `
         <div class="role-mapping-wrap">
@@ -1518,52 +1625,74 @@ function runRoleMapping(round) {
             <div class="path-syd-voice">
                 <p class="path-voice-line path-voice-line--visible">${voiceLines[round]}</p>
             </div>
-            <div class="role-card-stack">
-                ${cardData.map((p, i) => `
-                    <button class="role-card ${round === 0 ? 'role-card--split' : ''}" data-path-index="${i}">
-                        ${round === 0 && p.current_role_match ? `
-                            <div class="role-card-split-row">
-                                <div class="role-card-now">
-                                    <span class="role-card-split-label">NOW</span>
-                                    <span class="role-card-split-value">${p.current_role_match}</span>
-                                </div>
-                                <div class="role-card-direction">
-                                    <span class="role-card-split-label">DIRECTION</span>
-                                    <span class="role-card-split-value">${p.path_name || 'PATH ' + (i + 1)}</span>
-                                </div>
-                            </div>
-                            ${p.narrative ? '<p class="role-card-narrative">' + p.narrative + '</p>' : ''}
-                        ` : `
-                            <span class="role-card-name">${p.path_name || 'PATH ' + (i + 1)}</span>
-                            ${p.narrative ? '<p class="role-card-narrative">' + p.narrative + '</p>' : ''}
-                        `}
-                        ${(p.target_roles || []).length > 0 ? `
-                            <div class="role-card-roles">
-                                ${p.target_roles.map(r => '<span class="role-tag">' + r + '</span>').join('')}
-                            </div>
-                        ` : ''}
-                    </button>
-                `).join('')}
+            ${showMSBtn && !signals ? `
+                <button class="ms-fetch-btn" id="ms-fetch-btn">
+                    &#x25BA; GET MARKET SIGNAL — see who is hiring for each path right now
+                </button>
+            ` : ''}
+            ${showMSBtn && signals ? `
+                <p class="ms-fetched-note">&#x2713; Market signal loaded. Data sourced via live search.</p>
+            ` : ''}
+            <div class="role-card-stack" id="role-card-stack">
+                ${renderCards()}
             </div>
         </div>
     `;
 
-    document.querySelectorAll('.role-card').forEach(btn => {
-        btn.addEventListener('click', () => {
+    // Wire market signal fetch button
+    const msFetchBtn = document.getElementById('ms-fetch-btn');
+    if (msFetchBtn) {
+        msFetchBtn.addEventListener('click', () => {
             playUIClick();
-            const picked = cardData[parseInt(btn.dataset.pathIndex, 10)];
-
-            if (round === 0) pathState.confirmedPath = paths[parseInt(btn.dataset.pathIndex, 10)];
-            if (round === 1) pathState.confirmedRole = picked.path_name;
-            if (round === 2) pathState.confirmedSpec  = picked.path_name;
-
-            if (isLast) {
-                runRankConfirmation();
-            } else {
-                runRoleMapping(round + 1);
-            }
+            msFetchBtn.disabled    = true;
+            msFetchBtn.textContent = '[ READING MARKET — STANDING BY... ]';
+            fireMarketSignalCall(paths).then(result => {
+                if (result) {
+                    pathState.marketSignals = result;
+                    // Persist to path data immediately so it survives to Firestore
+                    const existing = loadPathData();
+                    if (existing) {
+                        existing.marketSignals = result;
+                        savePathData(existing);
+                    }
+                    // Re-render the card stack with signal injected
+                    const stack = document.getElementById('role-card-stack');
+                    if (stack) {
+                        stack.innerHTML = renderCards();
+                        wireRoleCards();
+                    }
+                    msFetchBtn.style.display = 'none';
+                    const note = document.createElement('p');
+                    note.className   = 'ms-fetched-note';
+                    note.textContent = '✓ Market signal loaded. Data sourced via live search.';
+                    msFetchBtn.parentNode.insertBefore(note, msFetchBtn);
+                } else {
+                    msFetchBtn.disabled    = false;
+                    msFetchBtn.textContent = '▶ GET MARKET SIGNAL — tap to retry';
+                    if (typeof showLog === 'function') showLog('[ MARKET SIGNAL UNAVAILABLE — CHECK CONNECTION ]', 'system');
+                }
+            });
         });
-    });
+    }
+
+    function wireRoleCards() {
+        document.querySelectorAll('.role-card').forEach(btn => {
+            btn.addEventListener('click', () => {
+                playUIClick();
+                const picked = cardData[parseInt(btn.dataset.pathIndex, 10)];
+                if (round === 0) pathState.confirmedPath = paths[parseInt(btn.dataset.pathIndex, 10)];
+                if (round === 1) pathState.confirmedRole = picked.path_name;
+                if (round === 2) pathState.confirmedSpec  = picked.path_name;
+                if (isLast) {
+                    runRankConfirmation();
+                } else {
+                    runRoleMapping(round + 1);
+                }
+            });
+        });
+    }
+
+    wireRoleCards();
 }
 
 // ─── SHARED FLOW: STARTING RANK CONFIRMATION ─────────────────
@@ -1816,7 +1945,8 @@ function runPathSynthesis() {
         inference:           pathState.inference,
         synthesisSydLines:   bundle.synthesis_syd_lines || [],
         orientationClosing:  bundle.orientation_closing_line || null,
-        geminiEnhanced:      !!bundle.geminiEnhanced
+        geminiEnhanced:      !!bundle.geminiEnhanced,
+        marketSignals:       pathState.marketSignals || null
     };
 
     // Fire Call 2B silently — does not block onComplete

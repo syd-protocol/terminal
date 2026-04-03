@@ -410,8 +410,12 @@ function createPlayer(name, scanTraits, pathData) {
         scanComplete:    true,
         pathComplete:    !!pathData,
         pathData:        pathData || null,
-        hasSeenBriefing: false
+        hasSeenBriefing: false,
+        // Preserve sync UID from onboarding opt-in so the same Firestore
+        // document is updated rather than creating a duplicate record.
+        ...(window._pendingSyncUID ? { uid: window._pendingSyncUID, syncOptedIn: true } : {})
     };
+    if (window._pendingSyncUID) { window._pendingSyncUID = null; }
 
     if (pathData && typeof savePathData === 'function') {
         savePathData(pathData);
@@ -1239,7 +1243,7 @@ function enableCloudSync() {
 
 // Renders the cloud sync opt-in screen.
 // onDone: called when operative confirms or skips.
-function renderCloudSyncOptIn(onDone) {
+function renderCloudSyncOptIn(onDone, pendingData) {
     showScreen('screen-path');
     const container = document.getElementById('path-content');
     if (!container) { if (onDone) onDone(); return; }
@@ -1263,9 +1267,40 @@ function renderCloudSyncOptIn(onDone) {
             playUIClick(); renderRestoreMode();
         });
         document.getElementById('cso-enable-btn').addEventListener('click', () => {
-            playUIClick();
+        playUIClick();
+        // During onboarding, player does not yet exist — build a minimal pushable
+        // record from the pending data so the UID is generated and the initial
+        // push reaches Firestore before createPlayer() runs.
+        let uid;
+        if (player) {
             enableCloudSync();
-            const uid = player && player.uid ? player.uid : '—';
+            uid = player.uid;
+        } else if (pendingData) {
+            uid = generateUID();
+            const minimalPlayer = {
+                name:            pendingData.name        || 'OPERATIVE',
+                stats:           {},
+                sig:             0,
+                momentum:        1.0,
+                capacity:        100,
+                maxCapacity:     100,
+                operatorDays:    1,
+                consecutiveDays: 1,
+                uid,
+                syncOptedIn:     true,
+                pathData:        pendingData.pathData    || null,
+                scanTraits:      pendingData.scanTraits  || null
+            };
+            // Temporarily set player so pushToCloud works, then clear it —
+            // createPlayer() will set the real player object immediately after.
+            player = minimalPlayer;
+            savePlayer();
+            pushToCloud(true);
+            // Store uid for createPlayer to pick up so the same doc is used
+            window._pendingSyncUID = uid;
+        } else {
+            uid = '—';
+        }
             container.innerHTML = `
                 <div class="cloud-sync-optin-wrap">
                     <p class="cso-label">[ CLOUD SYNC ACTIVE ]</p>
@@ -1644,7 +1679,7 @@ function startPATH(name, scanTraits) {
                         renderOrientationScreen(() => {
                             createPlayer(name, scanTraits, pathData);
                         });
-                    });
+                    }, { name, scanTraits, pathData });
                 });
             });
         });

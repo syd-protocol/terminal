@@ -314,6 +314,59 @@ function extractJSON(text) {
     return null;
 }
 
+// ─── SEARCH-GROUNDED CALL ────────────────────────────────────
+// Uses Gemini's native Google Search grounding tool.
+// Returns the same { ok, text } shape as geminiCall.
+// Only use for calls that genuinely need live web data — the grounding
+// tool adds latency and is not available with all model versions.
+// gemini-2.5-flash supports it via the tools parameter.
+async function geminiCallWithSearch({ prompt, temperature, maxTokens }) {
+    const key = (typeof getNeuralKey === 'function') ? getNeuralKey() : null;
+    if (!key) return { ok: false, error: 'No Neural Link key set.', quota: false };
+
+    const url  = `${GEMINI_API_BASE}/${GEMINI_MODEL_GENERATE}:generateContent?key=${key}`;
+    const body = {
+        contents: [{ parts: [{ text: prompt }] }],
+        tools:    [{ google_search: {} }],
+        generationConfig: {
+            temperature:     temperature !== undefined ? temperature : 0.3,
+            maxOutputTokens: maxTokens   !== undefined ? maxTokens  : 2048
+        }
+    };
+
+    try {
+        const res = await fetch(url, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+            const isQuota = res.status === 429;
+            let errMsg    = `HTTP ${res.status}`;
+            try {
+                const errBody = await res.json();
+                errMsg = (errBody.error && errBody.error.message) || errMsg;
+            } catch (_) {}
+            console.warn('[SYD Gemini] Search-grounded call failed:', errMsg);
+            return { ok: false, error: errMsg, quota: isQuota };
+        }
+
+        const data  = await res.json();
+        const parts = data?.candidates?.[0]?.content?.parts || [];
+        const text  = (parts.find(p => p.text && p.text.trim().length > 0) || {}).text || '';
+        if (!text) {
+            console.warn('[SYD Gemini] Search-grounded call returned empty.');
+            return { ok: false, error: 'Empty response.', quota: false };
+        }
+
+        return { ok: true, text };
+    } catch (e) {
+        console.warn('[SYD Gemini] Search-grounded call network error:', e.message || e);
+        return { ok: false, error: e.message || 'Network error.', quota: false };
+    }
+}
+
 // ─── KEY PRESENCE CHECK ───────────────────────────────────────
 // Quick check used before deciding whether to attempt a Gemini
 // call or go straight to local fallback.
