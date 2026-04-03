@@ -1977,6 +1977,10 @@ function buildSettingsSection() {
                 <button class="settings-row-btn" id="settings-sync-btn">
                     ${player && player.syncOptedIn ? 'MANAGE SYNC' : 'ENABLE CLOUD SYNC'}
                 </button>
+                ${!player || !player.syncOptedIn ? `
+                <button class="settings-restore-link" id="settings-restore-btn">
+                    RESTORE FROM SYNC ID
+                </button>` : ''}
             </div>
 
             <div class="settings-section">
@@ -2051,6 +2055,20 @@ function wireSettingsSection() {
                 if (typeof renderCloudSyncOptIn === 'function') {
                     renderCloudSyncOptIn(onReturn);
                 }
+            }
+        });
+    }
+
+    const settingsRestoreBtn = document.getElementById('settings-restore-btn');
+    if (settingsRestoreBtn) {
+        settingsRestoreBtn.addEventListener('click', () => {
+            playUIClick();
+            const onReturn = () => {
+                showScreen('screen-status');
+                if (typeof renderStatusWindow === 'function') renderStatusWindow(false);
+            };
+            if (typeof renderRestoreFromSyncID === 'function') {
+                renderRestoreFromSyncID(onReturn);
             }
         });
     }

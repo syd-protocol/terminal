@@ -9718,3 +9718,132 @@ body {
     line-height:  1.6;
     opacity:      0.8;
 }
+
+/* ─── TITLE SCREEN RESTORE BUTTON ───────────────────────────── */
+.title-restore-btn {
+    display:        block;
+    margin:         12px auto 0;
+    background:     transparent;
+    border:         none;
+    color:          var(--text-secondary, #5a6a7a);
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.72rem;
+    letter-spacing: 0.08em;
+    cursor:         pointer;
+    padding:        8px 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.title-restore-btn:active {
+    color: var(--accent);
+}
+
+/* ─── RESTORE FLOW ───────────────────────────────────────────── */
+.restore-wrap {
+    padding:        24px 20px;
+    display:        flex;
+    flex-direction: column;
+    gap:            12px;
+}
+.restore-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.72rem;
+    letter-spacing: 0.12em;
+    color:          var(--accent);
+    margin:         0;
+}
+.restore-syd-line {
+    font-size:   0.88rem;
+    color:       var(--text-primary);
+    line-height: 1.6;
+    margin:      0;
+}
+.restore-caveat {
+    font-size: 0.78rem;
+    color:     var(--text-secondary, #5a6a7a);
+}
+.restore-error {
+    font-family: var(--font-mono, monospace);
+    font-size:   0.78rem;
+    color:       var(--danger, #ef5350);
+    margin:      0;
+}
+.restore-input-group {
+    margin: 4px 0;
+}
+.restore-uid-input {
+    font-family: var(--font-mono, monospace);
+    width:       100%;
+    box-sizing:  border-box;
+}
+.restore-cancel-btn {
+    background:  transparent;
+    border:      none;
+    color:       var(--text-secondary, #5a6a7a);
+    font-family: var(--font-mono, monospace);
+    font-size:   0.72rem;
+    cursor:      pointer;
+    padding:     4px 0;
+    text-align:  center;
+}
+.restore-preview {
+    background:    rgba(79, 195, 247, 0.06);
+    border:        1px solid rgba(79, 195, 247, 0.2);
+    border-radius: 4px;
+    padding:       12px 16px;
+}
+.restore-preview-name {
+    font-family:    var(--font-mono, monospace);
+    font-size:      1rem;
+    color:          var(--accent);
+    margin:         0 0 4px;
+    letter-spacing: 0.06em;
+}
+.restore-preview-meta {
+    font-family: var(--font-mono, monospace);
+    font-size:   0.72rem;
+    color:       var(--text-secondary, #5a6a7a);
+    margin:      0;
+}
+
+/* ─── CLOUD SYNC OPT-IN MODE TOGGLE ─────────────────────────── */
+.cso-mode-row {
+    display: flex;
+    gap:     8px;
+    margin:  4px 0 8px;
+}
+.cso-mode-btn {
+    flex:           1;
+    background:     transparent;
+    border:         1px solid var(--border);
+    color:          var(--text-secondary, #5a6a7a);
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.72rem;
+    letter-spacing: 0.08em;
+    padding:        8px 4px;
+    cursor:         pointer;
+    border-radius:  2px;
+    transition:     border-color 0.15s, color 0.15s;
+}
+.cso-mode-btn--active {
+    border-color: var(--accent);
+    color:        var(--accent);
+}
+
+/* ─── SETTINGS RESTORE LINK ──────────────────────────────────── */
+.settings-restore-link {
+    display:     block;
+    background:  transparent;
+    border:      none;
+    color:       var(--text-secondary, #5a6a7a);
+    font-family: var(--font-mono, monospace);
+    font-size:   0.72rem;
+    cursor:      pointer;
+    padding:     6px 0 0;
+    text-align:  left;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.settings-restore-link:active {
+    color: var(--accent);
+}

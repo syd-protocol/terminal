@@ -1005,14 +1005,29 @@ async function pushToCloud(immediate) {
         const { sig, stats, momentum, capacity, maxCapacity, operatorDays,
                 consecutiveDays, name } = player;
 
-        // BLOCK B: Include career skills in profile document.
-        // These are small objects — no impact on Firestore free tier limits.
-        const careerSkills = loadCareerSkills();
+        // Load all restorable localStorage keys
+        const careerSkills    = loadCareerSkills();
+        const pathData        = (typeof loadPathData === 'function')        ? loadPathData()        : null;
+        const scanTraits      = (typeof loadScanTraits === 'function')      ? loadScanTraits()      : null;
+        const scanCommentary  = localStorage.getItem('syd_scan_commentary') || null;
+        const signalTrans     = localStorage.getItem('syd_signal_translation') || null;
+        const careerDirs      = localStorage.getItem('syd_career_directives')  || null;
+        const careerEncs      = localStorage.getItem('syd_career_encounters')  || null;
+        const fieldNotes      = localStorage.getItem(FIELD_NOTES_KEY)          || null;
+        const gear            = localStorage.getItem(GEAR_KEY)                 || '1';
 
         await database.collection('syd_operatives').doc(uid).set({
             name, stats, sig, momentum, capacity, maxCapacity,
             operatorDays, consecutiveDays,
             careerSkills,
+            pathData,
+            scanTraits,
+            scanCommentary,
+            signalTranslation: signalTrans,
+            careerDirectives:  careerDirs,
+            careerEncounters:  careerEncs,
+            fieldNotes,
+            gear,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
         localStorage.setItem(SYNC_LAST_PUSH_KEY, new Date().toISOString());
@@ -1023,6 +1038,178 @@ async function pushToCloud(immediate) {
 
 function generateUID() {
     return 'syd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+// ─── PULL FROM CLOUD ─────────────────────────────────────────
+// Reads a full operative record from Firestore by UID.
+// Clears all local SYD data first (clean restore), then writes
+// every restorable field back to localStorage.
+// Returns { ok: true } on success, { ok: false, error } on failure.
+async function pullFromCloud(uid) {
+    const database = getDB();
+    if (!database) return { ok: false, error: 'Database not available.' };
+    try {
+        const doc = await database.collection('syd_operatives').doc(uid.trim()).get();
+        if (!doc.exists) return { ok: false, error: 'not_found' };
+
+        const data = doc.data();
+        if (!data || !data.name || !data.stats) return { ok: false, error: 'corrupt' };
+
+        // ── Clear all SYD localStorage keys (clean slate) ────────
+        const sydKeys = [
+            STORAGE_KEY, GEAR_KEY, SYNC_OPTED_IN_KEY, SYNC_LAST_PUSH_KEY,
+            NEURAL_KEY_KEY, NEURAL_PROVIDER_KEY, FIELD_NOTES_KEY, AUDIO_MINUTES_KEY,
+            CAREER_SKILLS_KEY, CAREER_DIRECTIVES_KEY,
+            'syd_path_data', 'syd_scan_traits', 'syd_scan_commentary',
+            'syd_signal_translation', 'syd_career_directives', 'syd_career_encounters',
+            'syd_game_firstplay_cascade', 'syd_game_firstplay_drift',
+            'syd_game_firstplay_echo', 'syd_game_firstplay_flow',
+            'syd_game_firstplay_resonance', 'syd_sound'
+        ];
+        sydKeys.forEach(k => localStorage.removeItem(k));
+
+        // ── Reconstruct player object ──────────────────────────────
+        const restoredPlayer = {
+            name:            data.name,
+            stats:           data.stats,
+            sig:             data.sig             || 0,
+            momentum:        data.momentum         || 1.0,
+            capacity:        data.capacity         || 100,
+            maxCapacity:     data.maxCapacity      || 100,
+            operatorDays:    data.operatorDays     || 1,
+            consecutiveDays: data.consecutiveDays  || 1,
+            uid:             uid.trim(),
+            syncOptedIn:     true,
+            completedToday:  [],
+            lastQuestDate:   today(),
+            lastActiveDate:  today(),
+            scanComplete:    true,
+            pathComplete:    !!(data.pathData),
+            pathData:        data.pathData || null,
+            hasSeenBriefing: true
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(restoredPlayer));
+
+        // ── Restore all other keys ─────────────────────────────────
+        if (data.careerSkills)       localStorage.setItem(CAREER_SKILLS_KEY,          JSON.stringify(data.careerSkills));
+        if (data.pathData)           localStorage.setItem('syd_path_data',            JSON.stringify(data.pathData));
+        if (data.scanTraits)         localStorage.setItem('syd_scan_traits',           JSON.stringify(data.scanTraits));
+        if (data.scanCommentary)     localStorage.setItem('syd_scan_commentary',       data.scanCommentary);
+        if (data.signalTranslation)  localStorage.setItem('syd_signal_translation',   data.signalTranslation);
+        if (data.careerDirectives)   localStorage.setItem('syd_career_directives',    data.careerDirectives);
+        if (data.careerEncounters)   localStorage.setItem('syd_career_encounters',    data.careerEncounters);
+        if (data.fieldNotes)         localStorage.setItem(FIELD_NOTES_KEY,            data.fieldNotes);
+        if (data.gear)               localStorage.setItem(GEAR_KEY,                   data.gear);
+
+        return { ok: true, preview: { name: data.name, stats: data.stats } };
+    } catch(e) {
+        console.warn('[SYD] pullFromCloud failed:', e);
+        return { ok: false, error: e.message || 'Network error.' };
+    }
+}
+
+// ─── RESTORE FROM SYNC ID ────────────────────────────────────
+// Renders the Sync ID entry + restore flow.
+// onDone: called if operative cancels and returns to caller context.
+// On successful restore, reloads the page (cleanest re-boot path).
+function renderRestoreFromSyncID(onDone) {
+    showScreen('screen-path');
+    const container = document.getElementById('path-content');
+    if (!container) { if (onDone) onDone(); return; }
+
+    function renderEntry(prefill, errorMsg) {
+        container.innerHTML = `
+            <div class="restore-wrap">
+                <p class="restore-label">[ RESTORE YOUR RECORD ]</p>
+                <p class="restore-syd-line">Enter your Sync ID to restore your record on this device.</p>
+                <p class="restore-syd-line restore-caveat">Your stats, career path, directives, scan traits, and journal will be restored. Your Gemini key cannot be recovered — it is stored on your original device only.</p>
+                ${errorMsg ? `<p class="restore-error">${errorMsg}</p>` : ''}
+                <div class="restore-input-group">
+                    <input
+                        type="text"
+                        id="restore-uid-input"
+                        class="settings-input restore-uid-input"
+                        placeholder="syd_..."
+                        spellcheck="false"
+                        autocomplete="off"
+                        value="${prefill || ''}"
+                    />
+                </div>
+                <button class="btn btn--primary" id="restore-submit-btn">[ RESTORE ]</button>
+                <button class="restore-cancel-btn" id="restore-cancel-btn">cancel</button>
+            </div>
+        `;
+
+        setTimeout(() => {
+            const input = document.getElementById('restore-uid-input');
+            if (input) input.focus();
+        }, 150);
+
+        document.getElementById('restore-submit-btn').addEventListener('click', () => {
+            playUIClick();
+            const uid = document.getElementById('restore-uid-input').value.trim();
+            if (!uid) { showLog('[ ENTER YOUR SYNC ID ]', 'system'); return; }
+            renderLoading(uid);
+        });
+
+        document.getElementById('restore-cancel-btn').addEventListener('click', () => {
+            playUIClick();
+            if (onDone) onDone();
+        });
+    }
+
+    function renderLoading(uid) {
+        container.innerHTML = `
+            <div class="restore-wrap">
+                <p class="restore-label">[ LOCATING RECORD... ]</p>
+                <p class="restore-syd-line">Standing by.</p>
+            </div>
+        `;
+        pullFromCloud(uid).then(result => {
+            if (!result.ok) {
+                const msg = result.error === 'not_found'
+                    ? 'No operative found for that Sync ID. Check the ID and try again.'
+                    : 'Something went wrong. Check your connection and try again.';
+                renderEntry(uid, msg);
+            } else {
+                renderConfirm(uid, result.preview);
+            }
+        });
+    }
+
+    function renderConfirm(uid, preview) {
+        const level = preview.stats
+            ? levelFromXP(Math.max(0, earnedXP(preview.stats)))
+            : '—';
+        const rank = preview.stats ? rankFromLevel(level) : '—';
+
+        container.innerHTML = `
+            <div class="restore-wrap">
+                <p class="restore-label">[ RECORD LOCATED ]</p>
+                <div class="restore-preview">
+                    <p class="restore-preview-name">${preview.name}</p>
+                    <p class="restore-preview-meta">LEVEL ${level} &middot; ${rank}-RANK</p>
+                </div>
+                <p class="restore-syd-line">This will replace any data currently on this device.</p>
+                <button class="btn btn--primary" id="restore-confirm-btn">[ CONFIRM RESTORE ]</button>
+                <button class="restore-cancel-btn" id="restore-cancel2-btn">cancel</button>
+            </div>
+        `;
+
+        document.getElementById('restore-confirm-btn').addEventListener('click', () => {
+            playUIClick();
+            // Data already written to localStorage by pullFromCloud.
+            // Reload to boot as returning operative cleanly.
+            window.location.reload();
+        });
+
+        document.getElementById('restore-cancel2-btn').addEventListener('click', () => {
+            playUIClick();
+            if (onDone) onDone();
+        });
+    }
+
+    renderEntry('', '');
 }
 
 // ─── CLOUD SYNC HELPERS ───────────────────────────────────────
@@ -1057,53 +1244,114 @@ function renderCloudSyncOptIn(onDone) {
     const container = document.getElementById('path-content');
     if (!container) { if (onDone) onDone(); return; }
 
-    container.innerHTML = `
-        <div class="cloud-sync-optin-wrap">
-            <p class="cso-label">[ CLOUD SYNC ]</p>
-            <p class="cso-syd-line">Your career path and progress are currently on this device only.</p>
-            <p class="cso-syd-line">Enable cloud sync and they follow you — open SYD on any device and pick up exactly where you left off.</p>
-            <p class="cso-syd-line">No account needed. Your data is stored under a private ID. Nothing is shared.</p>
-            <button class="btn btn--primary" id="cso-enable-btn">[ ENABLE CLOUD SYNC ]</button>
-            <button class="cso-skip-btn" id="cso-skip-btn">Not now — keep it local</button>
-        </div>
-    `;
-
-    document.getElementById('cso-enable-btn').addEventListener('click', () => {
-        playUIClick();
-        enableCloudSync();
-        // Show sync ID immediately after enabling
-        const uid = player && player.uid ? player.uid : '—';
+    function renderEnableMode() {
         container.innerHTML = `
             <div class="cloud-sync-optin-wrap">
-                <p class="cso-label">[ CLOUD SYNC ACTIVE ]</p>
-                <p class="cso-syd-line">Your data is now backed up. To access it on another device, use your Sync ID below.</p>
-                <div class="csm-id-block">
-                    <span class="csm-id-label">YOUR SYNC ID</span>
-                    <span class="csm-id-value" id="cso-uid-display">${uid}</span>
-                    <span class="csm-id-note">Copy this. On a new device, tap Manage Sync and enter it to restore your data.</span>
+                <p class="cso-label">[ CLOUD SYNC ]</p>
+                <div class="cso-mode-row">
+                    <button class="cso-mode-btn cso-mode-btn--active" id="cso-mode-enable">ENABLE</button>
+                    <button class="cso-mode-btn" id="cso-mode-restore">RESTORE FROM ID</button>
                 </div>
-                <button class="btn btn--primary" id="cso-copy-btn">[ COPY SYNC ID ]</button>
-                <button class="btn btn--primary" id="cso-done-btn">[ CONTINUE ]</button>
+                <p class="cso-syd-line">Your career path and progress are currently on this device only.</p>
+                <p class="cso-syd-line">Enable cloud sync and they follow you — open SYD on any device and pick up exactly where you left off.</p>
+                <p class="cso-syd-line">No account needed. Your data is stored under a private ID. Nothing is shared.</p>
+                <button class="btn btn--primary" id="cso-enable-btn">[ ENABLE CLOUD SYNC ]</button>
+                <button class="cso-skip-btn" id="cso-skip-btn">Not now — keep it local</button>
             </div>
         `;
-        document.getElementById('cso-copy-btn').addEventListener('click', () => {
-            playUIClick();
-            navigator.clipboard.writeText(uid).then(() => {
-                const btn = document.getElementById('cso-copy-btn');
-                if (btn) { btn.textContent = '✓ COPIED'; setTimeout(() => { btn.textContent = '[ COPY SYNC ID ]'; }, 2500); }
-            }).catch(() => {});
+        document.getElementById('cso-mode-restore').addEventListener('click', () => {
+            playUIClick(); renderRestoreMode();
         });
-        document.getElementById('cso-done-btn').addEventListener('click', () => {
+        document.getElementById('cso-enable-btn').addEventListener('click', () => {
+            playUIClick();
+            enableCloudSync();
+            const uid = player && player.uid ? player.uid : '—';
+            container.innerHTML = `
+                <div class="cloud-sync-optin-wrap">
+                    <p class="cso-label">[ CLOUD SYNC ACTIVE ]</p>
+                    <p class="cso-syd-line">Your data is now backed up. To access it on another device, use your Sync ID below.</p>
+                    <div class="csm-id-block">
+                        <span class="csm-id-label">YOUR SYNC ID</span>
+                        <span class="csm-id-value" id="cso-uid-display">${uid}</span>
+                        <span class="csm-id-note">Copy this. On a new device, tap Manage Sync and enter it to restore your data.</span>
+                    </div>
+                    <button class="btn btn--primary" id="cso-copy-btn">[ COPY SYNC ID ]</button>
+                    <button class="btn btn--primary" id="cso-done-btn">[ CONTINUE ]</button>
+                </div>
+            `;
+            document.getElementById('cso-copy-btn').addEventListener('click', () => {
+                playUIClick();
+                navigator.clipboard.writeText(uid).then(() => {
+                    const btn = document.getElementById('cso-copy-btn');
+                    if (btn) { btn.textContent = '✓ COPIED'; setTimeout(() => { btn.textContent = '[ COPY SYNC ID ]'; }, 2500); }
+                }).catch(() => {});
+            });
+            document.getElementById('cso-done-btn').addEventListener('click', () => {
+                playUIClick();
+                if (onDone) onDone();
+            });
+            showLog('[ CLOUD SYNC ENABLED — DATA BACKED UP ]', 'accent');
+        });
+
+        document.getElementById('cso-skip-btn').addEventListener('click', () => {
             playUIClick();
             if (onDone) onDone();
         });
-        showLog('[ CLOUD SYNC ENABLED — DATA BACKED UP ]', 'accent');
-    });
+    }
 
-    document.getElementById('cso-skip-btn').addEventListener('click', () => {
-        playUIClick();
-        if (onDone) onDone();
-    });
+    function renderRestoreMode() {
+        container.innerHTML = `
+            <div class="cloud-sync-optin-wrap">
+                <p class="cso-label">[ CLOUD SYNC ]</p>
+                <div class="cso-mode-row">
+                    <button class="cso-mode-btn" id="cso-mode-enable">ENABLE</button>
+                    <button class="cso-mode-btn cso-mode-btn--active" id="cso-mode-restore">RESTORE FROM ID</button>
+                </div>
+                <p class="cso-syd-line">Enter your Sync ID to restore your record on this device.</p>
+                <p class="cso-syd-line restore-caveat">Your stats, career path, directives, scan traits, and journal will be restored. Your Gemini key cannot be recovered — it is stored on your original device only.</p>
+                <div class="restore-input-group">
+                    <input
+                        type="text"
+                        id="cso-restore-input"
+                        class="settings-input restore-uid-input"
+                        placeholder="syd_..."
+                        spellcheck="false"
+                        autocomplete="off"
+                    />
+                </div>
+                <p class="restore-error hidden" id="cso-restore-error"></p>
+                <button class="btn btn--primary" id="cso-restore-btn">[ RESTORE ]</button>
+                <button class="cso-skip-btn" id="cso-skip-btn2">cancel</button>
+            </div>
+        `;
+        document.getElementById('cso-mode-enable').addEventListener('click', () => {
+            playUIClick(); renderEnableMode();
+        });
+        document.getElementById('cso-restore-btn').addEventListener('click', () => {
+            playUIClick();
+            const uid = document.getElementById('cso-restore-input').value.trim();
+            if (!uid) { showLog('[ ENTER YOUR SYNC ID ]', 'system'); return; }
+            const errEl = document.getElementById('cso-restore-error');
+            if (errEl) { errEl.textContent = '[ LOCATING RECORD... ]'; errEl.classList.remove('hidden'); }
+            pullFromCloud(uid).then(result => {
+                if (!result.ok) {
+                    const msg = result.error === 'not_found'
+                        ? 'No operative found for that ID. Check and try again.'
+                        : 'Something went wrong. Check your connection.';
+                    if (errEl) errEl.textContent = msg;
+                } else {
+                    // Data written — reload for clean boot
+                    window.location.reload();
+                }
+            });
+        });
+        document.getElementById('cso-skip-btn2').addEventListener('click', () => {
+            playUIClick();
+            if (onDone) onDone();
+        });
+    }
+
+    renderEnableMode();
 }
 
 function renderCloudSyncManage(onDone) {
@@ -1861,6 +2109,15 @@ async function init() {
                 playUIClick();
                 showScreen('screen-onboarding');
                 runNewOperativeFlow();
+            });
+        }
+        const restoreBtn = document.getElementById('title-restore-btn');
+        if (restoreBtn) {
+            restoreBtn.addEventListener('click', () => {
+                playUIClick();
+                renderRestoreFromSyncID(() => {
+                    showScreen('screen-title');
+                });
             });
         }
         registerServiceWorker();

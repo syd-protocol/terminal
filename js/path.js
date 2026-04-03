@@ -539,6 +539,20 @@ function formatSignalForPrompt(signal, evidenceLines) {
     ].filter(l => l !== null).join('\n');
 }
 
+// Maps seniorityTier from extractCVSignals() to a rank letter for prompt calibration.
+// Used inside fireCall2Bundle() before the Gemini call — confirmedRank is not yet
+// set at this point in the flow (it is set after role mapping).
+function estimateRankFromSeniority(seniorityTier) {
+    const map = {
+        ic:             'F',
+        senior_ic:      'D',
+        manager:        'C',
+        senior_manager: 'C',
+        director:       'B'
+    };
+    return map[seniorityTier] || 'F';
+}
+
 async function fireCall2Bundle() {
     if (!hasNeuralLink()) {
         return getLocalFallbackBundle();
@@ -560,6 +574,41 @@ async function fireCall2Bundle() {
     const traits       = pathState._scanTraits || {};
     const traitSummary = Object.entries(traits).map(([k, v]) => `${k}: ${v}`).join(', ') || 'not available';
 
+    // Derive estimated rank and re-imaginer context before building the prompt
+    const estimatedRank = isCV && cvSignal
+        ? estimateRankFromSeniority(cvSignal.seniorityTier)
+        : 'F';
+
+    const seniorityLabels = {
+        ic:             'Individual Contributor',
+        senior_ic:      'Senior Individual Contributor',
+        manager:        'Manager / Team Lead',
+        senior_manager: 'Senior Manager',
+        director:       'Director / Head of / VP'
+    };
+    const seniorityLabel = isCV && cvSignal
+        ? (seniorityLabels[cvSignal.seniorityTier] || 'Individual Contributor')
+        : 'Entry Level (Re-imaginer)';
+
+    const rankCalibrationBlock = isCV ? `
+ESTIMATED STARTING RANK: ${estimatedRank}
+SENIORITY CONTEXT: ${seniorityLabel}
+
+Directive calibration by rank — apply strictly:
+- F rank: build foundational capabilities. First-time execution. Ship tangible artefacts. Assume the operative has never done this professionally.
+- D rank: improve deliberate execution. Consistency, speed, cross-functional communication. The operative can do the basics — make them reliable.
+- C rank: expand influence. Stakeholder impact, driving decisions, managing complexity. The operative is competent — make them consequential.
+- B/A rank: build leverage. Enabling others, designing systems, operating at strategic level. The operative is recognised — make them a force multiplier.
+` : `
+OPERATIVE TYPE: Career Re-imaginer. No professional record in the target domain.
+STARTING RANK: F — directives must assume zero domain experience.
+TRANSFERABLE SIGNALS (from self-assessment responses):
+${pathState.reimagineResponses.filter(Boolean).join('\n')}
+
+Directive calibration for Re-imaginer:
+Directives must build real, demonstrable artefacts from scratch — not study tasks or reading lists. Outputs that exist in the world and can be shown to someone. The operative has strong transferable skills from outside the domain — reference patterns from their responses where visible in the output. The first directive should be completable within 48 hours with no domain experience required.
+`;
+
     // [RESEARCH] Source: SYD Respec v2 — Call 2 prompt spec.
     // Finding: one large prompt with explicit JSON schema prevents Gemini
     //          from producing partial responses across multiple calls.
@@ -570,6 +619,7 @@ You are SYD — an elite career intelligence system. The operative's name is ${o
 OPERATIVE SCAN TRAITS (psychometric game scores, 0.0–1.0):
 ${traitSummary}
 
+${rankCalibrationBlock}
 ANALYSIS RULES — follow these strictly:
 1. The three paths must be DISTINCT in type, not variations of the same theme. If two paths feel similar, you have not dug deep enough.
 2. path_name must be a role archetype the operative has NOT explicitly stated on their CV — infer from the pattern of what they actually built, not what they called themselves.
@@ -1992,18 +2042,64 @@ function loadCareerEncounters() {
 // Fires in the background when the career directive cache is low.
 async function fireCall4() {
     if (!hasNeuralLink()) return;
-    
-    const bundle = loadPathData();
-    if (!bundle || !bundle.aspirationGoal) return;
 
-    const prompt = `Refresh career directives for a ${bundle.confirmedRole} (${bundle.confirmedSpec}) aiming for ${bundle.aspirationGoal.targetRole}. Return 10 new directives in JSON format.`;
-    
-    const result = await geminiSilentCall(prompt, 0.2);
-    if (result.ok && result.data) {
-        const newDirectives = extractJSON(result.data);
-        if (newDirectives) {
+    const bundle = loadPathData();
+    if (!bundle) return;
+
+    const confirmedRole  = bundle.confirmedRole  || 'their confirmed role';
+    const confirmedSpec  = bundle.confirmedSpec   || confirmedRole;
+    const confirmedRank  = bundle.confirmedRank   || 'F';
+    const confirmedPath  = (bundle.confirmedPath && bundle.confirmedPath.path_name) || 'their path';
+    const aspiration     = bundle.aspirationGoal  || null;
+
+    const aspirationBlock = aspiration
+        ? `
+ASPIRATION:
+Career goal: ${aspiration.careerGoal || 'not specified'}
+Life goal: ${aspiration.lifeGoal || 'not specified'}
+Target direction: ${aspiration.targetRole || aspiration.domain || 'not specified'}
+`
+        : '';
+
+    const prompt = `
+You are SYD — a career intelligence system refreshing the directive cache for an operative.
+
+OPERATIVE CONTEXT:
+Confirmed role: ${confirmedRole}
+Confirmed specialisation: ${confirmedSpec}
+Path: ${confirmedPath}
+Career rank: ${confirmedRank}
+${aspirationBlock}
+Generate 10 new career directives. Each must be a real-world action with real professional consequences — not study tasks or research exercises. Outcome-oriented. Calibrated to ${confirmedRank}-rank: ${
+    confirmedRank === 'F' || confirmedRank === 'E'
+        ? 'foundational execution, first-time shipping, building tangible artefacts'
+        : confirmedRank === 'D' || confirmedRank === 'C'
+        ? 'deliberate improvement, cross-functional impact, consistent delivery'
+        : 'leverage, systems thinking, enabling others'
+}.
+
+Output ONLY valid JSON — an array of directive objects. No markdown fences. No preamble.
+
+[
+  {
+    "id": "cd_r01",
+    "title": "Directive title — active verb, specific outcome",
+    "desc": "What the operative actually does. Real action, real professional consequence.",
+    "intel": "Mental model name — one sentence on what it is. One sentence on why it matters.",
+    "stat": "intelligence",
+    "career_skill": "Matching career skill name",
+    "xp": 12,
+    "tier": 1
+  }
+]
+`.trim();
+
+    const result = await geminiGenerate(prompt);
+    if (result.ok) {
+        const newDirectives = extractJSON(result.text);
+        if (Array.isArray(newDirectives) && newDirectives.length > 0) {
             localStorage.setItem('syd_career_directives', JSON.stringify(newDirectives));
-            console.log('[SYD] Call 4 successful: Career cache refreshed.');
+            console.log('[SYD] Call 4 successful: Career cache refreshed with', newDirectives.length, 'directives.');
         }
     }
 }
