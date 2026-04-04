@@ -614,7 +614,7 @@ Directives must build real, demonstrable artefacts from scratch — not study ta
     //          from producing partial responses across multiple calls.
     // Applied: full schema inline, all fields required, STRICT JSON only.
     const prompt = `
-You are SYD — an elite career intelligence system. The operative's name is ${operativeName}. Use this name (first name only if it contains spaces) when referencing them in narrative and synthesis fields — never use "the operative" or their surname alone. Your job is NOT to summarise what the operative already knows about themselves. Your job is to read beneath the surface and identify the patterns they cannot see from inside their own record.
+You are SYD — an elite career intelligence system. The operative's name is ${operativeName}. You may address them by first name in synthesis_syd_lines and orientation_closing_line only. Do NOT use their name in narrative fields — refer to the record, not the person. Do not invent or assume any name not explicitly provided in this prompt. Your job is NOT to summarise what the operative already knows about themselves. Your job is to read beneath the surface and identify the patterns they cannot see from inside their own record.
 
 OPERATIVE SCAN TRAITS (psychometric game scores, 0.0–1.0):
 ${traitSummary}
@@ -622,8 +622,8 @@ ${traitSummary}
 ${rankCalibrationBlock}
 ANALYSIS RULES — follow these strictly:
 1. The three paths must be DISTINCT in type, not variations of the same theme. If two paths feel similar, you have not dug deep enough.
-2. path_name must be a role archetype the operative has NOT explicitly stated on their CV — infer from the pattern of what they actually built, not what they called themselves.
-3. narrative must cite SPECIFIC evidence (a named project, a number, a dated event) and connect it to a non-obvious pattern. Never restate the operative's own job title or bio language.
+2. path_name must be a real, recognisable job title that exists on job boards — enough to represent a direction, grounded enough to be searchable. Examples: "Learning & Development Manager", "Systems Architect", "Program Manager". Do NOT invent compound titles or use words like "Ecosystem", "Synthesizer", "Facilitator", "Orchestrator", or "Strategist" as standalone labels.
+3. narrative must cite SPECIFIC evidence (a named project, a number, a dated event) and connect it to a non-obvious pattern. Never restate the operative's own job title or bio language. Do not use the operative's name — refer only to the record and its patterns.
 4. gap_skills must be things genuinely absent from the record — not polish on existing skills.
 5. hidden_affinity_stat must reflect the scan traits AND the record pattern — not just the highest stat.
 6. gap_analysis_prose must be honest and specific. Name the actual gap. Do not soften it.
@@ -631,7 +631,7 @@ ANALYSIS RULES — follow these strictly:
 8. career_skill_tracks must be named after what the operative actually does, not generic skill categories.
 9. initial_career_directives must be REAL actions with REAL professional consequences — not study tasks or research exercises.
 10. current_role_match and target_roles must contain ONLY the role name — no seniority prefix of any kind. Do not use Senior, Junior, Associate, Head of, Lead, Director, VP, Chief, or Principal. The role name alone is correct: "Community Manager" not "Senior Community Manager", "Data Analyst" not "Head of Data". Seniority is communicated separately through the operative's rank — it must not appear in role titles.
-11. current_role_match must be a role the operative could send a CV to tomorrow and be a plausible applicant based on their actual record. If uncertain, default to the more junior version of the role. target_roles are the direction their pattern points — they should be reachable within 2–4 years of deliberate work, not aspirational fantasy titles.
+11. current_role_match must be a role the operative could send a CV to tomorrow and be a plausible applicant based on their actual record. If uncertain, default to the more junior version of the role. target_roles must be real job titles that appear on job boards today — reachable within 2–4 years of deliberate work. No invented, compound, or fantasy titles in target_roles.
 
 Your output will seed multiple downstream systems. Every field is required. Do not omit any.
 
@@ -1579,10 +1579,8 @@ function runRoleMapping(round) {
         return `
             <div class="ms-block">
                 <span class="ms-label">[ MARKET SIGNAL ]</span>
-                <span class="ms-demand" style="color:${colour}">${(signal.demand || '').toUpperCase()}</span>
-                <p class="ms-trend">${signal.trend || ''}</p>
+                <span class="ms-demand" style="color:${colour}">${(signal.demand || '').toUpperCase()} <span class="ms-trend-inline">— ${signal.trend || ''}</span></span>
                 <p class="ms-who">Hiring: <span class="ms-who-value">${signal.who_is_hiring || ''}</span></p>
-                <p class="ms-one-signal">${signal.one_signal || ''}</p>
             </div>
         `;
     }
@@ -1616,8 +1614,8 @@ function runRoleMapping(round) {
         `).join('');
     }
 
-    // Market signal button only shown on round 0, only when Neural Link is connected
-    const showMSBtn = round === 0 && (typeof hasNeuralLink === 'function') && hasNeuralLink();
+    const hasLink   = round === 0 && (typeof hasNeuralLink === 'function') && hasNeuralLink();
+    const showMSBtn = hasLink; // kept for legacy guard below
 
     container.innerHTML = `
         <div class="role-mapping-wrap">
@@ -1629,12 +1627,14 @@ function runRoleMapping(round) {
             <div class="path-syd-voice">
                 <p class="path-voice-line path-voice-line--visible">${voiceLines[round]}</p>
             </div>
-            ${showMSBtn && !signals ? `
-                <button class="ms-fetch-btn" id="ms-fetch-btn">
-                    &#x25BA; GET MARKET SIGNAL — see who is hiring for each path right now
-                </button>
+            ${hasLink && !signals ? `
+                <div class="ms-fetch-wrap" id="ms-fetch-wrap">
+                    <button class="ms-fetch-btn" id="ms-fetch-btn">
+                        &#x25BA; GET MARKET SIGNAL — see who is hiring for each path right now
+                    </button>
+                </div>
             ` : ''}
-            ${showMSBtn && signals ? `
+            ${hasLink && signals ? `
                 <p class="ms-fetched-note">&#x2713; Market signal loaded. Data sourced via live search.</p>
             ` : ''}
             <div class="role-card-stack" id="role-card-stack">
@@ -1658,34 +1658,52 @@ function runRoleMapping(round) {
 
     // Wire market signal fetch button
     const msFetchBtn = document.getElementById('ms-fetch-btn');
-    if (msFetchBtn) {
+    const msFetchWrap = document.getElementById('ms-fetch-wrap');
+    if (msFetchBtn && msFetchWrap) {
         msFetchBtn.addEventListener('click', () => {
             playUIClick();
-            msFetchBtn.disabled    = true;
-            msFetchBtn.textContent = '[ READING MARKET — STANDING BY... ]';
+            // Show loading state
+            msFetchWrap.innerHTML = `
+                <p class="ms-loading-text" id="ms-loading-text">[ READING MARKET — STANDING BY... ]</p>
+                <div class="ms-loading-bar"><div class="ms-loading-bar-fill" id="ms-loading-bar-fill"></div></div>
+            `;
             fireMarketSignalCall(paths).then(result => {
                 if (result) {
                     pathState.marketSignals = result;
-                    // Persist to path data immediately so it survives to Firestore
                     const existing = loadPathData();
                     if (existing) {
                         existing.marketSignals = result;
                         savePathData(existing);
                     }
-                    // Re-render the card stack with signal injected
-                    const stack = document.getElementById('role-card-stack');
-                    if (stack) {
-                        stack.innerHTML = renderCards();
-                        wireRoleCards();
-                    }
-                    msFetchBtn.style.display = 'none';
-                    const note = document.createElement('p');
-                    note.className   = 'ms-fetched-note';
-                    note.textContent = '✓ Market signal loaded. Data sourced via live search.';
-                    msFetchBtn.parentNode.insertBefore(note, msFetchBtn);
+                    // Show acquired state with VIEW button
+                    msFetchWrap.innerHTML = `
+                        <div class="ms-acquired-row">
+                            <p class="ms-fetched-note">&#x2713; MARKET SIGNAL ACQUIRED</p>
+                            <button class="ms-view-btn" id="ms-view-btn">[ VIEW ]</button>
+                        </div>
+                    `;
+                    document.getElementById('ms-view-btn').addEventListener('click', () => {
+                        playUIClick();
+                        const stack = document.getElementById('role-card-stack');
+                        if (stack) {
+                            stack.innerHTML = renderCards();
+                            wireRoleCards();
+                        }
+                        msFetchWrap.innerHTML = `<p class="ms-fetched-note">&#x2713; Market signal loaded. Data sourced via live search.</p>`;
+                    });
                 } else {
-                    msFetchBtn.disabled    = false;
-                    msFetchBtn.textContent = '▶ GET MARKET SIGNAL — tap to retry';
+                    // Fail state — wrap becomes a retry button
+                    msFetchWrap.innerHTML = `
+                        <button class="ms-fetch-btn" id="ms-fetch-btn-retry">
+                            [ SIGNAL UNAVAILABLE — tap to retry ]
+                        </button>
+                    `;
+                    document.getElementById('ms-fetch-btn-retry').addEventListener('click', () => {
+                        msFetchWrap.innerHTML = `<button class="ms-fetch-btn" id="ms-fetch-btn">&#x25BA; GET MARKET SIGNAL — see who is hiring for each path right now</button>`;
+                        // Re-wire by re-triggering the outer block via a click simulation
+                        const newBtn = document.getElementById('ms-fetch-btn');
+                        if (newBtn) newBtn.click();
+                    });
                     if (typeof showLog === 'function') showLog('[ MARKET SIGNAL UNAVAILABLE — CHECK CONNECTION ]', 'system');
                 }
             });
