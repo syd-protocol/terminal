@@ -1125,7 +1125,7 @@ function renderRestoreFromSyncID(onDone) {
         container.innerHTML = `
             <div class="restore-wrap">
                 <p class="restore-label">[ RESTORE YOUR RECORD ]</p>
-                <p class="restore-syd-line">Enter your Sync ID to restore your record on this device.</p>
+                <p class="restore-syd-line">Enter your Sync ID to restore your record on this device. This is for returning players.</p>
                 <p class="restore-syd-line restore-caveat">Your stats, career path, directives, scan traits, and journal will be restored. Your Gemini key cannot be recovered — it is stored on your original device only.</p>
                 ${errorMsg ? `<p class="restore-error">${errorMsg}</p>` : ''}
                 <div class="restore-input-group">
@@ -1349,7 +1349,7 @@ function renderCloudSyncOptIn(onDone, pendingData) {
                     <button class="cso-mode-btn" id="cso-mode-enable">ENABLE</button>
                     <button class="cso-mode-btn cso-mode-btn--active" id="cso-mode-restore">RESTORE FROM ID</button>
                 </div>
-                <p class="cso-syd-line">Enter your Sync ID to restore your record on this device.</p>
+                <p class="cso-syd-line">Enter your Sync ID to restore your record on this device. This is for returning players.</p>
                 <p class="cso-syd-line restore-caveat">Your stats, career path, directives, scan traits, and journal will be restored. Your Gemini key cannot be recovered — it is stored on your original device only.</p>
                 <div class="restore-input-group">
                     <input

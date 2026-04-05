@@ -1092,7 +1092,7 @@ function renderStatusMainContent(container, animate) {
             <!-- Momentum bar — tappable -->
             <div class="sot-metric sot-metric--tappable" id="sot-momentum-row">
                 <div class="sot-metric-header">
-                    <div class="sot-metric-label">MOMENTUM <span class="sot-metric-hint">tap for read</span></div>
+                    <div class="sot-metric-label">MOMENTUM <span class="sot-metric-hint">tap to understand</span></div>
                     <div class="sot-metric-value">${momentum.toFixed(2)}&times;</div>
                 </div>
                 <div class="sot-bar">
@@ -1106,7 +1106,7 @@ function renderStatusMainContent(container, animate) {
             <!-- Capacity bar — tappable -->
             <div class="sot-metric sot-metric--tappable" id="sot-capacity-row">
                 <div class="sot-metric-header">
-                    <div class="sot-metric-label">CAPACITY <span class="sot-metric-hint">tap for read</span></div>
+                    <div class="sot-metric-label">CAPACITY <span class="sot-metric-hint">tap to understand</span></div>
                     <div class="sot-metric-value">${capacity} / ${maxCap}</div>
                 </div>
                 <div class="sot-bar">
@@ -1123,7 +1123,7 @@ function renderStatusMainContent(container, animate) {
             <div class="sot-divider"></div>
 
             <!-- ── 2. BASE STATS ───────────────────────────── -->
-            <p class="status-section-label">[ BASE STATS &mdash; TAP ANY ROW FOR SYD'S READ ]</p>
+            <p class="status-section-label">[ BASE STATS &mdash; TAP ANY ROW FOR A BREAKDOWN ]</p>
             <div class="stats-full-list">
                 ${STAT_NAMES.map(stat => {
                     const val       = player.stats[stat] || STAT_FLOOR;
