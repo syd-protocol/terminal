@@ -435,6 +435,22 @@ function createPlayer(name, scanTraits, pathData) {
     showScreen('screen-status');
     if (typeof switchStatusTab === 'function') switchStatusTab('status');
     runFirstTransmission();
+    scheduleJobOpsCalls();
+}
+
+// ─── JOB OPS BACKGROUND SEEDING ──────────────────────────────
+// Fires Call A and Call B silently after player creation.
+// No loading state shown — calls resolve in background.
+// Results cached. If either fails, the UI handles retry gracefully.
+function scheduleJobOpsCalls() {
+    if (!hasNeuralLink()) return;
+    if (typeof fireJobOpsProfile !== 'function') return;
+
+    // Small delay so createPlayer UI settles first
+    setTimeout(async () => {
+        await fireJobOpsProfile();
+        await fireJobOpsMarket();
+    }, 3000);
 }
 
 function effectiveGear() {
@@ -2015,6 +2031,29 @@ function renderOrientationScreen(onDone) {
     });
 }
 
+// ─── JOB OPS DAILY REFRESH ───────────────────────────────────
+// Called from init() on every relaunch for existing players.
+// Re-fires Call A and Call B silently if cache is stale (different day).
+function checkJobOpsRefresh() {
+    if (!hasNeuralLink()) return;
+    if (typeof fireJobOpsProfile !== 'function') return;
+
+    const profile  = (typeof loadJobOpsProfile === 'function') ? loadJobOpsProfile() : null;
+    const market   = (typeof loadJobOpsMarket  === 'function') ? loadJobOpsMarket()  : null;
+    const todayStr = today();
+
+    const profileStale = !profile || profile.cachedAt !== todayStr;
+    const marketStale  = !market  || market.cachedAt  !== todayStr;
+
+    if (!profileStale && !marketStale) return; // both fresh — nothing to do
+
+    // Fire in background — no UI indication unless operative opens JOB OPS
+    setTimeout(async () => {
+        if (profileStale) await fireJobOpsProfile();
+        if (marketStale)  await fireJobOpsMarket();
+    }, 4000);
+}
+
 // ─── NEW OPERATIVE FLOW ──────────────────────────────────────
 function runNewOperativeFlow() {
     startStatusAmbient();
@@ -2172,6 +2211,7 @@ async function init() {
     if (!allQuests.length) allQuests = await questsPromise;
 
     checkDailyReset();
+    checkJobOpsRefresh();
     dailyQuests = getDailyQuests(allQuests, calculateLevel(), effectiveGear(), player?.operatorDays);
     await runRelaunchBoot();
 
