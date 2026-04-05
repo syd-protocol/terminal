@@ -282,7 +282,7 @@ Include 4-6 search strings. Mix: LinkedIn jobs, company career pages for 2-3 wel
 Return ONLY valid JSON. No markdown fences. No preamble.
 `.trim();
 
-    const stage2Result = await geminiGenerate(stage2Prompt);
+    const stage2Result = await geminiGenerateLarge(stage2Prompt, 0.4);
 
     if (!stage2Result.ok) {
         console.warn('[SYD] JOB OPS Call B Stage 2 failed:', stage2Result.error);
@@ -430,10 +430,9 @@ function _triggerManualRefresh(container, panelLabel, roleLabel) {
         }
         return;
     }
-    recordManualRefresh();
     _joLoadingState(container, panelLabel, roleLabel, 60000);
     Promise.all([fireJobOpsProfile(), fireJobOpsMarket()]).then(() => {
-        // Re-render active panel
+        recordManualRefresh();
         const activePanel = window._jobOpsPanel || 'profile';
         renderJobOpsPanel(activePanel);
     });

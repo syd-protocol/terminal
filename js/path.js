@@ -1999,6 +1999,8 @@ function runPathSynthesis() {
     // so app.js renderSynthesisReveal() and renderOrientationScreen() can use them
     const pathData = {
         track:               pathState.track,
+        cvText:              pathState.cvText || null,
+        reimagineResponses:  pathState.reimagineResponses || [],
         confirmedPath:       pathState.confirmedPath,
         confirmedRole:       pathState.confirmedRole,
         confirmedSpec:       pathState.confirmedSpec,
