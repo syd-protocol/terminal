@@ -65,6 +65,9 @@ const PATH_DATA_KEY            = 'syd_path_data';
 const CALL2_BUNDLE_KEY         = 'syd_call2_bundle';
 const CAREER_ENCOUNTERS_KEY    = 'syd_career_encounters';
 const STAT_EXPLAINER_CACHE_KEY = 'syd_stat_explainer_cache';
+const JOB_OPS_PROFILE_KEY      = 'syd_job_ops_profile';
+const JOB_OPS_MARKET_KEY       = 'syd_job_ops_market';
+const JOB_OPS_INTENT_KEY       = 'syd_job_intent';
 
 // ─── PATH ENTRY POINT ────────────────────────────────────────
 // Called from app.js startPATH() after scan completes.
@@ -1886,6 +1889,20 @@ function runAspirationProbe() {
                     maxlength="280"
                 ></textarea>
             </div>
+            <div class="path-input-group path-intent-group">
+                <label class="path-input-label">WHERE ARE YOU RIGHT NOW?</label>
+                <div class="path-intent-options" id="aspiration-intent-options">
+                    <button class="path-intent-btn" data-intent="hunting">
+                        <span class="path-intent-label">Actively looking for a job</span>
+                    </button>
+                    <button class="path-intent-btn" data-intent="building">
+                        <span class="path-intent-label">Building toward a move — not yet</span>
+                    </button>
+                    <button class="path-intent-btn" data-intent="growing">
+                        <span class="path-intent-label">Growing where I am</span>
+                    </button>
+                </div>
+            </div>
             <div class="path-action-row">
                 <button class="path-skip-btn" id="aspiration-skip">SKIP</button>
                 <button class="btn btn--primary" id="aspiration-submit">[ CONFIRM SIGNAL ]</button>
@@ -1895,16 +1912,34 @@ function runAspirationProbe() {
 
     setTimeout(() => { const t = document.getElementById('aspiration-career'); if (t) t.focus(); }, 150);
 
-    document.getElementById('aspiration-skip').addEventListener('click', () => {
-        playUIClick(); pathState.aspirationGoal = null; runPathSynthesis();
+    let selectedIntent = 'building'; // default
+
+    document.querySelectorAll('.path-intent-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            playUIClick();
+            document.querySelectorAll('.path-intent-btn')
+                .forEach(b => b.classList.remove('path-intent-btn--active'));
+            btn.classList.add('path-intent-btn--active');
+            selectedIntent = btn.dataset.intent;
+        });
     });
+
+    document.getElementById('aspiration-skip').addEventListener('click', () => {
+        playUIClick();
+        pathState.aspirationGoal = null;
+        localStorage.setItem(JOB_OPS_INTENT_KEY, 'growing');
+        runPathSynthesis();
+    });
+
     document.getElementById('aspiration-submit').addEventListener('click', () => {
         playUIClick();
         const careerGoal = document.getElementById('aspiration-career').value.trim();
         const lifeGoal   = document.getElementById('aspiration-life').value.trim();
+        localStorage.setItem(JOB_OPS_INTENT_KEY, selectedIntent);
         pathState.aspirationGoal = {
             careerGoal,
             lifeGoal,
+            jobIntent:  selectedIntent,
             domain:     pathState.confirmedPath ? pathState.confirmedPath.path_name : '',
             targetRole: pathState.confirmedRole || ''
         };
@@ -2201,6 +2236,31 @@ function loadCareerEncounters() {
         const raw = localStorage.getItem(CAREER_ENCOUNTERS_KEY);
         return raw ? JSON.parse(raw) : [];
     } catch(e) { return []; }
+}
+
+// ─── JOB OPS STORAGE HELPERS ─────────────────────────────────
+function saveJobOpsProfile(data) {
+    try { localStorage.setItem(JOB_OPS_PROFILE_KEY, JSON.stringify(data)); }
+    catch(e) { console.warn('[SYD] Could not save JOB OPS profile:', e); }
+}
+
+function loadJobOpsProfile() {
+    try {
+        const raw = localStorage.getItem(JOB_OPS_PROFILE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
+}
+
+function saveJobOpsMarket(data) {
+    try { localStorage.setItem(JOB_OPS_MARKET_KEY, JSON.stringify(data)); }
+    catch(e) { console.warn('[SYD] Could not save JOB OPS market:', e); }
+}
+
+function loadJobOpsMarket() {
+    try {
+        const raw = localStorage.getItem(JOB_OPS_MARKET_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
 }
 
 // ─── CALL 4: CAREER REFRESH ──────────────────────────────────
