@@ -1687,12 +1687,7 @@ function runRoleMapping(round) {
                     `;
                     document.getElementById('ms-view-btn').addEventListener('click', () => {
                         playUIClick();
-                        const stack = document.getElementById('role-card-stack');
-                        if (stack) {
-                            stack.innerHTML = renderCards();
-                            wireRoleCards();
-                        }
-                        msFetchWrap.innerHTML = `<p class="ms-fetched-note">&#x2713; Market signal loaded. Data sourced via live search.</p>`;
+                        runRoleMapping(0);
                     });
                 } else {
                     // Fail state — wrap becomes a retry button

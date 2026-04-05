@@ -1985,7 +1985,7 @@ function renderSynthesisReveal(pathData, onDone) {
             ${affinity && affinity.stat ? `
                 <div class="sr-affinity-block">
                     <p class="sr-section-label">[ HIDDEN AFFINITY — STORED ]</p>
-                    <p class="sr-affinity-note">Something was flagged in your signal. It unlocks at Level 20. SYD is holding it.</p>
+                    <p class="sr-affinity-note">Something was flagged in your signal. SYD is holding it.</p>
                 </div>
             ` : ''}
             <div class="sr-syd-voice">

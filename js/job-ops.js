@@ -134,9 +134,7 @@ ALSO include for BOTH tracks (reproduce exactly from existing reframes above if 
 Return ONLY valid JSON. No markdown fences. No preamble. No explanation.
 `.trim();
 
-    const result = isChronicler && cvText && cvText.length > 1500
-        ? await geminiGenerateLarge(prompt, 0.3)
-        : await geminiGenerate(prompt);
+    const result = await geminiGenerateLarge(prompt, 0.3);
 
     if (!result.ok) {
         console.warn('[SYD] JOB OPS Call A failed:', result.error);
@@ -452,7 +450,6 @@ function renderJobOpsProfile(container) {
     // State C — data available
     const isChronicler = profile.track === 'chronicler';
     const pathData     = (typeof loadPathData === 'function') ? loadPathData() : null;
-    const role         = pathData ? (pathData.confirmedRole || (pathData.confirmedPath && pathData.confirmedPath.path_name) || '') : '';
     const aspiration   = pathData ? (pathData.aspirationGoal || null) : null;
 
     const aspirationBlock = aspiration ? `
