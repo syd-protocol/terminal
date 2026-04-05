@@ -10489,3 +10489,86 @@ body {
     line-height: 1.4;
     pointer-events: none;
 }
+
+/* ── JOB OPS — ASPIRATION / CAREER SIGNAL EDIT ────────────── */
+
+.jo-aspiration-block {
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding-top: 14px;
+}
+
+.jo-aspiration-row {
+    cursor: pointer;
+    padding: 8px 0 4px;
+}
+
+.jo-asp-edit-hint {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.6rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.08em;
+    opacity:        0.6;
+    display:        block;
+    margin-top:     2px;
+}
+
+.jo-aspiration-edit {
+    margin-top:     10px;
+    display:        flex;
+    flex-direction: column;
+    gap:            6px;
+}
+
+/* ── STATUS PATH CARD — CAREER SIGNAL + AFFINITY ──────────── */
+
+.sot-path-signal-block {
+    margin-top:  12px;
+    padding-top: 12px;
+    border-top:  1px solid rgba(255,255,255,0.05);
+    cursor:      pointer;
+}
+
+.sot-path-signal-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.6rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.1em;
+    margin:         0 0 4px;
+}
+
+.sot-path-signal-value {
+    font-size:   0.82rem;
+    color:       var(--text-primary, #c0cdd8);
+    margin:      0 0 2px;
+    line-height: 1.5;
+}
+
+.sot-path-signal-expand {
+    margin-top:     10px;
+    display:        flex;
+    flex-direction: column;
+    gap:            6px;
+}
+
+.sot-path-affinity-block {
+    margin-top:  12px;
+    padding-top: 12px;
+    border-top:  1px solid rgba(255,255,255,0.05);
+}
+
+.sot-path-affinity-stat {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.75rem;
+    font-weight:    700;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+    margin:         0 0 4px;
+}
+
+.sot-path-affinity-read {
+    font-size:   0.8rem;
+    color:       var(--text-secondary);
+    line-height: 1.6;
+    margin:      0;
+    font-style:  italic;
+}

@@ -56,8 +56,18 @@ async function fireJobOpsProfile() {
 
     const isChronicler = track === 'chronicler';
 
+    // Use extracted signal for Chronicler — much smaller than raw CV,
+    // prevents token budget being consumed by the input before output starts.
+    // Full CV text is still passed for experience/skills generation.
+    const cvSignal = isChronicler && cvText && (typeof extractCVSignals === 'function')
+        ? extractCVSignals(cvText)
+        : null;
+    const cvSignalText = cvSignal && (typeof formatSignalForPrompt === 'function')
+        ? formatSignalForPrompt(cvSignal, cvSignal.evidenceLines)
+        : null;
+
     const cvBlock = isChronicler
-        ? `CV TEXT:\n---\n${cvText || 'Not available'}\n---`
+        ? `CV TEXT (full):\n---\n${cvText || 'Not available'}\n---\n\nEXTRACTED SIGNAL SUMMARY:\n${cvSignalText || 'Not available'}`
         : `OPERATIVE RESPONSES:\n1. ${(reimagine || [])[0] || ''}\n2. ${(reimagine || [])[1] || ''}\n3. ${(reimagine || [])[2] || ''}\n4. ${(reimagine || [])[3] || ''}`;
 
     const reframeBlock = sigKit ? `
