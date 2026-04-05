@@ -1539,6 +1539,7 @@ const HIDDEN_AFFINITY_TEASER = [
 ].join(' ');
 
 // Builds PATH section HTML string — compact summary card linking to JOB OPS.
+// Includes: path name + rank, role, career signal (editable), hidden affinity (always unlocked).
 function buildPathSection(level) {
     const pathData = (typeof loadPathData === 'function') ? loadPathData() : null;
 
@@ -1554,30 +1555,71 @@ function buildPathSection(level) {
         `;
     }
 
-    const pathName  = (pathData.confirmedPath && pathData.confirmedPath.path_name) || 'UNCLASSIFIED';
-    const role      = pathData.confirmedRole || pathName;
-    const rank      = pathData.confirmedRank || 'F';
-    const rankLabel = (typeof careerRankLabel === 'function') ? careerRankLabel(rank) : rank;
+    const pathName      = (pathData.confirmedPath && pathData.confirmedPath.path_name) || 'UNCLASSIFIED';
+    const role          = pathData.confirmedRole || pathName;
+    const rank          = pathData.confirmedRank || 'F';
+    const rankLabel     = (typeof careerRankLabel === 'function') ? careerRankLabel(rank) : rank;
+    const aspiration    = pathData.aspirationGoal || null;
+    const careerGoal    = aspiration ? (aspiration.careerGoal || '') : '';
+    const lifeGoal      = aspiration ? (aspiration.lifeGoal   || '') : '';
+    const affinity      = pathData.hiddenAffinity || null;
+    const affinityRead  = affinity ? (affinity.read || '') : '';
+    const affinityStat  = affinity ? (affinity.stat || '') : '';
 
     return `
         <div class="status-section-card sot-path-card" id="sot-path-summary">
             <p class="status-section-label">[ PATH ]</p>
+
             <div class="sot-path-summary-row">
                 <span class="sot-path-name">${pathName}</span>
                 <span class="sot-path-rank sot-rank-badge">${rankLabel}</span>
             </div>
-            <p class="sot-path-role">${role !== pathName ? role : ''}</p>
+            ${role !== pathName ? `<p class="sot-path-role">${role}</p>` : ''}
+
             <button class="sot-job-ops-link" id="sot-job-ops-link">
                 → OPEN JOB OPS
             </button>
+
+            <!-- Career signal — tappable to edit -->
+            ${careerGoal || lifeGoal ? `
+                <div class="sot-path-signal-block tappable" id="sot-path-tap-career">
+                    <p class="sot-path-signal-label">CAREER SIGNAL</p>
+                    <p class="sot-path-signal-value" id="sot-career-signal-display">${careerGoal || '&mdash;'}</p>
+                    <div class="sot-path-signal-expand hidden" id="sot-path-expand-career">
+                        <textarea id="sot-career-input" class="fn-textarea"
+                            placeholder="Your career direction..."
+                            maxlength="200">${careerGoal}</textarea>
+                        <textarea id="sot-life-input" class="fn-textarea"
+                            placeholder="Your life direction..."
+                            maxlength="200" style="margin-top:8px;">${lifeGoal}</textarea>
+                        <button class="settings-row-btn settings-row-btn--inline" id="sot-career-save">SAVE</button>
+                    </div>
+                </div>
+            ` : ''}
+
+            <!-- Hidden affinity — always shown, no level gate -->
+            ${affinityRead ? `
+                <div class="sot-path-affinity-block">
+                    <p class="sot-path-signal-label">[ HIDDEN AFFINITY ]</p>
+                    ${affinityStat ? `<p class="sot-path-affinity-stat">${affinityStat.toUpperCase()}</p>` : ''}
+                    <p class="sot-path-affinity-read">${affinityRead}</p>
+                </div>
+            ` : (affinity === null && pathData ? `
+                <div class="sot-path-affinity-block">
+                    <p class="sot-path-signal-label">[ HIDDEN AFFINITY ]</p>
+                    <p class="sot-path-affinity-read">Connect Neural Link to surface your hidden affinity read.</p>
+                </div>
+            ` : '')}
+
         </div>
     `;
 }
 
 // ─── WIRE PATH TAPPABLE ELEMENTS ─────────────────────────────
-// JOB OPS respec: PATH section is now a compact summary card.
-// Only the → OPEN JOB OPS button needs wiring.
+// JOB OPS respec: PATH section is a compact summary card.
+// Wires: → OPEN JOB OPS button, career signal tap-to-edit.
 function wirePathTappableElements() {
+    // → OPEN JOB OPS
     const link = document.getElementById('sot-job-ops-link');
     if (link && !link.dataset.wired) {
         link.dataset.wired = 'true';
@@ -1585,6 +1627,41 @@ function wirePathTappableElements() {
             playUIClick();
             if (typeof switchStatusTab  === 'function') switchStatusTab('ops');
             if (typeof switchOpsSegment === 'function') switchOpsSegment('jobops');
+        });
+    }
+
+    // Career signal tap-to-edit
+    const careerTap = document.getElementById('sot-path-tap-career');
+    const careerExp = document.getElementById('sot-path-expand-career');
+    if (careerTap && careerExp) {
+        careerTap.addEventListener('click', () => {
+            playUIClick();
+            careerExp.classList.toggle('hidden');
+        });
+    }
+
+    const careerSave = document.getElementById('sot-career-save');
+    if (careerSave) {
+        careerSave.addEventListener('click', (e) => {
+            e.stopPropagation();
+            playUIClick();
+            const pathData     = (typeof loadPathData === 'function') ? loadPathData() : null;
+            const careerInput  = document.getElementById('sot-career-input');
+            const lifeInput    = document.getElementById('sot-life-input');
+            if (!pathData) return;
+
+            if (!pathData.aspirationGoal) pathData.aspirationGoal = {};
+            pathData.aspirationGoal.careerGoal = careerInput ? careerInput.value.trim() : '';
+            pathData.aspirationGoal.lifeGoal   = lifeInput   ? lifeInput.value.trim()   : '';
+
+            if (typeof savePathData === 'function') savePathData(pathData);
+            if (typeof player !== 'undefined' && player) { player.pathData = pathData; savePlayer(); }
+
+            const display = document.getElementById('sot-career-signal-display');
+            if (display) display.textContent = pathData.aspirationGoal.careerGoal || '—';
+
+            if (careerExp) careerExp.classList.add('hidden');
+            if (typeof showLog === 'function') showLog('[ CAREER SIGNAL UPDATED ]', 'accent');
         });
     }
 }

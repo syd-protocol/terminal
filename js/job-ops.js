@@ -453,6 +453,27 @@ function renderJobOpsProfile(container) {
     const isChronicler = profile.track === 'chronicler';
     const pathData     = (typeof loadPathData === 'function') ? loadPathData() : null;
     const role         = pathData ? (pathData.confirmedRole || (pathData.confirmedPath && pathData.confirmedPath.path_name) || '') : '';
+    const aspiration   = pathData ? (pathData.aspirationGoal || null) : null;
+
+    const aspirationBlock = aspiration ? `
+        <div class="jo-sub-section jo-aspiration-block">
+            <p class="jo-section-label">── CAREER SIGNAL ────────────────────────────</p>
+            <p class="jo-text-note">This feeds your market read. Update it if your direction has changed, then refresh.</p>
+            <div class="jo-aspiration-row tappable" id="jo-asp-tap">
+                <p class="jo-text-block" id="jo-asp-display">${aspiration.careerGoal || '&mdash;'}</p>
+                <span class="jo-asp-edit-hint">tap to edit</span>
+            </div>
+            <div class="jo-aspiration-edit hidden" id="jo-asp-expand">
+                <textarea id="jo-asp-career-input" class="fn-textarea"
+                    placeholder="Your career direction..."
+                    maxlength="200">${aspiration.careerGoal || ''}</textarea>
+                <textarea id="jo-asp-life-input" class="fn-textarea"
+                    placeholder="Your life direction..."
+                    maxlength="200" style="margin-top:8px;">${aspiration.lifeGoal || ''}</textarea>
+                <button class="jo-copy-btn" id="jo-asp-save">SAVE</button>
+            </div>
+        </div>
+    ` : '';
 
     const cvOrSummaryBlock = isChronicler
         ? `
@@ -482,6 +503,8 @@ function renderJobOpsProfile(container) {
         <div class="jo-panel-inner">
             <p class="jo-section-label">[ PROFILE ]</p>
             ${_joRefreshHeader(container, profile.cachedAt, null)}
+
+            ${aspirationBlock}
 
             ${cvOrSummaryBlock}
 
@@ -552,6 +575,39 @@ function renderJobOpsProfile(container) {
 
     wireCopy('jo-copy-current', currentText);
     wireCopy('jo-copy-target',  targetText);
+
+    // Wire aspiration edit
+    const aspTap    = document.getElementById('jo-asp-tap');
+    const aspExpand = document.getElementById('jo-asp-expand');
+    if (aspTap && aspExpand) {
+        aspTap.addEventListener('click', () => {
+            playUIClick();
+            aspExpand.classList.toggle('hidden');
+        });
+    }
+
+    const aspSave = document.getElementById('jo-asp-save');
+    if (aspSave) {
+        aspSave.addEventListener('click', (e) => {
+            e.stopPropagation();
+            playUIClick();
+            const pd          = (typeof loadPathData === 'function') ? loadPathData() : null;
+            const careerInput = document.getElementById('jo-asp-career-input');
+            const lifeInput   = document.getElementById('jo-asp-life-input');
+            if (!pd) return;
+
+            if (!pd.aspirationGoal) pd.aspirationGoal = {};
+            pd.aspirationGoal.careerGoal = careerInput ? careerInput.value.trim() : '';
+            pd.aspirationGoal.lifeGoal   = lifeInput   ? lifeInput.value.trim()   : '';
+
+            if (typeof savePathData === 'function') savePathData(pd);
+
+            const display = document.getElementById('jo-asp-display');
+            if (display) display.textContent = pd.aspirationGoal.careerGoal || '—';
+            if (aspExpand) aspExpand.classList.add('hidden');
+            if (typeof showLog === 'function') showLog('[ CAREER SIGNAL UPDATED — REFRESH TO APPLY ]', 'accent');
+        });
+    }
 }
 
 // ─── MARKET READ PANEL ────────────────────────────────────────
