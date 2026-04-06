@@ -48,6 +48,10 @@ async function fireJobOpsProfile() {
 
     const track       = pathData.track || null;
     const cvText      = pathData.cvText || null;
+
+    // Diagnostic: log CV length so we can confirm the CV is reaching the prompt.
+    // Remove this log once CV pipeline is verified end-to-end.
+    console.log('[SYD] JOB OPS Call A — cvText length:', cvText ? cvText.length : 0);
     const reimagine   = pathData.reimagineResponses || null;
     const role        = pathData.confirmedRole || (pathData.confirmedPath && pathData.confirmedPath.path_name) || 'their confirmed role';
     const rank        = pathData.confirmedRank || 'F';
@@ -485,7 +489,7 @@ function _joSkeletonHTML(skeleton) {
     const cvOrSummaryBlock = isChronicler
         ? `
             <div class="jo-sub-section">
-                <p class="jo-section-label">── FULL CV ──────────────────────────────────</p>
+                <p class="jo-section-label">── CV DRAFT ─────────────────────────────────</p>
                 <p class="jo-skeleton-label">[ LOCAL PROFILE — SYD is preparing an AI-enhanced version ]</p>
                 <div class="jo-full-cv-block">${(skeleton.full_cv || '').replace(/\n/g, '<br>')}</div>
             </div>
@@ -637,9 +641,9 @@ function renderJobOpsProfile(container) {
     const cvOrSummaryBlock = isChronicler
         ? `
             <div class="jo-sub-section">
-                <p class="jo-section-label">── FULL CV ──────────────────────────────────</p>
+                <p class="jo-section-label">── CV DRAFT ─────────────────────────────────</p>
                 <div class="jo-full-cv-block" id="jo-full-cv">${(profile.full_cv || '').replace(/\n/g, '<br>')}</div>
-                <button class="jo-copy-btn" id="jo-copy-cv">COPY FULL CV →</button>
+                <button class="jo-copy-btn" id="jo-copy-cv">COPY CV DRAFT →</button>
             </div>
         `
         : `
@@ -668,7 +672,7 @@ function renderJobOpsProfile(container) {
             ${cvOrSummaryBlock}
 
             <div class="jo-sub-section">
-                <p class="jo-section-label">── ROLE REFRAMES ────────────────────────────</p>
+                <p class="jo-section-heading jo-section-heading--profile">Role Reframes</p>
 
                 <div class="jo-reframe-block">
                     <p class="jo-reframe-tag">[ APPLY FOR THIS NOW ]</p>
@@ -689,7 +693,7 @@ function renderJobOpsProfile(container) {
 
             ${profile.gap_note ? `
                 <div class="jo-sub-section">
-                    <p class="jo-section-label">── WHAT IS STILL MISSING ────────────────────</p>
+                    <p class="jo-section-heading jo-section-heading--profile">What Is Still Missing</p>
                     <p class="jo-text-block">${profile.gap_note}</p>
                     <p class="jo-text-note">Your directives will target this directly.</p>
                 </div>
@@ -819,26 +823,26 @@ function renderJobOpsMarketRead(container) {
             ${_joRefreshHeader(container, market.cachedAt, market.live_data_used)}
 
             <div class="jo-sub-section">
-                <p class="jo-section-label">── DEMAND ───────────────────────────────────</p>
+                <p class="jo-section-heading jo-section-heading--market">Demand</p>
                 <p class="jo-demand-level ${levelClass}">${(demand.level || 'STABLE').toUpperCase()}</p>
                 <p class="jo-text-block">${demand.summary || ''}</p>
                 <p class="jo-text-note">${demand.driver || ''}</p>
             </div>
 
             <div class="jo-sub-section">
-                <p class="jo-section-label">── SKILL SHIFT ──────────────────────────────</p>
+                <p class="jo-section-heading jo-section-heading--market">Skill Shift</p>
                 <p class="jo-skill-name">${skillShift.skill || ''}</p>
                 <p class="jo-text-block">${skillShift.why || ''}</p>
             </div>
 
             <div class="jo-sub-section">
-                <p class="jo-section-label">── ADJACENT OPPORTUNITY ─────────────────────</p>
+                <p class="jo-section-heading jo-section-heading--market">Adjacent Opportunity</p>
                 <p class="jo-skill-name">${adjacent.role || ''}</p>
                 <p class="jo-text-block">${adjacent.why || ''}</p>
             </div>
 
             <div class="jo-sub-section">
-                <p class="jo-section-label">── YOUR NEXT MOVE ───────────────────────────</p>
+                <p class="jo-section-heading jo-section-heading--market">Your Next Move</p>
                 <p class="jo-text-block">${market.visibility_action || ''}</p>
             </div>
         </div>
@@ -911,7 +915,7 @@ function renderJobOpsHunt(container) {
     if (currentIntent === 'hunting') {
         panelContent = `
             <div class="jo-sub-section">
-                <p class="jo-section-label">── JOB SEARCH ───────────────────────────────</p>
+                <p class="jo-section-heading jo-section-heading--hunt">Job Search</p>
                 <p class="jo-text-note">Run these searches. Each opens the right jobs for your path.</p>
                 ${strings.map((s, i) => `
                     <div class="jo-search-string-block">
@@ -922,7 +926,7 @@ function renderJobOpsHunt(container) {
                 `).join('')}
             </div>
             <div class="jo-sub-section">
-                <p class="jo-section-label">── HOW TO BE FOUND ──────────────────────────</p>
+                <p class="jo-section-heading jo-section-heading--hunt">How To Be Found</p>
                 <p class="jo-text-note">LinkedIn headline formula:</p>
                 <p class="jo-search-query" id="jo-headline-formula">${strategy.headline_formula || ''}</p>
                 <button class="jo-copy-btn" id="jo-copy-headline">COPY →</button>

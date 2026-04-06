@@ -10519,6 +10519,100 @@ body {
     gap:            6px;
 }
 
+/* ── JOB OPS — COUNTDOWN + SKELETON + RAW SIGNAL ──────────── */
+
+.jo-countdown-block {
+    padding:       12px 0 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 16px;
+}
+
+.jo-countdown-msg {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.78rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.04em;
+    margin:         0 0 10px;
+    line-height:    1.6;
+}
+
+.jo-countdown-msg #jo-countdown-secs {
+    color:       var(--accent);
+    font-weight: 700;
+}
+
+.jo-skeleton-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.62rem;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+    opacity:        0.7;
+    margin:         0 0 10px;
+    display:        block;
+}
+
+.jo-raw-signal-block {
+    font-family:  var(--font-mono, monospace);
+    font-size:    0.72rem;
+    color:        var(--text-secondary);
+    line-height:  1.7;
+    max-height:   220px;
+    overflow-y:   auto;
+    padding:      10px 12px;
+    border:       1px solid rgba(255,255,255,0.07);
+    border-radius: 4px;
+    background:   rgba(255,255,255,0.02);
+    white-space:  pre-wrap;
+    word-break:   break-word;
+}
+
+/* ── JOB OPS — SECTION TITLE VISUAL HIERARCHY ──────────────── */
+/* Key data section headers get accent treatment.               */
+/* Structural/divider labels stay muted (existing .jo-section-  */
+/* label style).                                                */
+
+.jo-section-heading {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.7rem;
+    font-weight:    700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin:         0 0 8px;
+    padding-bottom: 6px;
+    border-bottom:  1px solid rgba(255,255,255,0.08);
+}
+
+/* PROFILE panel headings */
+.jo-section-heading--profile  { color: var(--accent, #4fc3f7); }
+
+/* MARKET READ headings — demand gets its own color by level,   */
+/* others use the market accent                                  */
+.jo-section-heading--market   { color: #ffa726; }
+
+/* JOB HUNT headings */
+.jo-section-heading--hunt     { color: #66bb6a; }
+
+/* Demand level badge — already has color by level class,       */
+/* bump up the size slightly                                     */
+.jo-demand-level {
+    font-size:      1.1rem !important;
+    letter-spacing: 0.12em !important;
+    margin-bottom:  6px !important;
+}
+
+/* Skill name and adjacent role titles — give them accent pop   */
+.jo-skill-name {
+    color:       var(--accent, #4fc3f7) !important;
+    font-size:   0.92rem !important;
+    font-weight: 600 !important;
+}
+
+/* Reframe role title — already styled but bump contrast        */
+.jo-reframe-role {
+    font-size:   1.0rem !important;
+    font-weight: 700 !important;
+}
+
 /* ── STATUS PATH CARD — CAREER SIGNAL + AFFINITY ──────────── */
 
 .sot-path-signal-block {

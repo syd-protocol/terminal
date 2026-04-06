@@ -2293,7 +2293,7 @@ function renderPathLoading(label) {
         'The gap analysis is the most useful part. It tells you exactly what to build next.',
         'Career paths are not linear. SYD is looking for the pattern beneath the sequence.',
         'You will be asked to confirm your starting rank. Be honest — it only affects where the directives begin.',
-        'The longer this takes, the more thoroughly Gemini is reading your record.',
+        'The longer this takes, the more thoroughly SYD is reading your record.',
         'SYD does not tell you what you want to hear. It tells you what the data shows.',
         'Your hidden affinity stat is calculated now. It unlocks at Level 20.'
     ];
