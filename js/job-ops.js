@@ -70,26 +70,6 @@ async function fireJobOpsProfile() {
         ? `CV TEXT (full):\n---\n${cvText || 'Not available'}\n---\n\nEXTRACTED SIGNAL SUMMARY:\n${cvSignalText || 'Not available'}`
         : `OPERATIVE RESPONSES:\n1. ${(reimagine || [])[0] || ''}\n2. ${(reimagine || [])[1] || ''}\n3. ${(reimagine || [])[2] || ''}\n4. ${(reimagine || [])[3] || ''}`;
 
-    const reframeBlock = sigKit ? `
-EXISTING ROLE REFRAMES (already generated — reproduce these exactly, do not regenerate):
-Current role: ${sigKit.current_role || ''}
-Current headline: ${sigKit.headline_current || ''}
-Current bullets: ${JSON.stringify(sigKit.current_bullets || [])}
-Target role: ${sigKit.target_role || ''}
-Target headline: ${sigKit.headline_target || ''}
-Target bullets: ${JSON.stringify(sigKit.target_bullets || [])}
-Gap note: ${sigKit.gap_note || ''}
-` : `
-EXISTING ROLE REFRAMES: Not available — use PATH data to reconstruct.
-Current role: ${role}
-Current headline: Generate from their record.
-Current bullets: []
-Target role: ${(pathData.confirmedPath && (pathData.confirmedPath.target_roles || [])[0]) || role}
-Target headline: Generate from their record.
-Target bullets: []
-Gap note: ${(pathData.gapAnalysis && pathData.gapAnalysis.primaryGap) || 'Not available.'}
-`;
-
     const cvOutputBlock = isChronicler ? `
 "full_cv": A complete, professionally formatted CV for this operative.
 Plain text, not markdown. Use this structure:
@@ -124,21 +104,12 @@ TRACK: ${track || 'unknown'}
 
 ${cvBlock}
 
-${reframeBlock}
-
 YOUR TASK:
 Produce a structured JSON object with these fields:
 
 ${cvOutputBlock}
 
-ALSO include for BOTH tracks (reproduce exactly from existing reframes above if available):
-"current_role": the current role string
-"current_headline": the current headline string
-"current_bullets": array of current bullet strings
-"target_role": the target role string
-"target_headline": the target headline string
-"target_bullets": array of target bullet strings
-"gap_note": the gap note string
+Also include:
 "track": "${track || 'unknown'}"
 
 Return ONLY valid JSON. No markdown fences. No preamble. No explanation.
@@ -155,6 +126,40 @@ Return ONLY valid JSON. No markdown fences. No preamble. No explanation.
     if (!parsed || typeof parsed !== 'object') {
         console.warn('[SYD] JOB OPS Call A JSON parse failed.');
         return;
+    }
+
+    // Validity check — discard if Gemini returned placeholder content.
+    // current_bullets and reframe fields now come from sigKit, not Gemini,
+    // so we only check the fields Gemini is responsible for.
+    const cvTextLower      = (parsed.full_cv || '').toLowerCase();
+    const summaryLower     = (parsed.summary || '').toLowerCase();
+    const skillsLower      = (parsed.skills_section || '').toLowerCase();
+    const hasRealCV        = !cvTextLower.includes('not available') && cvTextLower.length > 100;
+    const hasRealSummary   = !summaryLower.includes('not available') && summaryLower.length > 40;
+    const hasRealSkills    = !skillsLower.includes('not available') && skillsLower.length > 20;
+
+    // For Re-imaginer, full_cv is always empty string — only check summary + skills.
+    const isValid = isChronicler
+        ? (hasRealCV && hasRealSummary && hasRealSkills)
+        : (hasRealSummary && hasRealSkills);
+
+    if (!isValid) {
+        console.warn('[SYD] JOB OPS Call A validity check failed — discarding response, keeping existing state.');
+        return;
+    }
+
+    // Merge sigKit reframe fields — these were not re-asked of Gemini.
+    // Gemini output covers: full_cv, summary, skills_section, track.
+    // sigKit covers: current_role, current_headline, current_bullets,
+    //                target_role, target_headline, target_bullets, gap_note.
+    if (sigKit) {
+        parsed.current_role     = sigKit.current_role     || '';
+        parsed.current_headline = sigKit.headline_current || '';
+        parsed.current_bullets  = sigKit.current_bullets  || [];
+        parsed.target_role      = sigKit.target_role      || '';
+        parsed.target_headline  = sigKit.headline_target  || '';
+        parsed.target_bullets   = sigKit.target_bullets   || [];
+        parsed.gap_note         = sigKit.gap_note         || '';
     }
 
     parsed.cachedAt = (typeof today === 'function') ? today() : new Date().toISOString().slice(0, 10);
