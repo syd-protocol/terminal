@@ -542,6 +542,126 @@ function formatSignalForPrompt(signal, evidenceLines) {
     ].filter(l => l !== null).join('\n');
 }
 
+// ─── LOCAL CV SKELETON BUILDER ───────────────────────────────
+// Builds an immediate local profile from extracted signals.
+// Shown in the PROFILE panel before Call A resolves.
+// Chronicler: uses extractCVSignals output — evidence lines, domain, seniority.
+// Re-imaginer: uses extractReImaginerSignals output — domain only, no history.
+// Returns a profile-shaped object. Not saved to localStorage — display only.
+// Gemini's Call A output replaces this when it lands and passes validity.
+function buildLocalCVSkeleton(pathData, player) {
+    if (!pathData) return null;
+
+    const track      = pathData.track || 'chronicler';
+    const name       = (player && player.name) ? player.name : 'Operative';
+    const role       = pathData.confirmedRole
+        || (pathData.confirmedPath && pathData.confirmedPath.path_name)
+        || 'Professional';
+    const sigKit     = (typeof loadSignalTranslation === 'function') ? loadSignalTranslation() : null;
+
+    const isChronicler = track === 'chronicler';
+
+    // Extract signals from whichever track we're on
+    const signal = isChronicler && pathData.cvText
+        ? extractCVSignals(pathData.cvText)
+        : extractReImaginerSignals(pathData.reimagineResponses || []);
+
+    const tierLabels = {
+        ic:             'Professional',
+        senior_ic:      'Senior Professional',
+        manager:        'Manager',
+        senior_manager: 'Senior Manager',
+        director:       'Director'
+    };
+    const tierLabel = tierLabels[signal.seniorityTier] || 'Professional';
+
+    // Build summary from signal fields
+    let summary = '';
+    if (isChronicler) {
+        const parts = [
+            `${tierLabel} with approximately ${signal.yearsTotal} years of experience`,
+            signal.domainPrimary !== 'general' ? `in ${signal.domainPrimary}` : null,
+            signal.domainSecondary ? `and ${signal.domainSecondary}` : null,
+        ].filter(Boolean);
+        summary = parts.join(' ') + '.';
+        if (signal.leadershipEvidence) summary += ' Demonstrated leadership experience.';
+        if (signal.technicalEvidence)  summary += ' Technical background confirmed.';
+        summary += ` Confirmed direction: ${role}.`;
+    } else {
+        const responses = pathData.reimagineResponses || [];
+        summary = responses[0]
+            ? `Career direction built from self-assessment. Confirmed path: ${role}.`
+            : `Confirmed direction: ${role}.`;
+        if (signal.domainPrimary !== 'general') {
+            summary += ` Primary domain signal: ${signal.domainPrimary}.`;
+        }
+    }
+
+    // Build skills section from domain signal keywords that matched
+    const DOMAIN_KEYWORDS = {
+        community:   ['Community Management', 'Stakeholder Engagement', 'Platform Growth'],
+        product:     ['Product Management', 'Roadmapping', 'User Stories', 'Backlog Management'],
+        engineering: ['Software Development', 'System Design', 'Deployment', 'Code Review'],
+        design:      ['UX Design', 'UI Design', 'Wireframing', 'Prototyping'],
+        finance:     ['Financial Analysis', 'Budgeting', 'Forecasting', 'Reporting'],
+        hr:          ['Talent Acquisition', 'Performance Management', 'People Operations'],
+        operations:  ['Process Improvement', 'Vendor Management', 'Operational Efficiency'],
+        learning:    ['Curriculum Design', 'Facilitation', 'Training Delivery', 'L&D'],
+        sales:       ['Business Development', 'Pipeline Management', 'Client Acquisition'],
+        marketing:   ['Content Strategy', 'Campaign Management', 'Brand Development'],
+        data:        ['Data Analysis', 'SQL', 'Business Intelligence', 'Reporting'],
+        legal:       ['Contract Management', 'Compliance', 'Regulatory Affairs'],
+        health:      ['Clinical Operations', 'Patient Care', 'Health Programme Management']
+    };
+
+    const primarySkills   = DOMAIN_KEYWORDS[signal.domainPrimary]   || [];
+    const secondarySkills = DOMAIN_KEYWORDS[signal.domainSecondary]  || [];
+    const allSkills       = [...new Set([...primarySkills, ...secondarySkills])];
+    const skillsSection   = allSkills.length > 0
+        ? `CORE SKILLS\n${allSkills.join('\n')}`
+        : 'Skills will be extracted when SYD processes your profile.';
+
+    // Build full_cv for Chronicler from evidence lines
+    let fullCV = '';
+    if (isChronicler) {
+        const evidenceBullets = signal.evidenceLines.length > 0
+            ? signal.evidenceLines.map(l => l).join('\n')
+            : '— Evidence lines will appear in your AI-enhanced CV';
+        fullCV = [
+            name,
+            '[EMAIL PLACEHOLDER] | [PHONE PLACEHOLDER] | [LOCATION PLACEHOLDER]',
+            '',
+            'PROFESSIONAL SUMMARY',
+            summary,
+            '',
+            'EXPERIENCE',
+            evidenceBullets,
+            '',
+            'SKILLS',
+            skillsSection
+        ].join('\n');
+    }
+
+    // Reframe fields — pull from sigKit if available, else leave empty
+    const skeleton = {
+        track,
+        summary,
+        skills_section: skillsSection,
+        full_cv:        fullCV,
+        current_role:     sigKit ? (sigKit.current_role     || '') : '',
+        current_headline: sigKit ? (sigKit.headline_current || '') : '',
+        current_bullets:  sigKit ? (sigKit.current_bullets  || []) : [],
+        target_role:      sigKit ? (sigKit.target_role      || '') : '',
+        target_headline:  sigKit ? (sigKit.headline_target  || '') : '',
+        target_bullets:   sigKit ? (sigKit.target_bullets   || []) : [],
+        gap_note:         sigKit ? (sigKit.gap_note         || '') : '',
+        cachedAt:         null,   // null signals this is a skeleton, not Gemini output
+        isSkeleton:       true
+    };
+
+    return skeleton;
+}
+
 // Maps seniorityTier from extractCVSignals() to a rank letter for prompt calibration.
 // Used inside fireCall2Bundle() before the Gemini call — confirmedRank is not yet
 // set at this point in the flow (it is set after role mapping).

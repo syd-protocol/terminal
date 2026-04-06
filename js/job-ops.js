@@ -217,6 +217,14 @@ Return a factual summary of what you find. No formatting. Plain text. Keep it un
     if (stage1Result.ok && stage1Result.text) {
         liveData     = stage1Result.text;
         liveDataUsed = true;
+        // Store raw text so MARKET READ panel can render it immediately
+        // while Stage 2 synthesis runs. Cleared after Stage 2 succeeds.
+        localStorage.setItem('syd_job_ops_market_raw', liveData);
+        // If the player has MARKET READ open right now, re-render with raw signal state
+        if (window._jobOpsPanel === 'market') {
+            const content = document.getElementById('job-ops-panel-content');
+            if (content) renderJobOpsMarketRead(content);
+        }
         console.log('[SYD] JOB OPS Call B Stage 1 — live data acquired.');
     } else {
         console.warn('[SYD] JOB OPS Call B Stage 1 failed — falling back to training data.');
@@ -305,6 +313,13 @@ Return ONLY valid JSON. No markdown fences. No preamble.
 
     if (typeof saveJobOpsMarket === 'function') {
         saveJobOpsMarket(parsed);
+    }
+    // Stage 2 succeeded — raw signal no longer needed
+    localStorage.removeItem('syd_job_ops_market_raw');
+    // If MARKET READ is open, upgrade from raw signal to structured view
+    if (window._jobOpsPanel === 'market') {
+        const content = document.getElementById('job-ops-panel-content');
+        if (content) renderJobOpsMarketRead(content);
     }
     console.log('[SYD] JOB OPS Call B complete — market data cached. Live:', liveDataUsed);
 }
@@ -403,6 +418,114 @@ function _joLoadingState(container, panelLabel, roleLabel, showRefreshAfterMs) {
     }
 }
 
+// ─── COUNTDOWN STATE ─────────────────────────────────────────
+// Shown in PROFILE panel when scheduleJobOpsCalls() delay is still running.
+// Renders a local skeleton alongside the countdown so the panel is never blank.
+// When the countdown hits zero the panel switches to loading bar state
+// (calls are now in flight).
+function _joCountdownState(container, pathData, player) {
+    const skeleton = (typeof buildLocalCVSkeleton === 'function')
+        ? buildLocalCVSkeleton(pathData, player)
+        : null;
+
+    const msRemaining = (typeof _jobOpsPendingUntil !== 'undefined')
+        ? Math.max(0, _jobOpsPendingUntil - Date.now())
+        : 60000;
+    const secsRemaining = Math.ceil(msRemaining / 1000);
+
+    const skeletonHTML = skeleton ? _joSkeletonHTML(skeleton) : '';
+
+    container.innerHTML = `
+        <div class="jo-panel-inner">
+            <p class="jo-section-label">[ PROFILE ]</p>
+            <div class="jo-countdown-block">
+                <p class="jo-countdown-msg">Finishing your setup — <span id="jo-countdown-secs">${secsRemaining}</span>s. Your profile and market read are being prepared.</p>
+                <div class="jo-loading-bar"><div class="jo-loading-fill"></div></div>
+            </div>
+            ${skeletonHTML}
+        </div>
+    `;
+
+    // Decrement each second. When zero, switch to live loading bar.
+    let secs = secsRemaining;
+    const tick = setInterval(() => {
+        secs--;
+        const el = document.getElementById('jo-countdown-secs');
+        if (el) el.textContent = Math.max(0, secs);
+        if (secs <= 0) {
+            clearInterval(tick);
+            // Calls are now in flight — show loading bar without countdown
+            const content = document.getElementById('job-ops-panel-content');
+            if (content) _joLoadingState(content, 'PROFILE', null, null);
+        }
+    }, 1000);
+}
+
+// ─── SKELETON STATE ──────────────────────────────────────────
+// Shown when calls have fired but no Gemini cache exists yet.
+// Displays the local CV skeleton with a loading bar above it.
+function _joSkeletonState(container, skeleton, role) {
+    container.innerHTML = `
+        <div class="jo-panel-inner">
+            <p class="jo-section-label">[ PROFILE ]</p>
+            <div class="jo-countdown-block">
+                <p class="jo-countdown-msg">SYD is building your AI-enhanced profile.</p>
+                <div class="jo-loading-bar"><div class="jo-loading-fill"></div></div>
+            </div>
+            ${_joSkeletonHTML(skeleton)}
+        </div>
+    `;
+}
+
+// Shared HTML builder for skeleton content — used by both countdown and skeleton states.
+function _joSkeletonHTML(skeleton) {
+    if (!skeleton) return '';
+    const isChronicler = skeleton.track === 'chronicler';
+
+    const cvOrSummaryBlock = isChronicler
+        ? `
+            <div class="jo-sub-section">
+                <p class="jo-section-label">── FULL CV ──────────────────────────────────</p>
+                <p class="jo-skeleton-label">[ LOCAL PROFILE — SYD is preparing an AI-enhanced version ]</p>
+                <div class="jo-full-cv-block">${(skeleton.full_cv || '').replace(/\n/g, '<br>')}</div>
+            </div>
+        `
+        : `
+            <div class="jo-sub-section">
+                <p class="jo-section-label">── CAREER SUMMARY ───────────────────────────</p>
+                <p class="jo-skeleton-label">[ LOCAL PROFILE — SYD is preparing an AI-enhanced version ]</p>
+                <p class="jo-text-block">${skeleton.summary || ''}</p>
+            </div>
+            <div class="jo-sub-section">
+                <p class="jo-section-label">── SKILLS ───────────────────────────────────</p>
+                <p class="jo-text-block">${(skeleton.skills_section || '').replace(/\n/g, '<br>')}</p>
+            </div>
+        `;
+
+    const currentBullets = (skeleton.current_bullets || []).map(b => `<li class="st-bullet">${b}</li>`).join('');
+    const targetBullets  = (skeleton.target_bullets  || []).map(b => `<li class="st-bullet">${b}</li>`).join('');
+
+    const reframesBlock = (skeleton.current_role || skeleton.target_role) ? `
+        <div class="jo-sub-section">
+            <p class="jo-section-label">── ROLE REFRAMES ────────────────────────────</p>
+            <div class="jo-reframe-block">
+                <p class="jo-reframe-tag">[ APPLY FOR THIS NOW ]</p>
+                <p class="jo-reframe-role">${skeleton.current_role || ''}</p>
+                ${skeleton.current_headline ? `<p class="jo-reframe-headline">${skeleton.current_headline}</p>` : ''}
+                <ul class="st-bullets">${currentBullets}</ul>
+            </div>
+            <div class="jo-reframe-block jo-reframe-block--target">
+                <p class="jo-reframe-tag">[ WHERE YOUR PATTERN LEADS ]</p>
+                <p class="jo-reframe-role">${skeleton.target_role || ''}</p>
+                ${skeleton.target_headline ? `<p class="jo-reframe-headline">${skeleton.target_headline}</p>` : ''}
+                <ul class="st-bullets">${targetBullets}</ul>
+            </div>
+        </div>
+    ` : '';
+
+    return cvOrSummaryBlock + reframesBlock;
+}
+
 function _joRefreshHeader(container, cachedAt, liveDataUsed) {
     const canRefresh = canManualRefresh();
     const mins       = minutesUntilRefresh();
@@ -453,17 +576,42 @@ function renderJobOpsProfile(container) {
         return;
     }
 
-    const profile = (typeof loadJobOpsProfile === 'function') ? loadJobOpsProfile() : null;
+    const pathData  = (typeof loadPathData === 'function') ? loadPathData() : null;
+    const player    = (function() {
+        try { return JSON.parse(localStorage.getItem('syd_player') || 'null'); }
+        catch(_) { return null; }
+    })();
+    const role      = pathData
+        ? (pathData.confirmedRole || (pathData.confirmedPath && pathData.confirmedPath.path_name) || '')
+        : '';
 
-    // State B — no data yet
-    if (!profile) {
-        _joLoadingState(container, 'PROFILE', null, 60000);
+    let profile = (typeof loadJobOpsProfile === 'function') ? loadJobOpsProfile() : null;
+
+    // State B — calls still pending (scheduleJobOpsCalls delay not yet elapsed).
+    // Show countdown + local skeleton simultaneously so the panel is never blank.
+    const pending = (typeof _jobOpsPending !== 'undefined') && _jobOpsPending;
+    if (!profile && pending) {
+        _joCountdownState(container, pathData, player);
         return;
     }
 
-    // State C — data available
+    // State C — calls fired but no cache yet (e.g. returned player where
+    // scheduleJobOpsCalls already ran, or call in flight from checkJobOpsRefresh).
+    // Show local skeleton with a loading bar. No countdown — calls are live.
+    if (!profile) {
+        const skeleton = (typeof buildLocalCVSkeleton === 'function')
+            ? buildLocalCVSkeleton(pathData, player)
+            : null;
+        if (skeleton) {
+            _joSkeletonState(container, skeleton, role);
+        } else {
+            _joLoadingState(container, 'PROFILE', null, 60000);
+        }
+        return;
+    }
+
+    // State D — Gemini data available (profile.isSkeleton is falsy)
     const isChronicler = profile.track === 'chronicler';
-    const pathData     = (typeof loadPathData === 'function') ? loadPathData() : null;
     const aspiration   = pathData ? (pathData.aspirationGoal || null) : null;
 
     const aspirationBlock = aspiration ? `
@@ -550,6 +698,7 @@ function renderJobOpsProfile(container) {
     `;
 
     // Wire refresh button
+    // role is derived above from pathData — safe to reference here.
     const refreshBtn = document.getElementById('jo-panel-refresh');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
@@ -633,6 +782,26 @@ function renderJobOpsMarketRead(container) {
     const market   = (typeof loadJobOpsMarket === 'function') ? loadJobOpsMarket() : null;
     const pathData = (typeof loadPathData === 'function') ? loadPathData() : null;
     const role     = pathData ? (pathData.confirmedRole || (pathData.confirmedPath && pathData.confirmedPath.path_name) || '') : '';
+
+    // Raw signal state — Stage 1 has landed, Stage 2 still running.
+    const rawSignal = localStorage.getItem('syd_job_ops_market_raw');
+    if (!market && rawSignal) {
+        container.innerHTML = `
+            <div class="jo-panel-inner">
+                <p class="jo-section-label">[ MARKET READ ]</p>
+                <div class="jo-countdown-block">
+                    <p class="jo-countdown-msg">SYD is processing the signal.</p>
+                    <div class="jo-loading-bar"><div class="jo-loading-fill"></div></div>
+                </div>
+                <div class="jo-sub-section">
+                    <p class="jo-section-label">── RAW SIGNAL ───────────────────────────────</p>
+                    <p class="jo-skeleton-label">[ RAW SIGNAL — SYD is processing ]</p>
+                    <div class="jo-raw-signal-block">${rawSignal.replace(/\n/g, '<br>')}</div>
+                </div>
+            </div>
+        `;
+        return;
+    }
 
     if (!market) {
         _joLoadingState(container, 'MARKET READ', role, 60000);

@@ -442,15 +442,28 @@ function createPlayer(name, scanTraits, pathData) {
 // Fires Call A and Call B silently after player creation.
 // No loading state shown — calls resolve in background.
 // Results cached. If either fails, the UI handles retry gracefully.
+//
+// _jobOpsPending: true while the scheduled calls have not yet resolved.
+// Checked by renderJobOpsProfile() and renderJobOpsMarketRead() to decide
+// whether to show a countdown or a loading bar while waiting.
+let _jobOpsPending = false;
+let _jobOpsPendingUntil = 0; // epoch ms when the delay expires
+
 function scheduleJobOpsCalls() {
     if (!hasNeuralLink()) return;
     if (typeof fireJobOpsProfile !== 'function') return;
 
-    // Small delay so createPlayer UI settles first
+    _jobOpsPending = true;
+    _jobOpsPendingUntil = Date.now() + 60000;
+
+    // Delay so onboarding calls clear the RPM window first.
+    // Countdown timer in JOB OPS panels reads _jobOpsPendingUntil.
     setTimeout(async () => {
+        _jobOpsPending = false;
+        _jobOpsPendingUntil = 0;
         await fireJobOpsProfile();
         await fireJobOpsMarket();
-    }, 3000);
+    }, 60000);
 }
 
 function effectiveGear() {
