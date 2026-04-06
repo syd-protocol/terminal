@@ -463,7 +463,22 @@ function scheduleJobOpsCalls() {
         _jobOpsPendingUntil = 0;
         await fireJobOpsProfile();
         await fireJobOpsMarket();
+        // Re-render the active JOB OPS panel so the player sees results
+        // immediately without needing to tab away and back.
+        _jobOpsAutoRefreshPanel();
     }, 60000);
+}
+
+// Called after background JOB OPS calls resolve.
+// If the player has JOB OPS open, re-renders the active panel.
+// Safe to call even if JOB OPS is not the active segment.
+function _jobOpsAutoRefreshPanel() {
+    const content = document.getElementById('job-ops-panel-content');
+    if (!content) return; // JOB OPS panel not in DOM — player isn't there
+    const activePanel = window._jobOpsPanel || 'profile';
+    if (typeof renderJobOpsPanel === 'function') {
+        renderJobOpsPanel(activePanel);
+    }
 }
 
 function effectiveGear() {
@@ -2077,6 +2092,7 @@ function checkJobOpsRefresh() {
     setTimeout(async () => {
         if (profileMissing) await fireJobOpsProfile();
         if (marketStale)    await fireJobOpsMarket();
+        _jobOpsAutoRefreshPanel();
     }, 30000);
 }
 

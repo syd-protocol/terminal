@@ -10251,8 +10251,8 @@ body {
 }
 
 .jo-reframe-role {
-    font-size:   0.9rem;
-    font-weight: 600;
+    font-size:   1.0rem;
+    font-weight: 700;
     color:       var(--accent);
     margin:      0 0 3px;
 }
@@ -10267,9 +10267,9 @@ body {
 /* Demand level */
 .jo-demand-level {
     font-family:    var(--font-mono, monospace);
-    font-size:      1rem;
+    font-size:      1.1rem;
     font-weight:    700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.12em;
     margin:         0 0 6px;
 }
 
@@ -10279,9 +10279,9 @@ body {
 
 /* Skill name */
 .jo-skill-name {
-    font-size:   0.88rem;
+    font-size:   0.92rem;
     font-weight: 600;
-    color:       var(--text-primary, #c0cdd8);
+    color:       var(--accent, #4fc3f7);
     margin:      0 0 4px;
 }
 
@@ -10612,6 +10612,70 @@ body {
     font-size:   1.0rem !important;
     font-weight: 700 !important;
 }
+
+/* ── JOB OPS — COUNTDOWN + SKELETON + RAW SIGNAL ──────────── */
+
+.jo-countdown-block {
+    padding:       12px 0 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 16px;
+}
+
+.jo-countdown-msg {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.78rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.04em;
+    margin:         0 0 10px;
+    line-height:    1.6;
+}
+
+.jo-countdown-msg #jo-countdown-secs {
+    color:       var(--accent);
+    font-weight: 700;
+}
+
+.jo-skeleton-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.62rem;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+    opacity:        0.7;
+    margin:         0 0 10px;
+    display:        block;
+}
+
+.jo-raw-signal-block {
+    font-family:   var(--font-mono, monospace);
+    font-size:     0.72rem;
+    color:         var(--text-secondary);
+    line-height:   1.7;
+    max-height:    220px;
+    overflow-y:    auto;
+    padding:       10px 12px;
+    border:        1px solid rgba(255,255,255,0.07);
+    border-radius: 4px;
+    background:    rgba(255,255,255,0.02);
+    white-space:   pre-wrap;
+    word-break:    break-word;
+}
+
+/* ── JOB OPS — SECTION HEADING HIERARCHY ───────────────────── */
+
+.jo-section-heading {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.7rem;
+    font-weight:    700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin:         0 0 10px;
+    padding-bottom: 6px;
+    border-bottom:  1px solid rgba(255,255,255,0.08);
+}
+
+.jo-section-heading--profile { color: var(--accent, #4fc3f7); }
+.jo-section-heading--market  { color: #ffa726; }
+.jo-section-heading--hunt    { color: #66bb6a; }
 
 /* ── STATUS PATH CARD — CAREER SIGNAL + AFFINITY ──────────── */
 
