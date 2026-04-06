@@ -2047,6 +2047,10 @@ function renderOrientationScreen(onDone) {
 // ─── JOB OPS DAILY REFRESH ───────────────────────────────────
 // Called from init() on every relaunch for existing players.
 // Re-fires Call A and Call B silently if cache is stale (different day).
+// [TUNING TARGET] Days before market data is considered stale and re-fetched.
+// Profile has no auto-refresh — only re-fetches if no Gemini cache exists at all.
+const JOB_OPS_MARKET_REFRESH_DAYS = 3;
+
 function checkJobOpsRefresh() {
     if (!hasNeuralLink()) return;
     if (typeof fireJobOpsProfile !== 'function') return;
@@ -2055,16 +2059,25 @@ function checkJobOpsRefresh() {
     const market   = (typeof loadJobOpsMarket  === 'function') ? loadJobOpsMarket()  : null;
     const todayStr = today();
 
-    const profileStale = !profile || profile.cachedAt !== todayStr;
-    const marketStale  = !market  || market.cachedAt  !== todayStr;
+    // Profile: only re-fetch if no Gemini cache exists at all.
+    // isSkeleton is never written to localStorage — only real Gemini output is saved.
+    // So absence of profile in localStorage means no Gemini output has ever landed.
+    const profileMissing = !profile;
 
-    if (!profileStale && !marketStale) return; // both fresh — nothing to do
+    // Market: re-fetch if no cache, or if cache is older than JOB_OPS_MARKET_REFRESH_DAYS.
+    let marketStale = !market;
+    if (market && market.cachedAt) {
+        const daysSince = (new Date(todayStr) - new Date(market.cachedAt)) / 86400000;
+        marketStale = daysSince >= JOB_OPS_MARKET_REFRESH_DAYS;
+    }
 
-    // Fire in background — no UI indication unless operative opens JOB OPS
+    if (!profileMissing && !marketStale) return; // nothing to do
+
+    // Fire in background — longer delay so any onboarding calls clear the RPM window.
     setTimeout(async () => {
-        if (profileStale) await fireJobOpsProfile();
-        if (marketStale)  await fireJobOpsMarket();
-    }, 4000);
+        if (profileMissing) await fireJobOpsProfile();
+        if (marketStale)    await fireJobOpsMarket();
+    }, 30000);
 }
 
 // ─── NEW OPERATIVE FLOW ──────────────────────────────────────
