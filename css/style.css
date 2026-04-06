@@ -8505,6 +8505,19 @@ body {
     opacity:     0.55;
     margin-top:  6px;
 }
+.cs-description-grow {
+    font-family: var(--font-mono);
+    font-size:   0.72rem;
+    color:       var(--text-secondary);
+    line-height: 1.5;
+    margin-top:  8px;
+    padding-top: 6px;
+    border-top:  1px solid rgba(255,255,255,0.05);
+}
+.cs-score-cap {
+    font-size: 0.65rem;
+    opacity:   0.55;
+}
 
 /* ── JOURNAL ADDITIONS ──────────────────────────────────────── */
 .journal-close-day-row { margin-top: 8px; }
@@ -10674,22 +10687,7 @@ body {
     word-break:    break-word;
 }
 
-/* ── JOB OPS — SECTION HEADING HIERARCHY ───────────────────── */
-
-.jo-section-heading {
-    font-family:    var(--font-mono, monospace);
-    font-size:      0.7rem;
-    font-weight:    700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin:         0 0 10px;
-    padding-bottom: 6px;
-    border-bottom:  1px solid rgba(255,255,255,0.08);
-}
-
-.jo-section-heading--profile { color: var(--accent, #4fc3f7); }
-.jo-section-heading--market  { color: #ffa726; }
-.jo-section-heading--hunt    { color: #66bb6a; }
+/* ── JOB OPS — SECTION HEADING HIERARCHY (see first definition above) ── */
 
 /* ── JOB OPS — MARKET READ EXPANDED ITEMS ──────────────────── */
 

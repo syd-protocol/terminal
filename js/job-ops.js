@@ -510,19 +510,19 @@ function _joSkeletonHTML(skeleton) {
     const cvOrSummaryBlock = isChronicler
         ? `
             <div class="jo-sub-section">
-                <p class="jo-section-label">──  CV DRAFT ──────────────────────────────────</p>
+                <p class="jo-section-heading jo-section-heading--profile">CV Draft</p>
                 <p class="jo-skeleton-label">[ LOCAL PROFILE — SYD is preparing an AI-enhanced version ]</p>
                 <div class="jo-full-cv-block">${(skeleton.full_cv || '').replace(/\n/g, '<br>')}</div>
             </div>
         `
         : `
             <div class="jo-sub-section">
-                <p class="jo-section-label">── CAREER SUMMARY ───────────────────────────</p>
+                <p class="jo-section-heading jo-section-heading--profile">Career Summary</p>
                 <p class="jo-skeleton-label">[ LOCAL PROFILE — SYD is preparing an AI-enhanced version ]</p>
                 <p class="jo-text-block">${skeleton.summary || ''}</p>
             </div>
             <div class="jo-sub-section">
-                <p class="jo-section-label">── SKILLS ───────────────────────────────────</p>
+                <p class="jo-section-heading jo-section-heading--profile">Skills</p>
                 <p class="jo-text-block">${(skeleton.skills_section || '').replace(/\n/g, '<br>')}</p>
             </div>
         `;
@@ -532,7 +532,7 @@ function _joSkeletonHTML(skeleton) {
 
     const reframesBlock = (skeleton.current_role || skeleton.target_role) ? `
         <div class="jo-sub-section">
-            <p class="jo-section-label">── ROLE REFRAMES ────────────────────────────</p>
+            <p class="jo-section-heading jo-section-heading--profile">Role Reframes</p>
             <div class="jo-reframe-block">
                 <p class="jo-reframe-tag">[ APPLY FOR THIS NOW ]</p>
                 <p class="jo-reframe-role">${skeleton.current_role || ''}</p>
@@ -641,7 +641,7 @@ function renderJobOpsProfile(container) {
 
     const aspirationBlock = aspiration ? `
         <div class="jo-sub-section jo-aspiration-block">
-            <p class="jo-section-label">── CAREER SIGNAL ────────────────────────────</p>
+            <p class="jo-section-heading jo-section-heading--profile">Career Signal</p>
             <p class="jo-text-note">This feeds your market read. Update it if your direction has changed, then refresh.</p>
             <div class="jo-aspiration-row tappable" id="jo-asp-tap">
                 <p class="jo-text-block" id="jo-asp-display">${aspiration.careerGoal || '&mdash;'}</p>
@@ -662,14 +662,14 @@ function renderJobOpsProfile(container) {
     const cvOrSummaryBlock = isChronicler
         ? `
             <div class="jo-sub-section">
-                <p class="jo-section-label">──  CV DRAFT ──────────────────────────────────</p>
+                <p class="jo-section-heading jo-section-heading--profile">CV Draft</p>
                 <div class="jo-full-cv-block" id="jo-full-cv">${(profile.full_cv || '').replace(/\n/g, '<br>')}</div>
                 <button class="jo-copy-btn" id="jo-copy-cv">COPY  CV DRAFT →</button>
             </div>
         `
         : `
             <div class="jo-sub-section">
-                <p class="jo-section-label">── CAREER SUMMARY ───────────────────────────</p>
+                <p class="jo-section-heading jo-section-heading--profile">Career Summary</p>
                 <p class="jo-text-block">${profile.summary || ''}</p>
                 <button class="jo-copy-btn" id="jo-copy-summary">COPY SUMMARY →</button>
             </div>

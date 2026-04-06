@@ -371,6 +371,7 @@ function submitEncounterResponse() {
 // Returns { text, geminiEnhanced: bool }
 
 async function evaluateJudgmentEncounter(enc) {
+    try {
     if (!hasNeuralLink()) {
         return buildLocalJudgmentFeedback(enc);
     }
@@ -422,6 +423,10 @@ Evaluation rules:
     }
 
     return { text: result.text.trim(), geminiEnhanced: true };
+    } catch(e) {
+        console.warn('[SYD] evaluateJudgmentEncounter threw unexpectedly — using local fallback:', e.message || e);
+        return buildLocalJudgmentFeedback(enc);
+    }
 }
 
 // Local fallback: rule-based feedback from option + reasoning alignment.

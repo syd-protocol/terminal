@@ -39,7 +39,7 @@ const TEMP_GENERATE = 0.7;
 
 // [TUNING TARGET] Max tokens per call type
 const TOKENS_CLASSIFY = 1024;
-const TOKENS_GENERATE = 2048;
+const TOKENS_GENERATE = 4096; // Raised: 2.5-Flash thinking tokens consume part of this budget
 
 // ─── QUOTA AND REFRESH CONSTANTS ─────────────────────────────
 // [TUNING TARGET] Days between Call 4 career content refreshes.

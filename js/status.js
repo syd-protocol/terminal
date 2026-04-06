@@ -1281,45 +1281,45 @@ function getStatExplainer(stat, val) {
 const TRAIT_DESCRIPTIONS = {
     patternRecognition: {
         label: 'PATTERN RECOGNITION',
-        low:   'You were working to read structure under pressure during the scan. This takes time to develop — the scan caught you early in the process.',
-        mid:   'You read structure reasonably well. You noticed patterns before they were fully formed. That is the useful version of this skill.',
-        high:  'You read structure quickly and accurately. Signal Breach confirmed a strong pattern engine. This feeds your INT and AGI directly.'
+        low:   'You were working to read structure under pressure during the scan. This takes time to develop — the scan caught you early in the process. Trains INT and AGI — play CASCADE or ECHO in GAMES to develop this directly.',
+        mid:   'You read structure reasonably well. You noticed patterns before they were fully formed. That is the useful version of this skill. Trains INT and AGI — play CASCADE or ECHO in GAMES to sharpen it.',
+        high:  'You read structure quickly and accurately. Signal Breach confirmed a strong pattern engine. This feeds your INT and AGI directly. Play CASCADE or ECHO in GAMES to keep pushing it.'
     },
     cognitiveFlexibility: {
         label: 'COGNITIVE FLEXIBILITY',
-        low:   'The rule change in round 2 cost you. That is the most common pattern. Most people anchor to the first rule they learn. The directives here are built to loosen that anchor.',
-        mid:   'You adapted to the rule change with some difficulty. The instinct is there — the fluency takes more practice under pressure.',
-        high:  'You shifted rules cleanly when the pattern changed. That is cognitive flexibility confirmed — the ability to drop a framework when the situation no longer fits it.'
+        low:   'The rule change in round 2 cost you. That is the most common pattern. Most people anchor to the first rule they learn. The directives here are built to loosen that anchor. Trains AGI — play DRIFT or CASCADE to build adaptability under pressure.',
+        mid:   'You adapted to the rule change with some difficulty. The instinct is there — the fluency takes more practice under pressure. Trains AGI — play DRIFT or CASCADE to close the gap.',
+        high:  'You shifted rules cleanly when the pattern changed. That is cognitive flexibility confirmed. Trains AGI — play DRIFT or CASCADE in GAMES to maintain and extend this edge.'
     },
     persistence: {
         label: 'PERSISTENCE',
-        low:   'You attempted fewer rounds than were available during the scan. Stopping early is a pattern worth noticing — not judging. The directives here are about what happens after you want to stop.',
-        mid:   'You stayed in across the scan experiences. Even when the pattern was unclear, you attempted. That is the foundation of persistence.',
-        high:  'You attempted every round of every experience. Persistence under uncertainty confirmed — that is what separates practitioners from people who are almost practitioners.'
+        low:   'You attempted fewer rounds than were available during the scan. Stopping early is a pattern worth noticing — not judging. Trains END — play DRIFT or FLOW in GAMES, and complete endurance-tagged directives.',
+        mid:   'You stayed in across the scan experiences. Even when the pattern was unclear, you attempted. That is the foundation of persistence. Trains END — play DRIFT or FLOW in GAMES to build on this.',
+        high:  'You attempted every round of every experience. Persistence under uncertainty confirmed. Trains END — play DRIFT or FLOW in GAMES to keep the streak compounding.'
     },
     executionSpeed: {
         label: 'EXECUTION SPEED',
-        low:   'You were measured and careful under time pressure. The risk is tipping into hesitation when the window is actually closing. Speed and accuracy in sequence is the development target.',
-        mid:   'You responded at a functional pace across the waves. Not fastest — but consistent. Consistency at speed is more durable than speed alone.',
-        high:  'You responded quickly and consistently across all three waves of pressure. Execution speed confirmed. Feeds directly into AGI.'
+        low:   'You were measured and careful under time pressure. The risk is tipping into hesitation when the window is actually closing. Trains AGI — play DRIFT or CASCADE to build decisiveness under time pressure.',
+        mid:   'You responded at a functional pace across the waves. Not fastest — but consistent. Consistency at speed is more durable than speed alone. Trains AGI — play DRIFT or CASCADE in GAMES.',
+        high:  'You responded quickly and consistently across all three waves of pressure. Execution speed confirmed. Trains AGI directly — play CASCADE or DRIFT in GAMES to keep it sharp.'
     },
     executionAccuracy: {
         label: 'EXECUTION ACCURACY',
-        low:   'Speed won out over accuracy in this scan. That is a useful signal — knowing which way you default under pressure is more valuable than a clean number.',
-        mid:   'You were accurate more often than not across the session. That is the right default. Accuracy under pressure compounds differently than speed under pressure.',
-        high:  'Your accuracy held as pressure increased. That is the harder of the two to develop and the more valuable one to have. Execution accuracy confirmed.'
+        low:   'Speed won out over accuracy in this scan. Knowing which way you default under pressure is more valuable than a clean number. Trains STR — play ECHO or FLOW to build precision.',
+        mid:   'You were accurate more often than not across the session. Accuracy under pressure compounds differently than speed. Trains STR — play ECHO or FLOW in GAMES to push further.',
+        high:  'Your accuracy held as pressure increased. The harder of the two to develop and the more valuable one to have. Trains STR — play ECHO or FLOW in GAMES to maintain this standard.'
     },
     pressureStability: {
         label: 'PRESSURE STABILITY',
-        low:   'Your accuracy dropped as pressure increased across the waves. That is the most common pattern the scan reveals. The directives here are calibrated specifically to close this gap.',
-        mid:   'You held reasonably steady under increasing pressure. Some degradation — that is expected. The goal is narrowing the gap between wave 1 and wave 3 performance.',
-        high:  'Your accuracy in the final wave was close to your accuracy in the first. Pressure stability confirmed. Most people degrade faster under the same conditions.'
+        low:   'Your accuracy dropped as pressure increased across the waves. The most common pattern the scan reveals. Trains END — play FLOW or DRIFT in GAMES, and complete endurance-tagged directives to close this gap.',
+        mid:   'You held reasonably steady under increasing pressure. Some degradation — that is expected. Trains END — play FLOW or DRIFT in GAMES to narrow the wave 1 to wave 3 gap.',
+        high:  'Your accuracy in the final wave was close to your accuracy in the first. Pressure stability confirmed. Trains END — play FLOW or DRIFT in GAMES to hold and extend this.'
     },
     socialReading: {
         label: 'SOCIAL READING',
-        low:   'You read for surface content more than subtext during Final Transmission. This is where most professional communication training stops. The directives here go one layer deeper.',
-        mid:   'You caught meaning behind phrasing more often than not. The gap is in edge cases — ambiguous situations where there is no clear signal and you have to decide what to do with the uncertainty.',
-        high:  'You read what was actually meant, not just what was said. Social reading confirmed. It feeds CHA directly and affects every domain where people are involved — which is all of them.'
+        low:   'You read for surface content more than subtext during Final Transmission. This is where most professional communication training stops. Trains CHA — play RESONANCE in GAMES to go one layer deeper.',
+        mid:   'You caught meaning behind phrasing more often than not. The gap is in edge cases. Trains CHA — play RESONANCE in GAMES to sharpen edge-case reading.',
+        high:  'You read what was actually meant, not just what was said. Social reading confirmed. Feeds CHA directly. Play RESONANCE in GAMES to keep this edge active.'
     }
 };
 
@@ -1433,7 +1433,7 @@ function buildCareerSkillsSection() {
                     </div>
                     <div class="cs-meta">
                         <span class="cs-stat-tag" style="color:${statColour};">${statLabel}</span>
-                        <span class="cs-score">${score.toFixed(1)}</span>
+                        <span class="cs-score" title="Score out of 100. Cap at ${softCap} until next rank.">${score.toFixed(1)} <span class="cs-score-cap">/ ${softCap}</span></span>
                     </div>
                 </div>
                 <div class="cs-bar-wrap">
@@ -1441,10 +1441,17 @@ function buildCareerSkillsSection() {
                         <div class="cs-bar-fill" style="width:${scorePct}%;background:${statColour};"></div>
                         <div class="cs-softcap-marker" style="left:${capPct}%;" title="Soft cap at ${softCap}"></div>
                     </div>
-                    <span class="cs-softcap-label">${softCap}</span>
+                    <span class="cs-softcap-label" title="Rank cap — complete directives to grow">CAP ${softCap}</span>
                 </div>
                 <div class="cs-description hidden" id="cs-desc-${i}">
                     <p class="cs-description-text">${track.description || ''}</p>
+                    <p class="cs-description-grow">Grows from: completing ${statLabel}-tagged directives and career directives for this skill.${
+                        (['intelligence'].includes(track.stat)) ? ' Play CASCADE or ECHO in GAMES to train this stat directly.' :
+                        (['agility'].includes(track.stat))      ? ' Play CASCADE or DRIFT in GAMES to train this stat directly.' :
+                        (['strength'].includes(track.stat))     ? ' Play ECHO or FLOW in GAMES to train this stat directly.' :
+                        (['endurance'].includes(track.stat))    ? ' Play DRIFT or FLOW in GAMES to train this stat directly.' :
+                        (['charisma'].includes(track.stat))     ? ' Play RESONANCE in GAMES to train this stat directly.' : ''
+                    }</p>
                     ${!track.geminiEnhanced ? `
                         <p class="cs-description-note">[ Connect Neural Link for a personalised read on this skill ]</p>
                     ` : ''}
