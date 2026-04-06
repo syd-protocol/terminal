@@ -341,6 +341,7 @@ function submitEncounterResponse() {
 
     // Judgment encounters: call Gemini (Call 3) for personalised evaluation
     evaluateJudgmentEncounter(enc).then(feedback => {
+        console.log('[SYD DEBUG] feedback object:', JSON.stringify(feedback));
         renderJudgmentFeedback(enc, feedback);
     });
 }
@@ -477,6 +478,7 @@ function buildLocalJudgmentFeedback(enc) {
 
 // ─── FEEDBACK: JUDGMENT TYPE ──────────────────────────────────
 function renderJudgmentFeedback(enc, feedback) {
+    console.log('[SYD DEBUG] renderJudgmentFeedback called, feedback:', feedback, 'feedbackText:', feedback ? feedback.text : '(feedback is falsy)');
     const container = document.getElementById('encounter-content');
     if (!container) return;
 
