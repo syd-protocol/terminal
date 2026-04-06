@@ -219,6 +219,63 @@ async function geminiGenerateLarge(prompt, temperature) {
     }
 }
 
+// ─── LITE-LARGE GENERATOR ────────────────────────────────────
+// Call A (JOB OPS Profile), Call B Stage 2 (market synthesis), and
+// Call 4 (directive refresh) use this model.
+// Separate quota pool from GEMINI_MODEL_GENERATE (~20 RPD Flash).
+// gemini-3.1-flash-lite-preview: 15 RPM, 500 RPD — confirmed clean
+// (finishReason STOP, text extraction works, no thoughtsTokenCount burn).
+// No fallback chain — if this fails, caller keeps local skeleton / cache.
+// [TUNING TARGET] Model name if Google renames this endpoint.
+const GEMINI_MODEL_LITE_LARGE = 'gemini-3.1-flash-lite-preview';
+
+async function geminiGenerateLiteLarge(prompt, temperature) {
+    const key = (typeof getNeuralKey === 'function') ? getNeuralKey() : null;
+    if (!key) return { ok: false, error: 'No Neural Link key set.', quota: false };
+
+    const url  = `${GEMINI_API_BASE}/${GEMINI_MODEL_LITE_LARGE}:generateContent?key=${key}`;
+    const body = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+            temperature:     (temperature !== undefined) ? temperature : TEMP_GENERATE,
+            maxOutputTokens: TOKENS_BUNDLE
+        }
+    };
+
+    try {
+        const res = await fetch(url, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+            const isQuota = res.status === 429;
+            let errMsg    = `HTTP ${res.status}`;
+            try {
+                const errBody = await res.json();
+                errMsg = (errBody.error && errBody.error.message) || errMsg;
+            } catch (_) {}
+            console.warn('[SYD Gemini] Lite-Large call failed:', errMsg, '— keeping local state.');
+            return { ok: false, error: errMsg, quota: isQuota };
+        }
+
+        const data  = await res.json();
+        const parts = data?.candidates?.[0]?.content?.parts || [];
+        const text  = (parts.find(p => p.text && p.text.trim().length > 0) || {}).text || '';
+        if (!text) {
+            console.warn('[SYD Gemini] Lite-Large call returned empty — keeping local state.');
+            return { ok: false, error: 'Empty response.', quota: false };
+        }
+
+        return { ok: true, text };
+
+    } catch (e) {
+        console.warn('[SYD Gemini] Lite-Large call network error — keeping local state:', e.message || e);
+        return { ok: false, error: e.message || 'Network error.', quota: false };
+    }
+}
+
 // ─── JSON EXTRACTOR ───────────────────────────────────────────
 // Gemini sometimes wraps JSON in markdown fences.
 // This strips fences and returns a parsed object, or null on failure.

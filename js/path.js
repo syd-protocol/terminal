@@ -2316,7 +2316,7 @@ Output ONLY valid JSON — an array of directive objects. No markdown fences. No
 ]
 `.trim();
 
-    const result = await geminiGenerate(prompt);
+    const result = await geminiGenerateLiteLarge(prompt, 0.4);
     if (result.ok) {
         const newDirectives = extractJSON(result.text);
         if (Array.isArray(newDirectives) && newDirectives.length > 0) {
