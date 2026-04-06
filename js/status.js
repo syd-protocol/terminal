@@ -740,7 +740,7 @@ function renderEncounterEvaluatingInTab(container, enc) {
                             <span class="enc-label">[ SYD — EVALUATION ]</span>
                         </div>
                         <div class="enc-feedback ${result && result.verdict ? 'enc-feedback--' + result.verdict : ''}">
-                            <p class="enc-feedback-text">${result ? result.feedback : 'Acknowledged.'}</p>
+                            <p class="enc-feedback-text">${result ? result.text : 'Acknowledged.'}</p>
                         </div>
                         <div class="enc-footer-actions">
                             <button class="btn btn--primary" id="enc-tab-done">[ ACKNOWLEDGED ]</button>
