@@ -1096,7 +1096,10 @@ function renderSignalTranslationScreen(onDone) {
         }
     }
 
-    // Poll for kit — Call 2B fires async, may not have landed yet
+    // Poll for kit — Call 2B fires async, may not have landed yet.
+    // Polls for up to 60 seconds (60 × 1000ms) before giving up.
+    // On timeout: checks one final time before showing the fallback message,
+    // in case the kit landed between the last poll and the timeout render.
     const kit = loadSignalTranslation();
     if (kit && kit.current_bullets) {
         renderKit(kit);
@@ -1109,13 +1112,18 @@ function renderSignalTranslationScreen(onDone) {
             if (fresh && fresh.current_bullets) {
                 clearInterval(poll);
                 renderKit(fresh);
-            } else if (attempts >= 20) {
-                // 20 * 500ms = 10 seconds — give up gracefully
+            } else if (attempts >= 60) {
                 clearInterval(poll);
+                // Final check before giving up — kit may have just landed
+                const lastChance = loadSignalTranslation();
+                if (lastChance && lastChance.current_bullets) {
+                    renderKit(lastChance);
+                    return;
+                }
                 container.innerHTML = `
                     <div class="signal-translation-wrap">
                         <p class="st-label">[ SIGNAL TRANSLATION ]</p>
-                        <p class="st-loading-line">Translation is still processing. It will be available in OPS when ready.</p>
+                        <p class="st-loading-line">Translation is taking longer than expected. Open OPS → Signal Translation once you are in the app — it will be there.</p>
                         ${onDone ? `<button class="btn btn--primary" id="st-continue-btn">[ CONTINUE ]</button>` : ''}
                     </div>
                 `;
@@ -1124,7 +1132,7 @@ function renderSignalTranslationScreen(onDone) {
                     if (btn) btn.addEventListener('click', () => { playUIClick(); onDone(); });
                 }
             }
-        }, 500);
+        }, 1000);
     }
 }
 

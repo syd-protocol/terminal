@@ -10030,6 +10030,20 @@ body {
     padding-top:    2px;
 }
 
+/* Panel-level titles: [ PROFILE ], [ MARKET READ ], [ JOB HUNT ] */
+/* Uses the same class but targeted via first-child context.        */
+/* Applied directly in JS as jo-panel-title where needed.          */
+.jo-panel-title {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.72rem;
+    font-weight:    700;
+    color:          var(--accent);
+    letter-spacing: 0.14em;
+    margin:         0 0 16px;
+    padding-bottom: 10px;
+    border-bottom:  1px solid rgba(255,255,255,0.1);
+}
+
 /* Sub-sections within a panel */
 .jo-sub-section {
     margin-bottom:  20px;
@@ -10676,6 +10690,73 @@ body {
 .jo-section-heading--profile { color: var(--accent, #4fc3f7); }
 .jo-section-heading--market  { color: #ffa726; }
 .jo-section-heading--hunt    { color: #66bb6a; }
+
+/* ── JOB OPS — MARKET READ EXPANDED ITEMS ──────────────────── */
+
+.jo-market-item {
+    margin-bottom: 14px;
+}
+
+.jo-market-item:last-child {
+    margin-bottom: 0;
+}
+
+.jo-next-move-item {
+    display:       flex;
+    gap:           10px;
+    align-items:   flex-start;
+    margin-bottom: 14px;
+}
+
+.jo-next-move-item:last-child {
+    margin-bottom: 0;
+}
+
+.jo-effort-badge {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.58rem;
+    font-weight:    700;
+    letter-spacing: 0.1em;
+    padding:        2px 6px;
+    border-radius:  2px;
+    white-space:    nowrap;
+    flex-shrink:    0;
+    margin-top:     3px;
+}
+
+.jo-effort-badge--low    { background: rgba(102,187,106,0.15); color: #66bb6a; }
+.jo-effort-badge--medium { background: rgba(255,167,38,0.15);  color: #ffa726; }
+.jo-effort-badge--high   { background: rgba(229,115,115,0.15); color: #e57373; }
+
+.jo-community-row {
+    display:     flex;
+    align-items: center;
+    gap:         8px;
+    flex-wrap:   wrap;
+}
+
+.jo-community-where {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.6rem;
+    letter-spacing: 0.08em;
+    color:          var(--text-secondary);
+    border:         1px solid rgba(255,255,255,0.12);
+    border-radius:  2px;
+    padding:        1px 5px;
+}
+
+/* ── JOB OPS — CV DISCLAIMER ────────────────────────────────── */
+
+.jo-cv-disclaimer {
+    font-family:  var(--font-mono, monospace);
+    font-size:    0.65rem;
+    color:        var(--text-secondary);
+    line-height:  1.6;
+    margin:       0 0 10px;
+    padding:      8px 10px;
+    border-left:  2px solid rgba(255,167,38,0.5);
+    background:   rgba(255,167,38,0.05);
+}
 
 /* ── STATUS PATH CARD — CAREER SIGNAL + AFFINITY ──────────── */
 

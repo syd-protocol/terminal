@@ -276,7 +276,7 @@ function showHeaderDrawer(type) {
         const title   = titleFromLevel(level);
         const nextLvl = level + 1;
         const unlocksEncTier  = level < 10 ? ` · Encounter Tier 2 at Level 10` : (level < 25 ? ` · Encounter Tier 3 at Level 25` : '');
-        const unlocksTrait    = level < 10 ? ` · Trait Signals at Level 10` : '';
+        const unlocksTrait    = '';
         const unlocksAffinity = level < 20 ? ` · Hidden Affinity at Level 20` : '';
         drawer.innerHTML = `
             <div class="header-drawer-inner">
@@ -885,7 +885,7 @@ function renderStatusMainContent(container, animate) {
     ];
 
     // ── Trait signals section ──────────────────────────────────
-    const traitsSection = level >= 10
+    const traitsSection = level >= 1
         ? `
             <div class="stats-traits-block">
                 <p class="status-section-label">[ TRAIT SIGNALS ]</p>

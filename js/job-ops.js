@@ -267,17 +267,38 @@ Produce a structured JSON object with these fields:
     "driver": "One sentence explaining what is driving this."
 }
 
-"skill_shift": {
-    "skill": "The specific skill that is moving into demand.",
-    "why": "One sentence on why this skill is rising."
-}
+"skill_shifts": [
+    {
+        "skill": "The specific skill moving into demand.",
+        "why": "One sentence on why this skill is rising."
+    }
+]
+Include exactly 2 skill shifts. Both must be specific — not generic soft skills.
 
-"adjacent_opportunity": {
-    "role": "The specific adjacent role title.",
-    "why": "One sentence on why it is worth watching."
-}
+"adjacent_opportunities": [
+    {
+        "role": "The specific adjacent role title.",
+        "why": "One sentence on why it is worth watching."
+    }
+]
+Include exactly 2 adjacent opportunities. Pick roles that are genuinely reachable from the operative's current position within 1-2 years.
 
-"visibility_action": "One specific, concrete action the operative can take in the next 30 days to be more visible to employers hiring for their role. Not generic advice. Specific to their path and rank."
+"next_moves": [
+    {
+        "action": "One specific, concrete action the operative can take in the next 30 days.",
+        "effort": "low" | "medium" | "high"
+    }
+]
+Include exactly 3 next moves. Order by effort ascending (lowest first). Each must be specific to their path and rank — not generic career advice. Mix visibility, skill-building, and networking actions.
+
+"communities": [
+    {
+        "name": "The real name of the community, Slack group, Discord, forum, or platform.",
+        "where": "One word: Slack | Discord | LinkedIn | Forum | Conference | Newsletter",
+        "why": "One sentence on why this specific community is worth joining for their role."
+    }
+]
+Include exactly 3 communities. Real names only. Specific to their domain and role — not generic professional networks.
 
 "search_strings": [
     {
@@ -489,7 +510,7 @@ function _joSkeletonHTML(skeleton) {
     const cvOrSummaryBlock = isChronicler
         ? `
             <div class="jo-sub-section">
-                <p class="jo-section-label">── FULL CV ──────────────────────────────────</p>
+                <p class="jo-section-label">──  CV DRAFT ──────────────────────────────────</p>
                 <p class="jo-skeleton-label">[ LOCAL PROFILE — SYD is preparing an AI-enhanced version ]</p>
                 <div class="jo-full-cv-block">${(skeleton.full_cv || '').replace(/\n/g, '<br>')}</div>
             </div>
@@ -641,9 +662,9 @@ function renderJobOpsProfile(container) {
     const cvOrSummaryBlock = isChronicler
         ? `
             <div class="jo-sub-section">
-                <p class="jo-section-label">── FULL CV ──────────────────────────────────</p>
+                <p class="jo-section-label">──  CV DRAFT ──────────────────────────────────</p>
                 <div class="jo-full-cv-block" id="jo-full-cv">${(profile.full_cv || '').replace(/\n/g, '<br>')}</div>
-                <button class="jo-copy-btn" id="jo-copy-cv">COPY FULL CV →</button>
+                <button class="jo-copy-btn" id="jo-copy-cv">COPY  CV DRAFT →</button>
             </div>
         `
         : `
@@ -664,7 +685,7 @@ function renderJobOpsProfile(container) {
 
     container.innerHTML = `
         <div class="jo-panel-inner">
-            <p class="jo-section-label">[ PROFILE ]</p>
+            <p class="jo-panel-title">[ PROFILE ]</p>
             ${_joRefreshHeader(container, profile.cachedAt, null)}
 
             ${aspirationBlock}
@@ -819,7 +840,7 @@ function renderJobOpsMarketRead(container) {
 
     container.innerHTML = `
         <div class="jo-panel-inner">
-            <p class="jo-section-label">[ MARKET READ ]</p>
+            <p class="jo-panel-title">[ MARKET READ ]</p>
             ${_joRefreshHeader(container, market.cachedAt, market.live_data_used)}
 
             <div class="jo-sub-section">
@@ -830,21 +851,49 @@ function renderJobOpsMarketRead(container) {
             </div>
 
             <div class="jo-sub-section">
-                <p class="jo-section-heading jo-section-heading--market">Skill Shift</p>
-                <p class="jo-skill-name">${skillShift.skill || ''}</p>
-                <p class="jo-text-block">${skillShift.why || ''}</p>
+                <p class="jo-section-heading jo-section-heading--market">Skill Shifts</p>
+                ${(market.skill_shifts || (skillShift.skill ? [skillShift] : [])).map(s => `
+                    <div class="jo-market-item">
+                        <p class="jo-skill-name">${s.skill || ''}</p>
+                        <p class="jo-text-block">${s.why || ''}</p>
+                    </div>
+                `).join('')}
             </div>
 
             <div class="jo-sub-section">
-                <p class="jo-section-heading jo-section-heading--market">Adjacent Opportunity</p>
-                <p class="jo-skill-name">${adjacent.role || ''}</p>
-                <p class="jo-text-block">${adjacent.why || ''}</p>
+                <p class="jo-section-heading jo-section-heading--market">Adjacent Opportunities</p>
+                ${(market.adjacent_opportunities || (adjacent.role ? [adjacent] : [])).map(a => `
+                    <div class="jo-market-item">
+                        <p class="jo-skill-name">${a.role || ''}</p>
+                        <p class="jo-text-block">${a.why || ''}</p>
+                    </div>
+                `).join('')}
             </div>
 
             <div class="jo-sub-section">
-                <p class="jo-section-heading jo-section-heading--market">Your Next Move</p>
-                <p class="jo-text-block">${market.visibility_action || ''}</p>
+                <p class="jo-section-heading jo-section-heading--market">Next Moves</p>
+                ${(market.next_moves || (market.visibility_action ? [{ action: market.visibility_action, effort: 'medium' }] : [])).map(m => `
+                    <div class="jo-next-move-item">
+                        <span class="jo-effort-badge jo-effort-badge--${(m.effort || 'medium').toLowerCase()}">${(m.effort || 'MEDIUM').toUpperCase()}</span>
+                        <p class="jo-text-block">${m.action || ''}</p>
+                    </div>
+                `).join('')}
             </div>
+
+            ${(market.communities || []).length > 0 ? `
+            <div class="jo-sub-section">
+                <p class="jo-section-heading jo-section-heading--market">Where To Be Present</p>
+                ${market.communities.map(c => `
+                    <div class="jo-market-item">
+                        <div class="jo-community-row">
+                            <p class="jo-skill-name">${c.name || ''}</p>
+                            <span class="jo-community-where">${c.where || ''}</span>
+                        </div>
+                        <p class="jo-text-block">${c.why || ''}</p>
+                    </div>
+                `).join('')}
+            </div>
+            ` : ''}
         </div>
     `;
 
@@ -1011,7 +1060,7 @@ function renderJobOpsHunt(container) {
 
     container.innerHTML = `
         <div class="jo-panel-inner">
-            <p class="jo-section-label">[ JOB HUNT ]</p>
+            <p class="jo-panel-title">[ JOB HUNT ]</p>
             ${_joRefreshHeader(container, market.cachedAt, market.live_data_used)}
             ${intentBar}
             <div id="jo-hunt-content">
