@@ -1718,18 +1718,10 @@ function runRoleMapping(round) {
 
     function renderCards() {
         return cardData.map((p, i) => `
-            <button class="role-card ${round === 0 ? 'role-card--split' : ''}" data-path-index="${i}">
-                ${round === 0 && p.current_role_match ? `
-                    <div class="role-card-split-row">
-                        <div class="role-card-now">
-                            <span class="role-card-split-label">NOW</span>
-                            <span class="role-card-split-value">${p.current_role_match}</span>
-                        </div>
-                        <div class="role-card-direction">
-                            <span class="role-card-split-label">DIRECTION</span>
-                            <span class="role-card-split-value">${p.path_name || 'PATH ' + (i + 1)}</span>
-                        </div>
-                    </div>
+            <button class="role-card" data-path-index="${i}">
+                ${round === 0 ? `
+                    <span class="role-card-name">${p.path_name || 'PATH ' + (i + 1)}</span>
+                    ${p.current_role_match ? `<p class="role-card-from">From: ${p.current_role_match}</p>` : ''}
                     ${p.narrative ? '<p class="role-card-narrative">' + p.narrative + '</p>' : ''}
                     ${buildMarketSignalBlock(signals ? signals[i] : null)}
                 ` : `

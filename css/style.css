@@ -8055,6 +8055,35 @@ body {
 }
 .encounter-situation--reasoning { margin-bottom: -8px; }
 
+.enc-reasoning-anchor {
+    border-left: 3px solid var(--accent, #4fc3f7);
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    background: rgba(79, 195, 247, 0.05);
+    border-radius: 0 4px 4px 0;
+}
+.enc-reasoning-anchor-label {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary, #5a6a7a);
+    display: block;
+    margin-bottom: 4px;
+}
+.enc-reasoning-anchor-text {
+    font-size: 0.88rem;
+    color: var(--text-primary, #cdd6e0);
+    margin: 0;
+    line-height: 1.5;
+}
+.enc-reasoning-prompt {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    color: var(--text-secondary, #5a6a7a);
+    letter-spacing: 0.06em;
+    margin: 0 0 12px 0;
+}
+
 /* ── HEADER DRAWER ────────────────────────────────────────────── */
 .header-drawer {
     position:   relative;
@@ -9436,6 +9465,14 @@ body {
 .role-card--split .role-card-roles {
     padding:     0 14px 14px;
     margin-top:  8px;
+}
+
+.role-card-from {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.68rem;
+    color: var(--text-secondary, #5a6a7a);
+    margin: 2px 0 8px 0;
+    letter-spacing: 0.04em;
 }
 
 @media (max-width: 380px) {

@@ -206,7 +206,7 @@ function renderEncounterSituation() {
             <div class="encounter-header">
                 <button class="enc-back-btn" id="enc-back">← BACK</button>
                 <div class="enc-header-labels">
-                    <span class="enc-label">[ TRANSMISSION INCOMING ]</span>
+                    <span class="enc-label">[ STEP 1 OF 2 — READ THE SITUATION ]</span>
                     ${domainTag}
                 </div>
             </div>
@@ -232,7 +232,7 @@ function renderEncounterSituation() {
             <div class="enc-footer-actions">
                 <button class="enc-skip-btn" id="enc-skip">SKIP TODAY</button>
                 <button class="btn btn--primary enc-submit-btn" id="enc-to-reasoning">
-                    [ PICK YOUR REASONING ]
+                    [ CONTINUE → ]
                 </button>
             </div>
         </div>
@@ -275,11 +275,21 @@ function renderEncounterReasoning() {
     const container = document.getElementById('encounter-content');
     if (!container || !enc) return;
 
+    const selectedOpt = (enc.options || []).find(o => o.id === encounterState.selectedOption);
+    const freeTextPreview = encounterState.freeText;
+
     container.innerHTML = `
         <div class="encounter-wrap">
             <div class="encounter-header">
-                <span class="enc-label">[ WHAT IS DRIVING THAT RESPONSE? ]</span>
+                <span class="enc-label">[ STEP 2 OF 2 — WHY THAT CALL? ]</span>
             </div>
+            ${selectedOpt || freeTextPreview ? `
+                <div class="enc-reasoning-anchor">
+                    <span class="enc-reasoning-anchor-label">YOUR RESPONSE</span>
+                    <p class="enc-reasoning-anchor-text">${selectedOpt ? selectedOpt.text : freeTextPreview}</p>
+                </div>
+                <p class="enc-reasoning-prompt">What was driving that?</p>
+            ` : ''}
             <div class="enc-options" id="enc-reasonings">
                 ${(enc.reasonings || []).map(r => `
                     <button class="enc-option-btn" data-reasoning-id="${r.id}">
