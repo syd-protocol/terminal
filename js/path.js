@@ -1658,6 +1658,79 @@ Output ONLY a JSON array. No markdown. No preamble. No explanation.
 
 const DEMAND_COLOURS = { high: '#66bb6a', moderate: '#4fc3f7', emerging: '#ffa726', low: '#888888' };
 
+// ─── BEST PATH SIGNAL SCORER ─────────────────────────────────
+// Computes an evidence-density score for each path at round 0.
+// Primary signal: how many evidence lines in the CV match this path's
+// domain keywords. Secondary signals: stat alignment and market demand.
+// Returns the index of the highest-scoring path (0-based).
+function scorePaths(paths, cvSignal, scanTraits, marketSignals) {
+    if (!paths || paths.length === 0) return 0;
+
+    // Domain keyword → stat mapping (mirrors DOMAIN_SIGNALS in extractCVSignals)
+    const DOMAIN_STAT_MAP = {
+        community:   'charisma',
+        product:     'intelligence',
+        engineering: 'intelligence',
+        design:      'agility',
+        finance:     'intelligence',
+        hr:          'charisma',
+        operations:  'endurance',
+        learning:    'charisma',
+        sales:       'charisma',
+        marketing:   'agility',
+        data:        'intelligence',
+        legal:       'intelligence',
+        health:      'endurance'
+    };
+
+    const DEMAND_WEIGHT = { high: 2, moderate: 1, emerging: 0.5, low: 0 };
+
+    const scores = paths.map((p, i) => {
+        let score = 0;
+
+        // ── Primary: evidence density ─────────────────────────
+        // Use the narrative length as a proxy for how much evidence
+        // Gemini found (longer narratives = more specific evidence).
+        const narrativeWords = (p.narrative || '').split(/\s+/).filter(Boolean).length;
+        score += Math.min(narrativeWords / 5, 8); // max 8 points from narrative density
+
+        // Use mapped_skills count as a secondary evidence signal
+        score += Math.min((p.mapped_skills || []).length, 5);
+
+        // ── CV signal boost: domain match ────────────────────
+        if (cvSignal && cvSignal.domainPrimary) {
+            // Check if this path's stat_seeds align with the CV's primary domain stat
+            const domainStat  = DOMAIN_STAT_MAP[cvSignal.domainPrimary];
+            const pathSeeds   = p.stat_seeds || {};
+            const pathTopStat = Object.entries(pathSeeds).sort((a, b) => b[1] - a[1])[0];
+            if (pathTopStat && pathTopStat[0] === domainStat) score += 3;
+            // Bonus if this is the first path and CV domain matches directly
+            if (i === 0 && cvSignal.domainPrimary !== 'general') score += 1;
+        }
+
+        // ── Secondary: scan trait alignment ──────────────────
+        if (scanTraits && typeof scanTraits === 'object') {
+            const pathSeeds = p.stat_seeds || {};
+            let traitAlignment = 0;
+            for (const [stat, seedVal] of Object.entries(pathSeeds)) {
+                const traitScore = scanTraits[stat] || 0;
+                traitAlignment += (seedVal / 10) * traitScore; // weighted by seed magnitude
+            }
+            score += Math.min(traitAlignment, 4); // max 4 points from trait alignment
+        }
+
+        // ── Tertiary: market demand (if available) ───────────
+        if (marketSignals && marketSignals[i]) {
+            score += DEMAND_WEIGHT[marketSignals[i].demand] || 0;
+        }
+
+        return { index: i, score };
+    });
+
+    scores.sort((a, b) => b.score - a.score);
+    return scores[0].index;
+}
+
 // ─── SHARED FLOW: ROLE MAPPING ───────────────────────────────
 // Unchanged from Batch 6. Uses pathState.inference.paths seeded by
 // applyCall2Bundle() above.
@@ -1670,8 +1743,21 @@ function runRoleMapping(round) {
     const isLast = round === 2;
     const pct    = Math.round(((round + 1) / 3) * 100);
 
+    // Compute best path index for round 0 badge and voice line
+    const cvSignal   = pathState.track === 'chronicler'
+        ? extractCVSignals(pathState.cvText || '')
+        : null;
+    const bestPathIdx = round === 0
+        ? scorePaths(paths, cvSignal, pathState._scanTraits, pathState.marketSignals || null)
+        : -1;
+    const bestPathName = (round === 0 && paths[bestPathIdx])
+        ? paths[bestPathIdx].path_name
+        : null;
+
     const voiceLines = [
-        'Your record points to three possible paths. The first column is where you are now. The second is where the pattern leads.',
+        bestPathName
+            ? `Three paths detected. The record is densest for <strong>${bestPathName}</strong>. That is where the signal points — but you pick.`
+            : 'Your record points to three possible paths. The first column is where you are now. The second is where the pattern leads.',
         'Confirmed. Which of these roles do you actually see yourself in?',
         'Last one. Which of these focus areas fits how you want to work within that path?'
     ];
@@ -1719,9 +1805,12 @@ function runRoleMapping(round) {
     }
 
     function renderCards() {
-        return cardData.map((p, i) => `
-            <button class="role-card" data-path-index="${i}">
+        return cardData.map((p, i) => {
+            const isBest = round === 0 && i === bestPathIdx;
+            return `
+            <button class="role-card${isBest ? ' role-card--best-signal' : ''}" data-path-index="${i}">
                 ${round === 0 ? `
+                    ${isBest ? '<span class="role-card-signal-badge">⬡ STRONGEST SIGNAL</span>' : ''}
                     <span class="role-card-name">${p.path_name || 'PATH ' + (i + 1)}</span>
                     ${p.current_role_match ? `<p class="role-card-from">From: ${p.current_role_match}</p>` : ''}
                     ${p.narrative ? '<p class="role-card-narrative">' + p.narrative + '</p>' : ''}
@@ -1736,7 +1825,8 @@ function runRoleMapping(round) {
                     </div>
                 ` : ''}
             </button>
-        `).join('');
+        `;
+        }).join('');
     }
 
     const hasLink   = round === 0 && (typeof hasNeuralLink === 'function') && hasNeuralLink();
