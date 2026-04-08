@@ -136,14 +136,6 @@ body {
 .sound-toggle:hover { opacity: 1; }
 
 /* ── STATUS HEADER ──────────────────────────────────────────── */
-.status-header {
-    text-align: center;
-    border: 1px solid var(--border);
-    background: var(--panel);
-    padding: 20px 20px 14px;
-    margin-bottom: 12px;
-    position: relative;
-}
 
 .player-title {
     font-family: 'Share Tech Mono', monospace;
@@ -301,23 +293,6 @@ body {
     color: var(--red);
     text-align: right;
     white-space: nowrap;
-}
-
-/* ── CORRUPTED STATE ────────────────────────────────────────── */
-/* Applied to #status-header when player.corrupted is true.
-   One class toggle — no structural changes needed. */
-.status-header.corrupted {
-    border: 1px solid #3a0a0a;
-    animation: corruptedPulse 2s ease infinite;
-    padding: 12px;
-    margin-bottom: 4px;
-}
-
-/* The title text is overridden in JS to [ SYSTEM COMPROMISED ]
-   when corrupted; this ensures it renders in red */
-.status-header.corrupted #player-title {
-    color: var(--red);
-    letter-spacing: 2px;
 }
 
 /* ── TOOLTIP BOX ────────────────────────────────────────────── */
@@ -6097,45 +6072,6 @@ body {
     color:       var(--text-primary);
 }
 .mg-result-done { margin-top: 8px; min-width: 200px; }
-
-/* ── PATH TRACK SELECTION ────────────────────────────────────── */
-.path-track-btn {
-    display:        flex;
-    flex-direction: column;
-    gap:            6px;
-    text-align:     left;
-    /* Use --panel not --surface for slightly more contrast */
-    background:     var(--panel);
-    border:         1px solid var(--border);
-    border-radius:  4px;
-    padding:        20px 18px;
-    cursor:         pointer;
-    transition:     border-color 0.2s, background 0.2s;
-    width:          100%;
-    min-height:     44px;
-}
-.path-track-btn:hover {
-    border-color: var(--accent);
-    background:   rgba(79,195,247,0.04);
-}
-.path-track-tag {
-    font-family:   var(--font-mono);
-    font-size:     0.68rem;
-    color:         var(--accent);
-    letter-spacing: 0.1em;
-}
-.path-track-label {
-    font-family:   var(--font-mono);
-    font-size:     0.88rem;
-    font-weight:   700;
-    color:         var(--text-primary);
-    letter-spacing: 0.04em;
-}
-.path-track-sub {
-    font-size:   0.8rem;
-    color:       var(--text-secondary);
-    line-height: 1.5;
-}
 
 /* ── SCAN GAME SHARED ────────────────────────────────────────── */
 .scan-game { display: flex; flex-direction: column; gap: 14px; }
