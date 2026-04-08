@@ -435,8 +435,9 @@ function extractCVSignals(cvText) {
     // Title evidence takes priority — someone can reach Director in 4 years.
     // Years are a floor check, not the primary signal.
     if (hasDirector && (yearsTotal >= 5 || hasTeam))                  seniorityTier = 'director';
-    else if (hasFounder && yearsTotal >= 4)                           seniorityTier = 'director';
-    else if (hasFounder && yearsTotal >= 2)                           seniorityTier = 'manager';
+    else if (hasFounder && hasTeam && yearsTotal >= 4)                seniorityTier = 'director';
+    else if (hasFounder && yearsTotal >= 4)                           seniorityTier = 'manager';
+    else if (hasFounder && yearsTotal >= 2)                           seniorityTier = 'senior_ic';
     else if (hasManager && hasTeam && yearsTotal >= 4)                seniorityTier = 'senior_manager';
     else if (hasManager && yearsTotal >= 2)                           seniorityTier = 'manager';
     else if (hasSeniorIC && yearsTotal >= 1)                          seniorityTier = 'senior_ic';
@@ -753,8 +754,9 @@ ANALYSIS RULES — follow these strictly:
 7. synthesis_syd_lines must sound like intelligence analysis, not LinkedIn endorsements.
 8. career_skill_tracks must be named after what the operative actually does, not generic skill categories.
 9. initial_career_directives must be REAL actions with REAL professional consequences — not study tasks or research exercises.
-10. current_role_match and target_roles must contain ONLY the role name — no seniority prefix of any kind. Do not use Senior, Junior, Associate, Head of, Lead, Director, VP, Chief, or Principal. The role name alone is correct: "Community Manager" not "Senior Community Manager", "Data Analyst" not "Head of Data". Seniority is communicated separately through the operative's rank — it must not appear in role titles.
+10. current_role_match and target_roles must contain ONLY the role name — no seniority prefix of any kind. Do not use Senior, Junior, Associate, Head of, Lead, Director, VP, Chief, or Principal. The role name alone is correct: \"Community Manager\" not \"Senior Community Manager\", \"Data Analyst\" not \"Head of Data\". Seniority is communicated separately through the operative's rank — it must not appear in role titles.
 11. current_role_match must be a role the operative could send a CV to tomorrow and be a plausible applicant based on their actual record. If uncertain, default to the more junior version of the role. target_roles must be real job titles that appear on job boards today — reachable within 2–4 years of deliberate work. No invented, compound, or fantasy titles in target_roles.
+12. target_roles must NOT include any C-suite, executive, or VP-level titles (no CEO, COO, CTO, CLO, CPO, CMO, CXO, VP of anything, or equivalent). These are not reachable within 2–4 years for any operative below A rank. If you feel the record warrants a senior title, name the manager or specialist equivalent instead — \"Learning & Development Manager\" not \"Chief Learning Officer\", \"Community Programs Manager\" not \"VP of Community\".
 
 Your output will seed multiple downstream systems. Every field is required. Do not omit any.
 

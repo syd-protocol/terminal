@@ -8055,6 +8055,17 @@ body {
 }
 .encounter-situation--reasoning { margin-bottom: -8px; }
 
+.enc-feedback-teaching-ack {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.82rem;
+    color: var(--text-secondary, #5a6a7a);
+    font-style: italic;
+    margin-bottom: 14px;
+    line-height: 1.6;
+    border-bottom: 1px solid var(--border, #1e2d3d);
+    padding-bottom: 12px;
+}
+
 .enc-reasoning-anchor {
     border-left: 3px solid var(--accent, #4fc3f7);
     padding: 10px 14px;

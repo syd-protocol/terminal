@@ -344,8 +344,17 @@ function submitEncounterResponse() {
     markEncounterComplete();
 
     if (enc.type === 'teaching' && enc.teaching) {
-        // Teaching encounters: no Gemini call needed — reveal the pre-written expert thinking
-        setTimeout(() => renderTeachingFeedback(enc), 900);
+        const hasFreeText = encounterState.freeText && encounterState.freeText.length > 10;
+        if (hasFreeText && hasNeuralLink()) {
+            // Free text present — call Gemini to acknowledge the operative's thinking
+            // alongside the pre-written teaching content.
+            evaluateTeachingEncounter(enc).then(feedback => {
+                renderTeachingFeedback(enc, feedback);
+            });
+        } else {
+            // No free text or no neural link — reveal pre-written teaching only
+            setTimeout(() => renderTeachingFeedback(enc), 900);
+        }
         return;
     }
 
@@ -354,6 +363,48 @@ function submitEncounterResponse() {
         console.log('[SYD DEBUG] feedback object:', JSON.stringify(feedback));
         renderJudgmentFeedback(enc, feedback);
     });
+}
+
+// ─── GEMINI CALL 3a: TEACHING ENCOUNTER FREE TEXT ACKNOWLEDGEMENT ────────────
+// Only fires when: enc.type === 'teaching' AND free text present AND neural link active.
+// Does NOT evaluate — the teaching text is pre-written and authoritative.
+// SYD's job here is only to acknowledge the operative's specific thinking,
+// then transition into the teaching reveal.
+// Returns { text, geminiEnhanced: bool }
+
+async function evaluateTeachingEncounter(enc) {
+    try {
+        const freeText = encounterState.freeText;
+
+        const prompt = `
+You are SYD — a direct, honest career intelligence system. An operative wrote a free-text response to a situation, and now you are about to reveal the expert thinking on that situation.
+
+SITUATION:
+"${enc.situation}"
+
+OPERATIVE'S FREE TEXT:
+"${freeText}"
+
+EXPERT THINKING (what you are about to reveal):
+"${enc.teaching}"
+
+Your task: Write 1–2 sentences ONLY that acknowledge what the operative wrote before the expert thinking is shown. Do not repeat the teaching text. Do not evaluate whether they were right or wrong — that is not the point of a teaching encounter. Simply acknowledge the instinct or thinking behind what they wrote, then hand off to the transmission.
+
+SYD voice: direct, clipped, no flattery. End with a colon or a dash — signal that the teaching is coming.
+Output ONLY the acknowledgement text. No labels. No JSON. No preamble.
+`.trim();
+
+        const result = await geminiGenerate(prompt);
+
+        if (!result.ok || !result.text || result.text.trim().length < 10) {
+            return { text: '', geminiEnhanced: false };
+        }
+
+        return { text: result.text.trim(), geminiEnhanced: true };
+    } catch (e) {
+        console.warn('[SYD] evaluateTeachingEncounter failed:', e.message || e);
+        return { text: '', geminiEnhanced: false };
+    }
 }
 
 // ─── GEMINI CALL 3: JUDGMENT EVALUATION ──────────────────────
@@ -538,9 +589,13 @@ function renderJudgmentFeedback(enc, feedback) {
 // ─── FEEDBACK: TEACHING TYPE ──────────────────────────────────
 // Teaching encounters do not call Gemini — the expert thinking is pre-written.
 // SYD reveals it as a transmission, not a correction.
-function renderTeachingFeedback(enc) {
+function renderTeachingFeedback(enc, geminiAck) {
     const container = document.getElementById('encounter-content');
     if (!container) return;
+
+    const ackText = geminiAck && geminiAck.geminiEnhanced && geminiAck.text
+        ? geminiAck.text
+        : '';
 
     container.innerHTML = `
         <div class="encounter-wrap">
@@ -548,6 +603,7 @@ function renderTeachingFeedback(enc) {
                 <span class="enc-label">[ SYD — EXPERT THINKING ]</span>
             </div>
             <div class="enc-feedback enc-feedback--teaching">
+                ${ackText ? `<p class="enc-feedback-teaching-ack">${ackText}</p>` : ''}
                 <p class="enc-feedback-text">${enc.teaching}</p>
             </div>
             <div class="enc-footer-actions">
