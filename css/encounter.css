@@ -6,7 +6,6 @@
 ═══════════════════════════════════════════════════════════════ */
 
 /* ─── ENCOUNTER SCREEN ────────────────────────────────────────── */
-.screen-inner--narrow { padding: 32px 24px 80px; max-width: 520px; margin: 0 auto; width: 100%; box-sizing: border-box; }
 .encounter-wrap { display: flex; flex-direction: column; gap: 20px; }
 .encounter-wrap--done {
     align-items:     center;
