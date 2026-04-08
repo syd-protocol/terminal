@@ -1,0 +1,837 @@
+/* ═══════════════════════════════════════════════════════════════
+   SYD — job-ops.css
+   All Job Ops screen styles. Mirrors job-ops.js.
+   Depends on style.css (loaded first).
+   April 2026
+═══════════════════════════════════════════════════════════════ */
+
+/* ─── JOB OPS ───────────────────────────────────────────────── */
+
+.job-ops-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            0;
+}
+
+/* Sub-panel nav bar */
+.job-ops-panel-bar {
+    display:               grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:                   4px;
+    padding:               10px 0 8px;
+    border-bottom:         1px solid var(--border);
+    margin-bottom:         16px;
+    position:              sticky;
+    top:                   0;
+    background:            var(--bg);
+    z-index:               2;
+}
+
+.jo-panel-btn {
+    background:     transparent;
+    border:         1px solid var(--border);
+    color:          var(--text-secondary);
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.65rem;
+    letter-spacing: 0.07em;
+    padding:        7px 4px;
+    cursor:         pointer;
+    border-radius:  2px;
+    transition:     border-color 0.15s, color 0.15s, background 0.15s;
+    text-align:     center;
+}
+
+.jo-panel-btn--active {
+    border-color: var(--accent);
+    color:        var(--accent);
+    background:   rgba(79, 195, 247, 0.07);
+}
+
+.job-ops-panel-content {
+    min-height: 200px;
+}
+
+/* Panel inner wrapper */
+.jo-panel-inner {
+    display:        flex;
+    flex-direction: column;
+    gap:            0;
+    padding-bottom: 32px;
+}
+
+/* Section headers — same style as status-section-label */
+.jo-section-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.65rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.1em;
+    margin:         0 0 8px;
+    padding-top:    2px;
+}
+
+/* Panel-level titles: [ PROFILE ], [ MARKET READ ], [ JOB HUNT ] */
+/* Uses the same class but targeted via first-child context.        */
+/* Applied directly in JS as jo-panel-title where needed.          */
+.jo-panel-title {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.72rem;
+    font-weight:    700;
+    color:          var(--accent);
+    letter-spacing: 0.14em;
+    margin:         0 0 16px;
+    padding-bottom: 10px;
+    border-bottom:  1px solid rgba(255,255,255,0.1);
+}
+
+/* Sub-sections within a panel */
+.jo-sub-section {
+    margin-bottom:  20px;
+    padding-bottom: 16px;
+    border-bottom:  1px solid rgba(255,255,255,0.05);
+}
+
+.jo-sub-section:last-child {
+    border-bottom: none;
+}
+
+/* Header row: timestamp + refresh button */
+.jo-header-row {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    margin-bottom:   14px;
+    flex-wrap:       wrap;
+    gap:             6px;
+}
+
+.jo-timestamp {
+    display:     flex;
+    align-items: center;
+    gap:         8px;
+    flex-wrap:   wrap;
+}
+
+.jo-date-note {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.62rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.05em;
+}
+
+.jo-live-badge {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.62rem;
+    color:          #66bb6a;
+    letter-spacing: 0.05em;
+}
+
+.jo-stale-badge {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.62rem;
+    color:          #ffa726;
+    letter-spacing: 0.05em;
+}
+
+.jo-rate-limit-note {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.62rem;
+    color:          var(--text-secondary);
+    margin:         0 0 10px;
+    font-style:     italic;
+    width:          100%;
+}
+
+/* Refresh button */
+.jo-refresh-btn {
+    background:     transparent;
+    border:         1px solid var(--border);
+    color:          var(--accent);
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.65rem;
+    letter-spacing: 0.07em;
+    padding:        5px 10px;
+    cursor:         pointer;
+    border-radius:  2px;
+    transition:     border-color 0.15s, opacity 0.15s;
+    white-space:    nowrap;
+}
+
+.jo-refresh-btn:hover {
+    border-color: var(--accent);
+}
+
+.jo-refresh-btn--disabled,
+.jo-refresh-btn:disabled {
+    opacity: 0.35;
+    cursor:  default;
+}
+
+/* State screens: no key / loading */
+.jo-state-wrap {
+    padding:        24px 0 16px;
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+}
+
+.jo-state-msg {
+    font-size:   0.85rem;
+    color:       var(--text-secondary);
+    line-height: 1.5;
+    margin:      0;
+}
+
+.jo-state-sub {
+    font-size:   0.78rem;
+    color:       var(--text-secondary);
+    margin:      0;
+    opacity:     0.75;
+}
+
+.jo-settings-link {
+    background:     transparent;
+    border:         1px solid var(--accent);
+    color:          var(--accent);
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.7rem;
+    letter-spacing: 0.08em;
+    padding:        8px 14px;
+    cursor:         pointer;
+    align-self:     flex-start;
+    margin-top:     4px;
+    border-radius:  2px;
+    transition:     background 0.15s;
+}
+
+.jo-settings-link:hover {
+    background: rgba(79, 195, 247, 0.08);
+}
+
+/* Loading bar */
+.jo-loading-bar {
+    width:         100%;
+    height:        3px;
+    background:    var(--border);
+    border-radius: 2px;
+    overflow:      hidden;
+    margin:        8px 0;
+}
+
+.jo-loading-fill {
+    width:      60%;
+    height:     100%;
+    background: var(--accent);
+    border-radius: 2px;
+    animation:  joLoadingPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes joLoadingPulse {
+    0%, 100% { opacity: 0.4; transform: translateX(-20%); }
+    50%       { opacity: 1.0; transform: translateX(60%); }
+}
+
+/* Generic text blocks */
+.jo-text-block {
+    font-size:   0.85rem;
+    color:       var(--text-primary, #c0cdd8);
+    line-height: 1.6;
+    margin:      0 0 6px;
+}
+
+.jo-text-note {
+    font-size:   0.78rem;
+    color:       var(--text-secondary);
+    line-height: 1.5;
+    margin:      0 0 4px;
+}
+
+/* Copy button — reuses st-copy-btn pattern */
+.jo-copy-btn {
+    background:     transparent;
+    border:         1px solid var(--border);
+    color:          var(--accent);
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.65rem;
+    letter-spacing: 0.07em;
+    padding:        5px 10px;
+    cursor:         pointer;
+    border-radius:  2px;
+    margin-top:     8px;
+    display:        inline-block;
+    transition:     border-color 0.15s, background 0.15s;
+}
+
+.jo-copy-btn:hover {
+    border-color: var(--accent);
+    background:   rgba(79, 195, 247, 0.06);
+}
+
+/* Full CV block */
+.jo-full-cv-block {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.72rem;
+    color:          var(--text-primary, #c0cdd8);
+    line-height:    1.7;
+    white-space:    pre-wrap;
+    background:     rgba(255, 255, 255, 0.03);
+    border:         1px solid var(--border);
+    border-radius:  3px;
+    padding:        12px;
+    max-height:     320px;
+    overflow-y:     auto;
+    margin-bottom:  8px;
+}
+
+/* Role reframe blocks */
+.jo-reframe-block {
+    border:        1px solid var(--border);
+    border-radius: 3px;
+    padding:       12px;
+    margin-bottom: 12px;
+    background:    rgba(255, 255, 255, 0.02);
+}
+
+.jo-reframe-block--target {
+    border-color: rgba(79, 195, 247, 0.25);
+}
+
+.jo-reframe-tag {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.62rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.1em;
+    margin:         0 0 4px;
+}
+
+.jo-reframe-role {
+    font-size:   1.0rem;
+    font-weight: 700;
+    color:       var(--accent);
+    margin:      0 0 3px;
+}
+
+.jo-reframe-headline {
+    font-size:   0.78rem;
+    color:       var(--text-secondary);
+    font-style:  italic;
+    margin:      0 0 8px;
+}
+
+/* Demand level */
+.jo-demand-level {
+    font-family:    var(--font-mono, monospace);
+    font-size:      1.1rem;
+    font-weight:    700;
+    letter-spacing: 0.12em;
+    margin:         0 0 6px;
+}
+
+.jo-demand-level--growing  { color: #66bb6a; }
+.jo-demand-level--stable   { color: #ffa726; }
+.jo-demand-level--declining { color: var(--danger, #e57373); }
+
+/* Skill name */
+.jo-skill-name {
+    font-size:   0.92rem;
+    font-weight: 600;
+    color:       var(--accent, #4fc3f7);
+    margin:      0 0 4px;
+}
+
+/* Search strings */
+.jo-search-string-block {
+    border:        1px solid var(--border);
+    border-radius: 3px;
+    padding:       10px 12px;
+    margin-bottom: 10px;
+    background:    rgba(255, 255, 255, 0.02);
+}
+
+.jo-search-label {
+    font-size:   0.72rem;
+    color:       var(--text-secondary);
+    margin:      0 0 4px;
+}
+
+.jo-search-query {
+    font-family:   var(--font-mono, monospace);
+    font-size:     0.72rem;
+    color:         var(--accent);
+    word-break:    break-all;
+    margin:        0 0 6px;
+    line-height:   1.5;
+    user-select:   all;
+}
+
+/* Keyword tags */
+.jo-keyword-tags {
+    display:   flex;
+    flex-wrap: wrap;
+    gap:       6px;
+    margin:    4px 0 8px;
+}
+
+.jo-keyword-tag {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.65rem;
+    color:          var(--accent);
+    border:         1px solid rgba(79, 195, 247, 0.35);
+    border-radius:  2px;
+    padding:        3px 7px;
+    letter-spacing: 0.05em;
+}
+
+/* Communities list */
+.jo-communities-list {
+    margin:      4px 0 8px 16px;
+    padding:     0;
+    font-size:   0.8rem;
+    color:       var(--text-primary, #c0cdd8);
+    line-height: 1.7;
+}
+
+/* Intent toggle bar */
+.jo-intent-bar {
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.jo-intent-options {
+    display:   flex;
+    flex-wrap: wrap;
+    gap:       6px;
+    margin-top: 6px;
+}
+
+.jo-intent-btn {
+    background:     transparent;
+    border:         1px solid var(--border);
+    color:          var(--text-secondary);
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.65rem;
+    letter-spacing: 0.06em;
+    padding:        6px 10px;
+    cursor:         pointer;
+    border-radius:  2px;
+    transition:     border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.jo-intent-btn--active {
+    border-color: var(--accent);
+    color:        var(--accent);
+    background:   rgba(79, 195, 247, 0.07);
+}
+
+/* Dimmed search strings — BUILDING mode */
+.jo-dimmed-block {
+    opacity: 0.4;
+}
+
+.jo-dimmed-note {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.62rem;
+    color:          var(--text-secondary);
+    font-style:     italic;
+    margin:         4px 0 0;
+}
+
+/* ── STATUS PATH SUMMARY CARD ────────────────────────────── */
+
+.status-section-card {
+    border:        1px solid var(--border);
+    border-radius: 3px;
+    padding:       14px;
+    background:    rgba(255, 255, 255, 0.02);
+}
+
+.sot-path-card {
+    margin-bottom: 4px;
+}
+
+.sot-path-summary-row {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    gap:             8px;
+    margin-bottom:   4px;
+}
+
+.sot-path-name {
+    font-size:   0.88rem;
+    font-weight: 600;
+    color:       var(--accent);
+    line-height: 1.3;
+}
+
+.sot-path-rank {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.7rem;
+    color:          var(--text-secondary);
+    border:         1px solid var(--border);
+    border-radius:  2px;
+    padding:        2px 6px;
+    white-space:    nowrap;
+    flex-shrink:    0;
+}
+
+.sot-path-role {
+    font-size:   0.78rem;
+    color:       var(--text-secondary);
+    margin:      0 0 10px;
+    min-height:  1em;
+}
+
+.sot-job-ops-link {
+    background:     transparent;
+    border:         1px solid var(--accent);
+    color:          var(--accent);
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.68rem;
+    letter-spacing: 0.08em;
+    padding:        7px 12px;
+    cursor:         pointer;
+    border-radius:  2px;
+    width:          100%;
+    text-align:     center;
+    transition:     background 0.15s;
+}
+
+.sot-job-ops-link:hover {
+    background: rgba(79, 195, 247, 0.08);
+}
+
+/* ── ASPIRATION PROBE — INTENT QUESTION ─────────────────── */
+
+.path-intent-group {
+    margin-top: 8px;
+}
+
+.path-intent-options {
+    display:        flex;
+    flex-direction: column;
+    gap:            8px;
+    margin-top:     8px;
+}
+
+.path-intent-btn {
+    background:    rgba(255, 255, 255, 0.03);
+    border:        1px solid var(--border);
+    color:         var(--text-secondary);
+    padding:       12px 14px;
+    cursor:        pointer;
+    border-radius: 3px;
+    text-align:    left;
+    transition:    border-color 0.15s, background 0.15s, color 0.15s;
+    width:         100%;
+}
+
+.path-intent-btn:hover {
+    border-color: var(--accent);
+    background:   rgba(79, 195, 247, 0.04);
+}
+
+.path-intent-btn--active {
+    border-color: var(--accent);
+    color:        var(--accent);
+    background:   rgba(79, 195, 247, 0.08);
+}
+
+.path-intent-label {
+    font-size:   0.85rem;
+    line-height: 1.4;
+    pointer-events: none;
+}
+
+/* ── JOB OPS — ASPIRATION / CAREER SIGNAL EDIT ────────────── */
+
+.jo-aspiration-block {
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding-top: 14px;
+}
+
+.jo-aspiration-row {
+    cursor: pointer;
+    padding: 8px 0 4px;
+}
+
+.jo-asp-edit-hint {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.6rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.08em;
+    opacity:        0.6;
+    display:        block;
+    margin-top:     2px;
+}
+
+.jo-aspiration-edit {
+    margin-top:     10px;
+    display:        flex;
+    flex-direction: column;
+    gap:            6px;
+}
+
+/* ── JOB OPS — COUNTDOWN + SKELETON + RAW SIGNAL ──────────── */
+
+.jo-countdown-block {
+    padding:       12px 0 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 16px;
+}
+
+.jo-countdown-msg {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.78rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.04em;
+    margin:         0 0 10px;
+    line-height:    1.6;
+}
+
+.jo-countdown-msg #jo-countdown-secs {
+    color:       var(--accent);
+    font-weight: 700;
+}
+
+.jo-skeleton-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.62rem;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+    opacity:        0.7;
+    margin:         0 0 10px;
+    display:        block;
+}
+
+.jo-raw-signal-block {
+    font-family:  var(--font-mono, monospace);
+    font-size:    0.72rem;
+    color:        var(--text-secondary);
+    line-height:  1.7;
+    max-height:   220px;
+    overflow-y:   auto;
+    padding:      10px 12px;
+    border:       1px solid rgba(255,255,255,0.07);
+    border-radius: 4px;
+    background:   rgba(255,255,255,0.02);
+    white-space:  pre-wrap;
+    word-break:   break-word;
+}
+
+/* ── JOB OPS — SECTION TITLE VISUAL HIERARCHY ──────────────── */
+/* Key data section headers get accent treatment.               */
+/* Structural/divider labels stay muted (existing .jo-section-  */
+/* label style).                                                */
+
+.jo-section-heading {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.7rem;
+    font-weight:    700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin:         0 0 8px;
+    padding-bottom: 6px;
+    border-bottom:  1px solid rgba(255,255,255,0.08);
+}
+
+/* PROFILE panel headings */
+.jo-section-heading--profile  { color: var(--accent, #4fc3f7); }
+
+/* MARKET READ headings — demand gets its own color by level,   */
+/* others use the market accent                                  */
+.jo-section-heading--market   { color: #ffa726; }
+
+/* JOB HUNT headings */
+.jo-section-heading--hunt     { color: #66bb6a; }
+
+/* Demand level badge — already has color by level class,       */
+/* bump up the size slightly                                     */
+.jo-demand-level {
+    font-size:      1.1rem !important;
+    letter-spacing: 0.12em !important;
+    margin-bottom:  6px !important;
+}
+
+/* Skill name and adjacent role titles — give them accent pop   */
+.jo-skill-name {
+    color:       var(--accent, #4fc3f7) !important;
+    font-size:   0.92rem !important;
+    font-weight: 600 !important;
+}
+
+/* Reframe role title — already styled but bump contrast        */
+.jo-reframe-role {
+    font-size:   1.0rem !important;
+    font-weight: 700 !important;
+}
+
+/* ── JOB OPS — COUNTDOWN + SKELETON + RAW SIGNAL ──────────── */
+
+.jo-countdown-block {
+    padding:       12px 0 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 16px;
+}
+
+.jo-countdown-msg {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.78rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.04em;
+    margin:         0 0 10px;
+    line-height:    1.6;
+}
+
+.jo-countdown-msg #jo-countdown-secs {
+    color:       var(--accent);
+    font-weight: 700;
+}
+
+.jo-skeleton-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.62rem;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+    opacity:        0.7;
+    margin:         0 0 10px;
+    display:        block;
+}
+
+.jo-raw-signal-block {
+    font-family:   var(--font-mono, monospace);
+    font-size:     0.72rem;
+    color:         var(--text-secondary);
+    line-height:   1.7;
+    max-height:    220px;
+    overflow-y:    auto;
+    padding:       10px 12px;
+    border:        1px solid rgba(255,255,255,0.07);
+    border-radius: 4px;
+    background:    rgba(255,255,255,0.02);
+    white-space:   pre-wrap;
+    word-break:    break-word;
+}
+
+/* ── JOB OPS — SECTION HEADING HIERARCHY (see first definition above) ── */
+
+/* ── JOB OPS — MARKET READ EXPANDED ITEMS ──────────────────── */
+
+.jo-market-item {
+    margin-bottom: 14px;
+}
+
+.jo-market-item:last-child {
+    margin-bottom: 0;
+}
+
+.jo-next-move-item {
+    display:       flex;
+    gap:           10px;
+    align-items:   flex-start;
+    margin-bottom: 14px;
+}
+
+.jo-next-move-item:last-child {
+    margin-bottom: 0;
+}
+
+.jo-effort-badge {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.58rem;
+    font-weight:    700;
+    letter-spacing: 0.1em;
+    padding:        2px 6px;
+    border-radius:  2px;
+    white-space:    nowrap;
+    flex-shrink:    0;
+    margin-top:     3px;
+}
+
+.jo-effort-badge--low    { background: rgba(102,187,106,0.15); color: #66bb6a; }
+.jo-effort-badge--medium { background: rgba(255,167,38,0.15);  color: #ffa726; }
+.jo-effort-badge--high   { background: rgba(229,115,115,0.15); color: #e57373; }
+
+.jo-community-row {
+    display:     flex;
+    align-items: center;
+    gap:         8px;
+    flex-wrap:   wrap;
+}
+
+.jo-community-where {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.6rem;
+    letter-spacing: 0.08em;
+    color:          var(--text-secondary);
+    border:         1px solid rgba(255,255,255,0.12);
+    border-radius:  2px;
+    padding:        1px 5px;
+}
+
+/* ── JOB OPS — CV DISCLAIMER ────────────────────────────────── */
+
+.jo-cv-disclaimer {
+    font-family:  var(--font-mono, monospace);
+    font-size:    0.65rem;
+    color:        var(--text-secondary);
+    line-height:  1.6;
+    margin:       0 0 10px;
+    padding:      8px 10px;
+    border-left:  2px solid rgba(255,167,38,0.5);
+    background:   rgba(255,167,38,0.05);
+}
+
+/* ── STATUS PATH CARD — CAREER SIGNAL + AFFINITY ──────────── */
+
+.sot-path-signal-block {
+    margin-top:  12px;
+    padding-top: 12px;
+    border-top:  1px solid rgba(255,255,255,0.05);
+    cursor:      pointer;
+}
+
+.sot-path-signal-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.6rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.1em;
+    margin:         0 0 4px;
+}
+
+.sot-path-signal-value {
+    font-size:   0.82rem;
+    color:       var(--text-primary, #c0cdd8);
+    margin:      0 0 2px;
+    line-height: 1.5;
+}
+
+.sot-path-signal-expand {
+    margin-top:     10px;
+    display:        flex;
+    flex-direction: column;
+    gap:            6px;
+}
+
+.sot-path-affinity-block {
+    margin-top:  12px;
+    padding-top: 12px;
+    border-top:  1px solid rgba(255,255,255,0.05);
+}
+
+.sot-path-affinity-stat {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.75rem;
+    font-weight:    700;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+    margin:         0 0 4px;
+}
+
+.sot-path-affinity-read {
+    font-size:   0.8rem;
+    color:       var(--text-secondary);
+    line-height: 1.6;
+    margin:      0;
+    font-style:  italic;
+}

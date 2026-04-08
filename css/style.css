@@ -7848,9 +7848,9 @@ body {
     border-bottom: 1px solid var(--border);
 }
 .status-section { display: flex; flex-direction: column; gap: 12px; }
-.status-section--career-skills { /* gap handled by career-skills-list */ }
-.status-section--path          { /* gap handled by path-inline-block */ }
-.status-section--settings      { /* gap handled by settings-section */ }
+.status-section--career-skills { gap: 0; }
+.status-section--path          { gap: 0; }
+.status-section--settings      { gap: 0; }
 
 /* ── SOT IDENTITY — SETTINGS SHORTCUT ─────────────────────── */
 .sot-settings-shortcut {
@@ -8582,7 +8582,7 @@ body {
     flex-direction: column;
     gap:            20px;
 }
-.games-segment-header { /* intentionally minimal */ }
+.games-segment-header { display: block; }
 .games-syd-line {
     font-family: var(--font-mono);
     font-size:   0.78rem;

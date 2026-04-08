@@ -1,0 +1,1403 @@
+/* ═══════════════════════════════════════════════════════════════
+   SYD — path.css
+   All path/onboarding screen styles. Mirrors path.js and scan.js.
+   Depends on style.css (loaded first).
+   April 2026
+═══════════════════════════════════════════════════════════════ */
+
+/* ─── PATH SCREENS ─────────────────────────────────────────────── */
+
+/* ─── PATH SCREENS ───────────────────────────────────────────── */
+.screen-inner--centered {
+    display:         flex;
+    flex-direction:  column;
+    justify-content: flex-start;
+    align-items:     center;
+    padding:         40px 24px 80px;
+    min-height:      100vh;
+    width:           100%;
+}
+.screen-inner--narrow {
+    padding:   32px 24px 80px;
+    max-width: 520px;
+    margin:    0 auto;
+    width:     100%;
+}
+
+.path-select {
+    width:     100%;
+    max-width: 480px;
+}
+
+.path-syd-voice {
+    margin-bottom: 32px;
+}
+.path-voice-line {
+    font-family: var(--font-mono);
+    font-size:   0.95rem;
+    color:       var(--text-primary);
+    line-height: 1.7;
+    margin-bottom: 8px;
+    opacity:     0;
+    transform:   translateY(6px);
+    transition:  opacity 0.4s ease, transform 0.4s ease;
+}
+.path-voice-line--visible {
+    opacity:   1;
+    transform: none;
+}
+
+.path-track-choices {
+    display:        flex;
+    flex-direction: column;
+    gap:            16px;
+}
+.path-track-btn {
+    display:        flex;
+    flex-direction: column;
+    gap:            4px;
+    text-align:     left;
+    background:     var(--surface);
+    border:         1px solid var(--border);
+    border-radius:  4px;
+    padding:        20px;
+    cursor:         pointer;
+    transition:     border-color 0.2s ease, background 0.2s ease;
+}
+.path-track-btn:hover {
+    border-color: var(--accent);
+    background:   rgba(79, 195, 247, 0.05);
+}
+.path-track-tag {
+    font-family:   var(--font-mono);
+    font-size:     0.7rem;
+    color:         var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+}
+.path-track-label {
+    font-size:   1rem;
+    font-weight: 600;
+    color:       var(--text-primary);
+}
+.path-track-sub {
+    font-size:  0.83rem;
+    color:      var(--text-secondary);
+    line-height: 1.5;
+    margin-top:  4px;
+}
+
+.path-input-group {
+    margin-bottom: 20px;
+}
+.path-input-label {
+    display:       block;
+    font-family:   var(--font-mono);
+    font-size:     0.72rem;
+    color:         var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+}
+.path-textarea {
+    width:       100%;
+    min-height:  160px;
+    background:  var(--surface);
+    border:      1px solid var(--border);
+    border-radius: 4px;
+    color:       var(--text-primary);
+    font-family: var(--font-mono);
+    font-size:   0.88rem;
+    padding:     12px;
+    resize:      vertical;
+    outline:     none;
+    line-height: 1.6;
+    box-sizing:  border-box;
+}
+.path-textarea--short { min-height: 80px; }
+.path-textarea:focus  { border-color: var(--accent); }
+
+.path-progress-bar {
+    width:         100%;
+    height:        3px;
+    background:    var(--surface);
+    border-radius: 2px;
+    margin-bottom: 6px;
+    overflow:      hidden;
+}
+.path-progress-fill {
+    height:        100%;
+    background:    var(--accent);
+    border-radius: 2px;
+    transition:    width 0.5s ease;
+}
+.path-progress-label {
+    font-family:   var(--font-mono);
+    font-size:     0.7rem;
+    color:         var(--text-secondary);
+    margin-bottom: 28px;
+}
+
+.path-action-row {
+    display:     flex;
+    gap:         12px;
+    align-items: center;
+    margin-top:  8px;
+}
+.path-skip-btn {
+    background:  transparent;
+    border:      none;
+    color:       var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size:   0.8rem;
+    cursor:      pointer;
+    padding:     8px 0;
+    text-decoration: underline;
+}
+.path-skip-btn:hover { color: var(--text-primary); }
+
+.path-back-btn {
+    display:       block;
+    background:    transparent;
+    border:        none;
+    color:         var(--text-secondary);
+    font-family:   var(--font-mono);
+    font-size:     0.8rem;
+    cursor:        pointer;
+    margin-bottom: 24px;
+    padding:       0;
+}
+.path-back-btn:hover { color: var(--accent); }
+
+.path-privacy-note {
+    font-family: var(--font-mono);
+    font-size:   0.72rem;
+    color:       var(--text-secondary);
+    margin-top:  16px;
+    opacity:     0.7;
+}
+
+/* Role mapping cards */
+.role-mapping-wrap { width: 100%; max-width: 480px; }
+.role-card-stack {
+    display:        flex;
+    flex-direction: column;
+    gap:            14px;
+    margin-top:     24px;
+}
+.role-card {
+    display:        flex;
+    flex-direction: column;
+    gap:            6px;
+    text-align:     left;
+    background:     var(--surface);
+    border:         1px solid var(--border);
+    border-radius:  4px;
+    padding:        18px;
+    cursor:         pointer;
+    transition:     border-color 0.2s, background 0.2s;
+}
+.role-card:hover { border-color: var(--accent); background: rgba(79,195,247,0.05); }
+.role-card-name {
+    font-family:   var(--font-mono);
+    font-size:     0.85rem;
+    font-weight:   700;
+    color:         var(--accent);
+    letter-spacing: 0.08em;
+}
+.role-card-narrative {
+    font-size:  0.82rem;
+    color:      var(--text-secondary);
+    line-height: 1.5;
+}
+.role-card-roles {
+    display:   flex;
+    flex-wrap: wrap;
+    gap:       6px;
+    margin-top: 6px;
+}
+.role-tag {
+    font-family: var(--font-mono);
+    font-size:   0.7rem;
+    color:       var(--text-secondary);
+    background:  rgba(255,255,255,0.05);
+    border:      1px solid var(--border);
+    border-radius: 2px;
+    padding:     2px 8px;
+}
+
+/* Path loading */
+.path-loading {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    gap:             20px;
+    padding-top:     80px;
+}
+.path-loading-icon {
+    font-size: 3rem;
+    color:     var(--accent);
+    animation: pulse 1.6s infinite;
+}
+.path-loading-label {
+    font-family:   var(--font-mono);
+    font-size:     0.85rem;
+    color:         var(--accent);
+    letter-spacing: 0.1em;
+    text-align:    center;
+}
+.path-loading-bar {
+    width:         240px;
+    height:        3px;
+    background:    var(--border);
+    border-radius: 2px;
+    overflow:      hidden;
+}
+.path-loading-fill {
+    height:     100%;
+    background: var(--accent);
+    transition: width 0.6s ease;
+    width:      0%;
+}
+.path-loading-sub {
+    font-family: var(--font-mono);
+    font-size:   0.72rem;
+    color:       var(--text-secondary);
+    opacity:     0.6;
+}
+.path-loading-tip {
+    font-size:    0.82rem;
+    color:        var(--text-secondary);
+    line-height:  1.6;
+    max-width:    300px;
+    text-align:   center;
+    min-height:   3em;
+    transition:   opacity 0.4s ease;
+    margin-top:   8px;
+    font-style:   italic;
+}
+
+/* Aspiration */
+.aspiration-wrap { width: 100%; max-width: 480px; }
+
+
+/* ─── SCAN BRIDGE + RANK CONFIRMATION + RE-IMAGINER ────────────── */
+
+/* ─── SCAN BRIDGE ────────────────────────────────────────────── */
+.scan-bridge {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    justify-content: center;
+    min-height:      280px;
+    gap:             12px;
+}
+.scan-bridge-label {
+    font-family:   var(--font-mono);
+    font-size:     0.85rem;
+    color:         var(--accent);
+    letter-spacing: 0.1em;
+}
+.scan-bridge-sub {
+    font-family: var(--font-mono);
+    font-size:   0.72rem;
+    color:       var(--text-secondary);
+    animation:   pulse 1.2s infinite;
+}
+
+/* ─── RANK CONFIRMATION ──────────────────────────────────────── */
+.rank-confirm-wrap { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 20px; }
+.rank-confirm-options { display: flex; flex-direction: column; gap: 10px; }
+.rank-confirm-btn {
+    display:        flex;
+    flex-direction: column;
+    gap:            4px;
+    text-align:     left;
+    background:     var(--surface);
+    border:         1px solid var(--border);
+    border-radius:  4px;
+    padding:        16px 18px;
+    cursor:         pointer;
+    transition:     border-color 0.2s, background 0.2s;
+}
+.rank-confirm-btn:hover { border-color: var(--accent); background: rgba(79,195,247,0.05); }
+.rank-confirm-btn--accept { border-color: var(--accent); }
+.rank-confirm-label {
+    font-family:   var(--font-mono);
+    font-size:     0.85rem;
+    font-weight:   700;
+    color:         var(--accent);
+    letter-spacing: 0.08em;
+}
+.rank-confirm-sub {
+    font-size:  0.8rem;
+    color:      var(--text-secondary);
+    line-height: 1.4;
+}
+.rank-confirm-note {
+    font-family: var(--font-mono);
+    font-size:   0.72rem;
+    color:       var(--text-secondary);
+    opacity:     0.65;
+    line-height: 1.5;
+}
+
+
+
+/* ─── MORNING TRANSMISSION OVERLAY ──────────────────────────── */
+.overlay-inner--morning {
+    display:        flex;
+    flex-direction: column;
+    gap:            20px;
+    padding:        48px 28px 40px;
+    max-width:      480px;
+    margin:         0 auto;
+    width:          100%;
+}
+.morning-lines {
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+}
+.morning-line {
+    font-family:  var(--font-mono);
+    font-size:    0.82rem;
+    color:        var(--text-secondary);
+    line-height:  1.7;
+    opacity:      0;
+    transform:    translateY(5px);
+    transition:   opacity 0.4s ease, transform 0.4s ease;
+}
+.morning-line--visible  { opacity: 1; transform: none; }
+.morning-line--highlight {
+    color:        var(--accent);
+    font-weight:  700;
+    letter-spacing: 0.06em;
+}
+.morning-btn--visible { opacity: 1 !important; }
+
+
+/* ─── BATCH 5: PATH TAB ─────────────────────────────────────────── */
+
+/* ─── BATCH 5: PATH TAB ──────────────────────────────────────── */
+.path-tab-rank {
+    font-family:   var(--font-mono);
+    font-size:     0.72rem;
+    color:         var(--text-secondary);
+    margin-top:    4px;
+    letter-spacing: 0.06em;
+}
+.path-gap-skills-label {
+    font-family:   var(--font-mono);
+    font-size:     0.68rem;
+    color:         var(--text-secondary);
+    letter-spacing: 0.1em;
+    margin-top:    12px;
+    margin-bottom: 6px;
+    opacity:       0.7;
+}
+.path-gap-gemini-note {
+    font-family:  var(--font-mono);
+    font-size:    0.7rem;
+    color:        var(--text-secondary);
+    opacity:      0.5;
+    margin-top:   10px;
+    line-height:  1.5;
+}
+.path-affinity-locked-block {
+    background:    var(--surface);
+    border:        1px solid var(--border);
+    border-radius: 4px;
+    padding:       16px;
+}
+.path-affinity-teaser {
+    font-family:  var(--font-mono);
+    font-size:    0.8rem;
+    color:        var(--text-secondary);
+    line-height:  1.7;
+    margin-bottom: 14px;
+}
+.path-affinity-level-row {
+    display:     flex;
+    align-items: center;
+    gap:         12px;
+}
+.path-affinity-level-label {
+    font-family:  var(--font-mono);
+    font-size:    0.7rem;
+    color:        var(--accent);
+    white-space:  nowrap;
+    opacity:      0.7;
+}
+.path-affinity-bar-wrap {
+    flex:          1;
+    height:        3px;
+    background:    rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow:      hidden;
+}
+.path-affinity-bar {
+    height:     100%;
+    background: var(--accent);
+    opacity:    0.5;
+    transition: width 0.6s ease;
+}
+
+/* ─── BATCH 5: SETTINGS TAB ──────────────────────────────────── */
+
+/* ─── PATH RANK CLARIFICATION + REIMAGINER VISUAL FIX ─────────── */
+
+/* ─── PASS 1: PATH TAB RANK CLARIFICATION ────────────────────── */
+.path-rank-clarification {
+    background:  var(--surface, rgba(255,255,255,0.04));
+    border-left: 2px solid var(--text-secondary);
+    padding:     10px 14px;
+    margin-bottom: 16px;
+}
+
+.path-rank-note {
+    font-family: var(--font-mono);
+    font-size:   0.75rem;
+    color:       var(--text-secondary);
+    margin:      0;
+    line-height: 1.5;
+}
+
+/* ─── PASS 2: RE-IMAGINER QUESTION VISUAL FIX ────────────────── */
+/* Question text: larger, accent colour, visually distinct from inputs */
+.reimaginer-q {
+    font-size:      1.1rem !important;
+    color:          var(--text-primary) !important;
+    font-family:    var(--font-sans, inherit) !important;
+    font-weight:    500 !important;
+    line-height:    1.5 !important;
+    letter-spacing: 0 !important;
+    margin-bottom:  6px !important;
+}
+
+/* Hint text: clearly secondary */
+.reimaginer-hint {
+    font-size:   0.85rem !important;
+    color:       var(--text-secondary) !important;
+    font-style:  italic !important;
+    opacity:     0.8 !important;
+    margin-top:  0 !important;
+}
+
+/* Question fade transition — applied on re-render by setting opacity */
+.reimaginer-wrap {
+    animation: reimaginer-fade-in 0.3s ease;
+}
+
+@keyframes reimaginer-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+
+/* ─── SCAN REVEAL SCREEN ───────────────────────────────────────── */
+
+/* ─── PASS 2: SCAN REVEAL SCREEN ─────────────────────────────── */
+.scan-reveal-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            24px;
+    padding:        32px 0 80px;
+}
+
+.scan-reveal-header {
+    text-align: center;
+}
+
+.scan-reveal-label {
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+}
+
+.scan-reveal-syd {
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+    padding:        16px;
+    background:     var(--surface, rgba(255,255,255,0.04));
+    border-left:    2px solid var(--accent);
+}
+
+.scan-reveal-syd-line {
+    font-size:   0.9rem;
+    color:       var(--text-primary);
+    margin:      0;
+    line-height: 1.6;
+}
+
+.scan-reveal-traits {
+    display:        flex;
+    flex-direction: column;
+    gap:            14px;
+}
+
+.srt-row {
+    display:        flex;
+    flex-direction: column;
+    gap:            5px;
+}
+
+.srt-row-header {
+    display:         flex;
+    justify-content: space-between;
+    align-items:     center;
+}
+
+.srt-name {
+    font-family:    var(--font-mono);
+    font-size:      0.72rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.06em;
+}
+
+.srt-pct {
+    font-family: var(--font-mono);
+    font-size:   0.72rem;
+    color:       var(--accent);
+}
+
+.srt-bar-wrap {
+    width:         100%;
+    height:        4px;
+    background:    var(--surface-raised, rgba(255,255,255,0.06));
+    border-radius: 2px;
+    overflow:      hidden;
+}
+
+.srt-bar {
+    height:        100%;
+    background:    var(--accent);
+    border-radius: 2px;
+    width:         0%;
+    transition:    width 0.6s ease;
+}
+
+.scan-reveal-proceed {
+    align-self:  center;
+    margin-top:  8px;
+    min-width:   240px;
+}
+
+/* ─── PASS 2: NEURAL KEY REQUEST SCREEN ──────────────────────── */
+.neural-request-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            20px;
+    padding:        40px 0 80px;
+}
+
+.nr-header {
+    display:        flex;
+    flex-direction: column;
+    gap:            12px;
+}
+
+.nr-syd-line {
+    font-size:   0.95rem;
+    color:       var(--text-primary);
+    margin:      0;
+    line-height: 1.6;
+}
+
+.nr-get-key-btn {
+    display:    block;
+    text-align: center;
+    text-decoration: none;
+    padding:    16px 20px;
+    min-height: 54px;
+    font-size:  0.9rem;
+}
+
+.nr-input-group {
+    display:         flex;
+    gap:             10px;
+    align-items:     stretch;
+}
+
+.nr-key-input {
+    flex:      1;
+    font-size: 0.9rem;
+    padding:   12px 14px;
+}
+
+.nr-privacy-note {
+    font-family: var(--font-mono);
+    font-size:   0.7rem;
+    color:       var(--text-secondary);
+    margin:      0;
+    opacity:     0.7;
+    line-height: 1.5;
+}
+
+.nr-skip-btn {
+    background:   transparent;
+    border:       none;
+    color:        var(--text-secondary);
+    font-family:  var(--font-mono);
+    font-size:    0.8rem;
+    cursor:       pointer;
+    padding:      12px 0;
+    text-align:   center;
+    text-decoration: underline;
+    min-height:   44px;
+    opacity:      0.8;
+}
+.nr-skip-btn:active { opacity: 0.5; }
+
+
+/* ─── SYNTHESIS REVEAL SCREEN ─────────────────────────────────── */
+
+/* ─── PASS 2: SYNTHESIS REVEAL SCREEN ───────────────────────── */
+.synthesis-reveal-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            20px;
+    padding:        32px 0 80px;
+    animation:      reimaginer-fade-in 0.4s ease;
+}
+
+.sr-header {
+    text-align: center;
+}
+
+.sr-label {
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+}
+
+.sr-path-block {
+    text-align:  center;
+    padding:     20px 0;
+    border-top:  1px solid var(--border, rgba(255,255,255,0.06));
+    border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
+}
+
+.sr-path-name {
+    font-size:      1.6rem;
+    font-weight:    600;
+    color:          var(--text-primary);
+    margin:         0 0 6px;
+    letter-spacing: -0.01em;
+    line-height:    1.2;
+}
+
+.sr-role {
+    font-family: var(--font-mono);
+    font-size:   0.8rem;
+    color:       var(--text-secondary);
+    margin:      0 0 14px;
+    min-height:  1em;
+}
+
+
+
+.sr-gaps-block,
+.sr-affinity-block {
+    display:        flex;
+    flex-direction: column;
+    gap:            8px;
+}
+
+.sr-section-label {
+    font-family:    var(--font-mono);
+    font-size:      0.7rem;
+    color:          var(--accent);
+    letter-spacing: 0.08em;
+    margin:         0;
+}
+
+.sr-affinity-note {
+    font-family:  var(--font-mono);
+    font-size:    0.78rem;
+    color:        var(--text-secondary);
+    margin:       0;
+    font-style:   italic;
+    line-height:  1.5;
+}
+
+.sr-syd-voice {
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+    padding:        16px;
+    background:     var(--surface, rgba(255,255,255,0.04));
+    border-left:    2px solid var(--accent);
+}
+
+.sr-syd-line {
+    font-size:   0.9rem;
+    color:       var(--text-primary);
+    margin:      0;
+    line-height: 1.6;
+}
+
+
+/* ─── ORIENTATION SCREEN ───────────────────────────────────────── */
+
+/* ─── PASS 2: ORIENTATION SCREEN ─────────────────────────────── */
+.orientation-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            24px;
+    padding:        40px 0 80px;
+    animation:      reimaginer-fade-in 0.4s ease;
+}
+
+.or-header {
+    text-align: center;
+}
+
+.or-label {
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+}
+
+.or-syd-voice {
+    display:        flex;
+    flex-direction: column;
+    gap:            14px;
+}
+
+.or-syd-line {
+    font-size:   0.95rem;
+    color:       var(--text-primary);
+    margin:      0;
+    line-height: 1.65;
+}
+
+.or-syd-line strong {
+    color:       var(--accent);
+    font-weight: 600;
+}
+
+.or-continue-btn {
+    align-self: center;
+    min-width:  240px;
+}
+
+
+/* ─── SIGNAL TRANSLATION + ROLE CARDS + SCAN BRIEF ─────────────── */
+
+/* ══════════════════════════════════════════════════════════════
+   SIGNAL TRANSLATION — Call 2B output screen (onboarding + OPS)
+══════════════════════════════════════════════════════════════ */
+
+.signal-translation-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            20px;
+    padding:        32px 0 80px;
+    animation:      reimaginer-fade-in 0.4s ease;
+}
+.signal-translation-wrap--loading {
+    align-items:  center;
+    padding-top:  60px;
+    gap:          16px;
+}
+.st-header { text-align: center; }
+.st-label {
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom:  4px;
+}
+.st-sub {
+    font-size:   0.85rem;
+    color:       var(--text-secondary);
+    line-height: 1.5;
+    margin:      0;
+}
+.st-role-block {
+    display:        flex;
+    flex-direction: column;
+    gap:            16px;
+}
+.st-role-section {
+    background:    var(--surface);
+    border:        1px solid var(--border);
+    border-radius: 4px;
+    padding:       16px;
+    display:       flex;
+    flex-direction: column;
+    gap:            8px;
+}
+.st-role-section--target {
+    border-color: var(--accent);
+}
+.st-role-tag {
+    font-family:    var(--font-mono);
+    font-size:      0.65rem;
+    letter-spacing: 0.1em;
+    color:          var(--accent);
+    margin:         0;
+}
+.st-role-name {
+    font-size:   1rem;
+    font-weight: 600;
+    color:       var(--text-primary);
+    margin:      0;
+}
+.st-headline {
+    font-family:  var(--font-mono);
+    font-size:    0.78rem;
+    color:        var(--text-secondary);
+    font-style:   italic;
+    line-height:  1.45;
+    margin:       0;
+}
+.st-bullets {
+    list-style:     none;
+    padding:        0;
+    margin:         0;
+    display:        flex;
+    flex-direction: column;
+    gap:            8px;
+}
+.st-bullet {
+    font-size:    0.82rem;
+    color:        var(--text-primary);
+    line-height:  1.5;
+    padding-left: 1.1rem;
+    position:     relative;
+}
+.st-bullet::before {
+    content:  '▸';
+    position: absolute;
+    left:     0;
+    color:    var(--accent);
+    font-size: 0.7rem;
+    top:      0.1rem;
+}
+.st-gap-block {
+    background:    var(--surface);
+    border-left:   2px solid var(--gold);
+    padding:       12px 14px;
+    border-radius: 0 4px 4px 0;
+}
+.st-gap-label {
+    font-family:    var(--font-mono);
+    font-size:      0.65rem;
+    letter-spacing: 0.1em;
+    color:          var(--gold);
+    margin-bottom:  4px;
+}
+.st-gap-note {
+    font-size:   0.82rem;
+    color:       var(--text-primary);
+    line-height: 1.5;
+    margin:      0;
+}
+.st-footer-note {
+    font-family:  var(--font-mono);
+    font-size:    0.75rem;
+    color:        var(--text-secondary);
+    margin:       0;
+}
+.st-actions {
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+}
+.st-copy-btn {
+    background:     transparent;
+    border:         1px solid var(--border);
+    color:          var(--text-secondary);
+    font-family:    var(--font-mono);
+    font-size:      0.72rem;
+    letter-spacing: 0.08em;
+    padding:        8px 14px;
+    cursor:         pointer;
+    border-radius:  3px;
+    transition:     border-color 0.2s, color 0.2s;
+    align-self:     flex-start;
+    min-height:     44px;
+}
+.st-copy-btn:hover {
+    border-color: var(--accent);
+    color:        var(--accent);
+}
+.st-loading-line {
+    font-family:  var(--font-mono);
+    font-size:    0.82rem;
+    color:        var(--text-secondary);
+    text-align:   center;
+}
+.st-loading-bar {
+    width:         100%;
+    max-width:     260px;
+    height:        2px;
+    background:    var(--border);
+    border-radius: 1px;
+    overflow:      hidden;
+}
+.st-loading-fill {
+    height:     100%;
+    background: var(--accent);
+    width:      0%;
+    transition: width 0.3s ease;
+}
+.st-skip-small {
+    background:      none;
+    border:          none;
+    color:           var(--text-secondary);
+    font-family:     var(--font-mono);
+    font-size:       0.72rem;
+    cursor:          pointer;
+    text-decoration: underline;
+    padding:         4px 0;
+}
+
+/* ─── SYD INTRO VOICE (CV Reframe screen) ───────────────────── */
+.st-syd-intro {
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+    padding:        14px 16px;
+    background:     var(--surface);
+    border-left:    2px solid var(--accent);
+    margin-bottom:  4px;
+}
+.st-syd-line {
+    font-size:   0.88rem;
+    color:       var(--text-primary);
+    margin:      0;
+    line-height: 1.6;
+}
+
+/* ─── ROLE SECTION HEADER (inline copy button) ──────────────── */
+.st-role-section-header {
+    display:         flex;
+    justify-content: space-between;
+    align-items:     flex-start;
+    gap:             12px;
+    margin-bottom:   10px;
+}
+.st-copy-btn--inline {
+    flex-shrink:    0;
+    background:     transparent;
+    border:         1px solid var(--accent);
+    color:          var(--accent);
+    font-family:    var(--font-mono);
+    font-size:      0.65rem;
+    letter-spacing: 0.08em;
+    padding:        5px 10px;
+    cursor:         pointer;
+    border-radius:  3px;
+    transition:     background 0.2s, color 0.2s;
+    min-height:     36px;
+    align-self:     flex-start;
+    margin-top:     2px;
+    white-space:    nowrap;
+}
+.st-copy-btn--inline:hover {
+    background: var(--accent);
+    color:      var(--bg);
+}
+.st-gap-sub {
+    font-family: var(--font-mono);
+    font-size:   0.72rem;
+    color:       var(--text-secondary);
+    margin-top:  6px;
+}
+.st-continue-main {
+    align-self: center;
+    min-width:  260px;
+    margin-top: 8px;
+}
+
+/* ─── ROLE CARD — SPLIT LAYOUT (Round 1 path cards) ─────────── */
+.role-card--split {
+    padding: 0;
+    overflow: hidden;
+}
+.role-card-split-row {
+    display: flex;
+    gap:     0;
+    border-bottom: 1px solid var(--border);
+}
+.role-card-now,
+.role-card-direction {
+    flex:    1;
+    padding: 12px 14px;
+}
+.role-card-now {
+    border-right: 1px solid var(--border);
+}
+.role-card-direction {
+    background: rgba(79, 195, 247, 0.04);
+}
+.role-card-split-label {
+    display:        block;
+    font-family:    var(--font-mono);
+    font-size:      0.58rem;
+    letter-spacing: 0.12em;
+    color:          var(--text-secondary);
+    margin-bottom:  4px;
+}
+.role-card-split-value {
+    display:     block;
+    font-size:   0.85rem;
+    font-weight: 600;
+    color:       var(--text-primary);
+    line-height: 1.3;
+}
+.role-card-direction .role-card-split-value {
+    color: var(--accent);
+}
+.role-card--split .role-card-narrative {
+    padding:     10px 14px 0;
+    margin:      0;
+    font-size:   0.8rem;
+    line-height: 1.5;
+}
+.role-card--split .role-card-roles {
+    padding:     0 14px 14px;
+    margin-top:  8px;
+}
+
+.role-card-from {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.68rem;
+    color: var(--text-secondary, #5a6a7a);
+    margin: 2px 0 8px 0;
+    letter-spacing: 0.04em;
+}
+
+@media (max-width: 380px) {
+    .role-card-now,
+    .role-card-direction { padding: 10px 10px; }
+    .role-card-split-value { font-size: 0.78rem; }
+    .status-tab-btn  { font-size: 0.68rem; padding: 10px 12px; }
+    .sot-name { font-size: 1.2rem; }
+    .screen-inner--narrow { padding: 24px 16px 80px; }
+}
+
+/* ─── CALL 2 FAILURE SCREEN ─────────────────────────────────── */
+.call-failure-wrap {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            20px;
+    padding-top:    80px;
+    text-align:     center;
+}
+.call-failure-label {
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    color:          var(--red);
+    letter-spacing: 0.1em;
+}
+.call-failure-reason {
+    font-size:   0.88rem;
+    color:       var(--text-primary);
+    line-height: 1.6;
+    max-width:   320px;
+}
+.call-failure-actions {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            12px;
+    margin-top:     8px;
+}
+.call-failure-local-btn {
+    background:      none;
+    border:          none;
+    color:           var(--text-secondary);
+    font-family:     var(--font-mono);
+    font-size:       0.75rem;
+    cursor:          pointer;
+    text-decoration: underline;
+    padding:         4px 0;
+    min-height:      44px;
+}
+
+/* ─── SCAN REVEAL — TRAIT EXPLAINERS ────────────────────────── */
+.srt-row--tappable {
+    cursor: pointer;
+}
+.srt-row--tappable:hover .srt-name {
+    color: var(--accent);
+}
+.srt-explainer {
+    font-size:    0.78rem;
+    color:        var(--text-secondary);
+    line-height:  1.5;
+    padding-top:  6px;
+    padding-left: 2px;
+    border-left:  1px solid var(--border);
+    padding-left: 8px;
+    margin-top:   4px;
+    animation:    fadeIn 0.2s ease;
+}
+
+/* ─── SCAN GAME — VISUAL IMPROVEMENTS ──────────────────────── */
+.sb-node--lit {
+    animation: sb-pulse 1.4s ease-in-out infinite;
+}
+@keyframes sb-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.6; }
+}
+.sb-timer-bar {
+    transition: width 0.08s linear;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ADDENDUM — title screen, scan briefs, career rank, SIG badge
+   Added: feedback batch April 2026
+═══════════════════════════════════════════════════════════════ */
+
+/* ─── TITLE SCREEN ───────────────────────────────────────────── */
+.title-screen-wrap {
+    display:         flex;
+    flex-direction:  column;
+    justify-content: center;
+    min-height:      100vh;
+    padding:         0 0 80px;
+    gap:             0;
+}
+
+.title-screen-logo {
+    font-family:    var(--font-mono);
+    font-size:      2.8rem;
+    font-weight:    700;
+    color:          var(--accent);
+    letter-spacing: 0.18em;
+    margin-bottom:  40px;
+}
+
+.title-screen-lines {
+    display:        flex;
+    flex-direction: column;
+    gap:            12px;
+    margin-bottom:  48px;
+}
+
+.title-screen-line {
+    font-family:  var(--font-mono);
+    font-size:    1rem;
+    color:        var(--text-primary);
+    line-height:  1.75;
+    opacity:      0.92;
+}
+
+.title-screen-btn {
+    align-self:  flex-start;
+    min-width:   200px;
+}
+
+/* ─── SCAN BRIEF ─────────────────────────────────────────────── */
+.scan-brief {
+    display:        flex;
+    flex-direction: column;
+    gap:            16px;
+    padding-top:    8px;
+}
+
+.scan-brief-tag {
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    color:          var(--accent);
+    letter-spacing: 0.12em;
+}
+
+.scan-brief-line {
+    font-family:  var(--font-mono);
+    font-size:    0.95rem;
+    color:        var(--text-primary);
+    line-height:  1.7;
+    opacity:      0.9;
+}
+
+.scan-brief-btn {
+    margin-top: 8px;
+    align-self: flex-start;
+}
+
+/* ─── CAREER RANK LABEL ──────────────────────────────────────── */
+.career-rank-label,
+.sr-career-rank-label {
+    font-family:    var(--font-mono);
+    font-size:      1.1rem;
+    font-weight:    700;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.sr-rank-row {
+    display:     flex;
+    align-items: center;
+    gap:         12px;
+    margin-top:  8px;
+    flex-wrap:   wrap;
+}
+
+.sr-rank-context {
+    font-size:   0.85rem;
+    color:       var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* ─── SIG BADGE BUTTON ───────────────────────────────────────── */
+.sot-sig-badge--btn {
+    background:  transparent;
+    border:      1px solid var(--sig-gold);
+    color:       var(--sig-gold);
+    font-family: var(--font-mono);
+    font-size:   0.75rem;
+    padding:     3px 8px;
+    border-radius: 2px;
+    cursor:      pointer;
+    transition:  background 0.15s ease, opacity 0.15s ease;
+    min-height:  28px;
+}
+.sot-sig-badge--btn:active {
+    background: rgba(240, 192, 64, 0.12);
+    opacity:    0.8;
+}
+
+/* ─── SIGNAL TRANSLATION PERSIST NOTE ───────────────────────── */
+.st-persist-note {
+    font-family:  var(--font-mono);
+    font-size:    0.75rem;
+    color:        var(--text-secondary);
+    line-height:  1.6;
+    opacity:      0.7;
+    margin-top:   8px;
+    margin-bottom: 24px;
+}
+
+
+/* ─── MARKET SIGNAL — ROLE MAPPING ─────────────────────────────── */
+
+/* ─── MARKET SIGNAL — ROLE MAPPING ──────────────────────────── */
+.ms-fetch-btn {
+    display:        block;
+    width:          100%;
+    background:     transparent;
+    border:         1px solid var(--border);
+    color:          var(--text-secondary, #5a6a7a);
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.72rem;
+    letter-spacing: 0.06em;
+    padding:        10px 14px;
+    text-align:     left;
+    cursor:         pointer;
+    margin-bottom:  12px;
+    border-radius:  2px;
+    transition:     border-color 0.2s, color 0.2s;
+}
+.ms-fetch-btn:not(:disabled):hover {
+    border-color: var(--accent);
+    color:        var(--accent);
+}
+.ms-fetch-btn:disabled {
+    opacity: 0.5;
+    cursor:  default;
+}
+.ms-loading-text {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.68rem;
+    color:          var(--text-secondary, #5a6a7a);
+    letter-spacing: 0.06em;
+    margin:         0 0 6px;
+}
+.ms-loading-bar {
+    width:         100%;
+    height:        2px;
+    background:    var(--border);
+    border-radius: 1px;
+    overflow:      hidden;
+    margin-bottom: 12px;
+}
+@keyframes msBarPulse {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+}
+.ms-loading-bar-fill {
+    width:      50%;
+    height:     100%;
+    background: var(--accent, #4fc3f7);
+    animation:  msBarPulse 1.2s ease-in-out infinite;
+}
+.ms-acquired-row {
+    display:     flex;
+    align-items: center;
+    gap:         12px;
+    margin-bottom: 10px;
+}
+.ms-view-btn {
+    background:     transparent;
+    border:         1px solid var(--accent, #4fc3f7);
+    color:          var(--accent, #4fc3f7);
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.68rem;
+    letter-spacing: 0.08em;
+    padding:        4px 10px;
+    cursor:         pointer;
+    border-radius:  2px;
+    transition:     background 0.15s;
+    white-space:    nowrap;
+}
+.ms-view-btn:hover {
+    background: rgba(79, 195, 247, 0.1);
+}
+.ms-fetched-note {
+    font-family:  var(--font-mono, monospace);
+    font-size:    0.68rem;
+    color:        #66bb6a;
+    margin:       0 0 10px;
+    letter-spacing: 0.06em;
+}
+.ms-block {
+    margin-top:    10px;
+    padding:       10px 12px;
+    border-left:   2px solid var(--border);
+    background:    rgba(255,255,255,0.02);
+    border-radius: 0 2px 2px 0;
+    display:       flex;
+    flex-direction: column;
+    gap:           4px;
+}
+.ms-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.6rem;
+    letter-spacing: 0.12em;
+    color:          var(--text-secondary, #5a6a7a);
+}
+.ms-demand {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.78rem;
+    font-weight:    700;
+    letter-spacing: 0.1em;
+}
+.ms-trend-inline {
+    font-size:   0.75rem;
+    font-weight: 400;
+    font-family: var(--font-mono, monospace);
+    color:       var(--text-secondary, #5a6a7a);
+    letter-spacing: 0.04em;
+}
+.ms-who {
+    font-size:   0.75rem;
+    color:       var(--text-secondary, #5a6a7a);
+    line-height: 1.5;
+    margin:      0;
+}
+.ms-who-value {
+    color: var(--text-primary);
+}
+

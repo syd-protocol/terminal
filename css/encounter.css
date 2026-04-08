@@ -1,0 +1,269 @@
+/* ═══════════════════════════════════════════════════════════════
+   SYD — encounter.css
+   All encounter screen styles. Mirrors encounter.js.
+   Depends on style.css (loaded first).
+   April 2026
+═══════════════════════════════════════════════════════════════ */
+
+/* ─── ENCOUNTER SCREEN ────────────────────────────────────────── */
+.screen-inner--narrow { padding: 32px 24px 80px; max-width: 520px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+.encounter-wrap { display: flex; flex-direction: column; gap: 20px; }
+.encounter-wrap--done {
+    align-items:     center;
+    padding-top:     60px;
+    gap:             16px;
+    text-align:      center;
+}
+.enc-label {
+    font-family:    var(--font-mono);
+    font-size:      0.7rem;
+    color:          var(--accent);
+    letter-spacing: 0.12em;
+    margin-bottom:  6px;
+}
+.enc-back-btn {
+    background:     none;
+    border:         none;
+    color:          var(--text-dim);
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    cursor:         pointer;
+    padding:        0;
+    margin-bottom:  8px;
+    letter-spacing: 0.06em;
+}
+.enc-back-btn:hover { color: var(--accent); }
+.enc-situation-text {
+    font-size:   0.95rem;
+    color:       var(--text);
+    line-height: 1.65;
+    margin:      0;
+}
+.enc-options { display: flex; flex-direction: column; gap: 10px; }
+.enc-option-btn {
+    background:    transparent;
+    border:        1px solid var(--border);
+    color:         var(--text);
+    font-size:     0.88rem;
+    line-height:   1.5;
+    padding:       12px 14px;
+    text-align:    left;
+    cursor:        pointer;
+    border-radius: 2px;
+    transition:    border-color 0.15s, background 0.15s;
+}
+.enc-option-btn:hover { border-color: var(--accent); background: rgba(79,195,247,0.04); }
+.enc-option-btn--selected { border-color: var(--accent); background: rgba(79,195,247,0.1); color: var(--accent); }
+.enc-free-text-wrap { display: flex; flex-direction: column; gap: 6px; }
+.enc-free-text-label {
+    font-family:    var(--font-mono);
+    font-size:      0.68rem;
+    color:          var(--text-dim);
+    letter-spacing: 0.08em;
+}
+.enc-textarea {
+    background:    var(--panel);
+    border:        1px solid var(--border);
+    color:         var(--text);
+    font-size:     0.88rem;
+    line-height:   1.55;
+    padding:       10px 12px;
+    border-radius: 2px;
+    resize:        vertical;
+    min-height:    80px;
+    font-family:   inherit;
+    width:         100%;
+    box-sizing:    border-box;
+}
+.enc-textarea:focus { border-color: var(--accent); }
+.enc-footer-actions {
+    display: flex;
+    gap:     10px;
+}
+.enc-skip-btn {
+    background:     transparent;
+    border:         1px solid var(--border);
+    color:          var(--text-dim);
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    padding:        10px 14px;
+    cursor:         pointer;
+    letter-spacing: 0.06em;
+    border-radius:  2px;
+    transition:     border-color 0.15s, color 0.15s;
+}
+.enc-submit-btn { flex: 1; }
+.enc-feedback { display: flex; flex-direction: column; gap: 14px; }
+.enc-feedback--teaching .enc-feedback-text {
+    border-left:  3px solid var(--accent);
+    padding-left: 12px;
+    font-style:   italic;
+    opacity:      0.9;
+}
+.enc-feedback-picked, .enc-feedback-free {
+    display:        flex;
+    flex-direction: column;
+    gap:            4px;
+    padding:        10px 12px;
+    background:     rgba(255,255,255,0.02);
+    border:         1px solid var(--border);
+    border-radius:  2px;
+}
+.enc-feedback-picked-label, .enc-feedback-free-label {
+    font-family:    var(--font-mono);
+    font-size:      0.62rem;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+}
+.enc-feedback-text {
+    font-size:   0.88rem;
+    color:       var(--text);
+    line-height: 1.6;
+    margin:      0;
+}
+.enc-feedback-score {
+    font-family:    var(--font-mono);
+    font-size:      0.75rem;
+    color:          var(--accent);
+    letter-spacing: 0.08em;
+    margin-top:     4px;
+}
+.enc-feedback-xp {
+    font-family:    var(--font-mono);
+    font-size:      0.8rem;
+    color:          var(--accent);
+    letter-spacing: 0.06em;
+    text-align:     center;
+    padding:        8px 0 0;
+}
+.enc-next-btn {
+    margin-top: 8px;
+}
+.encounter-loading-wrap {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    gap:             20px;
+    padding-top:     80px;
+}
+.enc-done-body {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    text-align:      center;
+    gap:             16px;
+    padding:         60px 20px;
+}
+.enc-done-icon    { font-size: 3rem; color: var(--accent); opacity: 0.5; }
+.enc-done-label   { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); letter-spacing: 0.1em; }
+.enc-done-sub     { font-size: 0.82rem; color: var(--text-secondary); }
+
+/* ── ENCOUNTER DOMAIN TAG ────────────────────────────────────── */
+.enc-header-labels {
+    display:        flex;
+    flex-direction: column;
+    gap:            4px;
+}
+.enc-domain-tag {
+    font-family:    var(--font-mono);
+    font-size:      0.62rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.1em;
+    opacity:        0.7;
+}
+.enc-feedback-neural-note {
+    font-family: var(--font-mono);
+    font-size:   0.7rem;
+    color:       var(--text-secondary);
+    opacity:     0.55;
+    margin-top:  4px;
+}
+
+/* ── ENCOUNTER TAB WRAP ─────────────────────────────────────── */
+.encounter-tab-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            20px;
+}
+.encounter-tab-header {
+    display:     flex;
+    align-items: center;
+    gap:         12px;
+}
+.enc-optional-note {
+    font-family: var(--font-mono);
+    font-size:   0.65rem;
+    color:       var(--text-secondary);
+    opacity:     0.6;
+    margin-left: auto;
+}
+.enc-tab-done {
+    padding:    60px 20px;
+    text-align: center;
+}
+.encounter-loading {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    gap:             20px;
+    padding:         60px 20px;
+    text-align:      center;
+}
+.enc-loading-icon {
+    font-size:  2.5rem;
+    color:      var(--accent);
+    animation:  pulse 1.6s infinite;
+}
+.enc-loading-label {
+    font-family:    var(--font-mono);
+    font-size:      0.82rem;
+    color:          var(--accent);
+    letter-spacing: 0.1em;
+}
+.enc-situation-text--small {
+    font-size: 0.82rem;
+    opacity:   0.8;
+}
+.encounter-situation--reasoning { margin-bottom: -8px; }
+
+/* ── TEACHING ENCOUNTER ACK ──────────────────────────────────── */
+.enc-feedback-teaching-ack {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.82rem;
+    color:          var(--text-secondary, #5a6a7a);
+    font-style:     italic;
+    margin-bottom:  14px;
+    line-height:    1.6;
+    border-bottom:  1px solid var(--border, #1e2d3d);
+    padding-bottom: 12px;
+}
+
+/* ── REASONING ANCHOR (step 2 — shows selected answer) ──────── */
+.enc-reasoning-anchor {
+    border-left:   3px solid var(--accent, #4fc3f7);
+    padding:       10px 14px;
+    margin-bottom: 8px;
+    background:    rgba(79, 195, 247, 0.05);
+    border-radius: 0 4px 4px 0;
+}
+.enc-reasoning-anchor-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.65rem;
+    letter-spacing: 0.1em;
+    color:          var(--text-secondary, #5a6a7a);
+    display:        block;
+    margin-bottom:  4px;
+}
+.enc-reasoning-anchor-text {
+    font-size:   0.88rem;
+    color:       var(--text-primary, #cdd6e0);
+    margin:      0;
+    line-height: 1.5;
+}
+.enc-reasoning-prompt {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.75rem;
+    color:          var(--text-secondary, #5a6a7a);
+    letter-spacing: 0.06em;
+    margin:         0 0 12px 0;
+}
