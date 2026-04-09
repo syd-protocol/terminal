@@ -214,16 +214,36 @@ Return ONLY the 2–3 sentence note. No preamble. No labels. No markdown.
 }
 
 // ─── DIRECTIVE LIBRARY ────────────────────────────────────────
-// 45 directives. All bodyweight, no equipment.
-// Tags: stat, tier, rank (minimum rank to receive), excludeTags (skip if condition match)
-// formDesc: read aloud via Web Speech API when operative taps the speaker icon.
-//
+// Loaded from /terminal/data/fitness.json at first use.
+// Cached in _fitnessDirectivesCache after the first fetch.
 // Tiers:
-//   Tier 0 — F/E rank: foundational. Zero impact. Safe for anyone with no active medical block.
+//   Tier 0 — F/E rank: foundational. Zero impact. Safe for anyone.
 //   Tier 1 — D/C rank: progressive. Moderate load. Standard bodyweight movements.
 //   Tier 2 — B/A rank: demanding. Complex combinations, sustained effort, advanced holds.
+//   category:'stretch' — always available from rank F, served daily regardless of goal.
 
-const FITNESS_DIRECTIVES = [
+let _fitnessDirectivesCache = null;
+
+async function _loadFitnessDirectives() {
+    if (_fitnessDirectivesCache) return _fitnessDirectivesCache;
+    try {
+        const res  = await fetch('/terminal/data/fitness.json');
+        const data = await res.json();
+        _fitnessDirectivesCache = data.directives || [];
+    } catch (e) {
+        console.warn('[SYD] Could not load fitness.json — using empty library.', e);
+        _fitnessDirectivesCache = [];
+    }
+    return _fitnessDirectivesCache;
+}
+
+// Legacy sync accessor — returns cache if already loaded, else empty array.
+// Always call _loadFitnessDirectives() first in any async context.
+function _getFitnessDirectivesSync() {
+    return _fitnessDirectivesCache || [];
+}
+
+const _REMOVED_FITNESS_DIRECTIVES_ARRAY = [
 
     // ── TIER 0 — Endurance ───────────────────────────────────
     {
@@ -553,21 +573,27 @@ const FITNESS_DIRECTIVES = [
         excludeTags: ['back', 'hip']
     }
 ];
+// NOTE: _REMOVED_FITNESS_DIRECTIVES_ARRAY above is kept temporarily so git diff is readable.
+// It is never referenced — all directive access goes through _loadFitnessDirectives().
 
 // ─── DIRECTIVE FILTERING ──────────────────────────────────────
 // Returns directives appropriate for the operative's Fitness Rank,
 // filtered by their condition tags.
 // Rank progression: F includes Tier 0 only, D includes Tier 0+1, B includes all.
+// Stretch directives (category:'stretch') are always included regardless of tier cap.
 const RANK_MAX_TIER = { 'F': 0, 'E': 0, 'D': 1, 'C': 1, 'B': 2, 'A': 2 };
 
 function getFitnessDirectivesForRank(rank, conditionTags) {
+    const allDirectives = _getFitnessDirectivesSync();
     const maxTier  = RANK_MAX_TIER[rank] ?? 0;
     const excluded = (conditionTags || []).flatMap(tag =>
         CONDITION_EXCLUDE_TAGS[tag] || []
     );
 
-    return FITNESS_DIRECTIVES.filter(d => {
-        if (d.tier > maxTier) return false;
+    return allDirectives.filter(d => {
+        // Stretch directives bypass the tier cap — always available
+        const isStretch = d.category === 'stretch';
+        if (!isStretch && d.tier > maxTier) return false;
         if ((d.excludeTags || []).some(tag => excluded.includes(tag))) return false;
         return true;
     });
@@ -586,20 +612,22 @@ function getTodaysFitnessDirectives(fitnessData) {
     const pool = getFitnessDirectivesForRank(rank, condTags);
     if (pool.length === 0) return [];
 
-    // Prefer goal stat, then incomplete, then date-seed variety
-    const incomplete   = pool.filter(d => !completedIds.includes(d.id));
+    const dateNum = parseInt((typeof today === 'function' ? today() : new Date().toISOString().slice(0, 10)).replace(/-/g, ''), 10);
+    const pick    = (arr, offset) => arr.length > 0 ? arr[(dateNum + offset) % arr.length] : null;
+
+    // ── Always pick one stretch ────────────────────────────────
+    const stretches         = pool.filter(d => d.category === 'stretch');
+    const incompleteStretches = stretches.filter(d => !completedIds.includes(d.id));
+    const stretchPick       = pick(incompleteStretches.length > 0 ? incompleteStretches : stretches, 2);
+
+    // ── Pick main directive (non-stretch, goal-weighted) ───────
+    const mainPool     = pool.filter(d => d.category !== 'stretch');
+    const incomplete   = mainPool.filter(d => !completedIds.includes(d.id));
     const goalAligned  = incomplete.filter(d => goalStat && d.stat === goalStat);
     const other        = incomplete.filter(d => !goalStat || d.stat !== goalStat);
+    const mainPick     = goalAligned.length > 0 ? pick(goalAligned, 0) : pick(other, 0);
 
-    // Combine: up to 1 goal-aligned + fill with others
-    const dateNum   = parseInt((typeof today === 'function' ? today() : new Date().toISOString().slice(0, 10)).replace(/-/g, ''), 10);
-    const pick      = (arr, offset) => arr.length > 0 ? arr[(dateNum + offset) % arr.length] : null;
-
-    const first     = goalAligned.length > 0 ? pick(goalAligned, 0) : pick(other, 0);
-    const remaining = pool.filter(d => d !== first && !completedIds.includes(d.id));
-    const second    = pick(remaining, 1);
-
-    return [first, second].filter(Boolean);
+    return [mainPick, stretchPick].filter(Boolean);
 }
 
 // ─── WEB SPEECH API ───────────────────────────────────────────
@@ -806,6 +834,9 @@ async function _processFitnessScan(container) {
         </div>
     `;
 
+    // Ensure directive library is loaded before scoring
+    await _loadFitnessDirectives();
+
     // ── Compute score from questions 1–5 ──────────────────────
     let score = 0;
     const scoredQIds = ['freq', 'stairs', 'pushup', 'sitting', 'pain'];
@@ -834,11 +865,35 @@ async function _processFitnessScan(container) {
         modNote = `Condition flagged: ${conditionTags.join(', ')} involvement noted. Directives involving these movement patterns have been filtered from your queue. If anything still feels wrong, skip that directive — the System will not penalise you for it.`;
     }
 
+    // ── Local interpretation: recent activity ─────────────────
+    // Parse the free-text recent activity field for recency signals.
+    // If the operative has been inactive for a significant time, note it.
+    const recentText  = (_fitScanAnswers['recent'] || '').toLowerCase();
+    const longInactive = recentText.includes('week') || recentText.includes('month') ||
+                         recentText.includes('year')  || recentText.includes('nothing') ||
+                         recentText.includes('don\'t') || recentText.includes('havent') ||
+                         recentText.includes("haven't");
+    if (longInactive && rank === 'F' || longInactive && rank === 'E') {
+        modNote = (modNote ? modNote + ' ' : '') +
+            'Extended inactivity detected. Your first week of directives will be Tier 0 only — build the pattern before the load.';
+    }
+
+    // ── Local interpretation: goal voice line ──────────────────
+    const GOAL_VOICE_LINES = {
+        goal_energy:   'Directives weighted toward endurance — sustained output builds daily energy.',
+        goal_strength: 'Directives weighted toward strength — load accumulates over time.',
+        goal_mobility: 'Directives weighted toward agility — movement quality first.',
+        goal_general:  'Balanced directive pool — no single stat weighted.',
+        goal_none:     'Full directive pool available. No weighting applied.'
+    };
+    const goalVoiceLine = GOAL_VOICE_LINES[goalKey];
+
     // ── Save fitness data ──────────────────────────────────────
     const fitnessData = {
         rank,
         score,
         goalKey,
+        goalVoiceLine,
         conditionsText,
         conditionTags,
         modNote,
@@ -871,6 +926,7 @@ function _renderFitnessScanResult(container, fitnessData) {
                 <p class="fp-result-rank">${fitnessData.rank} &mdash; ${rankLabel}</p>
             </div>
             <p class="fp-result-goal-line">Goal: ${goalLabels[fitnessData.goalKey] || 'General fitness'}</p>
+            ${fitnessData.goalVoiceLine ? `<p class="fp-result-body" style="margin-top:-4px;opacity:0.7;font-style:italic;">${fitnessData.goalVoiceLine}</p>` : ''}
             ${fitnessData.modNote ? `
                 <div class="fp-result-modnote">
                     <p class="fp-result-modnote-label">[ CONDITION NOTE ]</p>

@@ -1,0 +1,698 @@
+{
+    "directives": [
+        {
+            "id": "fit_t0_e01",
+            "tier": 0,
+            "rank": "F",
+            "stat": "endurance",
+            "title": "Walk for 20 minutes without stopping",
+            "desc": "Step outside and walk continuously for 20 minutes at a pace that keeps you moving but lets you hold a conversation. No phone in hand. Pay attention to your breathing and posture.",
+            "formDesc": "Walk at a steady pace — not a stroll, not a race. Your breathing should be elevated but controlled. Keep your head up, shoulders back, and land through your heel to mid-foot. If you need to slow down, do — the goal is 20 unbroken minutes.",
+            "excludeTags": [
+                "ankle"
+            ]
+        },
+        {
+            "id": "fit_t0_e02",
+            "tier": 0,
+            "rank": "F",
+            "stat": "endurance",
+            "title": "March in place for 5 minutes",
+            "desc": "Stand and march on the spot, lifting your knees to hip height with each step. 5 minutes continuous. Use it as a warm-up or a standalone movement break.",
+            "formDesc": "Stand tall. Drive each knee up to hip height — not just shuffling. Swing your opposite arm naturally. Land softly on the ball of your foot. Keep the pace steady for the full 5 minutes.",
+            "excludeTags": [
+                "knee",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t0_e03",
+            "tier": 0,
+            "rank": "F",
+            "stat": "endurance",
+            "title": "Walk up and down stairs for 10 minutes",
+            "desc": "Find a flight of stairs. Walk up and down continuously for 10 minutes at a controlled pace. No rushing. Focus on foot placement and breathing.",
+            "formDesc": "Step fully onto each stair — whole foot, not just the ball. Use the handrail if you need it. Go up at a pace that elevates your breathing, come down steadily. Full 10 minutes.",
+            "excludeTags": [
+                "knee",
+                "ankle",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t0_e04",
+            "tier": 0,
+            "rank": "F",
+            "stat": "endurance",
+            "title": "Seated leg lifts — 3 sets of 10",
+            "desc": "Sit upright in a chair. Straighten one leg and hold it parallel to the floor for 2 seconds, then lower. 10 reps per leg. 3 sets. No equipment needed.",
+            "formDesc": "Sit at the front edge of the chair, back straight, not leaning. Straighten the leg fully — no bend at the knee at the top. Hold 2 seconds. Lower with control. Keep your core slightly braced throughout.",
+            "excludeTags": [
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t0_s01",
+            "tier": 0,
+            "rank": "F",
+            "stat": "strength",
+            "title": "Wall push-ups — 3 sets of 10",
+            "desc": "Stand arm-length from a wall. Place palms flat on the wall at shoulder height. Lower your chest toward the wall, then push back. 10 reps. 3 sets.",
+            "formDesc": "Stand with feet together, about arm-length from the wall. Hands at shoulder width and shoulder height. Keep your body in a straight line from head to heels — do not let your hips sag or push back. Lower your chest until it nearly touches the wall, then push back to straight arms.",
+            "excludeTags": [
+                "shoulder",
+                "wrist"
+            ]
+        },
+        {
+            "id": "fit_t0_s02",
+            "tier": 0,
+            "rank": "F",
+            "stat": "strength",
+            "title": "Chair-assisted squat — 3 sets of 10",
+            "desc": "Stand in front of a sturdy chair. Lower yourself toward the seat, stop just before sitting, then stand back up. 10 reps. 3 sets. The chair is there if you need it.",
+            "formDesc": "Stand with feet shoulder-width apart, toes pointing slightly out. Lower by pushing your hips back and bending your knees — not by folding your back. Touch the chair lightly if needed, do not sit fully. Keep your chest tall and your weight through your whole foot.",
+            "excludeTags": [
+                "knee",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t0_s03",
+            "tier": 0,
+            "rank": "F",
+            "stat": "strength",
+            "title": "Dead bug — 3 sets of 6 per side",
+            "desc": "Lie on your back, arms pointing toward the ceiling, knees bent at 90° in the air. Lower one arm and the opposite leg toward the floor simultaneously, then return. 6 per side. 3 sets.",
+            "formDesc": "Press your lower back firmly into the floor and keep it there throughout. Breathe out as you lower your arm and leg. Move slowly — 3 seconds down, 2 seconds back up. If your back lifts off the floor, you have gone too far. Reduce the range until you can hold it flat.",
+            "excludeTags": [
+                "back"
+            ]
+        },
+        {
+            "id": "fit_t0_s04",
+            "tier": 0,
+            "rank": "F",
+            "stat": "strength",
+            "title": "Glute bridge — 3 sets of 12",
+            "desc": "Lie on your back, knees bent, feet flat on the floor. Drive your hips up until your body forms a straight line from shoulders to knees. Hold 2 seconds. Lower slowly. 12 reps. 3 sets.",
+            "formDesc": "Feet hip-width apart, flat on the floor about 30cm from your hips. Press through your heels — not your toes. Squeeze your glutes at the top and hold for 2 full seconds. Lower with control; do not let your hips slam down. Keep your arms flat at your sides for balance.",
+            "excludeTags": [
+                "back",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t0_a01",
+            "tier": 0,
+            "rank": "F",
+            "stat": "agility",
+            "title": "Standing hip circles — 2 minutes",
+            "desc": "Stand with feet shoulder-width apart, hands on hips. Draw large slow circles with your hips — 10 circles clockwise, then 10 counter-clockwise. Full range, controlled speed.",
+            "formDesc": "Keep your feet flat and still throughout. The movement is in the hips, not the upper body. Draw the biggest circle you comfortably can. Breathe slowly. If you feel tightness on one side, slow down there rather than pushing through.",
+            "excludeTags": [
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t0_a02",
+            "tier": 0,
+            "rank": "F",
+            "stat": "agility",
+            "title": "Cat-cow stretch — 10 slow cycles",
+            "desc": "Start on hands and knees. Arch your back upward like a cat, then lower it into a curve like a cow. Move slowly through the full range. 10 complete cycles.",
+            "formDesc": "Hands under shoulders, knees under hips. For the cat: tuck your tailbone, round your spine upward, and drop your head. For the cow: let your belly drop, lift your tailbone and chest, and look forward. Move on your breath — exhale into cat, inhale into cow.",
+            "excludeTags": [
+                "wrist",
+                "back"
+            ]
+        },
+        {
+            "id": "fit_t0_a03",
+            "tier": 0,
+            "rank": "F",
+            "stat": "agility",
+            "title": "Neck and shoulder mobility — 5 minutes",
+            "desc": "Slow, controlled neck rolls and shoulder circles. Each movement held for 3–5 seconds at the end range. No forcing, no bouncing.",
+            "formDesc": "Drop your ear toward your shoulder and breathe. Do not pull. Let gravity do the work. Hold 5 seconds, return, repeat other side. For shoulder circles: roll them backward in large slow circles, 10 times each direction. Focus on the range, not the speed.",
+            "excludeTags": [
+                "shoulder"
+            ]
+        },
+        {
+            "id": "fit_t0_a04",
+            "tier": 0,
+            "rank": "F",
+            "stat": "agility",
+            "title": "Ankle and calf mobility — 2 minutes each side",
+            "desc": "Stand near a wall for balance. Lift one foot and draw slow circles with your ankle — 10 clockwise, 10 counter-clockwise. Then press the ball of your foot against the floor and hold a calf stretch for 30 seconds. Both sides.",
+            "formDesc": "For ankle circles: lift the foot off the ground and move only from the ankle — not the whole leg. Full range, slow speed. For the calf stretch: stand a step from the wall, press one heel firmly into the floor with the leg straight. Keep the heel down and hold.",
+            "excludeTags": [
+                "ankle"
+            ]
+        },
+        {
+            "id": "fit_t1_e01",
+            "tier": 1,
+            "rank": "D",
+            "stat": "endurance",
+            "title": "Jog in place — 4 rounds of 90 seconds",
+            "desc": "Jog on the spot at a steady pace. 90 seconds on, 30 seconds rest. 4 rounds. Focus on rhythm and breathing — not speed.",
+            "formDesc": "Land softly on the ball of your foot, not flat-footed. Keep your arms at 90 degrees, driving them forward and back — not crossing your body. Breathe in through your nose for 3 steps, out through your mouth for 3 steps. If you cannot hold a conversation, slow down.",
+            "excludeTags": [
+                "knee",
+                "ankle"
+            ]
+        },
+        {
+            "id": "fit_t1_e02",
+            "tier": 1,
+            "rank": "D",
+            "stat": "endurance",
+            "title": "Step-touch intervals — 5 minutes continuous",
+            "desc": "Side step left, touch right foot to left, then step right, touch left foot to right. Continuous for 5 minutes. Add arm movement to increase intensity.",
+            "formDesc": "Step wide enough that you feel your weight shift fully. Do not drag your feet — lift them. Keep your chest up and look forward, not at your feet. Add a small arm swing outward as you step — it keeps the movement rhythmic and slightly elevates your heart rate.",
+            "excludeTags": [
+                "knee",
+                "ankle",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t1_e03",
+            "tier": 1,
+            "rank": "D",
+            "stat": "endurance",
+            "title": "Plank hold — 3 sets, hold to fatigue",
+            "desc": "Hold a forearm plank for as long as you can maintain form. 3 sets. Rest 60 seconds between sets. Record your hold time on the first set.",
+            "formDesc": "Forearms flat on the floor, elbows under shoulders. Keep your hips level — do not let them sag or pike upward. Squeeze your glutes and brace your core as if bracing for a light punch. Look at the floor 30cm in front of you. When your form breaks, stop — that is your set.",
+            "excludeTags": [
+                "shoulder",
+                "wrist",
+                "back"
+            ]
+        },
+        {
+            "id": "fit_t1_e04",
+            "tier": 1,
+            "rank": "D",
+            "stat": "endurance",
+            "title": "Shadow boxing — 5 rounds of 2 minutes",
+            "desc": "Stand in a slight stance and throw punches, slips, and movement for 2 minutes. Rest 60 seconds between rounds. 5 rounds total. Stay light on your feet.",
+            "formDesc": "Guard up — fists near your cheeks. Throw punches from your shoulder, not your elbow. Move your feet between combinations — step, punch, move, do not stand still. Keep your weight balanced and your chin slightly down. No need to throw hard — the goal is 10 continuous minutes of output.",
+            "excludeTags": [
+                "shoulder",
+                "ankle"
+            ]
+        },
+        {
+            "id": "fit_t1_s01",
+            "tier": 1,
+            "rank": "D",
+            "stat": "strength",
+            "title": "Standard push-ups — 4 sets to near-failure",
+            "desc": "Full push-ups from the floor. 4 sets. Stop 1–2 reps before complete failure. Rest 60–90 seconds between sets.",
+            "formDesc": "Hands slightly wider than shoulder-width. Body in a straight line from head to heels — hips neither sagging nor piked. Lower until your chest is one fist-height from the floor. Push back to full arm extension. Breathe in on the way down, out on the way up. If your form breaks, drop to your knees and continue — that counts.",
+            "excludeTags": [
+                "shoulder",
+                "wrist"
+            ]
+        },
+        {
+            "id": "fit_t1_s02",
+            "tier": 1,
+            "rank": "D",
+            "stat": "strength",
+            "title": "Bodyweight squats — 4 sets of 15",
+            "desc": "Full depth squat, no weight. 15 reps. 4 sets. Rest 60 seconds between sets. Focus on depth and knee tracking.",
+            "formDesc": "Feet shoulder-width apart, toes out 15–30 degrees. Sit your hips back and down — as if lowering onto a chair that is too far behind you. Go until your thighs are parallel to the floor or deeper if you can. Keep your chest tall, your heels flat, and your knees tracking over your middle toe throughout.",
+            "excludeTags": [
+                "knee",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t1_s03",
+            "tier": 1,
+            "rank": "D",
+            "stat": "strength",
+            "title": "Reverse lunges — 3 sets of 10 per leg",
+            "desc": "Step backward into a lunge, lower your back knee toward the floor, then return. 10 per leg. 3 sets. Safer on the knees than forward lunges.",
+            "formDesc": "Step directly backward — not to the side. Your front knee stays over your ankle, not pushing forward past your toes. Lower your back knee toward (not onto) the floor. Keep your torso upright. Drive through your front heel to return. If balance is difficult, hold a wall with one hand.",
+            "excludeTags": [
+                "knee",
+                "hip",
+                "ankle"
+            ]
+        },
+        {
+            "id": "fit_t1_s04",
+            "tier": 1,
+            "rank": "D",
+            "stat": "strength",
+            "title": "Tricep dips off a chair — 3 sets of 12",
+            "desc": "Sit at the edge of a sturdy chair, hands gripping the seat edge. Lower your body toward the floor by bending your elbows, then press back up. 12 reps. 3 sets.",
+            "formDesc": "Hands shoulder-width on the edge of the seat, fingers forward. Walk your feet out slightly. Keep your back close to the chair as you lower — do not drift forward. Lower until your elbows are at 90 degrees, then press back to straight arms. Keep your shoulders down, not hunched toward your ears.",
+            "excludeTags": [
+                "shoulder",
+                "wrist"
+            ]
+        },
+        {
+            "id": "fit_t1_s05",
+            "tier": 1,
+            "rank": "D",
+            "stat": "strength",
+            "title": "Sit-ups — 3 sets of 15",
+            "desc": "Full sit-ups from the floor. 15 reps. 3 sets. Controlled on the way down — do not crash back.",
+            "formDesc": "Lie flat, knees bent, feet flat on the floor. Cross your arms on your chest or place fingertips behind your ears — do not pull on your neck. Sit all the way up until your elbows touch your thighs. Lower slowly — 2 seconds back down. Breathe out on the way up.",
+            "excludeTags": [
+                "back",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t1_s06",
+            "tier": 1,
+            "rank": "D",
+            "stat": "strength",
+            "title": "Leg raises — 3 sets of 12",
+            "desc": "Lie on your back, legs straight. Raise both legs to 90 degrees, then lower slowly without touching the floor. 12 reps. 3 sets.",
+            "formDesc": "Press your lower back into the floor and keep it there. Raise both legs together until they are vertical. Lower slowly — 3 to 4 seconds — stopping just above the floor before the next rep. If your back lifts, raise your legs higher (less range) until you build the strength to go lower.",
+            "excludeTags": [
+                "back",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t1_a01",
+            "tier": 1,
+            "rank": "D",
+            "stat": "agility",
+            "title": "Side plank — 3 sets of 30 seconds each side",
+            "desc": "Lie on your side, prop yourself up on your forearm. Lift your hips off the floor and hold a straight line from head to feet. 30 seconds each side. 3 sets.",
+            "formDesc": "Elbow directly under your shoulder. Stack your feet, or stagger them if balance is difficult. Lift your hips until your body is in a straight line — do not let them sag. Keep your top arm along your side or pointed at the ceiling. Breathe steadily.",
+            "excludeTags": [
+                "shoulder",
+                "wrist"
+            ]
+        },
+        {
+            "id": "fit_t1_a02",
+            "tier": 1,
+            "rank": "D",
+            "stat": "agility",
+            "title": "Bicycle crunches — 3 sets of 20",
+            "desc": "Lie on your back, hands behind your head. Bring opposite elbow to opposite knee in a twisting motion. 20 total reps (10 per side). 3 sets.",
+            "formDesc": "Keep both hands lightly behind your head — do not pull. Rotate from your core, not your neck. Fully extend the straightening leg each rep. Move with control — 2 seconds each rep — not fast. Your lower back should stay in contact with the floor throughout.",
+            "excludeTags": [
+                "back",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t1_a03",
+            "tier": 1,
+            "rank": "D",
+            "stat": "agility",
+            "title": "World",
+            "desc": "A full-body mobility sequence: lunge, rotate, reach. 5 slow reps each side. Used by athletes worldwide as a daily movement prep.",
+            "formDesc": "Step forward into a deep lunge. Place the same-side hand on the floor inside your front foot. Rotate your upper body, reaching that arm toward the ceiling. Hold 2 seconds. Return hand to floor. Drive back hip forward and drop your back knee if needed for depth. This is one rep.",
+            "excludeTags": [
+                "knee",
+                "wrist",
+                "hip",
+                "shoulder"
+            ]
+        },
+        {
+            "id": "fit_t1_a04",
+            "tier": 1,
+            "rank": "D",
+            "stat": "agility",
+            "title": "Inchworm — 3 sets of 8",
+            "desc": "Stand tall, fold forward and walk your hands out to a plank position. Pause. Walk your feet back to your hands. Stand. 8 reps. 3 sets.",
+            "formDesc": "Keep your legs as straight as you can when you fold — a slight bend is fine, no forcing. Walk your hands out one at a time until you are in a full plank. Pause one second. Walk your feet in one step at a time. Stand fully before the next rep. Move with control throughout.",
+            "excludeTags": [
+                "wrist",
+                "shoulder",
+                "back"
+            ]
+        },
+        {
+            "id": "fit_t1_a05",
+            "tier": 1,
+            "rank": "D",
+            "stat": "agility",
+            "title": "Hollow body hold — 3 sets of 20 seconds",
+            "desc": "Lie on your back. Press your lower back into the floor, lift your shoulders and legs slightly off the ground, and hold. Arms by your sides or extended overhead. 20 seconds. 3 sets.",
+            "formDesc": "The lower back must stay flat on the floor — this is the whole exercise. If it lifts, raise your legs higher. Tuck your chin slightly. Keep your legs together and toes pointed. Breathe shallowly — you will feel your core working to maintain the position. When your back peels off the floor, the set is over.",
+            "excludeTags": [
+                "back",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t2_e01",
+            "tier": 2,
+            "rank": "B",
+            "stat": "endurance",
+            "title": "Burpees — 5 sets of 10",
+            "desc": "Full burpee: squat, jump back to plank, chest to floor, push up, jump forward, jump up with arms overhead. 10 reps. 5 sets. Rest 90 seconds between sets.",
+            "formDesc": "Squat and place hands on the floor. Jump or step both feet back to a full plank. Lower your chest to the floor — actually touch it. Push up. Jump your feet back to your hands. Stand and jump with arms overhead. That is one rep. Maintain this sequence even when fatigued — sloppy burpees train sloppiness.",
+            "excludeTags": [
+                "knee",
+                "shoulder",
+                "wrist",
+                "ankle",
+                "back"
+            ]
+        },
+        {
+            "id": "fit_t2_e02",
+            "tier": 2,
+            "rank": "B",
+            "stat": "endurance",
+            "title": "Jump squats — 4 sets of 12",
+            "desc": "Squat down to parallel, then explode upward into a jump. Land softly and immediately lower into the next squat. 12 reps. 4 sets. Rest 60 seconds.",
+            "formDesc": "Lower with control — same mechanics as a regular squat. Drive through the floor at the bottom and explode upward. Reach your arms overhead at the top. Land softly on the balls of your feet, absorb through your knees and hips, and go directly into the next rep. Never land stiff-legged.",
+            "excludeTags": [
+                "knee",
+                "ankle",
+                "hip",
+                "back"
+            ]
+        },
+        {
+            "id": "fit_t2_e03",
+            "tier": 2,
+            "rank": "B",
+            "stat": "endurance",
+            "title": "Mountain climbers — 4 sets of 30 seconds",
+            "desc": "From a plank position, drive alternate knees toward your chest as fast as you can maintain form. 30 seconds. 4 sets. Rest 30 seconds between sets.",
+            "formDesc": "Set up in a full plank — hands under shoulders, body in a straight line. Drive one knee toward your chest, then snap it back while the other comes forward. Keep your hips level — do not let them rise as you speed up. Your shoulders should stay directly over your wrists throughout.",
+            "excludeTags": [
+                "shoulder",
+                "wrist",
+                "knee",
+                "back"
+            ]
+        },
+        {
+            "id": "fit_t2_e04",
+            "tier": 2,
+            "rank": "B",
+            "stat": "endurance",
+            "title": "Tabata protocol — any movement, 4 minutes",
+            "desc": "Choose one exercise (squats, push-ups, mountain climbers, or jumping jacks). 20 seconds maximum effort. 10 seconds rest. 8 rounds. Total: 4 minutes.",
+            "formDesc": "The 20 seconds must be genuine maximum effort — not a comfortable pace. The 10 second rest is exact — do not extend it. Pick one movement and do not switch. Your form will degrade as fatigue sets in: accept minor degradation in speed, do not accept breakdown in the fundamental position.",
+            "excludeTags": []
+        },
+        {
+            "id": "fit_t2_s01",
+            "tier": 2,
+            "rank": "B",
+            "stat": "strength",
+            "title": "Diamond push-ups — 4 sets of 8",
+            "desc": "Push-up with hands forming a diamond shape directly under your chest. Targets the triceps heavily. 8 reps. 4 sets.",
+            "formDesc": "Bring your thumbs and index fingers together to form a diamond shape. Place them directly under your sternum. Lower your chest toward your hands — keeping elbows tracking backward, not flaring out. Press back to full arm extension. This is significantly harder than a standard push-up — reduce reps before reducing form.",
+            "excludeTags": [
+                "shoulder",
+                "wrist"
+            ]
+        },
+        {
+            "id": "fit_t2_s02",
+            "tier": 2,
+            "rank": "B",
+            "stat": "strength",
+            "title": "Bulgarian split squat — 3 sets of 10 per leg",
+            "desc": "Stand a step in front of a chair. Rest one foot on the seat behind you. Lower your body until your front thigh is parallel to the floor. 10 reps. Switch legs. 3 sets.",
+            "formDesc": "Your front foot should be far enough forward that your front shin is vertical at the bottom of the movement. Drive through your front heel to stand. Keep your torso upright — do not fold forward. This is a balance challenge as much as a strength one. Use a wall for balance if needed on the first attempt.",
+            "excludeTags": [
+                "knee",
+                "hip",
+                "ankle"
+            ]
+        },
+        {
+            "id": "fit_t2_s03",
+            "tier": 2,
+            "rank": "B",
+            "stat": "strength",
+            "title": "Pike push-ups — 4 sets of 10",
+            "desc": "From a downward-dog position, lower your head toward the floor by bending your elbows, then press back up. Targets shoulders. 10 reps. 4 sets.",
+            "formDesc": "Start in a standard push-up position, then walk your feet toward your hands until your hips are high — forming an inverted V. Lower your head toward the floor between your hands by bending your elbows out to the side. Press back up. The closer your feet to your hands, the more vertical the press angle.",
+            "excludeTags": [
+                "shoulder",
+                "wrist",
+                "back"
+            ]
+        },
+        {
+            "id": "fit_t2_s04",
+            "tier": 2,
+            "rank": "B",
+            "stat": "strength",
+            "title": "Decline push-ups — 4 sets of 12",
+            "desc": "Feet elevated on a chair, hands on the floor. Push-up from this elevated foot position. Shifts the load toward the upper chest and shoulders. 12 reps. 4 sets.",
+            "formDesc": "Feet on the seat of a sturdy chair, hands on the floor at shoulder width. Keep your body in a straight line from feet to head — do not let your hips sag. Lower your chest toward the floor with full control. The higher your feet, the harder the movement. Start with feet at knee height if you have not done these before.",
+            "excludeTags": [
+                "shoulder",
+                "wrist"
+            ]
+        },
+        {
+            "id": "fit_t2_s05",
+            "tier": 2,
+            "rank": "B",
+            "stat": "strength",
+            "title": "V-sit hold — 3 sets of 20 seconds",
+            "desc": "Sit on the floor, lean back slightly, and lift both legs straight to form a V shape with your body. Hold. 20 seconds. 3 sets.",
+            "formDesc": "Sit on the floor and place your hands lightly on the ground beside your hips for the first attempt. Lean your torso back about 45 degrees and raise your legs to match — creating a V shape. Point your toes. Hold the position with your core — do not grip the floor with your hands unless your balance gives out. When you cannot maintain the V without your back rounding, the set is done.",
+            "excludeTags": [
+                "back",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t2_a01",
+            "tier": 2,
+            "rank": "B",
+            "stat": "agility",
+            "title": "Bear crawl — 4 sets of 20 metres",
+            "desc": "On all fours, crawl forward keeping your knees 2–3cm off the floor. 20 metres forward and back. 4 sets. Rest 60 seconds between sets.",
+            "formDesc": "Start on hands and knees. Lift your knees just off the floor. Move the opposite hand and foot together — right hand with left foot. Keep your back flat — no sagging or piking. Move slowly and deliberately. The slower you go, the harder this is. Your hips should stay low and level throughout.",
+            "excludeTags": [
+                "wrist",
+                "shoulder",
+                "knee"
+            ]
+        },
+        {
+            "id": "fit_t2_a02",
+            "tier": 2,
+            "rank": "B",
+            "stat": "agility",
+            "title": "Lateral bounds — 3 sets of 10 per side",
+            "desc": "Jump sideways from one foot to the other, landing on a single leg and holding the landing for 1 second before the next jump. 10 per side. 3 sets.",
+            "formDesc": "Push off from one foot and jump laterally, landing on the opposite foot. Absorb the landing by bending the knee — do not land stiff. Hold the landing for 1 full second before the next jump. Keep the distance manageable — the landing mechanics matter more than the distance.",
+            "excludeTags": [
+                "knee",
+                "ankle",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t2_a03",
+            "tier": 2,
+            "rank": "B",
+            "stat": "agility",
+            "title": "Turkish get-up — 3 reps per side (slow)",
+            "desc": "Lie on the floor. Using only your bodyweight, move from flat on your back to standing, following the specific sequence of the Turkish get-up. Then reverse back down. 3 reps per side.",
+            "formDesc": "Lie on your back. Extend one arm straight toward the ceiling. Roll onto your opposite elbow, then your hand. Sweep the opposite leg back into a kneeling position. Stand. Reverse the sequence back to lying. Keep the raised arm vertical throughout. Move slowly — this is a mobility and coordination exercise, not a speed test. Each rep should take 60 seconds.",
+            "excludeTags": [
+                "wrist",
+                "shoulder",
+                "knee",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_t2_a04",
+            "tier": 2,
+            "rank": "B",
+            "stat": "agility",
+            "title": "Broad jumps — 3 sets of 6",
+            "desc": "Stand with feet shoulder-width apart. Jump forward as far as possible with both feet, land softly, hold the landing for 2 seconds. Walk back. 6 reps. 3 sets.",
+            "formDesc": "Load by swinging your arms back and bending your knees. Drive your arms forward and jump from both feet. Land on both feet simultaneously, absorbing through the ankles, knees, and hips. Hold the landing completely still for 2 seconds before the next rep. Distance is secondary — landing quality is the target.",
+            "excludeTags": [
+                "knee",
+                "ankle",
+                "hip",
+                "back"
+            ]
+        },
+        {
+            "id": "fit_t2_a05",
+            "tier": 2,
+            "rank": "B",
+            "stat": "agility",
+            "title": "Dynamic plank complex — 3 rounds",
+            "desc": "One round: 10 shoulder taps, 10 hip dips, 10 mountain climbers (slow). Rest 45 seconds. 3 rounds total. All from the plank position.",
+            "formDesc": "Shoulder taps: from a full plank, lift one hand to tap the opposite shoulder, alternating. Keep your hips still. Hip dips: from a forearm plank, rotate your hips to dip one side toward the floor, alternating. Mountain climbers (slow): drive each knee to the chest with a 2-second hold at the top. The goal is control throughout all three movements.",
+            "excludeTags": [
+                "wrist",
+                "shoulder",
+                "back"
+            ]
+        },
+        {
+            "id": "fit_t1_c01",
+            "tier": 1,
+            "rank": "D",
+            "stat": "strength",
+            "title": "Crunches — 4 sets of 20",
+            "desc": "Lie on your back, knees bent. Curl your shoulders off the floor, hold 1 second, lower. 20 reps. 4 sets. Controlled tempo throughout.",
+            "formDesc": "Hands crossed on your chest or fingertips at your temples — do not pull your neck. Curl your upper back off the floor using your abs — not your momentum. Hold 1 second at the top. Lower slowly. Only your shoulder blades leave the floor; your lower back stays down throughout.",
+            "excludeTags": [
+                "back"
+            ]
+        },
+        {
+            "id": "fit_t1_c02",
+            "tier": 1,
+            "rank": "D",
+            "stat": "strength",
+            "title": "Plank to downward dog — 3 sets of 10",
+            "desc": "Start in a plank. Push your hips up into a downward-dog position, then lower back to plank. 10 reps. 3 sets.",
+            "formDesc": "From the plank, push through your hands and drive your hips toward the ceiling. Your body forms an inverted V at the top — heels reaching toward the floor. Hold 1 second. Lower back to a flat plank under control. Keep your core braced throughout and do not let your lower back sag in the plank position.",
+            "excludeTags": [
+                "shoulder",
+                "wrist",
+                "back"
+            ]
+        },
+        {
+            "id": "fit_t0_c01",
+            "tier": 0,
+            "rank": "F",
+            "stat": "strength",
+            "title": "Lying leg raises — single leg — 3 sets of 10 per side",
+            "desc": "Lie on your back. Keep one leg flat on the floor, raise the other to 45 degrees, then lower without touching. 10 reps. Switch legs. 3 sets.",
+            "formDesc": "Press your lower back firmly into the floor. Keep the working leg straight. Lower it slowly — 3 seconds — and stop just above the floor before the next rep. If your back arches, raise your foot higher. The leg on the floor stays flat and still throughout.",
+            "excludeTags": [
+                "back",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_str_01",
+            "tier": 0,
+            "rank": "F",
+            "stat": "agility",
+            "category": "stretch",
+            "title": "Hip flexor stretch — 60 seconds each side",
+            "desc": "Kneel on one knee, the other foot forward. Shift your hips forward until you feel a stretch down the front of the kneeling leg's hip. Hold 60 seconds. Switch sides. Do this daily if you sit for most of the day.",
+            "formDesc": "The stretch is in the front of your hip — the kneeling side. Tuck your pelvis under slightly to increase the stretch. Keep your torso upright, not leaning forward. If kneeling on hard floor is uncomfortable, fold a towel under your knee. Breathe slowly throughout — the stretch deepens on the exhale.",
+            "excludeTags": [
+                "knee",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_str_02",
+            "tier": 0,
+            "rank": "F",
+            "stat": "agility",
+            "category": "stretch",
+            "title": "Seated hamstring stretch — 60 seconds each side",
+            "desc": "Sit on the floor, one leg extended, the other bent with foot against your inner thigh. Hinge forward from your hips toward the extended leg. Hold 60 seconds. Switch sides.",
+            "formDesc": "Hinge from your hips — not your waist. Keep your back straight as you fold forward. You should feel the stretch behind the extended knee and thigh, not in your lower back. If you cannot reach your foot, hold your shin or place a towel around your foot. Do not round your spine to get further — that defeats the stretch.",
+            "excludeTags": [
+                "back",
+                "hip"
+            ]
+        },
+        {
+            "id": "fit_str_03",
+            "tier": 0,
+            "rank": "F",
+            "stat": "agility",
+            "category": "stretch",
+            "title": "Thoracic spine rotation — 10 reps each side",
+            "desc": "Sit cross-legged or on a chair. Place one hand behind your head. Rotate your upper body to that side as far as you can, then back. 10 slow controlled reps. Switch sides.",
+            "formDesc": "The rotation comes from the mid-back — not the lower back or the neck. Keep your hips still and facing forward. As you rotate, think about your shoulder blade moving back and down. Each rep: rotate to end range, hold 2 seconds, return. Breathe out as you rotate.",
+            "excludeTags": [
+                "back"
+            ]
+        },
+        {
+            "id": "fit_str_04",
+            "tier": 0,
+            "rank": "F",
+            "stat": "agility",
+            "category": "stretch",
+            "title": "Doorway chest stretch — 60 seconds",
+            "desc": "Stand in a doorway. Place both forearms on the frame at shoulder height, elbows bent at 90 degrees. Lean your body forward through the doorway until you feel a stretch across your chest. Hold 60 seconds.",
+            "formDesc": "Elbows at 90 degrees, hands level with or slightly below your shoulder line — higher than this shifts the stretch to the shoulder rather than the chest. Lean forward through the doorway from your feet — do not bend at the waist. Breathe deeply and let the stretch increase on each exhale. If using one side of a door frame, do each side for 30 seconds.",
+            "excludeTags": [
+                "shoulder"
+            ]
+        },
+        {
+            "id": "fit_str_05",
+            "tier": 0,
+            "rank": "F",
+            "stat": "agility",
+            "category": "stretch",
+            "title": "Standing quad stretch — 45 seconds each side",
+            "desc": "Stand on one leg, bend the other knee and hold your foot behind you. Hold 45 seconds. Switch sides. Use a wall for balance if needed.",
+            "formDesc": "Pull your foot toward your glute — not out to the side. Keep your knees together and your standing leg slightly bent. Tuck your pelvis under slightly to increase the stretch in the front of the thigh. Keep your torso upright throughout. If you cannot reach your foot, loop a towel around your ankle.",
+            "excludeTags": [
+                "knee",
+                "ankle"
+            ]
+        },
+        {
+            "id": "fit_str_06",
+            "tier": 0,
+            "rank": "F",
+            "stat": "agility",
+            "category": "stretch",
+            "title": "Standing calf stretch — 60 seconds each side",
+            "desc": "Stand facing a wall, one foot back with heel flat on the floor. Lean toward the wall until you feel the stretch in your calf. Hold 60 seconds. Switch sides.",
+            "formDesc": "The back heel must stay flat on the floor — that is the whole stretch. The further you step your foot back, the more intense the stretch. Keep your back knee straight for a gastroc stretch. For a deeper soleus stretch, slightly bend your back knee while keeping the heel down. Both are valuable — do both if you have time.",
+            "excludeTags": [
+                "ankle"
+            ]
+        },
+        {
+            "id": "fit_str_07",
+            "tier": 0,
+            "rank": "F",
+            "stat": "agility",
+            "category": "stretch",
+            "title": "Child's pose — 90 seconds",
+            "desc": "Kneel on the floor, sit back toward your heels, and stretch your arms forward along the floor with your forehead resting down. Hold 90 seconds. Breathe slowly and let your back release.",
+            "formDesc": "Kneel with feet together or knees wide apart — wide is more comfortable for most people and opens the hips further. Walk your hands as far forward as you can. Let your forehead rest on the floor. Breathe into your back — you should feel your ribcage expand toward the floor on the inhale. This is a rest position. There is nothing to force.",
+            "excludeTags": [
+                "knee",
+                "wrist"
+            ]
+        },
+        {
+            "id": "fit_str_08",
+            "tier": 0,
+            "rank": "F",
+            "stat": "agility",
+            "category": "stretch",
+            "title": "Cross-body shoulder stretch — 45 seconds each side",
+            "desc": "Bring one arm across your chest at shoulder height. Use your other hand or forearm to gently press it closer to your chest. Hold 45 seconds. Switch sides.",
+            "formDesc": "Keep your shoulder pressed down — do not let it rise up toward your ear as you pull the arm across. The stretch should be felt in the back of the shoulder. Do not pull hard — gentle sustained pressure for the full 45 seconds is more effective than aggressive pulling. Breathe normally.",
+            "excludeTags": [
+                "shoulder"
+            ]
+        }
+    ]
+}
