@@ -835,3 +835,102 @@
     margin:      0;
     font-style:  italic;
 }
+
+/* ─── MARKET DIRECTIVE QUEUE ─────────────────────────────────── */
+.jo-mdir-queue {
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+    margin-top:     8px;
+}
+
+.jo-mdir-card {
+    background:    rgba(255, 255, 255, 0.02);
+    border:        1px solid var(--border);
+    border-radius: 3px;
+    padding:       12px 14px;
+    display:       flex;
+    flex-direction: column;
+    gap:           6px;
+    transition:    opacity 0.2s, border-color 0.2s;
+}
+
+.jo-mdir-card--done {
+    opacity:       0.45;
+    border-color:  rgba(255, 255, 255, 0.06);
+}
+
+.jo-mdir-header {
+    display:     flex;
+    align-items: center;
+    gap:         8px;
+    flex-wrap:   wrap;
+}
+
+.jo-mdir-tier-badge {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.6rem;
+    letter-spacing: 0.1em;
+    padding:        2px 6px;
+    border-radius:  2px;
+    border:         1px solid;
+}
+
+.jo-mdir-tier-badge--t1 {
+    color:        var(--text-secondary);
+    border-color: var(--border);
+}
+
+.jo-mdir-tier-badge--t2 {
+    color:        var(--accent);
+    border-color: var(--accent);
+    opacity:      0.75;
+}
+
+.jo-mdir-tier-badge--t3 {
+    color:        #ffa726;
+    border-color: #ffa726;
+    opacity:      0.75;
+}
+
+.jo-mdir-done-mark {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.62rem;
+    letter-spacing: 0.1em;
+    color:          #66bb6a;
+    margin-left:    auto;
+}
+
+.jo-mdir-action {
+    font-size:   0.88rem;
+    color:       var(--text-primary);
+    line-height: 1.5;
+    margin:      0;
+}
+
+.jo-mdir-why {
+    font-size:   0.8rem;
+    color:       var(--text-secondary);
+    line-height: 1.5;
+    margin:      0;
+}
+
+.jo-mdir-complete-btn {
+    align-self:     flex-start;
+    background:     transparent;
+    border:         1px solid var(--border);
+    color:          var(--text-secondary);
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.68rem;
+    letter-spacing: 0.08em;
+    padding:        5px 10px;
+    cursor:         pointer;
+    border-radius:  2px;
+    margin-top:     4px;
+    transition:     border-color 0.15s, color 0.15s;
+}
+
+.jo-mdir-complete-btn:hover {
+    border-color: #66bb6a;
+    color:        #66bb6a;
+}

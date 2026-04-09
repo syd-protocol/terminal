@@ -795,6 +795,93 @@ function renderJobOpsProfile(container) {
     }
 }
 
+// ─── MARKET DIRECTIVE HELPERS ─────────────────────────────────
+// Renders a completable directive queue from an array of items.
+// Each item: { id, label, action/name, why, tier, where? }
+// sectionLabel: string shown as the section heading.
+// onComplete: callback(id, tier) — called when a directive is marked done.
+function _renderMarketDirectiveQueue(items, sectionLabel, sectionHeading, onComplete) {
+    const exposure = (typeof loadExposure === 'function') ? loadExposure() : { completedIds: [] };
+    const completedIds = exposure.completedIds || [];
+
+    if (!items || items.length === 0) {
+        return `
+            <div class="jo-sub-section">
+                <p class="jo-section-heading jo-section-heading--market">${sectionHeading}</p>
+                <p class="jo-text-note">No directives available yet. Refresh the market read to generate them.</p>
+            </div>
+        `;
+    }
+
+    const rows = items.map(item => {
+        const isDone  = completedIds.includes(item.id);
+        const tierNum = item.tier || 1;
+        return `
+            <div class="jo-mdir-card ${isDone ? 'jo-mdir-card--done' : ''}" data-mdir-id="${item.id}" data-mdir-tier="${tierNum}">
+                <div class="jo-mdir-header">
+                    <span class="jo-mdir-tier-badge jo-mdir-tier-badge--t${tierNum}">T${tierNum}</span>
+                    ${item.where ? `<span class="jo-community-where">${item.where}</span>` : ''}
+                    ${isDone ? '<span class="jo-mdir-done-mark">&#x2713; DONE</span>' : ''}
+                </div>
+                <p class="jo-mdir-action">${item.action || item.name || ''}</p>
+                ${item.why ? `<p class="jo-mdir-why">${item.why}</p>` : ''}
+                ${!isDone ? `
+                    <button class="jo-mdir-complete-btn" data-mdir-id="${item.id}" data-mdir-tier="${tierNum}">
+                        [ MARK DONE ]
+                    </button>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="jo-sub-section">
+            <p class="jo-section-heading jo-section-heading--market">${sectionHeading}</p>
+            <div class="jo-mdir-queue" id="jo-mdir-queue-${sectionLabel}">
+                ${rows}
+            </div>
+        </div>
+    `;
+}
+
+// Wires the [ MARK DONE ] buttons in all market directive queues.
+// Called once after the Market Read panel's innerHTML is set.
+function _wireMarketDirectiveButtons(container, refreshCallback) {
+    container.querySelectorAll('.jo-mdir-complete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            playUIClick();
+            const id   = btn.dataset.mdirId;
+            const tier = parseInt(btn.dataset.mdirTier, 10) || 1;
+
+            if (typeof addExposurePoints === 'function') {
+                addExposurePoints(id, tier);
+            }
+
+            // Visual feedback — swap button for done mark immediately
+            const card = btn.closest('.jo-mdir-card');
+            if (card) {
+                card.classList.add('jo-mdir-card--done');
+                btn.remove();
+                const header = card.querySelector('.jo-mdir-header');
+                if (header && !header.querySelector('.jo-mdir-done-mark')) {
+                    const mark = document.createElement('span');
+                    mark.className   = 'jo-mdir-done-mark';
+                    mark.textContent = '✓ DONE';
+                    header.appendChild(mark);
+                }
+            }
+
+            // Show XP toast in log if available
+            const pts = (typeof EXPOSURE_POINTS_PER_TIER !== 'undefined')
+                ? EXPOSURE_POINTS_PER_TIER[tier] || 5
+                : 5;
+            if (typeof showLog === 'function') {
+                showLog(`[ +${pts} EXPOSURE — MARKET DIRECTIVE COMPLETE ]`, 'accent');
+            }
+        });
+    });
+}
+
 // ─── MARKET READ PANEL ────────────────────────────────────────
 function renderJobOpsMarketRead(container) {
     if (!container) return;
@@ -870,30 +957,30 @@ function renderJobOpsMarketRead(container) {
                 `).join('')}
             </div>
 
-            <div class="jo-sub-section">
-                <p class="jo-section-heading jo-section-heading--market">Next Moves</p>
-                ${(market.next_moves || (market.visibility_action ? [{ action: market.visibility_action, effort: 'medium' }] : [])).map(m => `
-                    <div class="jo-next-move-item">
-                        <span class="jo-effort-badge jo-effort-badge--${(m.effort || 'medium').toLowerCase()}">${(m.effort || 'MEDIUM').toUpperCase()}</span>
-                        <p class="jo-text-block">${m.action || ''}</p>
-                    </div>
-                `).join('')}
-            </div>
+            ${(function() {
+                // Next Moves → completable Tier 1 / Tier 2 market directive queue
+                const rawMoves = market.next_moves || (market.visibility_action ? [{ action: market.visibility_action, effort: 'medium' }] : []);
+                const moveItems = rawMoves.map((m, i) => ({
+                    id:     'md_move_' + i + '_' + (market.cachedAt || 'x').replace(/-/g, ''),
+                    action: m.action || '',
+                    why:    '',
+                    tier:   (m.effort === 'high') ? 2 : 1
+                }));
+                return _renderMarketDirectiveQueue(moveItems, 'moves', 'Next Moves', null);
+            })()}
 
-            ${(market.communities || []).length > 0 ? `
-            <div class="jo-sub-section">
-                <p class="jo-section-heading jo-section-heading--market">Where To Be Present</p>
-                ${market.communities.map(c => `
-                    <div class="jo-market-item">
-                        <div class="jo-community-row">
-                            <p class="jo-skill-name">${c.name || ''}</p>
-                            <span class="jo-community-where">${c.where || ''}</span>
-                        </div>
-                        <p class="jo-text-block">${c.why || ''}</p>
-                    </div>
-                `).join('')}
-            </div>
-            ` : ''}
+            ${(function() {
+                // Where To Be Present → completable Tier 2 directive queue
+                const communities = market.communities || [];
+                const presenceItems = communities.map((c, i) => ({
+                    id:     'md_presence_' + i + '_' + (market.cachedAt || 'x').replace(/-/g, ''),
+                    action: c.name || '',
+                    why:    c.why || '',
+                    where:  c.where || '',
+                    tier:   2
+                }));
+                return _renderMarketDirectiveQueue(presenceItems, 'presence', 'Where To Be Present', null);
+            })()}
         </div>
     `;
 
@@ -904,6 +991,9 @@ function renderJobOpsMarketRead(container) {
             _triggerManualRefresh(container, 'MARKET READ', role);
         });
     }
+
+    // Wire completable directive buttons
+    _wireMarketDirectiveButtons(container, () => renderJobOpsMarketRead(container));
 }
 
 // ─── JOB HUNT PANEL ───────────────────────────────────────────

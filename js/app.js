@@ -110,6 +110,70 @@ const CAREER_SKILLS_KEY = 'syd_career_skills';
 // localStorage key for career directive cache (seeded by Gemini Call 2, refreshed by Call 4)
 const CAREER_DIRECTIVES_KEY = 'syd_career_directives';
 
+// ─── EXPOSURE STAT ────────────────────────────────────────────
+// Exposure measures the operative's market surface area — how findable
+// they are in their confirmed path's domain. Built by completing Market
+// Directives in the JOB OPS panel. Decays if the operative goes quiet.
+// Storage key: 'syd_exposure'
+// Shape: { points: number, completedIds: string[], lastActiveDate: string }
+const EXPOSURE_KEY = 'syd_exposure';
+
+// [TUNING TARGET] Exposure points per tier
+const EXPOSURE_POINTS_PER_TIER = { 1: 5, 2: 15, 3: 30 };
+
+// [TUNING TARGET] Exposure decay — points lost per day of inactivity (after grace period)
+const EXPOSURE_DECAY_GRACE_DAYS  = 3;   // no decay for the first N inactive days
+const EXPOSURE_DECAY_POINTS_PER_DAY = 3; // points lost per day after grace period
+
+function loadExposure() {
+    try {
+        const raw = localStorage.getItem(EXPOSURE_KEY);
+        return raw ? JSON.parse(raw) : { points: 0, completedIds: [], lastActiveDate: null };
+    } catch(e) {
+        return { points: 0, completedIds: [], lastActiveDate: null };
+    }
+}
+
+function saveExposure(data) {
+    try { localStorage.setItem(EXPOSURE_KEY, JSON.stringify(data)); }
+    catch(e) { console.warn('[SYD] Could not save Exposure data:', e); }
+}
+
+// Called whenever a Market Directive is completed.
+// tier: 1 | 2 | 3. directiveId: unique string for this directive.
+// Returns the updated Exposure object.
+function addExposurePoints(directiveId, tier) {
+    const exposure    = loadExposure();
+    const points      = EXPOSURE_POINTS_PER_TIER[tier] || 5;
+
+    // Guard against double-counting the same directive
+    if ((exposure.completedIds || []).includes(directiveId)) return exposure;
+
+    exposure.points       = (exposure.points || 0) + points;
+    exposure.completedIds = [...(exposure.completedIds || []), directiveId];
+    exposure.lastActiveDate = (typeof today === 'function') ? today() : new Date().toISOString().slice(0, 10);
+    saveExposure(exposure);
+    return exposure;
+}
+
+// Apply daily decay — called from the daily loop check.
+// Only decays if operative has gone quiet beyond the grace period.
+function applyExposureDecay() {
+    const exposure = loadExposure();
+    if (!exposure.lastActiveDate || exposure.points <= 0) return;
+
+    const last    = new Date(exposure.lastActiveDate);
+    const now     = new Date();
+    const diffDays = Math.floor((now - last) / 86400000);
+
+    if (diffDays <= EXPOSURE_DECAY_GRACE_DAYS) return;
+
+    const decayDays   = diffDays - EXPOSURE_DECAY_GRACE_DAYS;
+    const decayAmount = decayDays * EXPOSURE_DECAY_POINTS_PER_DAY;
+    exposure.points   = Math.max(0, exposure.points - decayAmount);
+    saveExposure(exposure);
+}
+
 // ─── FIREBASE ────────────────────────────────────────────────
 const FIREBASE_CONFIG = {
     apiKey:            'AIzaSyAkuEPtCAc5YWRgb08zClJwnr9IXlrN5nE',
