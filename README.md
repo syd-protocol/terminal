@@ -3,9 +3,9 @@
 > *"The economy broke first. Then the systems. Then the people.*
 > *Most are still waiting for someone to fix it. You stopped waiting."*
 
-**SYD** is a real-world RPG. Not a game that simulates progress — a system that tracks it.
+**SYD** is a real-world career RPG. Not a game that simulates progress — a system that tracks it.
 
-Complete daily directives. Build your stats. Survive the grind. The System doesn't care about your intentions. It only reads your execution.
+Complete daily directives. Build your stats. Run the PATH Protocol. Survive the grind. The System does not care about your intentions. It only reads your execution.
 
 **Live terminal:** [syd-protocol.github.io/terminal](https://syd-protocol.github.io/terminal)
 
@@ -15,13 +15,13 @@ Complete daily directives. Build your stats. Survive the grind. The System doesn
 
 Most productivity apps ask you to plan. SYD asks you to move.
 
-There are no reminders, no streaks for the sake of streaks, no rewards for checking a box. Every directive in SYD maps to a real-world behaviour — a walk, a deep work block, an uncomfortable conversation, a rest you actually took. When you complete it, your stats go up. Permanently. When you don't, your Momentum decays and your HP drops. Miss enough days and the System enters a Corrupted state: XP gain is halved, the log fills with warnings, and the only way out is to execute.
+There are no reminders, no streaks for the sake of streaks, no rewards for checking a box. Every directive maps to a real-world behaviour — a walk, a deep work block, an uncomfortable conversation, a rest you actually took. When you complete it, your stats go up. Permanently. When you don't, your Momentum decays and your Capacity drops. Miss enough days and the System degrades: XP gain drops, the log fills with warnings, and the only way out is to execute.
 
 SYD is not a metaphor for effort. It is a mirror.
 
 ---
 
-## The five attributes
+## The five base stats
 
 | Attribute | What it tracks |
 |---|---|
@@ -32,6 +32,8 @@ SYD is not a metaphor for effort. It is a mirror.
 | **Charisma** | Social presence, connection, the ability to move people |
 
 **Luck** is derived — the average of all five. You cannot grind it directly. Build the others and it rises with them.
+
+**Job Luck** is separate — it measures your market surface area. How findable you are. How legible. It is built through Exposure: completing Market Directives in the JOB OPS panel. It decays if you go quiet.
 
 ---
 
@@ -45,57 +47,82 @@ There are three mechanisms doing the work:
 
 **Externalisation.** SYD makes invisible effort visible. A day you ran, studied, and had a hard conversation looks exactly like a day you didn't — until the System logs it. Tracking forces recognition, and recognition compounds.
 
-**The cost of inaction.** Most habit apps are frictionless to abandon. SYD has consequences. Missed days rot your HP. Corruption halves your XP. The System does not reset your streak with encouragement — it degrades your character until you return and claw it back. This asymmetry is intentional. Real life does not offer grace periods. SYD doesn't either.
+**The cost of inaction.** Most habit apps are frictionless to abandon. SYD has consequences. Missed days decay your Momentum. Capacity drops. The System does not reset your streak with encouragement — it degrades your character until you return and claw it back. This asymmetry is intentional. Real life does not offer grace periods. SYD doesn't either.
 
 **Long time horizons.** Tier 1 directives unlock at Level 1. Tier 2 at Level 10. Tier 3 at Level 25. The formula governing XP-to-level (`25 × (n-1)^1.9`) means the gap between levels widens as you rise. A Tier 3 unlock at Level 25 represents roughly two years of consistent daily execution. SYD is not designed to be completed. It is designed to be a companion for the long game — because that is the only game that matters.
-
-The result is a system where the longer you play, the more the game resembles the life you are actually trying to build.
 
 ---
 
 ## What SYD can do
 
 **Core progression**
-- Five-attribute stat system that rises permanently with real-world execution
+- Five base stats that rise permanently with real-world execution
+- Job Luck stat — built through market Exposure, decays with inactivity
 - XP, levels, and a rank ladder from F through SSS
 - Momentum streak multiplier — builds over 14 days, decays on missed days
-- HP system — drops on missed days, triggers Corruption at zero
-- Gold economy — earned per directive, spent on performance buffs in the Supply Cache
+- Capacity system — drops on missed days, recovers through consistent execution
+- SIG economy — earned per directive, spent in GAMES to train specific stats
 
 **Directives**
-- Three-tier quest pool with 110 directives across all five attributes
-- Tier 0 initialisation track — a seven-day onboarding sequence that eases new operators into full Tier 1 behaviour
+- Three-tier quest pool with 110 directives across all five base stats
+- Tier 0 initialisation track — a seven-day onboarding sequence that eases new operatives into full Tier 1 behaviour
 - Gear system — one, two, or three directives per stat per day, scaling with commitment
-- Guaranteed world boss directive slot — when a World Boss is active, at least one daily directive always targets its primary stat
-- Field notes — attach a short note to any directive at completion; required on Gear 3 slot-3 directives, optional on all others; stored locally and synced
+- Career directives — Gemini-generated, path-specific actions that build professional skills and career skill tracks simultaneously
+- Market Directives — completable presence actions in JOB OPS; each completed action builds Exposure and raises Job Luck
+- Field notes — attach a short note to any directive at completion; required on Gear 3 slot-3 directives, optional on all others
 
-**World Boss system**
-- Set a real-world goal. The System catalogues it as a World Boss — a persistent enemy entity representing a long-term obstacle
-- Optional Neural Link upgrade: AI-generated threat name, enemy classification, tactical guidance, and stat weighting
-- Damage dealt by completing directives that match the boss's primary and linked stats
-- Suggested Strikes panel on the status screen — two boss-aligned directives surfaced daily
+**PATH Protocol**
+- Two tracks: The Chronicler (CV paste) and The Re-Imaginer (four guided questions)
+- Gemini Call 2 fires on submission — one bundled call produces three career path cards, gap analysis, hidden affinity stat, career skill tracks, stat explainers, initial directives, and initial encounters
+- Best Path Signal — evidence density scoring ranks the three paths; the highest-confidence path is badged and named in SYD's voice line
+- Role mapping — three rounds of selection confirm the operative's path, target role, and specialisation
+- Rank confirmation — SYD infers a starting rank from CV signals; the operative corrects it if needed
+- Synthesis reveal — SYD's read on the operative's record, personalised to their confirmed path
+- Signal Translation Kit — CV bullets reframed in the language of their current and target roles, ready to paste
+
+**Career skills**
+- Up to five named career skill tracks, seeded from Gemini Call 2
+- Each track shows score, soft cap by rank, and stat mapping
+- Tracks grow from career directives, career encounters, and passive stat-matched directives
+- Soft cap rises when the operative crosses to the next rank tier
+
+**Encounters**
+- Daily professional judgment scenarios — domain-specific, calibrated to the operative's confirmed path
+- Two types: judgment (Gemini evaluates the operative's reasoning) and teaching (pre-written expert read)
+- Two-step flow: choose a response, then explain the reasoning behind it
+- Neural Link active: Gemini evaluates judgment encounters and acknowledges free-text responses on teaching encounters
+
+**Psychometric scan (GAMES)**
+- Eight mini-games that measure seven cognitive and behavioural traits
+- Traits feed directly into stat seeding at PATH completion
+- Trait Signals visible on the STATUS screen from Level 1
+
+**JOB OPS**
+- Three panels: Profile, Market Read, and Job Hunt
+- Profile: AI-generated CV draft, professional summary, role reframes for current and target roles
+- Market Read: live demand signal, skill shifts, adjacent opportunities, Next Moves queue, Where To Be Present queue — both queues are completable Market Directives
+- Job Hunt: intent toggle (Actively Hunting / Building Toward a Move / Growing in Place), search strings, LinkedIn headline formula, keywords, community recommendations
+- All panels refresh on demand with a 1-hour rate limit
 
 **Neural Link**
-- Connect an AI processor key (Gemini, OpenAI, or Anthropic) to unlock generative features
-- Incursion Seeds — paste a real-world plan and the System generates a structured mission with a timer, objective, and threat classification
-- World Boss generation — AI translates a goal statement into a full threat profile
+- Connect a Gemini, OpenAI, or Anthropic key to unlock generative features
+- Powers PATH Protocol (Call 2), career encounters, market signal (Call 3), job ops profile and market (Calls A and B), and career content refresh (Call 4)
 - Behavioural Trace — journal your day and the System identifies patterns, assesses stat alignment, and generates a follow-up directive
 - All keys stored locally only — never transmitted to any SYD server
 
 **Infrastructure**
-- Cloud persistence via an 8-character Save Frequency code — ghost by default, syncing is a deliberate operator choice
+- Cloud persistence via an 8-character Frequency code — ghost by default, syncing is a deliberate operative choice
 - Automatic pull-on-foreground — when the app returns to focus, it checks for a newer cloud state and reloads silently if one exists
-- Manual pull via Settings > Sync — force-syncs from cloud on demand; recommended on iOS PWA where automatic sync may not trigger
-- Sync-Link co-op tether — two operators share a Sync-ID; simultaneous directive completion triggers Resonance, doubling XP for that event
-- Referral network — 50 Gold paid automatically when a recruit awakens
-- PWA — installable on iOS, Android, and desktop; works offline; install button accessible via Settings > System
+- Manual pull via Settings > Sync — recommended on iOS PWA where automatic sync may not trigger
+- Sync-Link co-op tether — two operatives share a Sync-ID; simultaneous directive completion triggers Resonance, doubling XP for that event
+- PWA — installable on iOS, Android, and desktop; works offline
 - Push notification re-engagement after three days of inactivity
-- Service Worker with network-first strategy and auto-update broadcast to connected clients
+- Service Worker with network-first strategy for HTML, CSS, and JS; cache-first for static assets
 
 **Settings**
-- Tabbed settings screen: System (designation, operator profile, gear, sound, install), Neural Link (AI config), Sync (cloud and co-op), and Danger Zone (wipe profile)
-- Operator profile field — contextual data the AI uses to personalise incursions and boss assessments
-- Install button in System tab — anchors the terminal to the device for offline access; falls back to browser share menu instructions on iOS
+- Tabbed settings: System (designation, gear, sound, install), Neural Link (AI config and operator profile), Sync (cloud and co-op), and Danger Zone (wipe profile)
+- Operator profile field — contextual data the AI uses to personalise career content
+- Install button — anchors the terminal to the device for offline access
 
 ---
 
@@ -105,7 +132,8 @@ The result is a system where the longer you play, the more the game resembles th
 |---|---|
 | Framework | None — vanilla JS, HTML, CSS |
 | Storage | `localStorage` (local) + Firebase Firestore (cloud, opt-in) |
-| Audio | Web Audio API — four-layer ambient system + co-op heartbeat layer |
+| AI | Gemini API (primary) — OpenAI and Anthropic supported |
+| Audio | Web Audio API — ambient system + co-op heartbeat layer |
 | Offline | Service Worker with network-first strategy for app shell |
 | Install | PWA — installable on iOS, Android, desktop |
 | Notifications | Push via Service Worker |
@@ -116,56 +144,59 @@ No bundler. No accounts required. The terminal runs anywhere a browser runs.
 ---
 
 ## File structure
-
-```
 terminal/
-├── index.html              # Single-page shell, all screens and overlays
-├── manifest.json           # PWA manifest
-├── service-worker.js       # Cache + notification + update broadcast worker
+├── index.html                  # Single-page shell, all screens and overlays
+├── manifest.json               # PWA manifest
+├── service-worker.js           # Cache + notifications + update broadcast
 ├── css/
-│   └── style.css           # Full design system
+│   ├── style.css               # Design tokens, reset, global layout, shared utilities
+│   ├── encounter.css           # Encounter screen styles (enc-)
+│   ├── path.css                # PATH Protocol and onboarding styles (path-, role-, ms-)
+│   ├── status.css              # STATUS screen styles (sot-, stats-, cs-, jl-)
+│   ├── job-ops.css             # JOB OPS panel styles (jo-, jo-mdir-)
+│   └── games-enhanced.css      # Mini-game visual enhancement layer
 ├── js/
-│   ├── app.js              # All game logic
-│   └── quests.js           # Quest pool rendering and selection
+│   ├── app.js                  # Core engine — player state, XP, stats, Exposure
+│   ├── path.js                 # PATH Protocol — CV analysis, role mapping, Call 2
+│   ├── encounter.js            # Encounter logic — judgment and teaching types
+│   ├── job-ops.js              # JOB OPS — Profile, Market Read, Job Hunt panels
+│   ├── status.js               # STATUS and OPS tab renderers
+│   ├── scan.js                 # Psychometric scan game logic
+│   ├── minigames.js            # Mini-games (CASCADE, ECHO, DRIFT, FLOW, RESONANCE)
+│   ├── dailyloop.js            # Daily loop — morning transmission, close-of-day, decay
+│   ├── quests.js               # Directive pool rendering and selection
+│   └── gemini.js               # All Gemini API call wrappers
 ├── data/
-│   └── quests.json         # Daily directive pool (110 directives across 3 tiers)
+│   ├── quests.json             # Daily directive pool (110 directives across 3 tiers)
+│   └── encounters.json         # Encounter pool
 └── icons/
-    ├── icon-192.png
-    └── icon-512.png
-```
+├── icon-192.png
+└── icon-512.png
 
 ---
 
-## Future considerations — building toward a real-world OP levelling system
+## Future considerations
 
-SYD currently lives in a browser. The long-term vision is something closer to an operating layer for real life — a system that meets you in the physical world, not just on a screen.
+**Fitness Protocol**
+An optional physical baseline scan — 6–8 indirect questions that assign a Fitness Rank (F through A). Generates pre-authored physical directives calibrated to that rank: walking cadences and static holds at F/E, push-up progressions and bodyweight work at D/C, complex movement combinations at B/A. Directives map to existing stats (Endurance, Strength, Agility) rather than creating new ones. Web Speech API reads form descriptions aloud so the operative can listen while in position. Opt-in placement after onboarding for new users, accessible from OPS for returning users.
 
 **Augmented Reality interface**
-The natural next frontier is AR: an operator says "Status" and the System appears — overlaid on the world, not locked behind a phone. A heads-up display showing live stat bars, active directive count, Momentum decay rate, and World Boss HP. Wearables — smart glasses, AR headsets, or even future contact lens displays — could link to the SYD backend and surface the terminal without breaking the flow of physical activity. The goal is a system that is present during effort, not only consulted before or after it.
-
-**VR integration**
-For deep work and deliberate practice sessions, a VR environment could serve as a full System terminal — an immersive space for reviewing stats, setting World Bosses, reviewing Behavioural Trace output, and planning the next operational cycle. Less a game world, more a command centre.
+An operator says "Status" and the System appears — overlaid on the world. A heads-up display showing live stat bars, active directive count, Momentum decay rate, and Job Luck tier. Wearables — smart glasses, AR headsets — link to the SYD backend and surface the terminal without breaking the flow of physical activity.
 
 **Biometric input**
-Currently SYD tracks only self-reported execution. The next layer is hardware-verified execution: heart rate data confirming a run happened, sleep tracking feeding directly into Endurance and HP recovery, HRV data informing Momentum state. Wearable APIs (Garmin, Apple Watch, Whoop, Oura) could feed raw behavioural data into the System and remove self-reporting as the single point of trust.
+Hardware-verified execution: heart rate data confirming a run happened, sleep tracking feeding Endurance and Capacity recovery, HRV informing Momentum state. Wearable APIs (Garmin, Apple Watch, Whoop, Oura) feed raw behavioural data into the System and remove self-reporting as the single point of trust.
 
 **Persistent world layer**
-World Bosses as shared social objects — not just personal goals, but publicly declared obstacles that allies can observe, contribute strikes toward, and celebrate the defeat of. A public bulletin board of active raids on the World Map. Real-world events (a marathon, a product launch, a public performance) as time-boxed Temporal Rifts with a countdown and shared directive pools.
+World Bosses as shared social objects — publicly declared obstacles that allies can observe and contribute strikes toward. Real-world events as time-boxed Temporal Rifts with a countdown and shared directive pools.
 
 **Operator network and factions**
-Beyond Sync-Link's two-player tether — guilds, factions, and coordinated multi-operator operations. Faction leaderboards by aggregate XP, shared stat thresholds that unlock faction-level rewards, and asymmetric co-op roles where different operators contribute different stat types toward a shared objective.
+Beyond Sync-Link's two-player tether — guilds, factions, coordinated multi-operator operations. Faction leaderboards by aggregate XP, shared stat thresholds that unlock faction-level rewards.
 
 **Adaptive directive generation**
-As Neural Link matures, the AI layer could generate directives dynamically from the operator's Behavioural Trace, calendar data, or declared goals — replacing static quest pools with a personalised directive stream that evolves with the operator's level, current weaknesses, and active World Bosses.
-
-**Offline-first physical artefacts**
-Printed operator cards, stat sheets, or physical journals that sync via QR or NFC when brought near a device — for operators who want a tactile layer alongside the digital one. The System as object, not just interface.
+Neural Link generates directives dynamically from the operative's Behavioural Trace, calendar data, and declared goals — replacing static quest pools with a personalised directive stream that evolves with the operator's level, current weaknesses, and active World Bosses.
 
 **Telegram notification layer**
-A Telegram bot that acts as the System's external comms channel — reaching the operator outside the terminal with a morning briefing and an end-of-day check-in. The operator links their Telegram account with a single tap via a frequency-coded deep link; no manual entry required. Escalating re-engagement if the operator goes dark, similar to Duolingo's streak-shame mechanic. Built on the Telegram Bot API against a lightweight serverless backend reading from Firestore — free to operate at any realistic indie scale.
-
-**Operator journal**
-A daily log screen where the operator records what happened in plain language — what they executed, what blocked them, what they intend differently tomorrow. Research on expressive writing (Pennebaker, 1997) shows meaningful psychological benefit from as few as three focused sentences. Journal entries stored locally and synced; when Neural Link is active, entries feed into the Behavioural Trace for AI pattern analysis and follow-up directive generation.
+A Telegram bot acting as SYD's external comms channel — morning briefing and end-of-day check-in. The operative links their account with a single tap via a frequency-coded deep link. Escalating re-engagement if the operative goes dark. Built on the Telegram Bot API against a lightweight serverless backend reading from Firestore.
 
 ---
 
@@ -183,12 +214,12 @@ SYD is open to contributions, particularly in areas that make the system more en
 
 The highest-value areas are:
 
-- **Game design** — directives, incursions, and world bosses that feel more alive, varied, and genuinely challenging to real-world behaviour
+- **Directive and encounter content** — well-written directives and encounter scenarios that fit SYD's voice and target real behavioural change
+- **Career domain coverage** — expanding the domain signals in `extractCVSignals()` and the local fallback path library in `path.js`
 - **Performance** — keeping the terminal fast on low-end devices and slow mobile networks; no bloat, no unnecessary dependencies
-- **Accessibility** — making the terminal work for as many operators as possible
-- **Quest content** — well-written directives that fit the System voice and target real behavioural change
+- **Accessibility** — making the terminal work for as many operatives as possible
 
-If you're contributing code, please read the technical stack section first. SYD has no build tools and no framework by design — contributions must respect that constraint. Open a discussion before starting large changes so effort isn't wasted.
+If you're contributing code, please read the technical stack section first. SYD has no build tools and no framework by design — contributions must respect that constraint. Open a discussion before starting large changes so effort is not wasted.
 
 ---
 

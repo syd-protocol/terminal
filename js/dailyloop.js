@@ -587,6 +587,10 @@ function initDailyLoop() {
     // Mid-day nudge: passive check on open
     checkMidDayNudge();
 
+    // Exposure decay: silently reduces Job Luck if operative has gone
+    // quiet in the market beyond the grace period. Defined in app.js.
+    if (typeof applyExposureDecay === 'function') applyExposureDecay();
+
     // Schedule midnight close-of-day check
     scheduleMidnightCheck();
 }
