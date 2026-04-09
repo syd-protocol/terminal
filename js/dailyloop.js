@@ -166,6 +166,27 @@ function buildMorningLines() {
         lines.push(`${Math.floor(dayNum / 30)} month${dayNum >= 60 ? 's' : ''} in. The operative you are becoming is not visible yet from the inside.`);
     }
 
+    // Fitness protocol signal
+    if (typeof loadFitness === 'function') {
+        const fitnessData = loadFitness();
+        if (fitnessData && fitnessData.rank) {
+            const fitDirs      = (typeof getTodaysFitnessDirectives === 'function')
+                ? getTodaysFitnessDirectives(fitnessData)
+                : [];
+            const fitCompleted = fitDirs.filter(d =>
+                (fitnessData.completedIds || []).includes(d.id)
+            ).length;
+            const fitTotal     = fitDirs.length;
+            if (fitTotal > 0) {
+                if (fitCompleted === fitTotal) {
+                    lines.push(`FITNESS: ${fitTotal} directive${fitTotal !== 1 ? 's' : ''} complete.`);
+                } else {
+                    lines.push(`FITNESS: ${fitCompleted} of ${fitTotal} directive${fitTotal !== 1 ? 's' : ''} done.`);
+                }
+            }
+        }
+    }
+
     lines.push('');
     lines.push(`[ ${totalToday} DIRECTIVE${totalToday !== 1 ? 'S' : ''} QUEUED FOR TODAY ]`);
 

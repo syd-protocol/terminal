@@ -112,17 +112,18 @@ const FITNESS_QUESTIONS = [
         placeholder: 'Describe your condition, injury, or limitation here. Be as specific as you like — SYD will use this to modify your directives.'
     },
     {
-        id:      'goal',
-        q:       'What would you like the Fitness Protocol to help you with?',
-        hint:    'This shapes which directives SYD surfaces first.',
-        type:    'choice',
+        id:          'goal',
+        q:           'What would you like the Fitness Protocol to help you with?',
+        hint:        'Pick the closest option. Then describe your actual goal in your own words below — SYD uses this to shape which directives you see.',
+        type:        'goal',
         options: [
             { id: 'goal_energy',    text: 'Feel less physically tired day to day'  },
             { id: 'goal_strength',  text: 'Build basic strength'                   },
             { id: 'goal_mobility',  text: 'Improve movement and flexibility'       },
             { id: 'goal_general',   text: 'General fitness — no specific goal'     },
             { id: 'goal_none',      text: 'No goal — just track what I do'        }
-        ]
+        ],
+        placeholder: 'Optional — describe your goal in your own words. e.g. "I want to lose belly fat", "I want to run without getting winded", "My back hurts when I sit all day"'
     }
 ];
 
@@ -148,6 +149,86 @@ const GOAL_STAT_WEIGHT = {
     goal_general:  null,   // balanced — no weight
     goal_none:     null
 };
+
+// ─── GOAL FREE TEXT PARSING ───────────────────────────────────
+// Maps keywords in the goal free text to a primary stat weight.
+// Used as local fallback when Gemini is unavailable.
+// Returns: { primaryStat, voiceLine } or null if no signal found.
+const GOAL_KEYWORD_MAP = [
+    {
+        keywords: ['run', 'cardio', 'breath', 'winded', 'stamina', 'fat', 'weight',
+                   'belly', 'tummy', 'stomach', 'slim', 'lose', 'tired', 'energy',
+                   'endurance', 'aerobic'],
+        stat:      'endurance',
+        voiceLine: 'Signal read: endurance. Directives weighted toward sustained output and cardio work — the primary driver for your goal.'
+    },
+    {
+        keywords: ['strong', 'strength', 'muscle', 'lift', 'push', 'weak', 'arms',
+                   'chest', 'upper body', 'build', 'tone', 'defined'],
+        stat:      'strength',
+        voiceLine: 'Signal read: strength. Directives weighted toward progressive loading — build the base before the definition follows.'
+    },
+    {
+        keywords: ['flexible', 'stiff', 'mobility', 'stretch', 'posture', 'back',
+                   'hip', 'sit', 'desk', 'pain', 'ache', 'joint', 'tight', 'move'],
+        stat:      'agility',
+        voiceLine: 'Signal read: mobility. Directives weighted toward movement quality — fixing how you move is the fastest path to feeling better.'
+    }
+];
+
+function parseGoalFreeText(text) {
+    if (!text || text.trim().length < 3) return null;
+    const lower = text.toLowerCase();
+    const scores = GOAL_KEYWORD_MAP.map(entry => ({
+        stat:      entry.stat,
+        voiceLine: entry.voiceLine,
+        hits:      entry.keywords.filter(kw => lower.includes(kw)).length
+    }));
+    const best = scores.reduce((a, b) => b.hits > a.hits ? b : a);
+    return best.hits > 0 ? { primaryStat: best.stat, voiceLine: best.voiceLine } : null;
+}
+
+async function processGoalWithGemini(goalFreeText, goalKey, fitnessRank) {
+    if (!goalFreeText || goalFreeText.trim().length < 5) return null;
+    if (typeof hasNeuralLink !== 'function' || !hasNeuralLink()) return null;
+
+    const rankLabel = FITNESS_RANK_LABELS[fitnessRank] || fitnessRank;
+    const prompt = `
+You are SYD — a physical training intelligence system. An operative has described their fitness goal in their own words:
+
+"${goalFreeText}"
+
+Their current Fitness Rank is ${rankLabel}.
+
+Your task: return a JSON object with exactly two fields:
+{
+  "primaryStat": "endurance" | "strength" | "agility",
+  "voiceLine": "One sentence in SYD's voice confirming what signal was read and what it means for their directives. Clipped, honest, no softening. Max 20 words."
+}
+
+Rules:
+- primaryStat must be one of the three exact strings above.
+- "lose belly fat", "lose weight", "slim down" → endurance (fat loss is systemic, driven by sustained cardio output).
+- "run", "cardio", "breath", "stamina" → endurance.
+- "build muscle", "get stronger", "tone up" → strength.
+- "back pain", "stiff", "sit all day", "posture", "flexibility" → agility.
+- If the goal is genuinely ambiguous, return the stat that best matches their selected category: ${goalKey}.
+
+Return ONLY the JSON object. No preamble. No markdown.
+`.trim();
+
+    try {
+        const result = await geminiGenerate(prompt, 0.1);
+        if (result && result.ok && result.text) {
+            const clean = result.text.replace(/```json|```/g, '').trim();
+            const parsed = JSON.parse(clean);
+            if (parsed.primaryStat && parsed.voiceLine) return parsed;
+        }
+    } catch(e) {
+        console.warn('[SYD] Goal Gemini parse failed:', e);
+    }
+    return null;
+}
 
 // ─── CONDITION TAG KEYWORDS ───────────────────────────────────
 // If conditions free text contains these keywords, tag the fitness
@@ -599,61 +680,177 @@ function getFitnessDirectivesForRank(rank, conditionTags) {
     });
 }
 
-// Returns today's fitness directives — 2 per day, varied by date seed.
-// Prefers the operative's goal stat if set.
+// Returns today's fitness directives — 2 per day (1 main + 1 stretch), date-seeded.
+// Uses resolvedStat (from goal free text) over goalKey mapping when available.
+// Daily assignment is stored in fitnessData.assignedToday so the same pair
+// shows all day even after individual directives are marked done.
 function getTodaysFitnessDirectives(fitnessData) {
     if (!fitnessData || !fitnessData.rank) return [];
 
+    const todayStr     = (typeof today === 'function') ? today() : new Date().toISOString().slice(0, 10);
+    const allDirectives = _getFitnessDirectivesSync();
+
+    // If today's directives are already assigned, return them directly
+    if (fitnessData.lastAssignedDate === todayStr && (fitnessData.assignedToday || []).length > 0) {
+        return (fitnessData.assignedToday || [])
+            .map(id => allDirectives.find(d => d.id === id))
+            .filter(Boolean);
+    }
+
+    // Otherwise pick fresh directives for today
     const rank         = fitnessData.rank;
     const condTags     = fitnessData.conditionTags || [];
-    const goalStat     = GOAL_STAT_WEIGHT[fitnessData.goalKey] || null;
+    // resolvedStat from goal free text takes priority over goalKey mapping
+    const goalStat     = fitnessData.resolvedStat || GOAL_STAT_WEIGHT[fitnessData.goalKey] || null;
     const completedIds = fitnessData.completedIds || [];
 
     const pool = getFitnessDirectivesForRank(rank, condTags);
     if (pool.length === 0) return [];
 
-    const dateNum = parseInt((typeof today === 'function' ? today() : new Date().toISOString().slice(0, 10)).replace(/-/g, ''), 10);
+    const dateNum = parseInt(todayStr.replace(/-/g, ''), 10);
     const pick    = (arr, offset) => arr.length > 0 ? arr[(dateNum + offset) % arr.length] : null;
 
     // ── Always pick one stretch ────────────────────────────────
-    const stretches         = pool.filter(d => d.category === 'stretch');
+    const stretches           = pool.filter(d => d.category === 'stretch');
     const incompleteStretches = stretches.filter(d => !completedIds.includes(d.id));
-    const stretchPick       = pick(incompleteStretches.length > 0 ? incompleteStretches : stretches, 2);
+    const stretchPick         = pick(incompleteStretches.length > 0 ? incompleteStretches : stretches, 2);
 
     // ── Pick main directive (non-stretch, goal-weighted) ───────
-    const mainPool     = pool.filter(d => d.category !== 'stretch');
-    const incomplete   = mainPool.filter(d => !completedIds.includes(d.id));
-    const goalAligned  = incomplete.filter(d => goalStat && d.stat === goalStat);
-    const other        = incomplete.filter(d => !goalStat || d.stat !== goalStat);
-    const mainPick     = goalAligned.length > 0 ? pick(goalAligned, 0) : pick(other, 0);
+    const mainPool    = pool.filter(d => d.category !== 'stretch');
+    const incomplete  = mainPool.filter(d => !completedIds.includes(d.id));
+    const goalAligned = incomplete.filter(d => goalStat && d.stat === goalStat);
+    const other       = incomplete.filter(d => !goalStat || d.stat !== goalStat);
+    const mainPick    = goalAligned.length > 0 ? pick(goalAligned, 0) : pick(other, 0);
 
-    return [mainPick, stretchPick].filter(Boolean);
+    const assigned = [mainPick, stretchPick].filter(Boolean);
+
+    // Persist today's assignment so it stays stable all day
+    fitnessData.lastAssignedDate = todayStr;
+    fitnessData.assignedToday    = assigned.map(d => d.id);
+    if (typeof saveFitness === 'function') saveFitness(fitnessData);
+
+    return assigned;
 }
 
 // ─── WEB SPEECH API ───────────────────────────────────────────
+const FITNESS_VOICE_KEY = 'syd_fitness_voice';
 let _speechActive = false;
+
+function _getFitnessVoiceSettings() {
+    try { return JSON.parse(localStorage.getItem(FITNESS_VOICE_KEY) || '{}'); }
+    catch(e) { return {}; }
+}
+
+function _saveFitnessVoiceSettings(s) {
+    localStorage.setItem(FITNESS_VOICE_KEY, JSON.stringify(s));
+}
+
+// Transforms text for paced guided-exercise reading.
+// Applied only to the speech string — stored/displayed text is never modified.
+function _paceTextForSpeech(text) {
+    return text
+        .replace(/\. /g,        '... ')
+        .replace(/ — /g,        '... ')
+        .replace(/\. Then /g,   '... Then ')
+        .replace(/\. Keep /g,   '... Keep ')
+        .replace(/\. Your /g,   '... Your ')
+        .replace(/\. Do not /g, '... Do not ')
+        .replace(/\. Lower /g,  '... Lower ')
+        .replace(/\. Press /g,  '... Press ')
+        .replace(/\. Breathe /g,'... Breathe ')
+        .replace(/\. Hold /g,   '... Hold ');
+}
 
 function readFormDescription(text) {
     if (!window.speechSynthesis || !text) return;
 
-    // Cancel any active speech first
     window.speechSynthesis.cancel();
 
     if (_speechActive) {
         _speechActive = false;
-        return; // Toggle off if already speaking
+        return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate   = 0.92;
-    utterance.pitch  = 1.0;
+    const settings  = _getFitnessVoiceSettings();
+    const paced     = _paceTextForSpeech(text);
+    const utterance = new SpeechSynthesisUtterance(paced);
+    utterance.rate   = settings.rate  ?? 0.78;
+    utterance.pitch  = settings.pitch ?? 0.95;
     utterance.volume = 1.0;
+
+    if (settings.voiceName) {
+        const voices = window.speechSynthesis.getVoices();
+        const match  = voices.find(v => v.name === settings.voiceName);
+        if (match) utterance.voice = match;
+    }
 
     utterance.onstart = () => { _speechActive = true; };
     utterance.onend   = () => { _speechActive = false; };
     utterance.onerror = () => { _speechActive = false; };
 
     window.speechSynthesis.speak(utterance);
+}
+
+// ─── VOICE PICKER ─────────────────────────────────────────────
+function _renderVoicePicker(container, fitnessData) {
+    const voices   = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+    const settings = _getFitnessVoiceSettings();
+    const preview  = 'Feet flat on the floor... press through your heels... hold for two full seconds.';
+
+    const voiceRows = voices.length > 0
+        ? voices.map(v => `
+            <button class="fp-scan-opt ${settings.voiceName === v.name ? 'fp-scan-opt--selected' : ''}"
+                data-voice-name="${v.name.replace(/"/g, '&quot;')}">
+                ${v.name}${v.localService ? '' : ' ↗'}
+            </button>`).join('')
+        : `<p class="fp-result-body" style="opacity:0.6;">No English voices found on this device.</p>`;
+
+    container.innerHTML = `
+        <div class="fp-all-wrap">
+            <button class="fp-back-btn" id="fp-voice-back">← BACK</button>
+            <p class="fp-all-label">[ VOICE SETTINGS ]</p>
+            <p class="fp-all-sub">Choose the voice SYD uses to read exercise instructions aloud.</p>
+            <div class="fp-scan-opts" style="margin-bottom:20px;">${voiceRows}</div>
+            <p class="fp-all-sub" style="margin-bottom:8px;">Reading speed</p>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+                <span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-secondary);">SLOW</span>
+                <input type="range" id="fp-rate-slider" min="0.5" max="1.1" step="0.05"
+                    value="${settings.rate ?? 0.78}" style="flex:1;">
+                <span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-secondary);">FAST</span>
+            </div>
+            <button class="btn btn--secondary" id="fp-voice-preview">[ PREVIEW ]</button>
+        </div>
+    `;
+
+    container.querySelectorAll('.fp-scan-opt[data-voice-name]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            playUIClick();
+            container.querySelectorAll('.fp-scan-opt[data-voice-name]')
+                .forEach(b => b.classList.remove('fp-scan-opt--selected'));
+            btn.classList.add('fp-scan-opt--selected');
+            const s = _getFitnessVoiceSettings();
+            s.voiceName = btn.dataset.voiceName;
+            _saveFitnessVoiceSettings(s);
+        });
+    });
+
+    const rateSlider = document.getElementById('fp-rate-slider');
+    if (rateSlider) {
+        rateSlider.addEventListener('input', () => {
+            const s = _getFitnessVoiceSettings();
+            s.rate = parseFloat(rateSlider.value);
+            _saveFitnessVoiceSettings(s);
+        });
+    }
+
+    document.getElementById('fp-voice-preview').addEventListener('click', () => {
+        readFormDescription(preview);
+    });
+
+    document.getElementById('fp-voice-back').addEventListener('click', () => {
+        playUIClick();
+        _renderFitnessActive(container, fitnessData);
+    });
 }
 
 // ─── OPS SEGMENT ENTRY POINT ──────────────────────────────────
@@ -729,6 +926,20 @@ function _renderFitnessScanQuestion(container, idx) {
             <textarea class="fp-scan-textarea" id="fp-scan-freetext"
                 placeholder="${q.placeholder || ''}"
                 maxlength="400">${_fitScanAnswers[q.id] || ''}</textarea>
+        `;
+    } else if (q.type === 'goal') {
+        optionsHTML = q.options.map(opt => `
+            <button class="fp-scan-opt ${_fitScanAnswers[q.id] === opt.id ? 'fp-scan-opt--selected' : ''}"
+                data-opt-id="${opt.id}" data-q-id="${q.id}">
+                ${opt.text}
+            </button>
+        `).join('');
+        optionsHTML += `
+            <div class="fp-conditions-text-wrap" style="margin-top:8px;">
+                <textarea class="fp-scan-textarea" id="fp-goal-freetext"
+                    placeholder="${q.placeholder || ''}"
+                    maxlength="300">${_fitScanAnswers['goal_text'] || ''}</textarea>
+            </div>
         `;
     } else if (q.type === 'conditions') {
         optionsHTML = q.options.map(opt => `
@@ -809,6 +1020,9 @@ function _renderFitnessScanQuestion(container, idx) {
             if (q.type === 'freetext') {
                 const ta = document.getElementById('fp-scan-freetext');
                 _fitScanAnswers[q.id] = ta ? ta.value.trim() : '';
+            } else if (q.type === 'goal') {
+                const ta = document.getElementById('fp-goal-freetext');
+                if (ta) _fitScanAnswers['goal_text'] = ta.value.trim();
             } else if (q.type === 'conditions') {
                 const ta = document.getElementById('fp-conditions-freetext');
                 if (ta) _fitScanAnswers['conditions_text'] = ta.value.trim();
@@ -849,10 +1063,26 @@ async function _processFitnessScan(container) {
         if (option && typeof option.score === 'number') score += option.score;
     });
 
-    const rank          = deriveFitnessRank(score);
-    const goalKey       = _fitScanAnswers['goal'] || 'goal_general';
+    const rank           = deriveFitnessRank(score);
+    const goalKey        = _fitScanAnswers['goal'] || 'goal_general';
+    const goalFreeText   = _fitScanAnswers['goal_text'] || '';
     const conditionsText = _fitScanAnswers['conditions_text'] || '';
     const conditionTags  = detectLocalConditionTags(conditionsText);
+
+    // ── Process goal free text ─────────────────────────────────
+    // Try Gemini first, fall back to local keyword parsing.
+    // Result: resolved primaryStat overrides goalKey weighting.
+    let goalSignal = null;
+    if (goalFreeText.length > 4) {
+        goalSignal = await processGoalWithGemini(goalFreeText, goalKey, rank);
+        if (!goalSignal) {
+            goalSignal = parseGoalFreeText(goalFreeText);
+        }
+    }
+    // Resolved stat: from goal free text signal, else from goalKey mapping
+    const resolvedStat = (goalSignal && goalSignal.primaryStat)
+        || GOAL_STAT_WEIGHT[goalKey]
+        || null;
 
     // ── Gemini: process conditions if available ────────────────
     let modNote = null;
@@ -866,19 +1096,19 @@ async function _processFitnessScan(container) {
     }
 
     // ── Local interpretation: recent activity ─────────────────
-    // Parse the free-text recent activity field for recency signals.
-    // If the operative has been inactive for a significant time, note it.
-    const recentText  = (_fitScanAnswers['recent'] || '').toLowerCase();
+    const recentText   = (_fitScanAnswers['recent'] || '').toLowerCase();
     const longInactive = recentText.includes('week') || recentText.includes('month') ||
                          recentText.includes('year')  || recentText.includes('nothing') ||
-                         recentText.includes('don\'t') || recentText.includes('havent') ||
+                         recentText.includes("don't") || recentText.includes('havent') ||
                          recentText.includes("haven't");
-    if (longInactive && rank === 'F' || longInactive && rank === 'E') {
+    if ((longInactive && rank === 'F') || (longInactive && rank === 'E')) {
         modNote = (modNote ? modNote + ' ' : '') +
             'Extended inactivity detected. Your first week of directives will be Tier 0 only — build the pattern before the load.';
     }
 
-    // ── Local interpretation: goal voice line ──────────────────
+    // ── Goal voice line ────────────────────────────────────────
+    // Use Gemini/local signal voice line if goal free text was provided,
+    // otherwise fall back to the standard key-based line.
     const GOAL_VOICE_LINES = {
         goal_energy:   'Directives weighted toward endurance — sustained output builds daily energy.',
         goal_strength: 'Directives weighted toward strength — load accumulates over time.',
@@ -886,18 +1116,23 @@ async function _processFitnessScan(container) {
         goal_general:  'Balanced directive pool — no single stat weighted.',
         goal_none:     'Full directive pool available. No weighting applied.'
     };
-    const goalVoiceLine = GOAL_VOICE_LINES[goalKey];
+    const goalVoiceLine = (goalSignal && goalSignal.voiceLine)
+        || GOAL_VOICE_LINES[goalKey];
 
     // ── Save fitness data ──────────────────────────────────────
     const fitnessData = {
         rank,
         score,
         goalKey,
+        goalFreeText,
+        resolvedStat,
         goalVoiceLine,
         conditionsText,
         conditionTags,
         modNote,
         completedIds:   [],
+        lastAssignedDate: '',
+        assignedToday:    [],
         scanDate: (typeof today === 'function') ? today() : new Date().toISOString().slice(0, 10)
     };
 
@@ -953,12 +1188,15 @@ function _renderFitnessActive(container, fitnessData) {
     const rankLabel    = FITNESS_RANK_LABELS[fitnessData.rank] || fitnessData.rank;
     const todayDirs    = getTodaysFitnessDirectives(fitnessData);
     const completedIds = fitnessData.completedIds || [];
-
-    const dirsHTML = todayDirs.length > 0
-        ? todayDirs.map(d => _buildFitnessDirectiveCard(d, completedIds)).join('')
-        : `<p class="fp-empty-msg">All available directives for your rank have been completed. Great work — return tomorrow for the next set, or rescan to update your rank.</p>`;
-
+    const allDone      = todayDirs.length > 0 &&
+                         todayDirs.every(d => completedIds.includes(d.id));
     const speechAvailable = typeof window !== 'undefined' && !!window.speechSynthesis;
+
+    const dirsHTML = allDone
+        ? `<p class="fp-empty-msg" style="color:#66bb6a;opacity:0.9;">Protocol complete. Return tomorrow for your next directives.</p>`
+        : todayDirs.length > 0
+            ? todayDirs.map(d => _buildFitnessDirectiveCard(d, completedIds)).join('')
+            : `<p class="fp-empty-msg">No directives assigned yet. Tap RESCAN to calibrate.</p>`;
 
     container.innerHTML = `
         <div class="fp-active-wrap">
@@ -967,7 +1205,10 @@ function _renderFitnessActive(container, fitnessData) {
                     <p class="fp-active-label">[ FITNESS PROTOCOL ]</p>
                     <p class="fp-active-rank">${fitnessData.rank} &mdash; ${rankLabel}</p>
                 </div>
-                <button class="fp-rescan-btn" id="fp-rescan-btn">RESCAN →</button>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    ${speechAvailable ? `<button class="fp-rescan-btn" id="fp-voice-btn">VOICE</button>` : ''}
+                    <button class="fp-rescan-btn" id="fp-rescan-btn">RESCAN</button>
+                </div>
             </div>
 
             ${fitnessData.modNote ? `
@@ -976,13 +1217,11 @@ function _renderFitnessActive(container, fitnessData) {
                 </div>
             ` : ''}
 
-            ${!speechAvailable ? '' : `<p class="fp-speech-note">Tap &#x1F50A; on any directive to have SYD read the form description aloud.</p>`}
+            ${speechAvailable && !allDone ? `<p class="fp-speech-note">Tap &#x1F50A; on any directive to hear the form description read aloud.</p>` : ''}
 
             <div class="fp-directives-list">
                 ${dirsHTML}
             </div>
-
-            <button class="fp-view-all-btn" id="fp-view-all-btn">[ VIEW ALL AVAILABLE DIRECTIVES ]</button>
         </div>
     `;
 
@@ -990,8 +1229,7 @@ function _renderFitnessActive(container, fitnessData) {
     container.querySelectorAll('.fp-complete-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             playUIClick();
-            const id = btn.dataset.dirId;
-            _completeFitnessDirective(id, container);
+            _completeFitnessDirective(btn.dataset.dirId, container);
         });
     });
 
@@ -999,10 +1237,22 @@ function _renderFitnessActive(container, fitnessData) {
     container.querySelectorAll('.fp-speech-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const text = btn.dataset.formDesc;
-            readFormDescription(text);
+            readFormDescription(btn.dataset.formDesc);
         });
     });
+
+    // Wire voice picker
+    const voiceBtn = document.getElementById('fp-voice-btn');
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', () => {
+            playUIClick();
+            if (window.speechSynthesis.getVoices().length === 0) {
+                window.speechSynthesis.onvoiceschanged = () => _renderVoicePicker(container, fitnessData);
+            } else {
+                _renderVoicePicker(container, fitnessData);
+            }
+        });
+    }
 
     // Wire rescan
     const rescanBtn = document.getElementById('fp-rescan-btn');
@@ -1010,15 +1260,6 @@ function _renderFitnessActive(container, fitnessData) {
         rescanBtn.addEventListener('click', () => {
             playUIClick();
             _renderFitnessScan(container);
-        });
-    }
-
-    // Wire view all
-    const viewAllBtn = document.getElementById('fp-view-all-btn');
-    if (viewAllBtn) {
-        viewAllBtn.addEventListener('click', () => {
-            playUIClick();
-            _renderFitnessAllDirectives(container, fitnessData);
         });
     }
 }
@@ -1072,56 +1313,4 @@ function _completeFitnessDirective(dirId, container) {
 
     // Re-render active panel
     _renderFitnessActive(container, fitnessData);
-}
-
-// ─── ALL DIRECTIVES VIEW ──────────────────────────────────────
-function _renderFitnessAllDirectives(container, fitnessData) {
-    const all          = getFitnessDirectivesForRank(fitnessData.rank, fitnessData.conditionTags || []);
-    const completedIds = fitnessData.completedIds || [];
-
-    const byTier = { 0: [], 1: [], 2: [] };
-    all.forEach(d => { if (byTier[d.tier] !== undefined) byTier[d.tier].push(d); });
-
-    const tierLabel = { 0: 'TIER 0 — FOUNDATIONAL', 1: 'TIER 1 — PROGRESSIVE', 2: 'TIER 2 — DEMANDING' };
-
-    const sections = [0, 1, 2].map(t => {
-        if (byTier[t].length === 0) return '';
-        return `
-            <div class="fp-tier-section">
-                <p class="fp-tier-heading">${tierLabel[t]}</p>
-                ${byTier[t].map(d => _buildFitnessDirectiveCard(d, completedIds)).join('')}
-            </div>
-        `;
-    }).join('');
-
-    container.innerHTML = `
-        <div class="fp-all-wrap">
-            <button class="fp-back-btn" id="fp-all-back">← BACK TO TODAY'S DIRECTIVES</button>
-            <p class="fp-all-label">[ ALL AVAILABLE DIRECTIVES ]</p>
-            <p class="fp-all-sub">${all.length} directive${all.length !== 1 ? 's' : ''} available at your current rank. Filtered for your conditions.</p>
-            ${sections}
-        </div>
-    `;
-
-    // Wire complete buttons
-    container.querySelectorAll('.fp-complete-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            playUIClick();
-            _completeFitnessDirective(btn.dataset.dirId, container);
-        });
-    });
-
-    // Wire speech buttons
-    container.querySelectorAll('.fp-speech-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            readFormDescription(btn.dataset.formDesc);
-        });
-    });
-
-    // Wire back
-    document.getElementById('fp-all-back').addEventListener('click', () => {
-        playUIClick();
-        _renderFitnessActive(container, fitnessData);
-    });
 }

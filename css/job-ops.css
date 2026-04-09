@@ -769,6 +769,30 @@
     padding:        1px 5px;
 }
 
+/* ── JOB OPS — MARKET DIRECTIVE HOW-TO ─────────────────────── */
+.jo-mdir-how-details {
+    margin-top: 6px;
+}
+.jo-mdir-how-summary {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.68rem;
+    letter-spacing: 0.06em;
+    color:          var(--accent);
+    cursor:         pointer;
+    list-style:     none;
+    opacity:        0.75;
+}
+.jo-mdir-how-summary::-webkit-details-marker { display: none; }
+.jo-mdir-how-details[open] .jo-mdir-how-summary { opacity: 1; }
+.jo-mdir-how-text {
+    font-size:   0.82rem;
+    color:       var(--text-secondary);
+    line-height: 1.65;
+    margin:      10px 0 4px;
+    padding-top: 8px;
+    border-top:  1px solid var(--border);
+}
+
 /* ── JOB OPS — CV DISCLAIMER ────────────────────────────────── */
 
 .jo-cv-disclaimer {

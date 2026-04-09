@@ -286,7 +286,8 @@ Include exactly 2 adjacent opportunities. Pick roles that are genuinely reachabl
 "next_moves": [
     {
         "action": "One specific, concrete action the operative can take in the next 30 days.",
-        "effort": "low" | "medium" | "high"
+        "effort": "low" | "medium" | "high",
+        "how": "2-3 sentences: exactly how to execute this. Specific steps — what to open, what to search, what to write. Not principles."
     }
 ]
 Include exactly 3 next moves. Order by effort ascending (lowest first). Each must be specific to their path and rank — not generic career advice. Mix visibility, skill-building, and networking actions.
@@ -825,6 +826,12 @@ function _renderMarketDirectiveQueue(items, sectionLabel, sectionHeading, onComp
                 </div>
                 <p class="jo-mdir-action">${item.action || item.name || ''}</p>
                 ${item.why ? `<p class="jo-mdir-why">${item.why}</p>` : ''}
+                ${item.how ? `
+                    <details class="jo-mdir-how-details">
+                        <summary class="jo-mdir-how-summary">How to do this</summary>
+                        <p class="jo-mdir-how-text">${item.how}</p>
+                    </details>
+                ` : ''}
                 ${!isDone ? `
                     <button class="jo-mdir-complete-btn" data-mdir-id="${item.id}" data-mdir-tier="${tierNum}">
                         [ MARK DONE ]
@@ -958,28 +965,74 @@ function renderJobOpsMarketRead(container) {
             </div>
 
             ${(function() {
-                // Next Moves → completable Tier 1 / Tier 2 market directive queue
-                const rawMoves = market.next_moves || (market.visibility_action ? [{ action: market.visibility_action, effort: 'medium' }] : []);
+                const pathName = (pathData && pathData.confirmedPath && pathData.confirmedPath.path_name) || 'your field';
+                const exposure    = (typeof loadExposure === 'function') ? loadExposure() : { completedIds: [] };
+                const completedIds = exposure.completedIds || [];
+
+                // T0 onboarding items — always shown first until completed.
+                // Low friction, no prior knowledge required, teach the habit.
+                const T0_MOVES = [
+                    {
+                        id:     'md_t0_search',
+                        action: `Search "${pathName}" on LinkedIn and save 3 job postings that feel like a stretch.`,
+                        why:    'Builds pattern recognition for what the role actually requires before you start building toward it.',
+                        how:    `Open LinkedIn Jobs. Search your exact confirmed role title. Filter to your country or Remote. Open 5 to 8 postings. Look for the pattern: which skills appear in almost all of them? What experience level keeps showing up? Save 3 that feel a step above where you are now. You are not applying. You are reading the market.`,
+                        tier:   0
+                    },
+                    {
+                        id:     'md_t0_profile',
+                        action: 'Update your LinkedIn headline to reflect your confirmed path.',
+                        why:    'Your headline is the first thing a recruiter reads. It should name where you are going, not where you have been.',
+                        how:    `Go to your LinkedIn profile. Tap the pencil on your intro section. Rewrite your headline using this format: [What you do] | [What you are building toward] | [One specific thing]. Example: "Product Manager | Building toward CPO | 0 to 1 product launches in fintech". Keep it under 220 characters. No buzzwords like passionate or results-driven.`,
+                        tier:   0
+                    }
+                ];
+                const t0Pending = T0_MOVES.filter(m => !completedIds.includes(m.id));
+
+                // Gemini moves — enforce effort ascending
+                const rawMoves = (market.next_moves || []).slice().sort((a, b) => {
+                    const order = { low: 0, medium: 1, high: 2 };
+                    return (order[a.effort] ?? 1) - (order[b.effort] ?? 1);
+                });
                 const moveItems = rawMoves.map((m, i) => ({
                     id:     'md_move_' + i + '_' + (market.cachedAt || 'x').replace(/-/g, ''),
                     action: m.action || '',
-                    why:    '',
+                    why:    m.why   || '',
+                    how:    m.how   || '',
                     tier:   (m.effort === 'high') ? 2 : 1
                 }));
-                return _renderMarketDirectiveQueue(moveItems, 'moves', 'Next Moves', null);
+
+                return _renderMarketDirectiveQueue([...t0Pending, ...moveItems], 'moves', 'Next Moves', null);
             })()}
 
             ${(function() {
-                // Where To Be Present → completable Tier 2 directive queue
-                const communities = market.communities || [];
+                const exposure     = (typeof loadExposure === 'function') ? loadExposure() : { completedIds: [] };
+                const completedIds = exposure.completedIds || [];
+
+                // T0 presence item — observe before participating.
+                const T0_PRESENCE = [
+                    {
+                        id:     'md_t0_observe',
+                        action: 'Join one community from the list below and spend 15 minutes reading — do not post yet.',
+                        why:    'Observation before participation. Learn the norms, the tone, and the active members before you speak.',
+                        how:    `Find the first community listed below this card. Join it. Spend 15 minutes scrolling and reading threads. Look for: what questions people ask, what gets engagement, what tone the community uses. You are learning the language before you speak it. Do not post yet. That comes after you understand what good contribution looks like here.`,
+                        where:  '',
+                        tier:   0
+                    }
+                ];
+                const t0Pending = T0_PRESENCE.filter(m => !completedIds.includes(m.id));
+
+                const communities   = market.communities || [];
                 const presenceItems = communities.map((c, i) => ({
                     id:     'md_presence_' + i + '_' + (market.cachedAt || 'x').replace(/-/g, ''),
                     action: c.name || '',
-                    why:    c.why || '',
+                    why:    c.why  || '',
+                    how:    `To show up in ${c.name || 'this community'}: join via ${c.where || 'their main channel'}. Introduce yourself once using this format — "I am a [role] focused on [specific area]. I am here to learn from people working on [relevant topic]." Then engage with one existing thread before starting your own. One quality comment a week is more valuable than daily noise.`,
                     where:  c.where || '',
-                    tier:   2
+                    tier:   1
                 }));
-                return _renderMarketDirectiveQueue(presenceItems, 'presence', 'Where To Be Present', null);
+
+                return _renderMarketDirectiveQueue([...t0Pending, ...presenceItems], 'presence', 'Where To Be Present', null);
             })()}
         </div>
     `;
