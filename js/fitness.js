@@ -103,7 +103,7 @@ const FITNESS_QUESTIONS = [
     {
         id:         'conditions',
         q:          'Do you have any injuries, medical conditions, or physical limitations we should know about?',
-        hint:       'Include anything that affects what movements are safe or comfortable for you — past injuries, chronic conditions, doctor's advice.',
+        hint:       "Include anything that affects what movements are safe or comfortable for you — past injuries, chronic conditions, doctor's advice.",
         type:       'conditions',
         options: [
             { id: 'cond_no',  text: 'No — no known limitations' },
@@ -426,7 +426,7 @@ const _REMOVED_FITNESS_DIRECTIVES_ARRAY = [
     },
     {
         id: 'fit_t1_a03', tier: 1, rank: 'D', stat: 'agility',
-        title: 'World's greatest stretch — 5 reps per side',
+        title: "World's greatest stretch — 5 reps per side",
         desc:  'A full-body mobility sequence: lunge, rotate, reach. 5 slow reps each side. Used by athletes worldwide as a daily movement prep.',
         formDesc: 'Step forward into a deep lunge. Place the same-side hand on the floor inside your front foot. Rotate your upper body, reaching that arm toward the ceiling. Hold 2 seconds. Return hand to floor. Drive back hip forward and drop your back knee if needed for depth. This is one rep.',
         excludeTags: ['knee', 'wrist', 'hip', 'shoulder']

@@ -1064,6 +1064,11 @@ function renderStatusMainContent(container, animate) {
 
             <div class="sot-divider"></div>
 
+            <!-- ── 4.7 FITNESS ───────────────────────────── -->
+            ${buildFitnessRankSection()}
+
+            <div class="sot-divider"></div>
+
             <!-- ── 5. PATH ────────────────────────────────── -->
             ${pathSection}
 
@@ -1201,6 +1206,9 @@ function renderStatusMainContent(container, animate) {
             }, 50);
         });
     }
+
+    // ── Wire fitness rank block tap ───────────────────────────
+    wireFitnessRankBlock();
 
     // ── Wire settings cogwheel shortcut ──────────────────────
     const settingsShortcut = document.getElementById('sot-settings-shortcut');
@@ -1613,6 +1621,60 @@ function buildJobLuckSection() {
             </div>
         </div>
     `;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FITNESS RANK SECTION — inline in STATUS tab
+// Compact signal showing Fitness Rank when protocol is active.
+// Links operative to OPS > FITNESS segment.
+// ═══════════════════════════════════════════════════════════════
+
+function buildFitnessRankSection() {
+    const fitnessData = (typeof loadFitness === 'function') ? loadFitness() : null;
+
+    if (!fitnessData || !fitnessData.rank) {
+        return `
+            <div class="status-section status-section--fitness">
+                <p class="status-section-label">[ PHYSICAL SIGNAL ]</p>
+                <p class="jl-empty-msg">Fitness Protocol not active. Activate in OPS → FITNESS.</p>
+            </div>
+        `;
+    }
+
+    const FITNESS_RANK_LABELS = {
+        'F': 'BASELINE', 'E': 'DEVELOPING', 'D': 'FUNCTIONAL',
+        'C': 'CAPABLE',  'B': 'STRONG',     'A': 'CONDITIONED'
+    };
+    const rankLabel  = FITNESS_RANK_LABELS[fitnessData.rank] || fitnessData.rank;
+    const goalLabels = {
+        goal_energy:   'Energy',   goal_strength: 'Strength',
+        goal_mobility: 'Mobility', goal_general:  'General', goal_none: '—'
+    };
+    const goalLabel = goalLabels[fitnessData.goalKey] || '—';
+
+    return `
+        <div class="status-section status-section--fitness">
+            <p class="status-section-label">[ PHYSICAL SIGNAL ]</p>
+            <div class="sot-metric--tappable" id="fitness-rank-block" style="padding:10px 0;">
+                <div class="sot-metric-header">
+                    <span class="sot-bar-label">${fitnessData.rank} — ${rankLabel}</span>
+                    <span class="sot-bar-label" style="opacity:0.55;font-size:0.68rem;">GOAL: ${goalLabel}</span>
+                </div>
+                <p style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-secondary);margin:6px 0 0;opacity:0.6;">
+                    Tap to go to FITNESS directives →
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+// Wire the tap on the STATUS tab fitness block — called after render
+function wireFitnessRankBlock() {
+    const block = document.getElementById('fitness-rank-block');
+    if (!block) return;
+    block.addEventListener('click', () => {
+        if (typeof switchOpsSegment === 'function') switchOpsSegment('fitness');
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════

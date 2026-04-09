@@ -682,17 +682,115 @@
             ]
         },
         {
-            "id": "fit_str_08",
-            "tier": 0,
-            "rank": "F",
-            "stat": "agility",
-            "category": "stretch",
-            "title": "Cross-body shoulder stretch — 45 seconds each side",
-            "desc": "Bring one arm across your chest at shoulder height. Use your other hand or forearm to gently press it closer to your chest. Hold 45 seconds. Switch sides.",
-            "formDesc": "Keep your shoulder pressed down — do not let it rise up toward your ear as you pull the arm across. The stretch should be felt in the back of the shoulder. Do not pull hard — gentle sustained pressure for the full 45 seconds is more effective than aggressive pulling. Breathe normally.",
-            "excludeTags": [
-                "shoulder"
-            ]
-        }
+        "id": "fit_str_08",
+        "tier": 0,
+        "rank": "F",
+        "stat": "agility",
+        "category": "stretch",
+        "title": "Cross-body shoulder stretch — 45 seconds each side",
+        "desc": "Bring one arm across your chest at shoulder height. Use your other hand or forearm to gently press it closer to your chest. Hold 45 seconds. Switch sides.",
+        "formDesc": "Keep your shoulder pressed down — do not let it rise up toward your ear as you pull the arm across. The stretch should be felt in the back of the shoulder. Do not pull hard — gentle sustained pressure for the full 45 seconds is more effective than aggressive pulling. Breathe normally.",
+        "excludeTags": ["shoulder"]
+    },
+    {
+        "id": "fit_t0_m01",
+        "tier": 0,
+        "rank": "F",
+        "stat": "endurance",
+        "title": "Box breathing — 4 minutes",
+        "desc": "Inhale for 4 counts, hold for 4, exhale for 4, hold for 4. Repeat for 4 minutes. Seated or lying down. Used by athletes and military to manage effort and recovery.",
+        "formDesc": "Sit or lie comfortably. Close your mouth. Breathe in through your nose for exactly 4 slow counts. Hold your breath for 4 counts — do not strain. Exhale slowly through your mouth for 4 counts. Hold empty for 4 counts. That is one cycle. If 4 counts feels too long at first, start with 3. The goal is to make each count the same length throughout.",
+        "excludeTags": []
+    },
+    {
+        "id": "fit_t0_m02",
+        "tier": 0,
+        "rank": "F",
+        "stat": "agility",
+        "title": "Seated figure-four stretch — 60 seconds each side",
+        "desc": "Sit upright in a chair. Cross one ankle over the opposite knee, forming a figure 4 shape. Gently press down on the raised knee and lean forward slightly. Hold 60 seconds. Switch sides.",
+        "formDesc": "The foot rests on the thigh above the knee, not on it. Keep your back straight as you lean forward from the hips — do not round your spine to get lower. Press the raised knee down gently with your hand to deepen the stretch. You should feel this in the outer hip and glute of the crossed leg. Breathe slowly.",
+        "excludeTags": ["hip", "knee"]
+    },
+    {
+        "id": "fit_t0_m03",
+        "tier": 0,
+        "rank": "F",
+        "stat": "agility",
+        "title": "Wrist and forearm mobility — 3 minutes",
+        "desc": "Three movements: wrist circles (10 each direction), prayer stretch (hold 30 seconds), reverse prayer stretch (hold 30 seconds). Essential for desk workers and anyone doing push-based exercises.",
+        "formDesc": "Wrist circles: extend both arms forward, make fists, and draw large slow circles with your wrists — 10 clockwise, 10 counter-clockwise. Prayer stretch: press your palms together in front of your chest, fingers pointing up, and lower your hands toward your waist until you feel the stretch. Reverse prayer: flip your hands so fingers point down and raise them. Neither should cause sharp pain — ease into both.",
+        "excludeTags": ["wrist"]
+    },
+    {
+        "id": "fit_t0_m04",
+        "tier": 0,
+        "rank": "F",
+        "stat": "agility",
+        "title": "Eye and neck decompression — 5 minutes",
+        "desc": "For screen workers. Slow neck side-to-side and forward tilts combined with deliberate eye movement breaks. Reduces accumulated tension from sustained focus.",
+        "formDesc": "Start with 20 seconds looking at something at least 6 metres away — let your eyes relax and defocus. Then: drop your chin to your chest and hold 10 seconds. Lift your head. Tilt your ear to your right shoulder and hold 10 seconds. Return. Repeat left. Finally, look left as far as comfortable, hold 5 seconds, then right. One round takes about 60 seconds. Do 3 rounds with 20-second eye breaks between each.",
+        "excludeTags": []
+    },
+    {
+        "id": "fit_t1_m01",
+        "tier": 1,
+        "rank": "D",
+        "stat": "agility",
+        "title": "90/90 hip stretch — 90 seconds each side",
+        "desc": "Sit on the floor with both knees bent at 90 degrees — one knee in front, one to the side. Sit tall and hold, then switch sides. Directly targets hip internal and external rotation.",
+        "formDesc": "Both shins are at 90 degrees to your thighs. Your front shin points forward, your back shin points to the side. Sit on your sit bones — do not collapse onto your hip. If you cannot sit upright without falling back, place a hand on the floor behind you for support. The goal is to sit tall and breathe. The stretch is in the outer hip of the back leg and the inner hip of the front leg.",
+        "excludeTags": ["hip", "knee"]
+    },
+    {
+        "id": "fit_t1_m02",
+        "tier": 1,
+        "rank": "D",
+        "stat": "agility",
+        "title": "Thoracic extension over a rolled towel — 2 minutes",
+        "desc": "Roll a towel into a firm cylinder. Place it on the floor and lie back over it so it sits across your mid-back — not your lower back. Arms across your chest or extended overhead. Hold and breathe.",
+        "formDesc": "Position the towel at the level of your shoulder blades — roughly between your shoulder blades and the bottom of your ribcage. Let your head rest back without straining your neck. Arms across your chest reduces intensity; extending them overhead increases it. Breathe slowly and let gravity open your thoracic spine. If you feel this in your lower back, move the towel higher.",
+        "excludeTags": ["back"]
+    },
+    {
+        "id": "fit_t1_m03",
+        "tier": 1,
+        "rank": "D",
+        "stat": "strength",
+        "title": "Wall sit — 3 sets, hold to fatigue",
+        "desc": "Stand with your back against a wall. Slide down until your thighs are parallel to the floor. Hold until your legs give. 3 sets. Rest 90 seconds between sets.",
+        "formDesc": "Your back flat against the wall throughout — do not lean forward. Thighs parallel to the floor or as close as you can get. Feet flat, hip-width apart, directly below your knees. Arms at your sides or crossed at your chest — do not rest them on your thighs. When your form breaks or you cannot hold the position, that is your set. Record your time on the first set.",
+        "excludeTags": ["knee", "hip", "back"]
+    },
+    {
+        "id": "fit_t1_m04",
+        "tier": 1,
+        "rank": "D",
+        "stat": "endurance",
+        "title": "Breath ladder — 10 minutes",
+        "desc": "A progressive breathing exercise: 1 deep breath, then 1 push-up (or squat). 2 deep breaths, then 2 push-ups. Continue up to 5. Rest 2 minutes, then descend back to 1. Builds breath control under mild load.",
+        "formDesc": "The deep breaths are full — inhale through the nose until your ribcage expands fully, exhale completely. The movement after each breath set should be controlled, not rushed. If push-ups are excluded for you, substitute squats or glute bridges. The point is not the movement — it is pairing deliberate breathing with physical effort. Do not rush the breaths to get to the movement faster.",
+        "excludeTags": []
+    },
+    {
+        "id": "fit_t2_m01",
+        "tier": 2,
+        "rank": "B",
+        "stat": "agility",
+        "title": "Cossack squat — 3 sets of 8 per side",
+        "desc": "Stand with feet wide. Shift your weight to one side, bending that knee into a deep lateral squat while the opposite leg stays straight and extended. Hold 1 second at the bottom. 8 per side. 3 sets.",
+        "formDesc": "Feet about twice shoulder-width. Toes can point slightly outward. Shift your weight to one side and lower your hips toward your heel on that side. The extended leg stays straight with the foot flat if possible — or heel down, toes up if your flexibility limits you. Keep your torso upright. Drive through the heel of the bent leg to stand. This is a demanding hip and groin stretch — ease into the range progressively.",
+        "excludeTags": ["knee", "hip", "ankle"]
+    },
+    {
+        "id": "fit_t2_m02",
+        "tier": 2,
+        "rank": "B",
+        "stat": "agility",
+        "title": "Lizard pose progression — 90 seconds each side",
+        "desc": "From a lunge position, lower your back knee to the floor and bring your front foot to the outside of your front hand. Hold and breathe. For progression: lower your forearms to the floor.",
+        "formDesc": "Step your front foot to the outside of your hand — this is the starting position. Back knee on the floor, top of the foot flat. Stack your front knee over your ankle. For the base hold, hands on the floor either side of your front foot. For the deeper version, lower your forearms to the floor and let your hips sink. This is a deep hip flexor and groin stretch — you should feel it intensely. Breathe through the discomfort. Do not push aggressively.",
+        "excludeTags": ["knee", "hip", "wrist"]
+    }
     ]
 }
