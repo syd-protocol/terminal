@@ -123,7 +123,7 @@ const FITNESS_QUESTIONS = [
             { id: 'goal_general',   text: 'General fitness — no specific goal'     },
             { id: 'goal_none',      text: 'No goal — just track what I do'        }
         ],
-        placeholder: 'Optional — describe your goal in your own words. e.g. "I want to lose belly fat", "I want to run without getting winded", "My back hurts when I sit all day"'
+        placeholder: 'Optional — describe your goal in your own words.\n\nExamples:\n"I want to lose weight and reduce belly fat"\n"I want to be able to run without getting winded"\n"I want to build visible muscle and get stronger"\n"My back aches from sitting at a desk all day — I need to move more"\n"I just want more energy and to feel less tired"\n"I want to improve my posture"\n\nThe more specific you are, the better SYD can calibrate your directives.'
     }
 ];
 

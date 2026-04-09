@@ -180,6 +180,11 @@
     overflow:      hidden;
 }
 
+@keyframes msBarPulse {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+}
+
 .fp-loading-fill {
     width:      60%;
     height:     100%;

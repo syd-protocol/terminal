@@ -1641,11 +1641,10 @@ function buildFitnessRankSection() {
         `;
     }
 
-    const FITNESS_RANK_LABELS = {
-        'F': 'BASELINE', 'E': 'DEVELOPING', 'D': 'FUNCTIONAL',
-        'C': 'CAPABLE',  'B': 'STRONG',     'A': 'CONDITIONED'
-    };
-    const rankLabel  = FITNESS_RANK_LABELS[fitnessData.rank] || fitnessData.rank;
+    const _rankLabels = (typeof FITNESS_RANK_LABELS !== 'undefined')
+        ? FITNESS_RANK_LABELS
+        : { 'F': 'BASELINE', 'E': 'DEVELOPING', 'D': 'FUNCTIONAL', 'C': 'CAPABLE', 'B': 'STRONG', 'A': 'CONDITIONED' };
+    const rankLabel  = _rankLabels[fitnessData.rank] || fitnessData.rank;
     const goalLabels = {
         goal_energy:   'Energy',   goal_strength: 'Strength',
         goal_mobility: 'Mobility', goal_general:  'General', goal_none: '—'
