@@ -360,6 +360,8 @@ function renderOpsTab(container) {
                     data-segment="games">GAMES</button>
                 <button class="ops-segment-btn ${activeOpsSegment === 'jobops' ? 'ops-segment-btn--active' : ''}"
                     data-segment="jobops">JOB OPS</button>
+                <button class="ops-segment-btn ${activeOpsSegment === 'fitness' ? 'ops-segment-btn--active' : ''}"
+                    data-segment="fitness">FITNESS</button>
             </div>
             <div class="ops-segment-content" id="ops-segment-content"></div>
         </div>
@@ -387,6 +389,7 @@ function renderOpsSegment(segmentId) {
         case 'encounter':  renderEncounterSegment(content);  break;
         case 'games':      renderGamesSegment(content);      break;
         case 'jobops':     renderJobOpsSegment(content);     break;
+        case 'fitness':    renderFitnessSegment(content);    break;
         default:           renderDirectivesSegment(content);
     }
 }

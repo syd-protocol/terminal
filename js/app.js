@@ -110,6 +110,27 @@ const CAREER_SKILLS_KEY = 'syd_career_skills';
 // localStorage key for career directive cache (seeded by Gemini Call 2, refreshed by Call 4)
 const CAREER_DIRECTIVES_KEY = 'syd_career_directives';
 
+// ─── FITNESS PROTOCOL ─────────────────────────────────────────
+// Optional physical baseline system. Scan assigns a Fitness Rank
+// (F–A). Directives are pre-authored static JSON, calibrated to rank.
+// No Gemini needed for scan or directives. Gemini used only if available
+// to process free-text conditions and return modification notes.
+// Storage key: 'syd_fitness'
+// Shape: { rank, score, goalKey, conditions, modNote, completedIds, scanDate }
+const FITNESS_KEY = 'syd_fitness';
+
+function loadFitness() {
+    try {
+        const raw = localStorage.getItem(FITNESS_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
+}
+
+function saveFitness(data) {
+    try { localStorage.setItem(FITNESS_KEY, JSON.stringify(data)); }
+    catch(e) { console.warn('[SYD] Could not save Fitness data:', e); }
+}
+
 // ─── EXPOSURE STAT ────────────────────────────────────────────
 // Exposure measures the operative's market surface area — how findable
 // they are in their confirmed path's domain. Built by completing Market

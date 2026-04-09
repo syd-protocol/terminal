@@ -1,0 +1,544 @@
+/* ═══════════════════════════════════════════════════════════════
+   SYD — fitness.css
+   All Fitness Protocol styles. Mirrors fitness.js.
+   Depends on style.css (loaded first).
+   April 2026
+═══════════════════════════════════════════════════════════════ */
+
+/* ─── OPT-IN PANEL ───────────────────────────────────────────── */
+.fp-optin-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            16px;
+    padding-top:    24px;
+}
+
+.fp-optin-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.72rem;
+    letter-spacing: 0.1em;
+    color:          var(--accent);
+}
+
+.fp-optin-body {
+    font-size:   0.88rem;
+    color:       var(--text-secondary);
+    line-height: 1.65;
+    margin:      0;
+}
+
+.fp-optin-btn {
+    margin-top: 8px;
+    align-self: flex-start;
+}
+
+/* ─── SCAN ───────────────────────────────────────────────────── */
+.fp-scan-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            16px;
+    padding-top:    12px;
+}
+
+.fp-scan-progress-bar {
+    width:         100%;
+    height:        2px;
+    background:    var(--border);
+    border-radius: 1px;
+    overflow:      hidden;
+}
+
+.fp-scan-progress-fill {
+    height:     100%;
+    background: var(--accent);
+    transition: width 0.4s ease;
+}
+
+.fp-scan-step {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.68rem;
+    letter-spacing: 0.1em;
+    color:          var(--text-secondary);
+    margin:         0;
+}
+
+.fp-scan-q {
+    font-size:   0.95rem;
+    font-weight: 500;
+    color:       var(--text-primary);
+    line-height: 1.55;
+    margin:      0;
+}
+
+.fp-scan-hint {
+    font-size:   0.8rem;
+    color:       var(--text-secondary);
+    line-height: 1.5;
+    margin:      0;
+    font-style:  italic;
+    opacity:     0.8;
+}
+
+.fp-scan-opts {
+    display:        flex;
+    flex-direction: column;
+    gap:            8px;
+}
+
+.fp-scan-opt {
+    background:    transparent;
+    border:        1px solid var(--border);
+    color:         var(--text-primary);
+    font-size:     0.88rem;
+    line-height:   1.5;
+    padding:       12px 14px;
+    text-align:    left;
+    cursor:        pointer;
+    border-radius: 2px;
+    transition:    border-color 0.15s, background 0.15s;
+}
+
+.fp-scan-opt:hover {
+    border-color: var(--accent);
+    background:   rgba(79, 195, 247, 0.04);
+}
+
+.fp-scan-opt--selected {
+    border-color: var(--accent);
+    background:   rgba(79, 195, 247, 0.1);
+    color:        var(--accent);
+}
+
+.fp-scan-textarea {
+    background:    var(--surface);
+    border:        1px solid var(--border);
+    color:         var(--text-primary);
+    font-size:     0.88rem;
+    line-height:   1.55;
+    padding:       10px 12px;
+    border-radius: 2px;
+    resize:        vertical;
+    min-height:    80px;
+    font-family:   inherit;
+    width:         100%;
+    box-sizing:    border-box;
+}
+
+.fp-scan-textarea:focus { border-color: var(--accent); outline: none; }
+
+.fp-conditions-text-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            8px;
+    margin-top:     4px;
+    animation:      fadeIn 0.2s ease;
+}
+
+.fp-scan-actions {
+    display:     flex;
+    gap:         12px;
+    align-items: center;
+    margin-top:  4px;
+}
+
+.fp-scan-back-btn {
+    background:  transparent;
+    border:      none;
+    color:       var(--text-secondary);
+    font-family: var(--font-mono, monospace);
+    font-size:   0.78rem;
+    cursor:      pointer;
+    padding:     0;
+    text-decoration: underline;
+}
+.fp-scan-back-btn:hover { color: var(--text-primary); }
+
+.fp-scan-next-btn { flex: 1; }
+
+/* ─── PROCESSING ─────────────────────────────────────────────── */
+.fp-processing-wrap {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    gap:             20px;
+    padding:         60px 20px;
+    text-align:      center;
+}
+
+.fp-processing-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.82rem;
+    letter-spacing: 0.1em;
+    color:          var(--accent);
+}
+
+.fp-loading-bar {
+    width:         200px;
+    height:        2px;
+    background:    var(--border);
+    border-radius: 1px;
+    overflow:      hidden;
+}
+
+.fp-loading-fill {
+    width:      60%;
+    height:     100%;
+    background: var(--accent);
+    animation:  msBarPulse 1.2s ease-in-out infinite;
+}
+
+.fp-processing-sub {
+    font-size:  0.8rem;
+    color:      var(--text-secondary);
+    margin:     0;
+    font-style: italic;
+}
+
+/* ─── SCAN RESULT ────────────────────────────────────────────── */
+.fp-result-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            16px;
+    padding-top:    20px;
+}
+
+.fp-result-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.72rem;
+    letter-spacing: 0.1em;
+    color:          var(--accent);
+    margin:         0;
+}
+
+.fp-result-rank-block {
+    display:        flex;
+    flex-direction: column;
+    gap:            4px;
+}
+
+.fp-result-rank-tag {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.65rem;
+    letter-spacing: 0.1em;
+    color:          var(--text-secondary);
+    margin:         0;
+}
+
+.fp-result-rank {
+    font-family:    var(--font-mono, monospace);
+    font-size:      1.1rem;
+    font-weight:    700;
+    color:          var(--accent);
+    letter-spacing: 0.08em;
+    margin:         0;
+}
+
+.fp-result-goal-line {
+    font-size:  0.82rem;
+    color:      var(--text-secondary);
+    margin:     0;
+    font-style: italic;
+}
+
+.fp-result-modnote {
+    background:    rgba(255, 167, 38, 0.06);
+    border:        1px solid rgba(255, 167, 38, 0.25);
+    border-radius: 3px;
+    padding:       12px 14px;
+    display:       flex;
+    flex-direction: column;
+    gap:           6px;
+}
+
+.fp-result-modnote-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.62rem;
+    letter-spacing: 0.1em;
+    color:          #ffa726;
+    margin:         0;
+}
+
+.fp-result-modnote-text {
+    font-size:   0.82rem;
+    color:       var(--text-secondary);
+    line-height: 1.6;
+    margin:      0;
+}
+
+.fp-result-body {
+    font-size:   0.85rem;
+    color:       var(--text-secondary);
+    line-height: 1.65;
+    margin:      0;
+}
+
+/* ─── ACTIVE PANEL ───────────────────────────────────────────── */
+.fp-active-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            16px;
+    padding-top:    12px;
+    padding-bottom: 32px;
+}
+
+.fp-active-header {
+    display:         flex;
+    align-items:     flex-start;
+    justify-content: space-between;
+    gap:             12px;
+}
+
+.fp-active-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.72rem;
+    letter-spacing: 0.1em;
+    color:          var(--accent);
+    margin:         0;
+}
+
+.fp-active-rank {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.8rem;
+    color:          var(--text-secondary);
+    margin:         4px 0 0;
+    letter-spacing: 0.06em;
+}
+
+.fp-rescan-btn {
+    background:      transparent;
+    border:          none;
+    color:           var(--text-secondary);
+    font-family:     var(--font-mono, monospace);
+    font-size:       0.7rem;
+    cursor:          pointer;
+    padding:         0;
+    text-decoration: underline;
+    flex-shrink:     0;
+    margin-top:      2px;
+}
+.fp-rescan-btn:hover { color: var(--accent); }
+
+.fp-modnote-bar {
+    background:    rgba(255, 167, 38, 0.06);
+    border-left:   2px solid #ffa726;
+    padding:       8px 12px;
+    border-radius: 0 2px 2px 0;
+}
+
+.fp-modnote-bar-text {
+    font-size:   0.78rem;
+    color:       var(--text-secondary);
+    line-height: 1.5;
+    margin:      0;
+}
+
+.fp-speech-note {
+    font-family: var(--font-mono, monospace);
+    font-size:   0.65rem;
+    color:       var(--text-secondary);
+    opacity:     0.55;
+    margin:      0;
+}
+
+.fp-directives-list {
+    display:        flex;
+    flex-direction: column;
+    gap:            12px;
+}
+
+.fp-empty-msg {
+    font-size:   0.82rem;
+    color:       var(--text-secondary);
+    line-height: 1.65;
+    font-style:  italic;
+}
+
+.fp-view-all-btn {
+    align-self:     flex-start;
+    background:     transparent;
+    border:         none;
+    color:          var(--text-secondary);
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.72rem;
+    cursor:         pointer;
+    padding:        0;
+    letter-spacing: 0.06em;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    margin-top:     4px;
+}
+.fp-view-all-btn:hover { color: var(--accent); }
+
+/* ─── DIRECTIVE CARDS ────────────────────────────────────────── */
+.fp-dir-card {
+    background:     rgba(255, 255, 255, 0.02);
+    border:         1px solid var(--border);
+    border-radius:  3px;
+    padding:        14px 16px;
+    display:        flex;
+    flex-direction: column;
+    gap:            8px;
+    transition:     opacity 0.2s, border-color 0.2s;
+}
+
+.fp-dir-card--done {
+    opacity:      0.45;
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.fp-dir-header {
+    display:     flex;
+    align-items: center;
+    gap:         8px;
+    flex-wrap:   wrap;
+}
+
+.fp-dir-stat-tag {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.62rem;
+    letter-spacing: 0.1em;
+    font-weight:    700;
+}
+
+.fp-dir-tier-badge {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.6rem;
+    letter-spacing: 0.1em;
+    color:          var(--text-secondary);
+    border:         1px solid var(--border);
+    border-radius:  2px;
+    padding:        1px 5px;
+}
+
+.fp-dir-done-mark {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.62rem;
+    letter-spacing: 0.1em;
+    color:          #66bb6a;
+    margin-left:    auto;
+}
+
+.fp-speech-btn {
+    background:  transparent;
+    border:      none;
+    font-size:   0.9rem;
+    cursor:      pointer;
+    padding:     0 2px;
+    color:       var(--text-secondary);
+    margin-left: auto;
+    line-height: 1;
+    opacity:     0.6;
+    transition:  opacity 0.15s;
+}
+.fp-speech-btn:hover { opacity: 1; }
+
+.fp-dir-title {
+    font-size:   0.9rem;
+    font-weight: 600;
+    color:       var(--text-primary);
+    line-height: 1.4;
+    margin:      0;
+}
+
+.fp-dir-desc {
+    font-size:   0.83rem;
+    color:       var(--text-secondary);
+    line-height: 1.6;
+    margin:      0;
+}
+
+.fp-dir-details {
+    margin-top: 4px;
+}
+
+.fp-dir-details-summary {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.68rem;
+    letter-spacing: 0.06em;
+    color:          var(--accent);
+    cursor:         pointer;
+    list-style:     none;
+    opacity:        0.75;
+}
+.fp-dir-details-summary::-webkit-details-marker { display: none; }
+.fp-dir-details[open] .fp-dir-details-summary { opacity: 1; }
+
+.fp-dir-form-desc {
+    font-size:   0.82rem;
+    color:       var(--text-secondary);
+    line-height: 1.65;
+    margin:      10px 0 4px;
+    padding-top: 8px;
+    border-top:  1px solid var(--border);
+    font-style:  italic;
+}
+
+.fp-complete-btn {
+    align-self:     flex-start;
+    background:     transparent;
+    border:         1px solid var(--border);
+    color:          var(--text-secondary);
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.68rem;
+    letter-spacing: 0.08em;
+    padding:        5px 10px;
+    cursor:         pointer;
+    border-radius:  2px;
+    margin-top:     2px;
+    transition:     border-color 0.15s, color 0.15s;
+}
+.fp-complete-btn:hover {
+    border-color: #66bb6a;
+    color:        #66bb6a;
+}
+
+/* ─── ALL DIRECTIVES VIEW ────────────────────────────────────── */
+.fp-all-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            20px;
+    padding-bottom: 40px;
+}
+
+.fp-back-btn {
+    background:      transparent;
+    border:          none;
+    color:           var(--text-secondary);
+    font-family:     var(--font-mono, monospace);
+    font-size:       0.75rem;
+    cursor:          pointer;
+    padding:         0;
+    text-decoration: underline;
+    align-self:      flex-start;
+}
+.fp-back-btn:hover { color: var(--accent); }
+
+.fp-all-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.72rem;
+    letter-spacing: 0.1em;
+    color:          var(--accent);
+    margin:         0;
+}
+
+.fp-all-sub {
+    font-size:  0.8rem;
+    color:      var(--text-secondary);
+    margin:     -12px 0 0;
+    font-style: italic;
+}
+
+.fp-tier-section {
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+}
+
+.fp-tier-heading {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.68rem;
+    letter-spacing: 0.1em;
+    color:          var(--text-secondary);
+    margin:         0 0 4px;
+    opacity:        0.7;
+}

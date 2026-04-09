@@ -1,4 +1,4 @@
-const CACHE_NAME = 'syd-v81';
+const CACHE_NAME = 'syd-v82';
 
 // These are the app shell files we want to pre-cache during install.
 // On every new deploy, bump CACHE_NAME so the install event fires again,
@@ -12,6 +12,7 @@ const PRECACHE_ASSETS = [
     '/terminal/css/status.css',
     '/terminal/css/job-ops.css',
     '/terminal/css/games-enhanced.css',
+    '/terminal/css/fitness.css',
     '/terminal/js/gemini.js',
     '/terminal/js/app.js',
     '/terminal/js/quests.js',
@@ -21,6 +22,7 @@ const PRECACHE_ASSETS = [
     '/terminal/js/minigames.js',
     '/terminal/js/dailyloop.js',
     '/terminal/js/job-ops.js',
+    '/terminal/js/fitness.js',
     '/terminal/js/status.js',
     '/terminal/data/quests.json',
     '/terminal/data/encounters.json',
