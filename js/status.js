@@ -1056,6 +1056,11 @@ function renderStatusMainContent(container, animate) {
 
             <div class="sot-divider"></div>
 
+            <!-- ── 4.5 JOB LUCK ──────────────────────────── -->
+            ${buildJobLuckSection()}
+
+            <div class="sot-divider"></div>
+
             <!-- ── 5. PATH ────────────────────────────────── -->
             ${pathSection}
 
@@ -1169,6 +1174,30 @@ function renderStatusMainContent(container, animate) {
 
     // ── Wire career skills tappable rows ─────────────────────
     wireCareerSkillsSection();
+
+    // ── Wire Job Luck tap to expand explainer ────────────────
+    const jlBlock = document.getElementById('jl-block');
+    if (jlBlock) {
+        jlBlock.addEventListener('click', (e) => {
+            // Don't toggle if the click was on the goto button
+            if (e.target.id === 'jl-goto-jobops') return;
+            playUIClick();
+            const exp = document.getElementById('jl-explainer');
+            if (exp) exp.classList.toggle('hidden');
+        });
+    }
+    const jlGoto = document.getElementById('jl-goto-jobops');
+    if (jlGoto) {
+        jlGoto.addEventListener('click', () => {
+            playUIClick();
+            if (typeof switchStatusTab  === 'function') switchStatusTab('ops');
+            if (typeof switchOpsSegment === 'function') switchOpsSegment('jobops');
+            if (typeof window._jobOpsPanel !== 'undefined') window._jobOpsPanel = 'market';
+            setTimeout(() => {
+                if (typeof renderJobOpsPanel === 'function') renderJobOpsPanel('market');
+            }, 50);
+        });
+    }
 
     // ── Wire settings cogwheel shortcut ──────────────────────
     const settingsShortcut = document.getElementById('sot-settings-shortcut');
@@ -1511,6 +1540,76 @@ function wireCareerSkillsSection() {
             }
         });
     });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// JOB LUCK SECTION — inline in STATUS tab
+// Job Luck is the operative's market surface area — how findable
+// and legible they are in their confirmed path's domain.
+// Built through Exposure: completing Market Directives in JOB OPS.
+// Decays during extended market inactivity.
+// ═══════════════════════════════════════════════════════════════
+
+function buildJobLuckSection() {
+    const exposure   = (typeof loadExposure === 'function')
+        ? loadExposure()
+        : { points: 0, completedIds: [] };
+    const points     = exposure.points || 0;
+    const completed  = (exposure.completedIds || []).length;
+    const pathData   = (typeof loadPathData === 'function') ? loadPathData() : null;
+    const pathRun    = !!(pathData && pathData.confirmedPath);
+
+    // ── Progress tier thresholds ──────────────────────────────
+    // [TUNING TARGET] Job Luck tier breakpoints
+    const TIERS = [
+        { min: 0,   max: 14,  label: 'UNDETECTED',  band: 'none'   },
+        { min: 15,  max: 44,  label: 'EMERGING',    band: 'low'    },
+        { min: 45,  max: 99,  label: 'VISIBLE',     band: 'mid'    },
+        { min: 100, max: 199, label: 'PRESENT',     band: 'high'   },
+        { min: 200, max: Infinity, label: 'KNOWN',  band: 'max'    }
+    ];
+    const tier      = TIERS.find(t => points >= t.min && points <= t.max) || TIERS[0];
+    const nextTier  = TIERS[TIERS.indexOf(tier) + 1] || null;
+    const barPct    = nextTier
+        ? Math.min(100, Math.round(((points - tier.min) / (nextTier.min - tier.min)) * 100))
+        : 100;
+
+    // ── Contextual explainer ──────────────────────────────────
+    const explainerText = pathRun
+        ? `Job Luck is built through Exposure — showing up in the right communities, making the right connections, and publishing in the right places for your confirmed path. It decays if you go quiet. Complete Market Directives in JOB OPS to build it. ${completed} action${completed !== 1 ? 's' : ''} completed so far.`
+        : `Job Luck measures how findable you are in your target domain. Run PATH Protocol first, then complete Market Directives in JOB OPS to start building it.`;
+
+    // ── No-path state ─────────────────────────────────────────
+    if (!pathRun) {
+        return `
+            <div class="status-section status-section--job-luck">
+                <p class="status-section-label">[ JOB LUCK ]</p>
+                <p class="jl-empty-msg">Run PATH Protocol to unlock Market Directives and start building Job Luck.</p>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="status-section status-section--job-luck">
+            <p class="status-section-label">[ JOB LUCK ]</p>
+            <div class="jl-block sot-metric--tappable" id="jl-block">
+                <div class="jl-header">
+                    <div class="jl-label-wrap">
+                        <span class="jl-tier-label jl-tier-label--${tier.band}">${tier.label}</span>
+                        <span class="jl-points">${points} <span class="jl-points-unit">EXPOSURE</span></span>
+                    </div>
+                    ${nextTier ? `<span class="jl-next-tier">→ ${nextTier.label} at ${nextTier.min}</span>` : '<span class="jl-next-tier">MAX TIER</span>'}
+                </div>
+                <div class="sot-bar jl-bar">
+                    <div class="sot-bar-fill jl-bar-fill jl-bar-fill--${tier.band}" style="width:${barPct}%"></div>
+                </div>
+                <div class="jl-explainer hidden" id="jl-explainer">
+                    <p class="jl-explainer-text">${explainerText}</p>
+                    <button class="jl-goto-btn" id="jl-goto-jobops">[ GO TO JOB OPS → MARKET READ ]</button>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 // ═══════════════════════════════════════════════════════════════

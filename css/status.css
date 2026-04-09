@@ -1370,3 +1370,110 @@
     opacity:   0.55;
 }
 
+/* ─── JOB LUCK SECTION ───────────────────────────────────────── */
+.status-section--job-luck {
+    padding: 0;
+}
+
+.jl-empty-msg {
+    font-size:   0.82rem;
+    color:       var(--text-secondary);
+    line-height: 1.6;
+    margin:      8px 0 0;
+}
+
+.jl-block {
+    margin-top: 10px;
+    cursor:     pointer;
+}
+
+.jl-header {
+    display:         flex;
+    align-items:     baseline;
+    justify-content: space-between;
+    gap:             8px;
+    margin-bottom:   8px;
+    flex-wrap:       wrap;
+}
+
+.jl-label-wrap {
+    display:     flex;
+    align-items: baseline;
+    gap:         10px;
+}
+
+.jl-tier-label {
+    font-family:    var(--font-mono);
+    font-size:      0.85rem;
+    font-weight:    700;
+    letter-spacing: 0.1em;
+}
+
+.jl-tier-label--none   { color: var(--text-secondary); opacity: 0.5; }
+.jl-tier-label--low    { color: var(--text-secondary); }
+.jl-tier-label--mid    { color: var(--accent); }
+.jl-tier-label--high   { color: #66bb6a; }
+.jl-tier-label--max    { color: #ffa726; }
+
+.jl-points {
+    font-family: var(--font-mono);
+    font-size:   0.75rem;
+    color:       var(--text-secondary);
+}
+
+.jl-points-unit {
+    font-size: 0.65rem;
+    opacity:   0.6;
+}
+
+.jl-next-tier {
+    font-family:    var(--font-mono);
+    font-size:      0.65rem;
+    color:          var(--text-secondary);
+    letter-spacing: 0.06em;
+    opacity:        0.55;
+    flex-shrink:    0;
+}
+
+.jl-bar {
+    margin-bottom: 0;
+}
+
+.jl-bar-fill { transition: width 0.5s ease; }
+.jl-bar-fill--none   { background: var(--text-secondary); opacity: 0.3; }
+.jl-bar-fill--low    { background: var(--text-secondary); }
+.jl-bar-fill--mid    { background: var(--accent); }
+.jl-bar-fill--high   { background: #66bb6a; }
+.jl-bar-fill--max    { background: #ffa726; }
+
+.jl-explainer {
+    margin-top:    10px;
+    padding-top:   10px;
+    border-top:    1px solid var(--border);
+    animation:     fadeIn 0.2s ease;
+    display:       flex;
+    flex-direction: column;
+    gap:           10px;
+}
+
+.jl-explainer-text {
+    font-size:   0.8rem;
+    color:       var(--text-secondary);
+    line-height: 1.6;
+    margin:      0;
+}
+
+.jl-goto-btn {
+    align-self:     flex-start;
+    background:     transparent;
+    border:         none;
+    color:          var(--accent);
+    font-family:    var(--font-mono);
+    font-size:      0.72rem;
+    letter-spacing: 0.06em;
+    cursor:         pointer;
+    padding:        0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.jl-goto-btn:hover { opacity: 0.8; }
