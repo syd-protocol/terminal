@@ -2179,12 +2179,32 @@ function checkJobOpsRefresh() {
         marketStale = daysSince >= JOB_OPS_MARKET_REFRESH_DAYS;
     }
 
-    if (!profileMissing && !marketStale) return; // nothing to do
+    // Market directives: refresh independently at a longer cadence.
+    // loadMarketDirectives is defined in job-ops.js.
+    let directivesStale = false;
+    if (typeof loadMarketDirectives === 'function') {
+        const dirCache = loadMarketDirectives();
+        if (!dirCache) {
+            directivesStale = true;
+        } else if (dirCache.cachedAt) {
+            const daysSince = (new Date(todayStr) - new Date(dirCache.cachedAt)) / 86400000;
+            const threshold = (typeof MARKET_DIRECTIVES_REFRESH_DAYS !== 'undefined')
+                ? MARKET_DIRECTIVES_REFRESH_DAYS : 7;
+            directivesStale = daysSince >= threshold;
+        }
+    }
+
+    if (!profileMissing && !marketStale && !directivesStale) return; // nothing to do
 
     // Fire in background — longer delay so any onboarding calls clear the RPM window.
     setTimeout(async () => {
         if (profileMissing) await fireJobOpsProfile();
         if (marketStale)    await fireJobOpsMarket();
+        // Directives refresh separately — only if market itself is fresh
+        // (no point refreshing directives if Call B is about to replace them anyway)
+        if (directivesStale && !marketStale && typeof fireMarketDirectivesRefresh === 'function') {
+            await fireMarketDirectivesRefresh();
+        }
         _jobOpsAutoRefreshPanel();
     }, 30000);
 }

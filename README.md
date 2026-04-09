@@ -100,7 +100,7 @@ There are three mechanisms doing the work:
 **JOB OPS**
 - Three panels: Profile, Market Read, and Job Hunt
 - Profile: AI-generated CV draft, professional summary, role reframes for current and target roles
-- Market Read: live demand signal, skill shifts, adjacent opportunities, Next Moves queue, Where To Be Present queue — both queues are completable Market Directives
+- Market Read: live demand signal, skill shifts, adjacent opportunities, Next Moves queue, Where To Be Present queue — both queues are completable Market Directives with separate refresh cycles; when all directives in a queue are completed, a fresh batch is fetched automatically via a targeted call (Call C) without re-running the full market read
 - Job Hunt: intent toggle (Actively Hunting / Building Toward a Move / Growing in Place), search strings, LinkedIn headline formula, keywords, community recommendations
 - All panels refresh on demand with a 1-hour rate limit
 
@@ -178,7 +178,7 @@ terminal/
 ## Future considerations
 
 **Fitness Protocol**
-An optional physical baseline scan — 6–8 indirect questions that assign a Fitness Rank (F through A). Generates pre-authored physical directives calibrated to that rank: walking cadences and static holds at F/E, push-up progressions and bodyweight work at D/C, complex movement combinations at B/A. Directives map to existing stats (Endurance, Strength, Agility) rather than creating new ones. Web Speech API reads form descriptions aloud so the operative can listen while in position. Opt-in placement after onboarding for new users, accessible from OPS for returning users.
+An optional physical baseline scan — 8 questions that assign a Fitness Rank (F through A). Generates pre-authored physical directives (62 total across 3 tiers) calibrated to that rank: walking cadences and static holds at F/E, push-up progressions and bodyweight work at D/C, complex movement combinations at B/A. All directives are bodyweight only, no equipment. Conditions and injuries are captured during the scan; Gemini processes free-text conditions into movement modification notes when Neural Link is active; local keyword detection provides fallback filtering. Directives map to existing stats (Endurance, Strength, Agility). Web Speech API reads form descriptions aloud with paced pausing so the operative can listen while in position — voice and rate configurable. New users are offered the opt-in between the orientation screen and their first directives; returning users access it from OPS → FITNESS.
 
 **Augmented Reality interface**
 An operator says "Status" and the System appears — overlaid on the world. A heads-up display showing live stat bars, active directive count, Momentum decay rate, and Job Luck tier. Wearables — smart glasses, AR headsets — link to the SYD backend and surface the terminal without breaking the flow of physical activity.

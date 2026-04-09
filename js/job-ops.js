@@ -7,9 +7,112 @@
 // ─── CONSTANTS ────────────────────────────────────────────────
 // Storage key constants duplicated here for local reference.
 // The authoritative constants live in path.js.
-const _JOB_OPS_PROFILE_KEY = 'syd_job_ops_profile';
-const _JOB_OPS_MARKET_KEY  = 'syd_job_ops_market';
-const _JOB_OPS_INTENT_KEY  = 'syd_job_intent';
+const _JOB_OPS_PROFILE_KEY    = 'syd_job_ops_profile';
+const _JOB_OPS_MARKET_KEY     = 'syd_job_ops_market';
+const _JOB_OPS_INTENT_KEY     = 'syd_job_intent';
+const _MARKET_DIRECTIVES_KEY  = 'syd_market_directives';
+
+// [TUNING TARGET] Days before market directives are considered stale.
+// Separate and longer than the market read (3 days) — directives are
+// completable items that should stay stable for a meaningful period.
+const MARKET_DIRECTIVES_REFRESH_DAYS = 7;
+
+// ─── MARKET DIRECTIVE STORAGE ─────────────────────────────────
+// Separate cache for Next Moves and Where To Be Present directive
+// queues. Refreshes independently from the broader market read.
+// Shape: { moves: [...], presence: [...], cachedAt: 'YYYY-MM-DD' }
+function loadMarketDirectives() {
+    try {
+        const raw = localStorage.getItem(_MARKET_DIRECTIVES_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
+}
+
+function saveMarketDirectives(data) {
+    try { localStorage.setItem(_MARKET_DIRECTIVES_KEY, JSON.stringify(data)); }
+    catch(e) { console.warn('[SYD] Could not save market directives:', e); }
+}
+
+// ─── CALL C: MARKET DIRECTIVE REFRESH ─────────────────────────
+// Targeted call that refreshes only next_moves and communities.
+// Fires when: (a) all directives in a queue are completed, or
+//             (b) the directive cache is older than MARKET_DIRECTIVES_REFRESH_DAYS.
+// Uses the last known market data as context — no new web search.
+// Silent: no loading state. Results replace the existing directive cache.
+async function fireMarketDirectivesRefresh() {
+    if (typeof hasNeuralLink !== 'function' || !hasNeuralLink()) return;
+
+    const pathData = (typeof loadPathData === 'function') ? loadPathData() : null;
+    if (!pathData) return;
+
+    const role       = pathData.confirmedRole || (pathData.confirmedPath && pathData.confirmedPath.path_name) || 'their confirmed role';
+    const domain     = (pathData.confirmedPath && pathData.confirmedPath.path_name) || role;
+    const rank       = pathData.confirmedRank || 'F';
+    const rankLabel  = (typeof careerRankLabel === 'function') ? careerRankLabel(rank) : rank;
+    const gapSkills  = (pathData.gapAnalysis && pathData.gapAnalysis.skills) || [];
+    const todayStr   = (typeof today === 'function') ? today() : new Date().toISOString().slice(0, 10);
+
+    // Use existing exposure completed IDs to avoid regenerating already-done items
+    const exposure     = (typeof loadExposure === 'function') ? loadExposure() : { completedIds: [] };
+    const completedIds = exposure.completedIds || [];
+
+    const prompt = `
+You are SYD — an elite career intelligence system generating fresh Market Directives.
+
+OPERATIVE: ${rankLabel} ${role}
+DOMAIN: ${domain}
+GAP SKILLS: ${gapSkills.join(', ') || 'Not specified'}
+COMPLETED DIRECTIVE IDS (do not regenerate these): ${completedIds.filter(id => id.startsWith('md_')).join(', ') || 'none'}
+
+Generate a fresh batch of market presence directives. These are completable real-world actions — not advice.
+
+"next_moves": [
+    {
+        "action": "One specific, concrete action the operative can take in the next 30 days.",
+        "effort": "low" | "medium" | "high",
+        "how": "2-3 sentences: exactly how to execute this. Specific steps. Not principles."
+    }
+]
+Include exactly 3 next moves. Order by effort ascending (lowest first). Each must differ from anything a ${role} would have already done — push to the next level of visibility or skill.
+
+"communities": [
+    {
+        "name": "The real name of the community, Slack group, Discord, forum, or platform.",
+        "where": "One word: Slack | Discord | LinkedIn | Forum | Conference | Newsletter",
+        "why": "One sentence on why this specific community is worth joining for their role."
+    }
+]
+Include exactly 3 communities. Real names only. Specific to their domain. Do not repeat the most obvious generic options — surface less well-known communities where practitioners at the ${rankLabel} level actually gather.
+
+Return ONLY valid JSON with these two fields. No markdown fences. No preamble.
+`.trim();
+
+    const result = await geminiGenerateLiteLarge(prompt, 0.5);
+    if (!result || !result.ok) {
+        console.warn('[SYD] Call C (directive refresh) failed:', result && result.error);
+        return;
+    }
+
+    const parsed = (typeof extractJSON === 'function') ? extractJSON(result.text) : null;
+    if (!parsed || !Array.isArray(parsed.next_moves) || !Array.isArray(parsed.communities)) {
+        console.warn('[SYD] Call C JSON parse failed.');
+        return;
+    }
+
+    saveMarketDirectives({
+        moves:    parsed.next_moves,
+        presence: parsed.communities,
+        cachedAt: todayStr
+    });
+
+    console.log('[SYD] Call C complete — market directives refreshed.');
+
+    // If Market Read panel is open, re-render to surface new directives
+    if (window._jobOpsPanel === 'market') {
+        const content = document.getElementById('job-ops-panel-content');
+        if (content) renderJobOpsMarketRead(content);
+    }
+}
 
 // ─── MANUAL REFRESH RATE LIMIT ────────────────────────────────
 function canManualRefresh() {
@@ -340,6 +443,18 @@ Return ONLY valid JSON. No markdown fences. No preamble.
     if (typeof saveJobOpsMarket === 'function') {
         saveJobOpsMarket(parsed);
     }
+
+    // Seed the separate market directives cache from Call B output.
+    // This ensures directives are available immediately without a Call C.
+    // Call C fires later only when directives are stale or all completed.
+    if (Array.isArray(parsed.next_moves) && Array.isArray(parsed.communities)) {
+        saveMarketDirectives({
+            moves:    parsed.next_moves,
+            presence: parsed.communities,
+            cachedAt: todayStr
+        });
+    }
+
     // Stage 2 succeeded — raw signal no longer needed
     localStorage.removeItem('syd_job_ops_market_raw');
     // If MARKET READ is open, upgrade from raw signal to structured view
@@ -965,12 +1080,12 @@ function renderJobOpsMarketRead(container) {
             </div>
 
             ${(function() {
-                const pathName = (pathData && pathData.confirmedPath && pathData.confirmedPath.path_name) || 'your field';
-                const exposure    = (typeof loadExposure === 'function') ? loadExposure() : { completedIds: [] };
+                const pathName     = (pathData && pathData.confirmedPath && pathData.confirmedPath.path_name) || 'your field';
+                const exposure     = (typeof loadExposure === 'function') ? loadExposure() : { completedIds: [] };
                 const completedIds = exposure.completedIds || [];
+                const dirCache     = loadMarketDirectives();
 
                 // T0 onboarding items — always shown first until completed.
-                // Low friction, no prior knowledge required, teach the habit.
                 const T0_MOVES = [
                     {
                         id:     'md_t0_search',
@@ -989,25 +1104,43 @@ function renderJobOpsMarketRead(container) {
                 ];
                 const t0Pending = T0_MOVES.filter(m => !completedIds.includes(m.id));
 
-                // Gemini moves — enforce effort ascending
-                const rawMoves = (market.next_moves || []).slice().sort((a, b) => {
-                    const order = { low: 0, medium: 1, high: 2 };
-                    return (order[a.effort] ?? 1) - (order[b.effort] ?? 1);
-                });
+                // Use directive cache if available; fall back to market.next_moves
+                const rawMoves = ((dirCache && dirCache.moves) || market.next_moves || [])
+                    .slice().sort((a, b) => {
+                        const order = { low: 0, medium: 1, high: 2 };
+                        return (order[a.effort] ?? 1) - (order[b.effort] ?? 1);
+                    });
+                const cacheStamp = (dirCache && dirCache.cachedAt) || (market.cachedAt || 'x');
                 const moveItems = rawMoves.map((m, i) => ({
-                    id:     'md_move_' + i + '_' + (market.cachedAt || 'x').replace(/-/g, ''),
+                    id:     'md_move_' + i + '_' + cacheStamp.replace(/-/g, ''),
                     action: m.action || '',
-                    why:    m.why   || '',
-                    how:    m.how   || '',
+                    why:    m.why    || '',
+                    how:    m.how    || '',
                     tier:   (m.effort === 'high') ? 2 : 1
                 }));
 
-                return _renderMarketDirectiveQueue([...t0Pending, ...moveItems], 'moves', 'Next Moves', null);
+                const allMoveItems  = [...t0Pending, ...moveItems];
+                const allMovesDone  = allMoveItems.length > 0 &&
+                                      allMoveItems.every(m => completedIds.includes(m.id));
+
+                // Auto-trigger refresh when all moves completed — silent, one shot
+                if (allMovesDone && typeof fireMarketDirectivesRefresh === 'function') {
+                    setTimeout(() => fireMarketDirectivesRefresh(), 800);
+                }
+
+                const refreshNote = allMovesDone ? `
+                    <div class="jo-mdir-refresh-note" id="jo-mdir-moves-refresh">
+                        <p class="jo-text-note">All Next Moves complete. Fetching new directives&hellip;</p>
+                    </div>
+                ` : '';
+
+                return _renderMarketDirectiveQueue(allMoveItems, 'moves', 'Next Moves', null) + refreshNote;
             })()}
 
             ${(function() {
                 const exposure     = (typeof loadExposure === 'function') ? loadExposure() : { completedIds: [] };
                 const completedIds = exposure.completedIds || [];
+                const dirCache     = loadMarketDirectives();
 
                 // T0 presence item — observe before participating.
                 const T0_PRESENCE = [
@@ -1022,9 +1155,11 @@ function renderJobOpsMarketRead(container) {
                 ];
                 const t0Pending = T0_PRESENCE.filter(m => !completedIds.includes(m.id));
 
-                const communities   = market.communities || [];
-                const presenceItems = communities.map((c, i) => ({
-                    id:     'md_presence_' + i + '_' + (market.cachedAt || 'x').replace(/-/g, ''),
+                // Use directive cache if available; fall back to market.communities
+                const rawPresence  = (dirCache && dirCache.presence) || market.communities || [];
+                const cacheStamp   = (dirCache && dirCache.cachedAt) || (market.cachedAt || 'x');
+                const presenceItems = rawPresence.map((c, i) => ({
+                    id:     'md_presence_' + i + '_' + cacheStamp.replace(/-/g, ''),
                     action: c.name || '',
                     why:    c.why  || '',
                     how:    `To show up in ${c.name || 'this community'}: join via ${c.where || 'their main channel'}. Introduce yourself once using this format — "I am a [role] focused on [specific area]. I am here to learn from people working on [relevant topic]." Then engage with one existing thread before starting your own. One quality comment a week is more valuable than daily noise.`,
@@ -1032,7 +1167,22 @@ function renderJobOpsMarketRead(container) {
                     tier:   1
                 }));
 
-                return _renderMarketDirectiveQueue([...t0Pending, ...presenceItems], 'presence', 'Where To Be Present', null);
+                const allPresenceItems = [...t0Pending, ...presenceItems];
+                const allPresenceDone  = allPresenceItems.length > 0 &&
+                                         allPresenceItems.every(m => completedIds.includes(m.id));
+
+                // Auto-trigger refresh when all presence directives completed
+                if (allPresenceDone && typeof fireMarketDirectivesRefresh === 'function') {
+                    setTimeout(() => fireMarketDirectivesRefresh(), 1200);
+                }
+
+                const refreshNote = allPresenceDone ? `
+                    <div class="jo-mdir-refresh-note" id="jo-mdir-presence-refresh">
+                        <p class="jo-text-note">All presence directives complete. Fetching new directives&hellip;</p>
+                    </div>
+                ` : '';
+
+                return _renderMarketDirectiveQueue(allPresenceItems, 'presence', 'Where To Be Present', null) + refreshNote;
             })()}
         </div>
     `;
