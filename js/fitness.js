@@ -1179,7 +1179,14 @@ function _renderFitnessScanResult(container, fitnessData) {
 
     document.getElementById('fp-result-begin').addEventListener('click', () => {
         playUIClick();
-        _renderFitnessActive(container, fitnessData);
+        // If we came from onboarding, hand control back to the onboarding flow
+        if (window._fitnessScanOnboardingCallback) {
+            const cb = window._fitnessScanOnboardingCallback;
+            window._fitnessScanOnboardingCallback = null;
+            cb();
+        } else {
+            _renderFitnessActive(container, fitnessData);
+        }
     });
 }
 
@@ -1195,7 +1202,7 @@ function _renderFitnessActive(container, fitnessData) {
     const dirsHTML = allDone
         ? `<p class="fp-empty-msg" style="color:#66bb6a;opacity:0.9;">Protocol complete. Return tomorrow for your next directives.</p>`
         : todayDirs.length > 0
-            ? todayDirs.map(d => _buildFitnessDirectiveCard(d, completedIds)).join('')
+            ? todayDirs.map((d, i) => _buildFitnessDirectiveCard(d, completedIds, i === 0)).join('')
             : `<p class="fp-empty-msg">No directives assigned yet. Tap RESCAN to calibrate.</p>`;
 
     container.innerHTML = `
@@ -1265,13 +1272,14 @@ function _renderFitnessActive(container, fitnessData) {
 }
 
 // ─── DIRECTIVE CARD BUILDER ───────────────────────────────────
-function _buildFitnessDirectiveCard(d, completedIds) {
+function _buildFitnessDirectiveCard(d, completedIds, isFirst) {
     const isDone         = completedIds.includes(d.id);
     const statColours    = {
         strength: 'var(--stat-str)', endurance: 'var(--stat-end)', agility: 'var(--stat-agi)'
     };
     const colour         = statColours[d.stat] || 'var(--accent)';
     const speechAvailable = typeof window !== 'undefined' && !!window.speechSynthesis;
+    const showSpeechNudge = isFirst && !isDone && speechAvailable && d.formDesc;
 
     return `
         <div class="fp-dir-card ${isDone ? 'fp-dir-card--done' : ''}">
@@ -1289,6 +1297,9 @@ function _buildFitnessDirectiveCard(d, completedIds) {
             ${d.formDesc ? `
                 <details class="fp-dir-details">
                     <summary class="fp-dir-details-summary">Form guide</summary>
+                    ${showSpeechNudge ? `
+                        <p class="fp-speech-nudge">&#x1F50A; Tap the speaker above to have SYD read this aloud while you move — no need to look at the screen.</p>
+                    ` : ''}
                     <p class="fp-dir-form-desc">${d.formDesc}</p>
                 </details>
             ` : ''}
@@ -1313,4 +1324,52 @@ function _completeFitnessDirective(dirId, container) {
 
     // Re-render active panel
     _renderFitnessActive(container, fitnessData);
+}
+
+// ─── ONBOARDING PROMPT ────────────────────────────────────────
+// Shown once during new user onboarding, between the orientation
+// screen and createPlayer(). Gives the operative a clear opt-in
+// or skip without blocking the flow.
+// onProceed: called when the operative either activates or skips.
+function renderFitnessOnboardingPrompt(onProceed) {
+    const screen = document.getElementById('screen-orientation');
+    const container = document.getElementById('orientation-content');
+    if (!container) { if (onProceed) onProceed(); return; }
+
+    container.innerHTML = `
+        <div class="orientation-wrap">
+            <div class="or-header">
+                <p class="or-label">[ ONE SIGNAL MISSING ]</p>
+            </div>
+            <div class="or-syd-voice">
+                <p class="or-syd-line">SYD reads career and mind. It does not read body — that is an option.</p>
+                <p class="or-syd-line">The Fitness Protocol runs a short baseline scan and delivers daily bodyweight directives calibrated to where you actually are. No equipment. Works anywhere.</p>
+                <p class="or-syd-line">You can activate it now or find it later in OPS → FITNESS.</p>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:8px;">
+                <button class="btn btn--primary" id="fp-onboard-activate">
+                    [ ACTIVATE FITNESS PROTOCOL ]
+                </button>
+                <button class="fp-rescan-btn" id="fp-onboard-skip" style="align-self:flex-start;padding:8px 0;">
+                    Skip for now →
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('fp-onboard-activate').addEventListener('click', () => {
+        playUIClick();
+        // Run the scan inside the orientation container; on completion proceed
+        _renderFitnessScan(container);
+        // After scan saves data, the next NEXT/PROCESS tap calls _processFitnessScan
+        // which ends in _renderFitnessScanResult. Wire a one-time proceed from result.
+        // We patch _renderFitnessScanResult to call onProceed after "Begin Protocol" tap.
+        window._fitnessScanOnboardingCallback = onProceed;
+    });
+
+    document.getElementById('fp-onboard-skip').addEventListener('click', () => {
+        playUIClick();
+        window._fitnessScanOnboardingCallback = null;
+        if (onProceed) onProceed();
+    });
 }

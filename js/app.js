@@ -2140,7 +2140,15 @@ function renderOrientationScreen(onDone) {
 
     document.getElementById('or-continue-btn').addEventListener('click', () => {
         playUIClick();
-        if (onDone) onDone();
+        // Surface the Fitness opt-in once before handing off to createPlayer.
+        // renderFitnessOnboardingPrompt is defined in fitness.js (loaded before app.js).
+        // If fitness.js is not loaded or Fitness already activated, skip straight to onDone.
+        const fitnessAlreadyActive = (typeof loadFitness === 'function') && !!(loadFitness());
+        if (!fitnessAlreadyActive && typeof renderFitnessOnboardingPrompt === 'function') {
+            renderFitnessOnboardingPrompt(onDone);
+        } else {
+            if (onDone) onDone();
+        }
     });
 }
 
