@@ -950,7 +950,12 @@ ${inputText}
 `.trim();
 
     const result = await geminiGenerateLarge(prompt);
-    if (!result.ok) return;
+    if (!result.ok) {
+        if (typeof _queueNeuralError === 'function') {
+            _queueNeuralError(result, { screen: 'jobops', callLabel: 'SIGNAL TRANSLATION', onLocalKey: 'profileLocal' });
+        }
+        return;
+    }
 
     const parsed = extractJSON(result.text);
     if (!parsed || !Array.isArray(parsed.current_bullets)) return;
@@ -2352,6 +2357,9 @@ Write the explainer in SYD's voice. Rules:
     const result = await geminiGenerate(prompt);
 
     if (!result.ok || !result.text || result.text.trim().length < 20) {
+        if (!result.ok && typeof _queueNeuralError === 'function') {
+            _queueNeuralError(result, { screen: 'any', callLabel: 'STAT EXPLAINER', onLocalKey: null });
+        }
         return { text: null, geminiEnhanced: false };
     }
 
@@ -2529,6 +2537,12 @@ Output ONLY valid JSON — an array of directive objects. No markdown fences. No
 `.trim();
 
     const result = await geminiGenerateLiteLarge(prompt, 0.4);
+    if (!result.ok) {
+        if (typeof _queueNeuralError === 'function') {
+            _queueNeuralError(result, { screen: 'career', callLabel: 'CAREER DIRECTIVE REFRESH', onLocalKey: 'careerLocal' });
+        }
+        return;
+    }
     if (result.ok) {
         const newDirectives = extractJSON(result.text);
         if (Array.isArray(newDirectives) && newDirectives.length > 0) {

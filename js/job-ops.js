@@ -226,6 +226,9 @@ Return ONLY valid JSON. No markdown fences. No preamble. No explanation.
 
     if (!result.ok) {
         console.warn('[SYD] JOB OPS Call A failed:', result.error);
+        if (typeof _queueNeuralError === 'function') {
+            _queueNeuralError(result, { screen: 'jobops', callLabel: 'PROFILE', onLocalKey: 'profileLocal' });
+        }
         return;
     }
 
@@ -428,6 +431,9 @@ Return ONLY valid JSON. No markdown fences. No preamble.
 
     if (!stage2Result.ok) {
         console.warn('[SYD] JOB OPS Call B Stage 2 failed:', stage2Result.error);
+        if (typeof _queueNeuralError === 'function') {
+            _queueNeuralError(stage2Result, { screen: 'jobops', callLabel: 'MARKET READ', onLocalKey: 'marketLocal' });
+        }
         return;
     }
 
@@ -472,6 +478,14 @@ Return ONLY valid JSON. No markdown fences. No preamble.
 // ─── TOP-LEVEL SEGMENT RENDERER ──────────────────────────────
 function renderJobOpsSegment(container) {
     if (!container) return;
+
+    // Surface any queued Neural Link errors for this segment
+    if (typeof geminiCheckQueuedErrors === 'function') {
+        geminiCheckQueuedErrors('jobops', {
+            profileLocal: () => renderJobOpsPanel('profile'),
+            marketLocal:  () => renderJobOpsPanel('market')
+        });
+    }
 
     const activePanel = window._jobOpsPanel || 'profile';
 

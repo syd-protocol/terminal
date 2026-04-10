@@ -470,6 +470,11 @@ function renderDirectivesTab(container) {
 // ═══════════════════════════════════════════════════════════════
 
 function renderEncounterSegment(container) {
+    // Surface any queued Neural Link errors for the encounter screen
+    if (typeof geminiCheckQueuedErrors === 'function') {
+        geminiCheckQueuedErrors('encounter', {});
+    }
+
     const done = (typeof hasCompletedEncounterToday === 'function')
         && hasCompletedEncounterToday();
 
@@ -735,6 +740,40 @@ function renderEncounterEvaluatingInTab(container, enc) {
         const es = (typeof encounterState !== 'undefined') ? encounterState : {};
         evaluateJudgmentEncounter(enc, es.selectedOption, es.selectedReasoning, es.freeText)
             .then(result => {
+                // If Gemini failed and returned an error marker, show inline error
+                if (result && result.error && result.text === null) {
+                    if (typeof geminiShowError === 'function') {
+                        const errContainer = document.createElement('div');
+                        errContainer.className = 'encounter-tab-wrap';
+                        container.innerHTML = '';
+                        container.appendChild(errContainer);
+                        geminiShowError(errContainer, result.error, {
+                            context: 'ENCOUNTER',
+                            onRetry: () => renderEncounterEvaluatingInTab(container, enc),
+                            onLocal: () => {
+                                if (typeof markEncounterComplete === 'function') markEncounterComplete();
+                                updateEncounterTabDot();
+                                const fb = result.localFallback || { text: 'Acknowledged.' };
+                                container.innerHTML = `
+                                    <div class="encounter-tab-wrap">
+                                        <div class="encounter-tab-header">
+                                            <span class="enc-label">[ SYD — EVALUATION ]</span>
+                                        </div>
+                                        <div class="enc-feedback">
+                                            <p class="enc-feedback-text">${fb.text}</p>
+                                        </div>
+                                        <div class="enc-footer-actions">
+                                            <button class="btn btn--primary" id="enc-tab-done">[ ACKNOWLEDGED ]</button>
+                                        </div>
+                                    </div>
+                                `;
+                                document.getElementById('enc-tab-done').addEventListener('click', () => { playUIClick(); renderEncounterSegment(container); });
+                            }
+                        });
+                    }
+                    return;
+                }
+
                 if (typeof markEncounterComplete === 'function') markEncounterComplete();
                 updateEncounterTabDot();
                 container.innerHTML = `
@@ -854,6 +893,14 @@ function saveTodaysJournal(text) {
 
 function renderStatusMainContent(container, animate) {
     if (!player) return;
+
+    // Surface any queued Neural Link errors relevant to the STATUS screen
+    if (typeof geminiCheckQueuedErrors === 'function') {
+        geminiCheckQueuedErrors('career', {
+            careerLocal: () => {} // career directives already rendered locally — just acknowledge
+        });
+        geminiCheckQueuedErrors('any', {});
+    }
 
     const level    = calculateLevel();
     const rank     = rankFromLevel(level);

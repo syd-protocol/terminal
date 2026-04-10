@@ -456,9 +456,232 @@ async function geminiCallWithSearch({ prompt, temperature, maxTokens }) {
 }
 
 // ─── KEY PRESENCE CHECK ───────────────────────────────────────
-// Quick check used before deciding whether to attempt a Gemini
-// call or go straight to local fallback.
-
 function hasNeuralLink() {
     return !!(typeof getNeuralKey === 'function' && getNeuralKey());
+}
+
+// ─── NEURAL LINK ERROR SYSTEM ────────────────────────────────
+// Every AI call failure is classified, translated into plain language,
+// and surfaced to the operative — either inline (when they are watching)
+// or via a queued modal (when the call was background).
+//
+// The operative gave SYD their key to get smart answers.
+// Silent fallbacks without notice break that contract.
+
+const _NEURAL_ERROR_QUEUE_KEY = 'syd_neural_error_queue';
+
+// ── Error classifier ──────────────────────────────────────────
+// Translates raw API error into plain-language copy.
+// canRetry: true → show [ RETRY ] button
+// canRetry: false (quota/auth) → show [ USE LOCAL VERSION ] only
+function _classifyNeuralError(result) {
+    const msg   = (result && result.error) || '';
+    const lower = msg.toLowerCase();
+
+    if (result && result.quota) {
+        return {
+            type:     'quota',
+            headline: 'Neural Link has reached its request limit.',
+            detail:   'Your AI key is fine — it just needs a short break. Limits reset automatically, usually within the hour. For now, SYD will use its built-in version.',
+            canRetry: false
+        };
+    }
+    if (lower.includes('401') || lower.includes('403') ||
+        lower.includes('api key') || lower.includes('permission denied')) {
+        return {
+            type:     'auth',
+            headline: 'Neural Link key not accepted.',
+            detail:   'SYD could not connect using your key. Check that it is correct and active in Settings → Neural Link.',
+            canRetry: false,
+            canSettings: true
+        };
+    }
+    if (lower.includes('503') || lower.includes('502') || lower.includes('504') ||
+        lower.includes('unavailable') || lower.includes('overloaded')) {
+        return {
+            type:     'unavailable',
+            headline: 'Neural Link is temporarily unavailable.',
+            detail:   'The AI service is overloaded right now. This usually clears up within a few minutes. You can retry or continue with SYD\'s built-in version.',
+            canRetry: true
+        };
+    }
+    if (lower.includes('network') || lower.includes('fetch') ||
+        lower.includes('failed to fetch') || lower.includes('connection')) {
+        return {
+            type:     'network',
+            headline: 'Could not reach Neural Link.',
+            detail:   'SYD lost the connection before the response arrived. Check your internet and try again, or continue with the built-in version.',
+            canRetry: true
+        };
+    }
+    return {
+        type:     'other',
+        headline: 'Neural Link returned an unexpected error.',
+        detail:   'Something went wrong on the AI side. You can retry or continue with SYD\'s built-in version.',
+        canRetry: true
+    };
+}
+
+// ── Inline error renderer ────────────────────────────────────
+// Renders into a container the operative is currently looking at.
+// onRetry: re-runs the original call (only offered when canRetry)
+// onLocal: proceeds with local fallback
+// context: short label for the panel, e.g. 'ENCOUNTER' or 'MARKET READ'
+function geminiShowError(container, result, { onRetry, onLocal, context } = {}) {
+    if (!container) { if (onLocal) onLocal(); return; }
+
+    const info = _classifyNeuralError(result);
+    const lbl  = context ? `[ ${context} — NEURAL LINK ]` : '[ NEURAL LINK ]';
+
+    const retryHTML = (info.canRetry && onRetry) ? `
+        <button class="btn btn--primary gem-err-btn" id="gem-err-retry">[ RETRY ]</button>
+    ` : '';
+
+    const localLabel = info.canRetry ? 'Continue with built-in version →' : '[ CONTINUE WITH BUILT-IN VERSION ]';
+    const localHTML  = onLocal ? `
+        <button class="gem-err-local-btn" id="gem-err-local">${localLabel}</button>
+    ` : '';
+
+    const settingsHTML = info.canSettings ? `
+        <button class="gem-err-local-btn" id="gem-err-settings">Check Neural Link settings →</button>
+    ` : '';
+
+    container.innerHTML = `
+        <div class="gem-err-wrap">
+            <p class="gem-err-label">${lbl}</p>
+            <p class="gem-err-headline">&#x26A0;&nbsp;${info.headline}</p>
+            <p class="gem-err-detail">${info.detail}</p>
+            <div class="gem-err-actions">
+                ${retryHTML}
+                ${localHTML}
+                ${settingsHTML}
+            </div>
+        </div>
+    `;
+
+    const retryEl    = document.getElementById('gem-err-retry');
+    const localEl    = document.getElementById('gem-err-local');
+    const settingsEl = document.getElementById('gem-err-settings');
+
+    if (retryEl)    retryEl.addEventListener('click',    () => { if (typeof playUIClick === 'function') playUIClick(); onRetry(); });
+    if (localEl)    localEl.addEventListener('click',    () => { if (typeof playUIClick === 'function') playUIClick(); onLocal(); });
+    if (settingsEl) settingsEl.addEventListener('click', () => { if (typeof playUIClick === 'function') playUIClick(); if (typeof navTo === 'function') navTo('screen-neural'); });
+}
+
+// ── Background error queue ────────────────────────────────────
+// For calls that fired in the background with no visible container.
+// Queued errors are shown as a modal when the operative navigates
+// to the relevant screen.
+// screen: which screen/segment should trigger the modal ('jobops', 'encounter', 'fitness', 'career', 'any')
+// onLocal: stored as a key name — the modal will call the matching handler
+function _queueNeuralError(result, { screen, callLabel, onLocalKey }) {
+    try {
+        const queue = JSON.parse(localStorage.getItem(_NEURAL_ERROR_QUEUE_KEY) || '[]');
+        // Deduplicate: don't stack identical errors
+        const isDupe = queue.some(e => e.type === _classifyNeuralError(result).type && e.screen === screen);
+        if (!isDupe) {
+            queue.push({
+                result,
+                screen,
+                callLabel,
+                onLocalKey,
+                queuedAt: Date.now()
+            });
+            localStorage.setItem(_NEURAL_ERROR_QUEUE_KEY, JSON.stringify(queue));
+        }
+    } catch(e) { /* non-critical */ }
+}
+
+function _clearNeuralErrorQueue(screen) {
+    try {
+        const queue   = JSON.parse(localStorage.getItem(_NEURAL_ERROR_QUEUE_KEY) || '[]');
+        const filtered = queue.filter(e => e.screen !== screen && e.screen !== 'any');
+        localStorage.setItem(_NEURAL_ERROR_QUEUE_KEY, JSON.stringify(filtered));
+    } catch(e) {}
+}
+
+// ── Modal: show queued errors for a given screen ──────────────
+// Call this at the top of each screen/segment renderer.
+// If a queued error exists for this screen, shows the modal.
+// onLocalHandlers: map of key → function, called when operative chooses local.
+function geminiCheckQueuedErrors(screen, onLocalHandlers) {
+    try {
+        const queue = JSON.parse(localStorage.getItem(_NEURAL_ERROR_QUEUE_KEY) || '[]');
+        const match = queue.find(e => e.screen === screen || e.screen === 'any');
+        if (!match) return;
+
+        const info    = _classifyNeuralError(match.result);
+        const overlay = document.getElementById('overlay-neural-error');
+        if (!overlay) return;
+
+        const inner   = overlay.querySelector('.neural-err-inner');
+        if (!inner) return;
+
+        const lbl = match.callLabel ? `[ ${match.callLabel} — NEURAL LINK ]` : '[ NEURAL LINK ]';
+
+        const retryHTML = (info.canRetry) ? `
+            <button class="btn btn--primary" id="ne-retry-btn">[ RETRY ]</button>
+        ` : '';
+
+        const localLabel = info.canRetry ? 'Continue with built-in version →' : '[ CONTINUE WITH BUILT-IN VERSION ]';
+
+        const settingsHTML = info.canSettings ? `
+            <button class="gem-err-local-btn" id="ne-settings-btn">Check Neural Link settings →</button>
+        ` : '';
+
+        inner.innerHTML = `
+            <p class="neural-err-label">${lbl}</p>
+            <p class="neural-err-headline">&#x26A0;&nbsp;${info.headline}</p>
+            <p class="neural-err-detail">${info.detail}</p>
+            <div class="neural-err-actions">
+                ${retryHTML}
+                <button class="gem-err-local-btn" id="ne-local-btn">${localLabel}</button>
+                ${settingsHTML}
+            </div>
+        `;
+
+        overlay.classList.remove('hidden');
+
+        const dismiss = () => {
+            overlay.classList.add('hidden');
+            _clearNeuralErrorQueue(screen);
+        };
+
+        const localEl    = document.getElementById('ne-local-btn');
+        const settingsEl = document.getElementById('ne-settings-btn');
+        const retryEl    = document.getElementById('ne-retry-btn');
+
+        if (localEl) {
+            localEl.addEventListener('click', () => {
+                if (typeof playUIClick === 'function') playUIClick();
+                dismiss();
+                // Call the registered local handler if provided
+                const handler = onLocalHandlers && match.onLocalKey && onLocalHandlers[match.onLocalKey];
+                if (typeof handler === 'function') handler();
+            });
+        }
+
+        if (settingsEl) {
+            settingsEl.addEventListener('click', () => {
+                if (typeof playUIClick === 'function') playUIClick();
+                dismiss();
+                if (typeof navTo === 'function') navTo('screen-neural');
+            });
+        }
+
+        if (retryEl) {
+            retryEl.addEventListener('click', () => {
+                if (typeof playUIClick === 'function') playUIClick();
+                dismiss();
+                // Re-fire the relevant call based on screen
+                if (screen === 'jobops' && typeof fireJobOpsMarket === 'function') {
+                    fireJobOpsMarket();
+                    if (typeof fireJobOpsProfile === 'function') fireJobOpsProfile();
+                } else if (screen === 'career' && typeof fireCall4 === 'function') {
+                    fireCall4();
+                }
+            });
+        }
+
+    } catch(e) { /* non-critical */ }
 }

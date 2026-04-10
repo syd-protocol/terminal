@@ -481,6 +481,11 @@ Evaluation rules:
 
     if (!result.ok || !result.text || result.text.trim().length < 20) {
         console.warn('[SYD] Judgment evaluation fell back to local:', result.error);
+        // Surface error inline — wrap in a rejected promise shape so callers
+        // can offer retry. Return a special marker so the caller renders error UI.
+        if (!result.ok) {
+            return { text: null, geminiEnhanced: false, error: result, localFallback: buildLocalJudgmentFeedback(enc) };
+        }
         return buildLocalJudgmentFeedback(enc);
     }
 

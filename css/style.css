@@ -6544,6 +6544,93 @@ body {
     color:        var(--accent);
 }
 
+/* ─── NEURAL LINK ERROR — inline + modal shared styles ──────── */
+.gem-err-wrap {
+    display:        flex;
+    flex-direction: column;
+    gap:            12px;
+    padding:        20px 0 8px;
+}
+.gem-err-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.7rem;
+    letter-spacing: 0.1em;
+    color:          var(--text-secondary);
+    margin:         0;
+}
+.gem-err-headline {
+    font-family: var(--font-mono, monospace);
+    font-size:   0.88rem;
+    font-weight: 700;
+    color:       var(--red, #ef5350);
+    margin:      0;
+    line-height: 1.4;
+}
+.gem-err-detail {
+    font-size:   0.85rem;
+    color:       var(--text-secondary);
+    line-height: 1.65;
+    margin:      0;
+}
+.gem-err-actions {
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+    margin-top:     4px;
+}
+.gem-err-btn { align-self: flex-start; }
+.gem-err-local-btn {
+    align-self:      flex-start;
+    background:      transparent;
+    border:          none;
+    color:           var(--text-secondary);
+    font-family:     var(--font-mono, monospace);
+    font-size:       0.78rem;
+    cursor:          pointer;
+    padding:         0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.gem-err-local-btn:hover { color: var(--accent); }
+
+/* ─── NEURAL ERROR MODAL ─────────────────────────────────────── */
+.neural-err-inner {
+    display:        flex;
+    flex-direction: column;
+    gap:            16px;
+    padding:        40px 28px 36px;
+    max-width:      440px;
+    margin:         0 auto;
+    width:          100%;
+}
+.neural-err-label {
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.7rem;
+    letter-spacing: 0.1em;
+    color:          var(--accent);
+    margin:         0;
+}
+.neural-err-headline {
+    font-family: var(--font-mono, monospace);
+    font-size:   0.95rem;
+    font-weight: 700;
+    color:       var(--red, #ef5350);
+    margin:      0;
+    line-height: 1.4;
+}
+.neural-err-detail {
+    font-size:   0.88rem;
+    color:       var(--text-secondary);
+    line-height: 1.7;
+    margin:      0;
+}
+.neural-err-actions {
+    display:        flex;
+    flex-direction: column;
+    gap:            12px;
+    margin-top:     8px;
+}
+
 /* ─── SETTINGS RESTORE LINK ──────────────────────────────────── */
 .settings-restore-link {
     display:     block;

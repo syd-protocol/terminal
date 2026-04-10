@@ -858,6 +858,11 @@ function _renderVoicePicker(container, fitnessData) {
 function renderFitnessSegment(container) {
     if (!container) return;
 
+    // Surface any queued Neural Link errors for the fitness screen
+    if (typeof geminiCheckQueuedErrors === 'function') {
+        geminiCheckQueuedErrors('fitness', {});
+    }
+
     const fitnessData = (typeof loadFitness === 'function') ? loadFitness() : null;
 
     if (!fitnessData || !fitnessData.rank) {
@@ -1072,10 +1077,12 @@ async function _processFitnessScan(container) {
     // ── Process goal free text ─────────────────────────────────
     // Try Gemini first, fall back to local keyword parsing.
     // Result: resolved primaryStat overrides goalKey weighting.
-    let goalSignal = null;
+    let goalSignal    = null;
+    let _goalAiFailed = false;
     if (goalFreeText.length > 4) {
         goalSignal = await processGoalWithGemini(goalFreeText, goalKey, rank);
         if (!goalSignal) {
+            if (hasNeuralLink()) _goalAiFailed = true;
             goalSignal = parseGoalFreeText(goalFreeText);
         }
     }
@@ -1085,14 +1092,25 @@ async function _processFitnessScan(container) {
         || null;
 
     // ── Gemini: process conditions if available ────────────────
-    let modNote = null;
+    let modNote      = null;
+    let _condAiFailed = false;
     if (conditionsText.length > 5) {
         modNote = await processConditionsWithGemini(conditionsText, rank, goalKey);
+        if (!modNote && hasNeuralLink()) _condAiFailed = true;
     }
 
     // ── Build local mod note if Gemini unavailable ─────────────
     if (!modNote && conditionTags.length > 0) {
         modNote = `Condition flagged: ${conditionTags.join(', ')} involvement noted. Directives involving these movement patterns have been filtered from your queue. If anything still feels wrong, skip that directive — the System will not penalise you for it.`;
+    }
+
+    // ── Queue Neural Link notice if either AI call failed ──────
+    // Shown as a modal when the operative next visits the FITNESS segment.
+    if ((_goalAiFailed || _condAiFailed) && typeof _queueNeuralError === 'function') {
+        _queueNeuralError(
+            { ok: false, error: 'Network error.', quota: false },
+            { screen: 'fitness', callLabel: 'FITNESS SCAN', onLocalKey: null }
+        );
     }
 
     // ── Local interpretation: recent activity ─────────────────
