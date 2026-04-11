@@ -531,8 +531,9 @@
 
 /* SETTINGS TAB */
 .status-settings-tab { display: flex; flex-direction: column; gap: 24px; }
-.settings-section { display: flex; flex-direction: column; gap: 10px; }
-.settings-section--danger { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 20px; }
+.settings-section { display: flex; flex-direction: column; gap: 10px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+.settings-section:last-child { border-bottom: none; padding-bottom: 0; }
+.settings-section--danger { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 24px; border-bottom: none; padding-bottom: 0; }
 .settings-section-label {
     font-family:   var(--font-mono);
     font-size:     0.7rem;
@@ -786,7 +787,7 @@
 .status-section { display: flex; flex-direction: column; gap: 12px; }
 .status-section--career-skills { gap: 0; }
 .status-section--path          { gap: 0; }
-.status-section--settings      { gap: 0; }
+.status-section--settings      { gap: 24px; }
 
 /* ── SOT IDENTITY — SETTINGS SHORTCUT ─────────────────────── */
 .sot-settings-shortcut {
