@@ -1242,7 +1242,7 @@ function _renderFitnessActive(container, fitnessData) {
                 </div>
             ` : ''}
 
-            ${speechAvailable && !allDone ? `<p class="fp-speech-note">Tap &#x1F50A; on any directive to hear the form description read aloud.</p>` : ''}
+            ${speechAvailable && !allDone ? `<p class="fp-speech-note">Tap &#x1F50A; on any directive to hear the full exercise instructions read aloud.</p>` : ''}
 
             <div class="fp-directives-list">
                 ${dirsHTML}
@@ -1262,7 +1262,7 @@ function _renderFitnessActive(container, fitnessData) {
     container.querySelectorAll('.fp-speech-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            readFormDescription(btn.dataset.formDesc);
+            readFormDescription(btn.dataset.speechScript);
         });
     });
 
@@ -1299,6 +1299,13 @@ function _buildFitnessDirectiveCard(d, completedIds, isFirst) {
     const speechAvailable = typeof window !== 'undefined' && !!window.speechSynthesis;
     const showSpeechNudge = isFirst && !isDone && speechAvailable && d.formDesc;
 
+    // Build the full spoken script: title announces the exercise and volume,
+    // desc explains what to do, formDesc gives the form cues.
+    // This mirrors how exercise apps read out a movement before you start.
+    const speechScript = d.formDesc
+        ? `${d.title}. ${d.desc} Form guide: ${d.formDesc}`
+        : `${d.title}. ${d.desc}`;
+
     return `
         <div class="fp-dir-card ${isDone ? 'fp-dir-card--done' : ''}">
             <div class="fp-dir-header">
@@ -1306,8 +1313,8 @@ function _buildFitnessDirectiveCard(d, completedIds, isFirst) {
                 <span class="fp-dir-tier-badge">T${d.tier}</span>
                 ${isDone ? '<span class="fp-dir-done-mark">&#x2713; DONE</span>' : ''}
                 ${speechAvailable && d.formDesc ? `
-                    <button class="fp-speech-btn" data-form-desc="${d.formDesc.replace(/"/g, '&quot;')}"
-                        title="Read form description aloud">&#x1F50A;</button>
+                    <button class="fp-speech-btn" data-speech-script="${speechScript.replace(/"/g, '&quot;')}"
+                        title="Read exercise instructions aloud">&#x1F50A;</button>
                 ` : ''}
             </div>
             <p class="fp-dir-title">${d.title}</p>
@@ -1316,7 +1323,7 @@ function _buildFitnessDirectiveCard(d, completedIds, isFirst) {
                 <details class="fp-dir-details">
                     <summary class="fp-dir-details-summary">Form guide</summary>
                     ${showSpeechNudge ? `
-                        <p class="fp-speech-nudge">&#x1F50A; Tap the speaker above to have SYD read this aloud while you move — no need to look at the screen.</p>
+                        <p class="fp-speech-nudge">&#x1F50A; Tap the speaker above to have SYD read the full exercise instructions aloud — no need to look at the screen.</p>
                     ` : ''}
                     <p class="fp-dir-form-desc">${d.formDesc}</p>
                 </details>
@@ -1357,10 +1364,10 @@ function renderFitnessOnboardingPrompt(onProceed) {
     container.innerHTML = `
         <div class="orientation-wrap">
             <div class="or-header">
-                <p class="or-label">[ ONE SIGNAL MISSING ]</p>
+                <p class="or-label">[ ONE MORE THING ]</p>
             </div>
             <div class="or-syd-voice">
-                <p class="or-syd-line">SYD reads career and mind. It does not read body — that is an option.</p>
+                <p class="or-syd-line">SYD reads career and mind. It can also read body — if you want it to.</p>
                 <p class="or-syd-line">The Fitness Protocol runs a short baseline scan and delivers daily bodyweight directives calibrated to where you actually are. No equipment. Works anywhere.</p>
                 <p class="or-syd-line">You can activate it now or find it later in OPS → FITNESS.</p>
             </div>

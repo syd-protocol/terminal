@@ -1815,7 +1815,17 @@ function runRoleMapping(round) {
             return `
             <button class="role-card${isBest ? ' role-card--best-signal' : ''}" data-path-index="${i}">
                 ${round === 0 ? `
-                    ${isBest ? '<span class="role-card-signal-badge">⬡ STRONGEST SIGNAL</span>' : ''}
+                    ${isBest ? `
+                        <span class="role-card-signal-badge" id="badge-best-signal" role="button" tabindex="0"
+                            aria-label="What does this mean?">
+                            ⬡ YOUR RECORD POINTS HERE <span class="role-card-badge-hint">?</span>
+                        </span>
+                        <div class="role-card-badge-explainer hidden" id="badge-explainer">
+                            SYD scored all three paths against your CV, scan results, and experience pattern.
+                            This path has the densest match — the most evidence already pointing in this direction.
+                            It is not a verdict. It is where the data lands. You still pick.
+                        </div>
+                    ` : ''}
                     <span class="role-card-name">${p.path_name || 'PATH ' + (i + 1)}</span>
                     ${p.current_role_match ? `<p class="role-card-from">From: ${p.current_role_match}</p>` : ''}
                     ${p.narrative ? '<p class="role-card-narrative">' + p.narrative + '</p>' : ''}
@@ -1943,6 +1953,211 @@ function runRoleMapping(round) {
     }
 
     wireRoleCards();
+
+    // ── Badge tap: toggle inline explainer ───────────────────────
+    // stopPropagation so tapping the badge doesn't also select the card.
+    const badgeEl     = document.getElementById('badge-best-signal');
+    const explainerEl = document.getElementById('badge-explainer');
+    if (badgeEl && explainerEl) {
+        badgeEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (typeof playUIClick === 'function') playUIClick();
+            explainerEl.classList.toggle('hidden');
+        });
+        badgeEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                explainerEl.classList.toggle('hidden');
+            }
+        });
+    }
+
+    // ── Reanalyse: only shown on round 0 ─────────────────────────
+    if (round === 0) {
+        _renderReanalyseSection(container, paths);
+    }
+}
+
+// ─── REANALYSE SECTION ────────────────────────────────────────
+// Renders below the card stack on round 0. Shows a textarea + button
+// letting the operative tell SYD what doesn't fit or where they want
+// to go instead. Capped at 2 reanalyses per session to prevent
+// operatives chasing a "perfect" role set indefinitely.
+//
+// On submit: re-fires a targeted Call 2 variant that returns only
+// the paths[] array, then replaces pathState.inference.paths and
+// re-renders round 0.
+//
+// pathState._reanalyseCount tracks uses this session (not persisted).
+
+const REANALYSE_MAX = 2;
+
+function _renderReanalyseSection(container, paths) {
+    // Remove existing reanalyse section if any (clean re-render)
+    const existing = document.getElementById('reanalyse-section');
+    if (existing) existing.remove();
+
+    const count = pathState._reanalyseCount || 0;
+    const wrap  = document.createElement('div');
+    wrap.id = 'reanalyse-section';
+    wrap.className = 'reanalyse-wrap';
+
+    if (count >= REANALYSE_MAX) {
+        wrap.innerHTML = `
+            <p class="reanalyse-limit-note">
+                You have reanalysed twice. If these paths still don't fit, you can restart PATH Protocol from Settings.
+            </p>
+        `;
+    } else {
+        wrap.innerHTML = `
+            <div class="reanalyse-toggle-row">
+                <button class="reanalyse-toggle-btn" id="reanalyse-toggle">
+                    These paths don't fit — reanalyse
+                </button>
+            </div>
+            <div class="reanalyse-input-wrap hidden" id="reanalyse-input-wrap">
+                <p class="reanalyse-label">Tell SYD what doesn't fit and / or the direction you actually want to go.</p>
+                <textarea
+                    id="reanalyse-textarea"
+                    class="reanalyse-textarea"
+                    placeholder="e.g. I don't want to manage people. I want something more technical. Or: I've been moving toward data science."
+                    maxlength="600"
+                    rows="4"
+                ></textarea>
+                <div class="reanalyse-footer">
+                    <span class="reanalyse-count-note">${REANALYSE_MAX - count} reanalysis remaining</span>
+                    <button class="btn btn--primary reanalyse-submit-btn" id="reanalyse-submit">
+                        [ REANALYSE ]
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    // Append after the role-card-stack
+    const stack = document.getElementById('role-card-stack');
+    if (stack) stack.parentNode.insertBefore(wrap, stack.nextSibling);
+
+    // Wire toggle
+    const toggleBtn = document.getElementById('reanalyse-toggle');
+    const inputWrap = document.getElementById('reanalyse-input-wrap');
+    if (toggleBtn && inputWrap) {
+        toggleBtn.addEventListener('click', () => {
+            if (typeof playUIClick === 'function') playUIClick();
+            inputWrap.classList.toggle('hidden');
+            toggleBtn.textContent = inputWrap.classList.contains('hidden')
+                ? 'These paths don\'t fit — reanalyse'
+                : 'Never mind — collapse';
+        });
+    }
+
+    // Wire submit
+    const submitBtn = document.getElementById('reanalyse-submit');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', () => {
+            if (typeof playUIClick === 'function') playUIClick();
+            const note = (document.getElementById('reanalyse-textarea') || {}).value || '';
+            if (!note.trim()) {
+                if (typeof showLog === 'function') showLog('[ TELL SYD WHAT DOESN\'T FIT BEFORE REANALYSING ]', 'system');
+                return;
+            }
+            _fireReanalyse(paths, note.trim());
+        });
+    }
+}
+
+// ─── REANALYSE CALL ───────────────────────────────────────────
+// Fires a trimmed Gemini call that returns only the paths[] array.
+// Uses the original input text already in pathState, plus the operative's note.
+// On success: replaces pathState.inference.paths and re-renders round 0.
+// On failure: surfaces the error inline without losing the current paths.
+async function _fireReanalyse(currentPaths, operativeNote) {
+    const container = document.getElementById('path-content');
+    if (!container) return;
+
+    // Show loading state inside the reanalyse section only
+    const section = document.getElementById('reanalyse-section');
+    if (section) {
+        section.innerHTML = `
+            <div class="reanalyse-loading">
+                <div class="enc-loading-icon">⬡</div>
+                <p class="enc-loading-label">[ SYD IS REANALYSING YOUR RECORD... ]</p>
+            </div>
+        `;
+    }
+
+    const isCV          = pathState.track === 'chronicler';
+    const inputText     = isCV ? (pathState.cvText || '') : (pathState.reimagineResponses || []).join('\n');
+    const traitSummary  = pathState._scanTraits
+        ? Object.entries(pathState._scanTraits).map(([k, v]) => `${k}: ${v}`).join('\n')
+        : 'Not available';
+
+    const currentPathNames = currentPaths.map(p => p.path_name).filter(Boolean).join(', ');
+
+    const prompt = `
+You are SYD — an elite career intelligence system. You previously suggested these three career paths for an operative:
+${currentPathNames}
+
+The operative has reviewed these paths and given you this feedback:
+"${operativeNote}"
+
+Using the same operative record below, generate three NEW career paths that respond to this feedback.
+Follow all the same rules as before — DISTINCT paths, real hireable job titles for current_role_match, no C-suite targets, no invented titles.
+If the operative named a specific direction they want, include it as one of the paths (or honour it in the others).
+If they named paths they want removed, do not include those or close variations of them.
+
+Output ONLY a JSON object with a single key: "paths" — an array of exactly 3 path objects.
+Each path object must have: path_name, current_role_match, narrative, target_roles, mapped_skills, stat_seeds, gap_skills.
+No other keys. No markdown. No preamble.
+
+${isCV ? 'STRUCTURED CAREER SIGNALS (extracted from CV)' : 'SELF-ASSESSMENT RESPONSES'}:
+${inputText}
+
+OPERATIVE SCAN TRAITS:
+${traitSummary}
+`.trim();
+
+    if (!hasNeuralLink()) {
+        if (section) {
+            section.innerHTML = `<p class="reanalyse-limit-note">Neural Link is not connected — reanalysis requires an AI key.</p>`;
+        }
+        return;
+    }
+
+    const result = await geminiGenerateLarge(prompt, 0.4);
+
+    if (!result.ok) {
+        if (section) {
+            section.innerHTML = `
+                <p class="reanalyse-limit-note" style="color:var(--accent-warn, #ffa726);">
+                    Reanalysis failed — ${result.error || 'unknown error'}. Your current paths are still shown above.
+                </p>
+            `;
+        }
+        return;
+    }
+
+    const parsed = extractJSON(result.text);
+    if (!parsed || !Array.isArray(parsed.paths) || parsed.paths.length < 2) {
+        if (section) {
+            section.innerHTML = `
+                <p class="reanalyse-limit-note" style="color:var(--accent-warn, #ffa726);">
+                    SYD returned a response but it could not be read. Your current paths are still shown above.
+                </p>
+            `;
+        }
+        return;
+    }
+
+    // Increment counter and update pathState with new paths
+    pathState._reanalyseCount = (pathState._reanalyseCount || 0) + 1;
+    if (pathState.inference) {
+        pathState.inference.paths = parsed.paths;
+    }
+
+    // Re-render round 0 with the new paths
+    runRoleMapping(0);
 }
 
 // ─── SHARED FLOW: STARTING RANK CONFIRMATION ─────────────────

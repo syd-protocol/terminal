@@ -2133,7 +2133,7 @@ function renderOrientationScreen(onDone) {
                 <p class="or-syd-line">Momentum tracks how many days in a row you show up. It multiplies your XP. The compounding starts slow. You will not feel it yet. Show up tomorrow anyway.</p>
             </div>
             <button class="btn btn--primary or-continue-btn" id="or-continue-btn">
-                [ UNDERSTOOD — LET'S BEGIN ]
+                [ CONTINUE → ]
             </button>
         </div>
     `;

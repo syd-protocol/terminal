@@ -1341,7 +1341,9 @@
     background: rgba(79, 195, 247, 0.08);
 }
 .role-card-signal-badge {
-    display:        inline-block;
+    display:        inline-flex;
+    align-items:    center;
+    gap:            5px;
     font-family:    var(--font-mono, monospace);
     font-size:      0.6rem;
     letter-spacing: 0.14em;
@@ -1351,5 +1353,121 @@
     padding:        2px 7px;
     margin-bottom:  8px;
     opacity:        0.85;
+    cursor:         pointer;
+    user-select:    none;
+}
+.role-card-signal-badge:hover {
+    opacity: 1;
+    background: rgba(79, 195, 247, 0.08);
+}
+.role-card-badge-hint {
+    font-size:      0.65rem;
+    border:         1px solid var(--accent);
+    border-radius:  50%;
+    width:          13px;
+    height:         13px;
+    display:        inline-flex;
+    align-items:    center;
+    justify-content:center;
+    opacity:        0.7;
+    line-height:    1;
+    flex-shrink:    0;
+}
+.role-card-badge-explainer {
+    font-family:  var(--font-mono, monospace);
+    font-size:    0.72rem;
+    color:        var(--text-secondary);
+    line-height:  1.6;
+    border-left:  2px solid var(--accent);
+    padding:      6px 10px;
+    margin-bottom: 10px;
+    background:   rgba(79, 195, 247, 0.04);
+    border-radius: 0 2px 2px 0;
+}
+.role-card-badge-explainer.hidden {
+    display: none;
 }
 
+/* ─── REANALYSE SECTION ─────────────────────────────────────── */
+.reanalyse-wrap {
+    margin-top:  20px;
+    padding-top: 16px;
+    border-top:  1px solid var(--border);
+}
+.reanalyse-toggle-btn {
+    background:     transparent;
+    border:         none;
+    color:          var(--text-secondary);
+    font-family:    var(--font-mono, monospace);
+    font-size:      0.72rem;
+    letter-spacing: 0.06em;
+    cursor:         pointer;
+    padding:        0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    opacity:        0.75;
+    transition:     opacity 0.15s;
+}
+.reanalyse-toggle-btn:hover { opacity: 1; }
+.reanalyse-toggle-row {
+    display: flex;
+    justify-content: center;
+}
+.reanalyse-input-wrap {
+    margin-top: 14px;
+}
+.reanalyse-input-wrap.hidden { display: none; }
+.reanalyse-label {
+    font-family:   var(--font-mono, monospace);
+    font-size:     0.72rem;
+    color:         var(--text-secondary);
+    margin-bottom: 8px;
+    line-height:   1.5;
+}
+.reanalyse-textarea {
+    width:         100%;
+    background:    var(--surface);
+    border:        1px solid var(--border);
+    color:         var(--text-primary);
+    font-family:   var(--font-mono, monospace);
+    font-size:     0.82rem;
+    line-height:   1.6;
+    padding:       10px 12px;
+    border-radius: 2px;
+    resize:        vertical;
+    min-height:    90px;
+    box-sizing:    border-box;
+}
+.reanalyse-textarea:focus {
+    outline:      none;
+    border-color: var(--accent);
+}
+.reanalyse-footer {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    margin-top:      10px;
+    gap:             12px;
+}
+.reanalyse-count-note {
+    font-family: var(--font-mono, monospace);
+    font-size:   0.65rem;
+    color:       var(--text-secondary);
+    opacity:     0.6;
+    flex-shrink: 0;
+}
+.reanalyse-limit-note {
+    font-family:  var(--font-mono, monospace);
+    font-size:    0.72rem;
+    color:        var(--text-secondary);
+    text-align:   center;
+    line-height:  1.5;
+    padding:      8px 0;
+}
+.reanalyse-loading {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    gap:             10px;
+    padding:         20px 0;
+}

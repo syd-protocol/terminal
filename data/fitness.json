@@ -620,9 +620,9 @@
             "rank": "F",
             "stat": "agility",
             "category": "stretch",
-            "title": "Thoracic spine rotation — 10 reps each side",
+            "title": "Upper back rotation — 10 reps each side",
             "desc": "Sit cross-legged or on a chair. Place one hand behind your head. Rotate your upper body to that side as far as you can, then back. 10 slow controlled reps. Switch sides.",
-            "formDesc": "The rotation comes from the mid-back — not the lower back or the neck. Keep your hips still and facing forward. As you rotate, think about your shoulder blade moving back and down. Each rep: rotate to end range, hold 2 seconds, return. Breathe out as you rotate.",
+            "formDesc": "The rotation comes from your upper and mid back — not your lower back or your neck. Keep your hips still and facing forward. As you rotate, think about your shoulder blade moving back and down. Each rep: rotate to end range, hold 2 seconds, return. Breathe out as you rotate.",
             "excludeTags": [
                 "back"
             ]
@@ -662,7 +662,7 @@
             "category": "stretch",
             "title": "Standing calf stretch — 60 seconds each side",
             "desc": "Stand facing a wall, one foot back with heel flat on the floor. Lean toward the wall until you feel the stretch in your calf. Hold 60 seconds. Switch sides.",
-            "formDesc": "The back heel must stay flat on the floor — that is the whole stretch. The further you step your foot back, the more intense the stretch. Keep your back knee straight for a gastroc stretch. For a deeper soleus stretch, slightly bend your back knee while keeping the heel down. Both are valuable — do both if you have time.",
+            "formDesc": "The back heel must stay flat on the floor — that is the whole stretch. The further you step your foot back, the more intense the stretch. Keep your back knee straight for a deeper stretch through the full length of the calf. To shift the stretch lower toward the ankle, slightly bend your back knee while keeping the heel down. Both are valuable — do both if you have time.",
             "excludeTags": [
                 "ankle"
             ]
@@ -747,9 +747,9 @@
         "tier": 1,
         "rank": "D",
         "stat": "agility",
-        "title": "Thoracic extension over a rolled towel — 2 minutes",
+        "title": "Upper back extension over a rolled towel — 2 minutes",
         "desc": "Roll a towel into a firm cylinder. Place it on the floor and lie back over it so it sits across your mid-back — not your lower back. Arms across your chest or extended overhead. Hold and breathe.",
-        "formDesc": "Position the towel at the level of your shoulder blades — roughly between your shoulder blades and the bottom of your ribcage. Let your head rest back without straining your neck. Arms across your chest reduces intensity; extending them overhead increases it. Breathe slowly and let gravity open your thoracic spine. If you feel this in your lower back, move the towel higher.",
+        "formDesc": "Position the towel at the level of your shoulder blades — roughly between your shoulder blades and the bottom of your ribcage. Let your head rest back without straining your neck. Arms across your chest reduces intensity; extending them overhead increases it. Breathe slowly and let gravity open your upper back. If you feel this in your lower back, move the towel higher.",
         "excludeTags": ["back"]
     },
     {

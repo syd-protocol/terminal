@@ -344,15 +344,14 @@ function submitEncounterResponse() {
     markEncounterComplete();
 
     if (enc.type === 'teaching' && enc.teaching) {
-        const hasFreeText = encounterState.freeText && encounterState.freeText.length > 10;
-        if (hasFreeText && hasNeuralLink()) {
-            // Free text present — call Gemini to acknowledge the operative's thinking
-            // alongside the pre-written teaching content.
+        if (hasNeuralLink()) {
+            // Always call Gemini for teaching encounters when neural link is active.
+            // evaluateTeachingEncounter handles both cases: option-only and free text.
             evaluateTeachingEncounter(enc).then(feedback => {
                 renderTeachingFeedback(enc, feedback);
             });
         } else {
-            // No free text or no neural link — reveal pre-written teaching only
+            // No neural link — reveal pre-written teaching only
             setTimeout(() => renderTeachingFeedback(enc), 900);
         }
         return;
@@ -374,21 +373,36 @@ function submitEncounterResponse() {
 
 async function evaluateTeachingEncounter(enc) {
     try {
-        const freeText = encounterState.freeText;
+        const freeText    = encounterState.freeText;
+        const hasFreeText = freeText && freeText.length > 0;
+        const selectedOpt = (enc.options || []).find(o => o.id === encounterState.selectedOption);
+        const selectedRsn = (enc.reasonings || []).find(r => r.id === encounterState.selectedReasoning);
+
+        // Build the response block — free text takes priority; option choice is the fallback.
+        // Both paths result in Gemini acknowledging what the operative brought before
+        // the teaching reveal. Neither path evaluates correctness — that is not the
+        // point of a teaching encounter.
+        const responseBlock = hasFreeText
+            ? `OPERATIVE'S FREE TEXT RESPONSE:\n"${freeText}"`
+            : [
+                selectedOpt ? `OPERATIVE'S CHOSEN OPTION: "${selectedOpt.text}"` : null,
+                selectedRsn ? `OPERATIVE'S STATED REASONING: "${selectedRsn.text}"` : null
+              ].filter(Boolean).join('\n');
+
+        if (!responseBlock) return { text: '', geminiEnhanced: false };
 
         const prompt = `
-You are SYD — a direct, honest career intelligence system. An operative wrote a free-text response to a situation, and now you are about to reveal the expert thinking on that situation.
+You are SYD — a direct, honest career intelligence system. An operative has responded to a situation, and you are about to reveal the expert thinking on it.
 
 SITUATION:
 "${enc.situation}"
 
-OPERATIVE'S FREE TEXT:
-"${freeText}"
+${responseBlock}
 
 EXPERT THINKING (what you are about to reveal):
 "${enc.teaching}"
 
-Your task: Write 1–2 sentences ONLY that acknowledge what the operative wrote before the expert thinking is shown. Do not repeat the teaching text. Do not evaluate whether they were right or wrong — that is not the point of a teaching encounter. Simply acknowledge the instinct or thinking behind what they wrote, then hand off to the transmission.
+Your task: Write 1–2 sentences ONLY that acknowledge what the operative brought before the expert thinking is shown. Do not repeat the teaching text. Do not evaluate whether they were right or wrong — that is not the point of a teaching encounter. Simply acknowledge the instinct or thinking behind their response, then hand off to the transmission.
 
 SYD voice: direct, clipped, no flattery. End with a colon or a dash — signal that the teaching is coming.
 Output ONLY the acknowledgement text. No labels. No JSON. No preamble.
